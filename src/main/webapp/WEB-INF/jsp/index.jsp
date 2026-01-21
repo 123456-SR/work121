@@ -53,6 +53,10 @@
         <a href="/water_replacement_record" class="nav-button">相对密度试验记录表（灌水法）</a>
         <a href="/cutting_ring_record" class="nav-button">原位密度检测记录表（环刀法）</a>
         <a href="/rebound_method_record" class="nav-button">回弹法检测混凝土抗压强度记录表</a>
+            <a href="/rebound_method_report" class="nav-button">回弹法检测混凝土抗压强度报告</a>
+        <a href="/beckman_beam_record" class="nav-button">路基路面回弹弯沉试验检测记录表（贝克曼梁法）</a>
+        <a href="/beckman_beam_report" class="nav-button">路基路面回弹弯沉（回弹模量）检测报告</a>
+        <a href="/beckman_beam_result" class="nav-button">路基路面回弹弯沉（回弹模量）检测结果</a>
         <a href="/signature" class="nav-button" style="background-color: #28a745;">电子签名</a>
     </div>
 </body>
