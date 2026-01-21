@@ -35,4 +35,34 @@ public class PageController {
     public String nuclearDensityRecord() {
         return "nuclear_density_record";
     }
+
+    @GetMapping("/density_test_report")
+    public String densityTestReport() {
+        return "density_test_report";
+    }
+
+    @GetMapping("/density_test_result")
+    public String densityTestResult() {
+        return "density_test_result";
+    }
+
+    @GetMapping("/sand_replacement_record")
+    public String sandReplacementRecord() {
+        return "sand_replacement_record";
+    }
+
+    @GetMapping("/water_replacement_record")
+    public String waterReplacementRecord() {
+        return "water_replacement_record";
+    }
+
+    @GetMapping("/cutting_ring_record")
+    public String cuttingRingRecord() {
+        return "cutting_ring_record";
+    }
+
+    @GetMapping("/rebound_method_record")
+    public String reboundMethodRecord() {
+        return "rebound_method_record";
+    }
 }

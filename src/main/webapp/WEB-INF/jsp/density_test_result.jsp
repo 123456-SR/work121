@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>原位密度检测记录表（核子法）</title>
+    <title>原位密度检测结果</title>
     <style>
         body {
             font-family: 'SimSun', 'Songti SC', serif;
@@ -18,7 +18,7 @@
         }
         .header-info {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end; /* Align to right as per image top left corner seems to be for binding or just empty, unified number is top left/right? Let's assume standard right or left. Image shows '统一编号' on top left actually? Wait, looking at the image, '统一编号' is on top left. */
             margin-bottom: 5px;
             font-weight: bold;
         }
@@ -63,17 +63,17 @@
         }
         .footer-info {
             display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-            margin-bottom: 20px;
+            justify-content: space-around;
+            margin-top: 20px;
+            margin-bottom: 10px;
             font-size: 16px;
             font-weight: bold;
-            padding: 0 50px;
         }
         .page-footer {
-            margin-top: 10px;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
             font-size: 14px;
-            margin-bottom: 20px;
         }
         @media print {
             body {
@@ -97,38 +97,18 @@
         <button onclick="window.print()" style="float: right;">打印此单</button>
     </div>
 
-    <h2>原位密度检测记录表（核子法）</h2>
-
-    <div class="header-info">
-        <span>委托单位：<input type="text" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+    <div class="header-info" style="justify-content: space-between;">
+        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span></span> <!-- Placeholder for layout balance if needed -->
     </div>
 
+    <h2>原位密度检测结果</h2>
+
     <table>
-        <!-- Header Section -->
+        <!-- Header Rows -->
         <tr>
-            <td class="label">工程名称</td>
-            <td colspan="4"><input type="text" name="projectName"></td>
-            <td class="label">委托日期</td>
-            <td colspan="2"><input type="text" name="commissionDate"></td>
-        </tr>
-        <tr>
-            <td class="label">施工部位</td>
-            <td colspan="4"><input type="text" name="constructionPart"></td>
-            <td class="label">检测类别</td>
-            <td colspan="2"><input type="text" name="testCategory"></td>
-        </tr>
-        <tr>
-            <td class="label">仪器设备</td>
-            <td colspan="4"><input type="text" name="equipment"></td>
-            <td class="label">检测方法</td>
-            <td colspan="2"><input type="text" name="testMethod" value="核子法"></td>
-        </tr>
-        <tr>
-            <td class="label">样品名称及<br>状态</td>
-            <td colspan="4"><input type="text" name="sampleNameStatus"></td>
-            <td class="label">依据标准</td>
-            <td colspan="2"><input type="text" name="standard"></td>
+            <td class="label" style="width: 15%;">施工部位</td>
+            <td colspan="9" class="left-align"><input type="text" name="constructionPart"></td>
         </tr>
         <tr>
             <td class="label">最大干密度<br>(g/cm³)</td>
@@ -136,48 +116,46 @@
             <td class="label">最优含水率 %</td>
             <td colspan="2"><input type="text" name="optimumMoisture"></td>
             <td class="label">最小干密度<br>(g/cm³)</td>
-            <td><input type="text" name="minDryDensity"></td>
+            <td colspan="3"><input type="text" name="minDryDensity"></td>
         </tr>
 
         <!-- Data Header -->
         <tr>
             <td class="label" style="width: 10%;">样品编号</td>
-            <td class="label" style="width: 20%;">检测部位<br>(桩号、高程)</td>
-            <td class="label" style="width: 12%;">检测日期</td>
+            <td class="label" style="width: 25%;">检测部位<br>(桩号、高程)</td>
+            <td class="label" style="width: 15%;">检测日期</td>
             <td class="label" style="width: 12%;">湿密度<br>(g/cm³)</td>
             <td class="label" style="width: 12%;">干密度<br>(g/cm³)</td>
             <td class="label" style="width: 12%;">含水率<br>%</td>
-            <td class="label" style="width: 12%;">压实度%</td>
-            <td class="label" style="width: 10%;">备注</td>
+            <td class="label" style="width: 14%;">压实度%</td>
         </tr>
 
-        <!-- Data Rows -->
-        <%
-        for(int i=0; i<15; i++) {
+        <!-- Data Rows (20 rows to fill the page) -->
+        <% 
+        for(int i=0; i<20; i++) { 
         %>
         <tr>
-            <td><input type="text" name="sampleId_<%=i%>"></td>
-            <td><input type="text" name="location_<%=i%>"></td>
-            <td><input type="text" name="date_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="sampleId_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="location_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="date_<%=i%>"></td>
             <td><input type="text" name="wetDensity_<%=i%>"></td>
             <td><input type="text" name="dryDensity_<%=i%>"></td>
             <td><input type="text" name="moisture_<%=i%>"></td>
-            <td><input type="text" name="compaction_<%=i%>"></td>
-            <td><input type="text" name="remarks_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="compaction_<%=i%>"></td>
         </tr>
-        <%
-        }
+        <tr>
+            <td><input type="text" name="wetDensity2_<%=i%>"></td>
+            <td><input type="text" name="dryDensity2_<%=i%>"></td>
+            <td><input type="text" name="moisture2_<%=i%>"></td>
+        </tr>
+        <% 
+        } 
         %>
     </table>
 
-    <div class="footer-info">
-        <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检测：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-    </div>
-
-    <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="page-footer">
         <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
         <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
 
