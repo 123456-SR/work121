@@ -46,6 +46,7 @@
         <a href="/entrustment" class="nav-button">检测（前）委托单（带合同）</a>
         <a href="/light_dynamic_penetration" class="nav-button">轻型动力触探检测报告</a>
         <a href="/light_dynamic_penetration_record" class="nav-button">轻型动力触探检测记录表</a>
+        <a href="/nuclear_density_record" class="nav-button">原位密度检测记录表（核子法）</a>
         <a href="/signature" class="nav-button" style="background-color: #28a745;">电子签名</a>
     </div>
 </body>
