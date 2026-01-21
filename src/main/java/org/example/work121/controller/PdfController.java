@@ -125,4 +125,166 @@ public class PdfController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    @PostMapping("/cutting_ring_record/generate")
+    public ResponseEntity<byte[]> generateCuttingRingRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateCuttingRingRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "cutting_ring_record.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/cutting_ring_record/preview")
+    public ResponseEntity<byte[]> previewCuttingRingRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateCuttingRingRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/density_test_report/generate")
+    public ResponseEntity<byte[]> generateDensityTestReportPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateDensityTestReportPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "density_test_report.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/density_test_report/preview")
+    public ResponseEntity<byte[]> previewDensityTestReportPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateDensityTestReportPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/density_test_result/generate")
+    public ResponseEntity<byte[]> generateDensityTestResultPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateDensityTestResultPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "density_test_result.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/density_test_result/preview")
+    public ResponseEntity<byte[]> previewDensityTestResultPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateDensityTestResultPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/rebound_method_record/generate")
+    public ResponseEntity<byte[]> generateReboundMethodRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "rebound_method_record.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/rebound_method_record/preview")
+    public ResponseEntity<byte[]> previewReboundMethodRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/sand_replacement_record/generate")
+    public ResponseEntity<byte[]> generateSandReplacementRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateSandReplacementRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "sand_replacement_record.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/sand_replacement_record/preview")
+    public ResponseEntity<byte[]> previewSandReplacementRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateSandReplacementRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/water_replacement_record/generate")
+    public ResponseEntity<byte[]> generateWaterReplacementRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateWaterReplacementRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "water_replacement_record.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/water_replacement_record/preview")
+    public ResponseEntity<byte[]> previewWaterReplacementRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateWaterReplacementRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
 }
