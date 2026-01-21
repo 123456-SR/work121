@@ -15,4 +15,9 @@ public class PageController {
     public String entrustment() {
         return "entrustment";
     }
+
+    @GetMapping("/light_dynamic_penetration")
+    public String lightDynamicPenetration() {
+        return "light_dynamic_penetration";
+    }
 }

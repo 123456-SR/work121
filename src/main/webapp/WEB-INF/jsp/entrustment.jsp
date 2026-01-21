@@ -56,8 +56,14 @@
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
-            margin-bottom: 50px;
+            margin-bottom: 20px;
             font-size: 16px;
+        }
+        .page-footer {
+            margin-top: 10px;
+            text-align: right;
+            font-size: 14px;
+            margin-bottom: 50px;
         }
         .notes {
             font-size: 12px;
@@ -247,6 +253,12 @@
     <div class="footer-info">
         <span>委托(送样)人：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
         <span>承接(收样)人：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+    </div>
+
+    <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span><input type="text" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
 
 </body>
