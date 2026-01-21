@@ -16,6 +16,11 @@ public class PageController {
         return "entrustment";
     }
 
+    @GetMapping("/signature")
+    public String signature() {
+        return "signature";
+    }
+
     @GetMapping("/light_dynamic_penetration")
     public String lightDynamicPenetration() {
         return "light_dynamic_penetration";
