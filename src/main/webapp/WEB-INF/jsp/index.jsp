@@ -43,14 +43,10 @@
 <body>
     <h1>表格管理系统</h1>
     <div class="button-container">
-        <a href="/entrustment" class="nav-button">检测（前）委托单（代合同）</a>
         <a href="/entrustment" class="nav-button">检测（前）委托单（带合同）</a>
+        <a href="/light_dynamic_penetration" class="nav-button">轻型动力触探检测报告</a>
+        <a href="/light_dynamic_penetration_record" class="nav-button">轻型动力触探检测记录表</a>
         <a href="/signature" class="nav-button" style="background-color: #28a745;">电子签名</a>
-        
-        <!-- 占位按钮，展示系列表的概念 -->
-        <a href="#" class="nav-button" style="background-color: #6c757d;" onclick="alert('功能开发中...')">样品登记表</a>
-        <a href="#" class="nav-button" style="background-color: #6c757d;" onclick="alert('功能开发中...')">检测记录表</a>
-        <a href="#" class="nav-button" style="background-color: #6c757d;" onclick="alert('功能开发中...')">报告发放记录</a>
     </div>
 </body>
 </html>

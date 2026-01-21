@@ -122,7 +122,7 @@
         <!-- Row 3 -->
         <tr>
             <td class="label">岩土性状</td>
-            <td colspan="4"><input type="text" name="soilProperties" value="水泥土搅拌桩"></td>
+            <td colspan="4"><input type="text" name="soilProperties"></td>
             <td class="label">检测类别</td>
             <td colspan="4"><input type="text" name="testCategory"></td>
         </tr>
