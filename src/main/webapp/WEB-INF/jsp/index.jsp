@@ -48,6 +48,7 @@
         <a href="/light_dynamic_penetration_record" class="nav-button">轻型动力触探检测记录表</a>
         <a href="/nuclear_density_record" class="nav-button">原位密度检测记录表（核子法）</a>
         <a href="/density_test_report" class="nav-button">原位密度检测报告</a>
+        <a href="/density_test_result" class="nav-button">原位密度检测结果</a>
         <a href="/signature" class="nav-button" style="background-color: #28a745;">电子签名</a>
     </div>
 </body>
