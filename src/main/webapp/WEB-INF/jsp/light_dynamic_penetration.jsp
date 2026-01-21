@@ -99,7 +99,9 @@
 
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button onclick="window.print()" style="float: right;">打印此单</button>
+        <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
     </div>
 
     <h2>轻型动力触探检测报告</h2>
@@ -164,10 +166,10 @@
         </tr>
 
         <!-- Data Rows -->
-        <% 
+        <%
         // 左右两栏，每栏4个大测点块，每个测点块包含2个小行（深度记录）
         // 外层循环控制“大行”（测点），共4个（保持总行数8行不变：4*2=8）
-        for(int block=0; block<4; block++) { 
+        for(int block=0; block<4; block++) {
             // 内层循环控制“小行”（深度），共2个
             for(int sub=0; sub<2; sub++) {
                 // 计算全局行索引，用于唯一标识输入框名称
@@ -178,10 +180,10 @@
             <% if(sub == 0) { %>
                 <td rowspan="2"><textarea name="pos_L_<%=block%>" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
             <% } %>
-            
+
             <td><input type="text" name="depth_L_<%=globalRowIndex%>"></td>
             <td><input type="text" name="actual_L_<%=globalRowIndex%>"></td>
-            
+
             <% if(sub == 0) { %>
                 <td rowspan="2"><input type="text" name="avg_L_<%=block%>" style="height: 100%;"></td>
                 <td rowspan="2"><input type="text" name="capacity_L_<%=block%>" style="height: 100%;"></td>
@@ -191,18 +193,18 @@
             <% if(sub == 0) { %>
                 <td rowspan="2"><textarea name="pos_R_<%=block%>" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
             <% } %>
-            
+
             <td><input type="text" name="depth_R_<%=globalRowIndex%>"></td>
             <td><input type="text" name="actual_R_<%=globalRowIndex%>"></td>
-            
+
             <% if(sub == 0) { %>
                 <td rowspan="2"><input type="text" name="avg_R_<%=block%>" style="height: 100%;"></td>
                 <td rowspan="2"><input type="text" name="capacity_R_<%=block%>" style="height: 100%;"></td>
             <% } %>
         </tr>
-        <% 
+        <%
             }
-        } 
+        }
         %>
 
         <!-- Row: 检测依据 -->
@@ -245,9 +247,50 @@
 
     <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
+        <span><input type="text" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
         <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
 
+<script>
+        function generatePdf() {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/api/pdf/light_dynamic_penetration/generate';
+            form.target = '_blank';
+
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            inputs.forEach(input => {
+                const inputClone = document.createElement('input');
+                inputClone.type = 'hidden';
+                inputClone.name = input.name;
+                inputClone.value = input.value;
+                form.appendChild(inputClone);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function previewPdf() {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/api/pdf/light_dynamic_penetration/preview';
+            form.target = '_blank';
+
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            inputs.forEach(input => {
+                const inputClone = document.createElement('input');
+                inputClone.type = 'hidden';
+                inputClone.name = input.name;
+                inputClone.value = input.value;
+                form.appendChild(inputClone);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+    </script>
 </body>
 </html>

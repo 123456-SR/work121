@@ -97,7 +97,9 @@
 
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button onclick="window.print()" style="float: right;">打印此单</button>
+        <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
     </div>
 
     <h2>原位密度检测记录表（灌砂法）</h2>
@@ -257,5 +259,46 @@
         <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
 
+<script>
+        function generatePdf() {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/api/pdf/sand_replacement_record/generate';
+            form.target = '_blank';
+
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            inputs.forEach(input => {
+                const inputClone = document.createElement('input');
+                inputClone.type = 'hidden';
+                inputClone.name = input.name;
+                inputClone.value = input.value;
+                form.appendChild(inputClone);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function previewPdf() {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/api/pdf/sand_replacement_record/preview';
+            form.target = '_blank';
+
+            const inputs = document.querySelectorAll('input[type="text"], textarea');
+            inputs.forEach(input => {
+                const inputClone = document.createElement('input');
+                inputClone.type = 'hidden';
+                inputClone.name = input.name;
+                inputClone.value = input.value;
+                form.appendChild(inputClone);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+    </script>
 </body>
 </html>
