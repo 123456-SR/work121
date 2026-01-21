@@ -2413,6 +2413,38 @@ public class PdfGeneratorService {
             conclusionValueCell.setColspan(19);
             mainTable.addCell(conclusionValueCell);
 
+            PdfPCell diagramLabelCell = new PdfPCell(new Paragraph("测区示意图：", labelFont));
+            diagramLabelCell.setBorder(Rectangle.BOX);
+            diagramLabelCell.setPadding(5);
+            diagramLabelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            diagramLabelCell.setVerticalAlignment(Element.ALIGN_TOP);
+            diagramLabelCell.setColspan(2);
+            mainTable.addCell(diagramLabelCell);
+
+            PdfPCell diagramValueCell = new PdfPCell(new Paragraph(getParameter(request, "diagram"), valueFont));
+            diagramValueCell.setBorder(Rectangle.BOX);
+            diagramValueCell.setPadding(5);
+            diagramValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            diagramValueCell.setVerticalAlignment(Element.ALIGN_TOP);
+            diagramValueCell.setColspan(19);
+            mainTable.addCell(diagramValueCell);
+
+            PdfPCell remarksLabelCell = new PdfPCell(new Paragraph("备注", labelFont));
+            remarksLabelCell.setBorder(Rectangle.BOX);
+            remarksLabelCell.setPadding(5);
+            remarksLabelCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            remarksLabelCell.setVerticalAlignment(Element.ALIGN_TOP);
+            remarksLabelCell.setColspan(2);
+            mainTable.addCell(remarksLabelCell);
+
+            PdfPCell remarksValueCell = new PdfPCell(new Paragraph(getParameter(request, "remarks"), valueFont));
+            remarksValueCell.setBorder(Rectangle.BOX);
+            remarksValueCell.setPadding(5);
+            remarksValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            remarksValueCell.setVerticalAlignment(Element.ALIGN_TOP);
+            remarksValueCell.setColspan(19);
+            mainTable.addCell(remarksValueCell);
+
             document.add(mainTable);
 
             PdfPTable footerTable = new PdfPTable(3);
@@ -2561,14 +2593,14 @@ public class PdfGeneratorService {
 
             document.add(headerTable3);
 
-            PdfPTable mainTable = new PdfPTable(34);
+            PdfPTable mainTable = new PdfPTable(18);
             mainTable.setWidthPercentage(100);
             mainTable.setSpacingBefore(10);
             
-            float[] widths = new float[34];
+            float[] widths = new float[18];
             widths[0] = 2.5f;
             widths[1] = 0.5f;
-            for (int i = 2; i < 34; i++) {
+            for (int i = 2; i < 18; i++) {
                 widths[i] = 1f;
             }
             mainTable.setWidths(widths);
@@ -2587,7 +2619,7 @@ public class PdfGeneratorService {
                 locationValueCell.setPadding(5);
                 locationValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 locationValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                locationValueCell.setColspan(8);
+                locationValueCell.setColspan(4);
                 mainTable.addCell(locationValueCell);
             }
 
@@ -2611,7 +2643,7 @@ public class PdfGeneratorService {
                 sandMassValueCell1.setPadding(5);
                 sandMassValueCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
                 sandMassValueCell1.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sandMassValueCell1.setColspan(4);
+                sandMassValueCell1.setColspan(2);
                 mainTable.addCell(sandMassValueCell1);
             }
 
@@ -2635,7 +2667,7 @@ public class PdfGeneratorService {
                 sandMassValueCell2.setPadding(5);
                 sandMassValueCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
                 sandMassValueCell2.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sandMassValueCell2.setColspan(4);
+                sandMassValueCell2.setColspan(2);
                 mainTable.addCell(sandMassValueCell2);
             }
 
@@ -2659,7 +2691,7 @@ public class PdfGeneratorService {
                 sandMassValueCell3.setPadding(5);
                 sandMassValueCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
                 sandMassValueCell3.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sandMassValueCell3.setColspan(4);
+                sandMassValueCell3.setColspan(2);
                 mainTable.addCell(sandMassValueCell3);
             }
 
@@ -2683,7 +2715,7 @@ public class PdfGeneratorService {
                 sandMassValueCell4.setPadding(5);
                 sandMassValueCell4.setHorizontalAlignment(Element.ALIGN_CENTER);
                 sandMassValueCell4.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sandMassValueCell4.setColspan(4);
+                sandMassValueCell4.setColspan(2);
                 mainTable.addCell(sandMassValueCell4);
             }
 
@@ -2707,7 +2739,7 @@ public class PdfGeneratorService {
                 pitVolumeValueCell.setPadding(5);
                 pitVolumeValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 pitVolumeValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                pitVolumeValueCell.setColspan(4);
+                pitVolumeValueCell.setColspan(2);
                 mainTable.addCell(pitVolumeValueCell);
             }
 
@@ -2731,7 +2763,7 @@ public class PdfGeneratorService {
                 sampleMassValueCell.setPadding(5);
                 sampleMassValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 sampleMassValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sampleMassValueCell.setColspan(4);
+                sampleMassValueCell.setColspan(2);
                 mainTable.addCell(sampleMassValueCell);
             }
 
@@ -2755,7 +2787,7 @@ public class PdfGeneratorService {
                 wetDensityValueCell.setPadding(5);
                 wetDensityValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 wetDensityValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                wetDensityValueCell.setColspan(4);
+                wetDensityValueCell.setColspan(2);
                 mainTable.addCell(wetDensityValueCell);
             }
 
@@ -3011,14 +3043,14 @@ public class PdfGeneratorService {
 
             document.add(headerTable3);
 
-            PdfPTable mainTable = new PdfPTable(34);
+            PdfPTable mainTable = new PdfPTable(18);
             mainTable.setWidthPercentage(100);
             mainTable.setSpacingBefore(10);
             
-            float[] widths = new float[34];
+            float[] widths = new float[18];
             widths[0] = 2.5f;
             widths[1] = 0.5f;
-            for (int i = 2; i < 34; i++) {
+            for (int i = 2; i < 18; i++) {
                 widths[i] = 1f;
             }
             mainTable.setWidths(widths);
@@ -3037,7 +3069,7 @@ public class PdfGeneratorService {
                 locationValueCell.setPadding(5);
                 locationValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 locationValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                locationValueCell.setColspan(8);
+                locationValueCell.setColspan(4);
                 mainTable.addCell(locationValueCell);
             }
 
@@ -3061,7 +3093,7 @@ public class PdfGeneratorService {
                 waterVolumeValueCell1.setPadding(5);
                 waterVolumeValueCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
                 waterVolumeValueCell1.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                waterVolumeValueCell1.setColspan(4);
+                waterVolumeValueCell1.setColspan(2);
                 mainTable.addCell(waterVolumeValueCell1);
             }
 
@@ -3085,7 +3117,7 @@ public class PdfGeneratorService {
                 sampleMassValueCell.setPadding(5);
                 sampleMassValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 sampleMassValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sampleMassValueCell.setColspan(4);
+                sampleMassValueCell.setColspan(2);
                 mainTable.addCell(sampleMassValueCell);
             }
 
@@ -3109,7 +3141,7 @@ public class PdfGeneratorService {
                 wetDensityValueCell.setPadding(5);
                 wetDensityValueCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 wetDensityValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                wetDensityValueCell.setColspan(4);
+                wetDensityValueCell.setColspan(2);
                 mainTable.addCell(wetDensityValueCell);
             }
 
