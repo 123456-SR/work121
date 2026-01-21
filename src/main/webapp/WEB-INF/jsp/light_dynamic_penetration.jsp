@@ -245,7 +245,7 @@
 
     <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
         <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
 

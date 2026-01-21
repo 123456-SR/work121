@@ -30,4 +30,14 @@ public class PageController {
     public String lightDynamicPenetrationRecord() {
         return "light_dynamic_penetration_record";
     }
+
+    @GetMapping("/nuclear_density_record")
+    public String nuclearDensityRecord() {
+        return "nuclear_density_record";
+    }
+
+    @GetMapping("/density_test_report")
+    public String densityTestReport() {
+        return "density_test_report";
+    }
 }
