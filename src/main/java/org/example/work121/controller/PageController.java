@@ -20,4 +20,9 @@ public class PageController {
     public String lightDynamicPenetration() {
         return "light_dynamic_penetration";
     }
+
+    @GetMapping("/light_dynamic_penetration_record")
+    public String lightDynamicPenetrationRecord() {
+        return "light_dynamic_penetration_record";
+    }
 }

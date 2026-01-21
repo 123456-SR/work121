@@ -45,6 +45,7 @@
     <div class="button-container">
         <a href="/entrustment" class="nav-button">检测（前）委托单（代合同）</a>
         <a href="/light_dynamic_penetration" class="nav-button">轻型动力触探检测报告</a>
+        <a href="/light_dynamic_penetration_record" class="nav-button">轻型动力触探检测记录表</a>
         
         <!-- 占位按钮，展示系列表的概念 -->
         <a href="#" class="nav-button" style="background-color: #6c757d;" onclick="alert('功能开发中...')">样品登记表</a>
