@@ -65,4 +65,24 @@ public class PageController {
     public String reboundMethodRecord() {
         return "rebound_method_record";
     }
+
+    @GetMapping("/rebound_method_report")
+    public String reboundMethodReport() {
+        return "rebound_method_report";
+    }
+
+    @GetMapping("/beckman_beam_record")
+    public String beckmanBeamRecord() {
+        return "beckman_beam_record";
+    }
+
+    @GetMapping("/beckman_beam_report")
+    public String beckmanBeamReport() {
+        return "beckman_beam_report";
+    }
+
+    @GetMapping("/beckman_beam_result")
+    public String beckmanBeamResult() {
+        return "beckman_beam_result";
+    }
 }
