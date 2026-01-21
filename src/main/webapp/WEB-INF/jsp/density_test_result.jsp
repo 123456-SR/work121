@@ -108,15 +108,15 @@
         <!-- Header Rows -->
         <tr>
             <td class="label" style="width: 15%;">施工部位</td>
-            <td colspan="6" class="left-align"><input type="text" name="constructionPart"></td>
+            <td colspan="9" class="left-align"><input type="text" name="constructionPart"></td>
         </tr>
         <tr>
             <td class="label">最大干密度<br>(g/cm³)</td>
-            <td><input type="text" name="maxDryDensity"></td>
+            <td colspan="2"><input type="text" name="maxDryDensity"></td>
             <td class="label">最优含水率 %</td>
-            <td><input type="text" name="optimumMoisture"></td>
+            <td colspan="2"><input type="text" name="optimumMoisture"></td>
             <td class="label">最小干密度<br>(g/cm³)</td>
-            <td colspan="2"><input type="text" name="minDryDensity"></td>
+            <td colspan="3"><input type="text" name="minDryDensity"></td>
         </tr>
 
         <!-- Data Header -->
@@ -135,13 +135,18 @@
         for(int i=0; i<20; i++) { 
         %>
         <tr>
-            <td><input type="text" name="sampleId_<%=i%>"></td>
-            <td><input type="text" name="location_<%=i%>"></td>
-            <td><input type="text" name="date_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="sampleId_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="location_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="date_<%=i%>"></td>
             <td><input type="text" name="wetDensity_<%=i%>"></td>
             <td><input type="text" name="dryDensity_<%=i%>"></td>
             <td><input type="text" name="moisture_<%=i%>"></td>
-            <td><input type="text" name="compaction_<%=i%>"></td>
+            <td rowspan="2"><input type="text" name="compaction_<%=i%>"></td>
+        </tr>
+        <tr>
+            <td><input type="text" name="wetDensity2_<%=i%>"></td>
+            <td><input type="text" name="dryDensity2_<%=i%>"></td>
+            <td><input type="text" name="moisture2_<%=i%>"></td>
         </tr>
         <% 
         } 
