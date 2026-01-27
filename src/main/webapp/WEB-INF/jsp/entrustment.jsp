@@ -104,7 +104,8 @@
     <h2>检测 (验) 委托单 (代合同)</h2>
 
     <div class="header-info">
-        <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" id="unifiedNumber" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;">
+        <button type="button" onclick="queryEntrustment()" style="margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">查询</button></span>
         <span>样品编号：<input type="text" name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
@@ -193,7 +194,7 @@
         <!-- Row 8: 地址电话 -->
         <tr>
             <td class="label">委托单位地址<br>及电话(传真)：</td>
-            <td colspan="3"><input type="text" name="clientAddressPhone"></td>
+            <td colspan="3"><textarea name="clientAddressPhone" rows="2" style="width: 100%; border: none; border-bottom: 1px solid black; resize: none;"></textarea></td>
         </tr>
         <!-- Row 9: 报告发送 & 样品处置 -->
         <tr>
@@ -262,7 +263,7 @@
 
     <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
         <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
+        <span><input type="text" name="signDate" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
         <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
 
@@ -279,6 +280,69 @@
             form.action = '/api/pdf/preview';
             form.target = '_blank';
             form.submit();
+        }
+        
+        function queryEntrustment() {
+            var unifiedNumber = document.getElementById('unifiedNumber').value;
+            
+            if (!unifiedNumber) {
+                alert('请输入统一编号');
+                return;
+            }
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/jc-core-wt-info/by-wt-num?wtNum=' + encodeURIComponent(unifiedNumber), true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            
+                            if (response.success && response.data) {
+                                var data = response.data;
+                                
+                                document.querySelector('input[name="clientUnit"]').value = data.wtUnit || '';
+                                document.querySelector('input[name="clientDate"]').value = formatDate(data.wtDate, 'YYYY-MM') || '';
+                                document.querySelector('input[name="constructionUnit"]').value = data.sgUnit || '';
+                                document.querySelector('input[name="buildingUnit"]').value = data.jsUnit || '';
+                                document.querySelector('input[name="witnessUnit"]').value = data.jzUnit || '';
+                                document.querySelector('input[name="witness"]').value = data.jzMan || '';
+                                document.querySelector('input[name="projectName"]').value = data.gcName || '';
+                                document.querySelector('input[name="constructionPart"]').value = data.gcArea || '';
+                                var address = data.wtUnitAddress || '----';
+                                var phone = data.wtManTel || '----';
+                                document.querySelector('textarea[name="clientAddressPhone"]').value = address + '\n' + phone;
+                                document.querySelector('input[name="fee"]').value = data.realMoney || '';
+                                document.querySelector('input[name="remarks"]').value = data.beizhu || '';
+                                document.querySelector('input[name="signDate"]').value = formatDate(data.wtDate) || '';
+                                
+                                alert('查询成功，数据已自动填充');
+                            } else {
+                                alert('未找到对应的委托信息：' + (response.message || ''));
+                            }
+                        } catch (e) {
+                            alert('数据解析错误：' + e.message);
+                        }
+                    } else {
+                        alert('查询失败，HTTP状态：' + xhr.status);
+                    }
+                }
+            };
+            xhr.send();
+        }
+        
+        function formatDate(dateString, format) {
+            if (!dateString) return '';
+            
+            var date = new Date(dateString);
+            var year = date.getFullYear();
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            
+            if (format === 'YYYY-MM') {
+                return year + '-' + month;
+            }
+            return year + '-' + month + '-' + day;
         }
     </script>
 

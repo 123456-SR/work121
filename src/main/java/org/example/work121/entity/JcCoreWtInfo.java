@@ -59,6 +59,7 @@ public class JcCoreWtInfo {
     private String jzUnit;
     private String jzUnitId;
     private String jzManId;
+    private String jzMan;
     private String jzManTel;
     private String olWtNum;
     private String stationId;
@@ -511,6 +512,14 @@ public class JcCoreWtInfo {
 
     public void setJzManId(String jzManId) {
         this.jzManId = jzManId;
+    }
+
+    public String getJzMan() {
+        return jzMan;
+    }
+
+    public void setJzMan(String jzMan) {
+        this.jzMan = jzMan;
     }
 
     public String getJzManTel() {
