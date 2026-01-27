@@ -86,15 +86,19 @@
     </style>
 </head>
 <body>
-    <div class="no-print" style="text-align: center;">
-        <a href="/" class="nav-button">返回主页</a>
+    <div class="no-print" style="margin-bottom: 20px;">
+        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h1>路基路面回弹弯沉（回弹模量）检测报告</h1>
 
     <div class="header-info">
-        <div>委托单位：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
-        <div>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></div>
+        <div>委托单位：<input type="text" name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
+        <div>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
     </div>
 
     <!-- Table 1: Header Info (Rows 1-6) -->
@@ -247,25 +251,42 @@
 
     <div class="footer-section">
         <div class="footer-line">
-            <div>批准：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></div>
-            <div>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></div>
-            <div>检测：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></div>
+            <div>批准：<input type="text" name="approver" style="width: 100px; border-bottom: 1px solid black;"></div>
+            <div>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></div>
+            <div>检测：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></div>
         </div>
 
         <div class="company-info">
             <div>声明：</div>
             <div>1.对本检测报告的复印件未加盖公司检验检测专用章无效。2.对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。</div>
-            <div style="margin-top: 10px;">公司名称：<input type="text" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></div>
+            <div style="margin-top: 10px;">公司名称：<input type="text" name="companyName" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></div>
             <div class="footer-line" style="margin-top: 5px;">
-                <div>公司地址：<input type="text" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></div>
-                <div>电话：<input type="text" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></div>
+                <div>公司地址：<input type="text" name="companyAddress" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></div>
+                <div>电话：<input type="text" name="companyPhone" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></div>
             </div>
         </div>
 
         <div class="footer-line" style="font-size: 12px; margin-top: 10px;">
-            <div>版次：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></div>
-            <div>第 页，共 页</div>
+            <div>版次：<input type="text" name="version" style="width: 100px; border-bottom: 1px solid black;"></div>
+            <div>第 <input type="text" name="page" style="width: 30px; border-bottom: 1px solid black;"> 页，共 <input type="text" name="totalPages" style="width: 30px; border-bottom: 1px solid black;"> 页</div>
         </div>
     </div>
+    </form>
+
+    <script>
+        function generatePdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/beckman_beam_report/generate';
+            form.target = '_blank';
+            form.submit();
+        }
+
+        function previewPdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/beckman_beam_report/preview';
+            form.target = '_blank';
+            form.submit();
+        }
+    </script>
 </body>
 </html>

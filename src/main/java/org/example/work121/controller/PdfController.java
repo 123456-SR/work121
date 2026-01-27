@@ -287,4 +287,112 @@ public class PdfController {
                 .headers(headers)
                 .body(pdfBytes);
     }
+
+    @PostMapping("/beckman_beam_result/generate")
+    public ResponseEntity<byte[]> generateBeckmanBeamResultPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamResultPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "beckman_beam_result.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/beckman_beam_result/preview")
+    public ResponseEntity<byte[]> previewBeckmanBeamResultPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamResultPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/beckman_beam_record/generate")
+    public ResponseEntity<byte[]> generateBeckmanBeamRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "beckman_beam_record.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/beckman_beam_record/preview")
+    public ResponseEntity<byte[]> previewBeckmanBeamRecordPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamRecordPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/beckman_beam_report/generate")
+    public ResponseEntity<byte[]> generateBeckmanBeamReportPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamReportPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "beckman_beam_report.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/beckman_beam_report/preview")
+    public ResponseEntity<byte[]> previewBeckmanBeamReportPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamReportPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/rebound_method_report/generate")
+    public ResponseEntity<byte[]> generateReboundMethodReportPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodReportPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "rebound_method_report.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/rebound_method_report/preview")
+    public ResponseEntity<byte[]> previewReboundMethodReportPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodReportPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
 }

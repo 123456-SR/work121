@@ -99,17 +99,20 @@
 
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button onclick="window.print()" style="float: right;">打印此单</button>
+        <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
     </div>
 
     <h2>回弹法检测混凝土抗压强度报告</h2>
 
+    <form id="pdfForm" method="post">
     <div class="header-top">
-        <span>委托单位：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
     <div class="header-top">
-        <span>样品编号：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>样品编号：<input type="text" name="sampleNumber" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
     </div>
 
     <!-- Table with 12-column grid -->
@@ -236,9 +239,9 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检验：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>批准：<input type="text" name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>检验：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
     <div class="disclaimer">
@@ -247,17 +250,34 @@
     </div>
 
     <div class="company-info">
-        <div>公司名称：<input type="text" style="width: 70%; border-bottom: 1px solid black; text-align: left;"></div>
+        <div>公司名称：<input type="text" name="companyName" style="width: 70%; border-bottom: 1px solid black; text-align: left;"></div>
         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-            <span>公司地址：<input type="text" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></span>
-            <span>电话：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+            <span>公司地址：<input type="text" name="companyAddress" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></span>
+            <span>电话：<input type="text" name="companyPhone" style="width: 150px; border-bottom: 1px solid black;"></span>
         </div>
     </div>
 
     <div class="page-footer">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
+
+    <script>
+        function generatePdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/rebound_method_report/generate';
+            form.target = '_blank';
+            form.submit();
+        }
+
+        function previewPdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/rebound_method_report/preview';
+            form.target = '_blank';
+            form.submit();
+        }
+    </script>
 
 </body>
 </html>

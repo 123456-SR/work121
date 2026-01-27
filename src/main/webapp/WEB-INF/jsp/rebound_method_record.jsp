@@ -91,18 +91,19 @@
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
         <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
-        <button onclick="generatePdf()" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h2>回弹法检测混凝土抗压强度记录表</h2>
 
     <div class="header-top">
-        <span>委托单位：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
     <div class="header-top">
-        <span>样品编号：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>样品编号：<input type="text" name="sampleNo" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
     </div>
 
     <table>
@@ -198,6 +199,7 @@
             <td colspan="11" class="left-align"><input type="text" name="standard" style="text-align: left;"></td>
             <td colspan="4" class="label">率定值</td>
             <td colspan="4" class="left-align">
+
                 检测前：<input type="text" name="calibrationBefore" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;"><br>
                 检测后：<input type="text" name="calibrationAfter" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;">
             </td>
@@ -223,54 +225,31 @@
     </table>
 
     <div class="footer-info">
-        <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检验：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>批准：<input type="text" name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>检测：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
     <div class="page-footer">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span><input type="text" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
 
 <script>
         function generatePdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/rebound_method_record/generate';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
 
         function previewPdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/rebound_method_record/preview';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
     </script>
 </body>

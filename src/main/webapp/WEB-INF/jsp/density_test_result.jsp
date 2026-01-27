@@ -95,12 +95,13 @@
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
         <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
-        <button onclick="generatePdf()" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <div class="header-info" style="justify-content: space-between;">
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
         <span></span> <!-- Placeholder for layout balance if needed -->
     </div>
 
@@ -124,12 +125,12 @@
         <!-- Data Header -->
         <tr>
             <td class="label" style="width: 10%;">样品编号</td>
-            <td class="label" style="width: 25%;">检测部位<br>(桩号、高程)</td>
-            <td class="label" style="width: 15%;">检测日期</td>
-            <td class="label" style="width: 12%;">湿密度<br>(g/cm³)</td>
-            <td class="label" style="width: 12%;">干密度<br>(g/cm³)</td>
-            <td class="label" style="width: 12%;">含水率<br>%</td>
-            <td class="label" style="width: 14%;">压实度%</td>
+            <td class="label" style="width: 25%;" colspan="2">检测部位<br>(桩号、高程)</td>
+            <td class="label" style="width: 15%;" colspan="2">检测日期</td>
+            <td class="label" style="width: 12.5%;">湿密度<br>(g/cm³)</td>
+            <td class="label" style="width: 12.5%;">干密度<br>(g/cm³)</td>
+            <td class="label" style="width: 12.5%;">含水率<br>%</td>
+            <td class="label" style="width: 12.5%;" colspan="2">压实度%</td>
         </tr>
 
         <!-- Data Rows (20 rows to fill the page) -->
@@ -138,12 +139,12 @@
         %>
         <tr>
             <td rowspan="2"><input type="text" name="sampleId_<%=i%>"></td>
-            <td rowspan="2"><input type="text" name="location_<%=i%>"></td>
-            <td rowspan="2"><input type="text" name="date_<%=i%>"></td>
+            <td rowspan="2" colspan="2"><input type="text" name="location_<%=i%>"></td>
+            <td rowspan="2" colspan="2"><input type="text" name="date_<%=i%>"></td>
             <td><input type="text" name="wetDensity_<%=i%>"></td>
             <td><input type="text" name="dryDensity_<%=i%>"></td>
             <td><input type="text" name="moisture_<%=i%>"></td>
-            <td rowspan="2"><input type="text" name="compaction_<%=i%>"></td>
+            <td rowspan="2" colspan="2"><input type="text" name="compaction_<%=i%>"></td>
         </tr>
         <tr>
             <td><input type="text" name="wetDensity2_<%=i%>"></td>
@@ -156,50 +157,25 @@
     </table>
 
     <div class="page-footer">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span><input type="text" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
 
 <script>
         function generatePdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/density_test_result/generate';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
 
         function previewPdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/density_test_result/preview';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
     </script>
 </body>

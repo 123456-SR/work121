@@ -104,6 +104,7 @@
         <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h2>轻型动力触探检测报告</h2>
 
     <div class="header-info">
@@ -250,46 +251,21 @@
         <span><input type="text" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
         <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
 
 <script>
         function generatePdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/light_dynamic_penetration/generate';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
 
         function previewPdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/light_dynamic_penetration/preview';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
     </script>
 </body>

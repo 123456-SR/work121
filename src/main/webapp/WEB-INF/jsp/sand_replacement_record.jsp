@@ -102,24 +102,25 @@
         <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h2>原位密度检测记录表（灌砂法）</h2>
 
     <div class="header-info">
-        <span>单元工程名称：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>试验日期：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>单元工程名称：<input type="text" name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>试验日期：<input type="text" name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
      <div class="header-info">
-        <span>依据标准：<input type="text" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>最大干密度 (g/cm³)：<input type="text" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>最优含水率 (%)：<input type="text" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>最小干密度 (g/cm³)：<input type="text" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>依据标准：<input type="text" name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>最大干密度 (g/cm³)：<input type="text" name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>最优含水率 (%)：<input type="text" name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>最小干密度 (g/cm³)：<input type="text" name="minDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
     </div>
     <div class="header-info">
-        <span>量砂密度：<input type="text" style="width: 80px; border-bottom: 1px solid black;"> g/cm³</span>
-        <span>仪器设备：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>检测类别：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>设计压实度：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>量砂密度：<input type="text" name="sandDensity" style="width: 80px; border-bottom: 1px solid black;"> g/cm³</span>
+        <span>仪器设备：<input type="text" name="equipment" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>检测类别：<input type="text" name="testCategory" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>设计压实度：<input type="text" name="designCompaction" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
 
@@ -249,55 +250,31 @@
     </table>
 
     <div class="footer-info">
-        <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>试验：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>批准：<input type="text" name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>试验：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
     <div class="page-footer">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span><input type="text" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
 
 <script>
         function generatePdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/sand_replacement_record/generate';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
 
         function previewPdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/sand_replacement_record/preview';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
     </script>
 </body>

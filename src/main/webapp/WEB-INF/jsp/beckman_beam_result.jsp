@@ -6,22 +6,10 @@
     <style>
         body {
             font-family: "SimSun", "Songti SC", serif;
-            margin: 0;
+            width: 210mm;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-        }
-        .page-container {
-            width: 210mm; /* A4 width */
-            min-height: 297mm; /* A4 height */
             background-color: white;
-            padding: 20mm;
-            box-sizing: border-box;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            position: relative;
-            display: flex;
-            flex-direction: column;
         }
         h2 {
             text-align: center;
@@ -61,36 +49,40 @@
         .footer-info {
             display: flex;
             justify-content: space-between;
-            margin-top: auto;
+            margin-top: 20px;
             font-size: 14px;
             width: 100%;
         }
         
         @media print {
             body {
-                background-color: white;
-                padding: 0;
-            }
-            .page-container {
-                box-shadow: none;
-                margin: 0;
                 width: 100%;
-                height: auto;
-                padding: 0; /* Let print margins handle it or keep minimal */
+                margin: 0;
+                padding: 0;
             }
             .no-print {
                 display: none;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 1cm;
             }
         }
     </style>
 </head>
 <body>
-    <div class="page-container">
+    <div class="no-print" style="margin-bottom: 20px;">
+        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
+    </div>
+    <form id="pdfForm" method="post">
         <h2>路基路面回弹弯沉(回弹模量) 检测结果</h2>
         
         <div class="header-info">
-            <span>委托单位：<input type="text" style="width: 200px; text-align: left; border-bottom: 1px solid #ccc;" placeholder=""></span>
-            <span>统一编号：<input type="text" style="width: 150px; text-align: left; border-bottom: 1px solid #ccc;" placeholder=""></span>
+            <span>委托单位：<input type="text" name="entrustingUnit" style="width: 200px; text-align: left; border-bottom: 1px solid #ccc;" placeholder=""></span>
+            <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; text-align: left; border-bottom: 1px solid #ccc;" placeholder=""></span>
         </div>
 
         <table>
@@ -127,9 +119,26 @@
         </table>
 
         <div class="footer-info">
-            <span>版次：<input type="text" style="width: 100px; text-align: left;" value=""></span>
-            <span>第 <input type="text" style="width: 30px;"> 页，共 <input type="text" style="width: 30px;"> 页</span>
+            <span>版次：<input type="text" name="version" style="width: 100px; text-align: left;" value=""></span>
+            <span>日期：<input type="text" name="reportDate" style="width: 100px; text-align: left;"></span>
+            <span>第 <input type="text" name="page" style="width: 30px;"> 页，共 <input type="text" name="totalPages" style="width: 30px;"> 页</span>
         </div>
-    </div>
+    </form>
+
+    <script>
+        function generatePdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/beckman_beam_result/generate';
+            form.target = '_blank'; // Open in new tab/download
+            form.submit();
+        }
+
+        function previewPdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/beckman_beam_result/preview';
+            form.target = '_blank';
+            form.submit();
+        }
+    </script>
 </body>
 </html>

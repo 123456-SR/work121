@@ -269,46 +269,16 @@
     <script>
         function generatePdf() {
             var form = document.getElementById('entrustmentForm');
-            var formData = new FormData(form);
-            
-            fetch('/api/pdf/generate', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                var url = window.URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'entrustment_' + new Date().getTime() + '.pdf';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(error => {
-                console.error('Error generating PDF:', error);
-                alert('生成PDF失败，请重试');
-            });
+            form.action = '/api/pdf/generate';
+            form.target = '_blank';
+            form.submit();
         }
         
         function previewPdf() {
             var form = document.getElementById('entrustmentForm');
-            var formData = new FormData(form);
-            
-            fetch('/api/pdf/generate', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                var url = window.URL.createObjectURL(blob);
-                window.open(url, '_blank');
-            })
-            .catch(error => {
-                console.error('Error previewing PDF:', error);
-                alert('预览PDF失败，请重试');
-            });
+            form.action = '/api/pdf/preview';
+            form.target = '_blank';
+            form.submit();
         }
     </script>
 

@@ -94,22 +94,23 @@
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
         <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
-        <button onclick="generatePdf()" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h2>原位密度检测记录表（环刀法）</h2>
 
     <div class="header-info">
-        <span>施工部位：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>最大干密度 (g/cm³)：<input type="text" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>最优含水率 (%)：<input type="text" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>检测类别：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>施工部位：<input type="text" name="constructionLocation" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>最大干密度 (g/cm³)：<input type="text" name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>最优含水率 (%)：<input type="text" name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>检测类别：<input type="text" name="testType" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
     <div class="header-info">
-        <span>依据标准：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>设计压实度：<input type="text" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>检测日期：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>依据标准：<input type="text" name="standard" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>设计压实度：<input type="text" name="designCompaction" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>检测日期：<input type="text" name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
     <table>

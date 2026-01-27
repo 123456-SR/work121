@@ -114,6 +114,7 @@
         <button onclick="previewPdf()" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h2>原位密度检测报告</h2>
 
     <div class="header-info">
@@ -173,13 +174,12 @@
         <!-- Data Header -->
         <tr>
             <td class="label" style="width: 10%;">样品编号</td>
-            <td class="label" style="width: 20%;">检测部位<br>(桩号、高程)</td>
-            <td class="label" style="width: 12%;">检测日期</td>
-            <td class="label" style="width: 12%;">湿密度<br>(g/cm³)</td>
-            <td class="label" style="width: 12%;">干密度<br>(g/cm³)</td>
-            <td class="label" style="width: 12%;">含水率<br>%</td>
-            <td class="label" style="width: 12%;">压实度%</td>
-            <td class="label" style="width: 10%;"> </td> <!-- Empty header for alignment if needed, or maybe merge -->
+            <td class="label" style="width: 20%;" colspan="3">检测部位<br>(桩号、高程)</td>
+            <td class="label" style="width: 14%;" colspan="2">检测日期</td>
+            <td class="label" style="width: 14%;">湿密度<br>(g/cm³)</td>
+            <td class="label" style="width: 14%;">干密度<br>(g/cm³)</td>
+            <td class="label" style="width: 14%;">含水率<br>%</td>
+            <td class="label" style="width: 14%;" colspan="2">压实度%</td>
         </tr>
 
         <!-- Data Rows (8 rows as per visual estimation) -->
@@ -188,13 +188,12 @@
         %>
         <tr>
             <td rowspan="2"><input type="text" name="sampleId_<%=i%>"></td>
-            <td rowspan="2"><input type="text" name="location_<%=i%>"></td>
-            <td rowspan="2"><input type="text" name="date_<%=i%>"></td>
+            <td rowspan="2" colspan="3"><input type="text" name="location_<%=i%>"></td>
+            <td rowspan="2" colspan="2"><input type="text" name="date_<%=i%>"></td>
             <td><input type="text" name="wetDensity_<%=i%>"></td>
             <td><input type="text" name="dryDensity_<%=i%>"></td>
             <td><input type="text" name="moisture_<%=i%>"></td>
-            <td rowspan="2"><input type="text" name="compaction_<%=i%>"></td>
-            <td rowspan="2"></td> <!-- Empty cell to match column count of 11 -->
+            <td rowspan="2" colspan="2"><input type="text" name="compaction_<%=i%>"></td>
         </tr>
         <tr>
             <td><input type="text" name="wetDensity2_<%=i%>"></td>
@@ -236,50 +235,25 @@
     </div>
 
     <div class="page-footer">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD" value="2018-12-15"></span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span><input type="text" name="footerDate" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD" value="2018-12-15"></span>
+        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
 
 <script>
         function generatePdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/density_test_report/generate';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
 
         function previewPdf() {
-            const form = document.createElement('form');
-            form.method = 'post';
+            var form = document.getElementById('pdfForm');
             form.action = '/api/pdf/density_test_report/preview';
             form.target = '_blank';
-
-            const inputs = document.querySelectorAll('input[type="text"], textarea');
-            inputs.forEach(input => {
-                const inputClone = document.createElement('input');
-                inputClone.type = 'hidden';
-                inputClone.name = input.name;
-                inputClone.value = input.value;
-                form.appendChild(inputClone);
-            });
-
-            document.body.appendChild(form);
             form.submit();
-            document.body.removeChild(form);
         }
     </script>
 </body>

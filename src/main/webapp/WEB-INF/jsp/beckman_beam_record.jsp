@@ -74,15 +74,19 @@
     </style>
 </head>
 <body>
-    <div class="no-print" style="text-align: center;">
-        <a href="/" class="nav-button">返回主页</a>
+    <div class="no-print" style="margin-bottom: 20px;">
+        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
+        <button onclick="generatePdf()" style="float: right; margin-left: 10px;">下载PDF</button>
+        <button onclick="previewPdf()" style="float: right; margin-left: 10px;">预览PDF</button>
     </div>
 
+    <form id="pdfForm" method="post">
     <h1>路基路面回弹弯沉试验检测记录表（贝克曼梁法）</h1>
 
     <div class="header-info">
-        <div>委托单位：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
-        <div>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></div>
+        <div>委托单位：<input type="text" name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
+        <div>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
     </div>
 
     <!-- Top Info Table -->
@@ -290,16 +294,32 @@
     </table>
 
     <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-        <div>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></div>
-        <div>检测：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></div>
+        <div>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></div>
+        <div>检测：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></div>
     </div>
 
-    <div style="margin-top: 10px; display: flex; justify-content: space-between; font-size: 12px;">
-        <div>版次：</div>
-        <div>第 页，共 页</div>
+    <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
+        <span><input type="text" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
     </div>
+    </form>
 
     <script>
+        function generatePdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/beckman_beam_record/generate';
+            form.target = '_blank';
+            form.submit();
+        }
+
+        function previewPdf() {
+            var form = document.getElementById('pdfForm');
+            form.action = '/api/pdf/beckman_beam_record/preview';
+            form.target = '_blank';
+            form.submit();
+        }
+
         // Set current date for date inputs
         document.addEventListener('DOMContentLoaded', function() {
             const dateInputs = document.querySelectorAll('.date-input');
