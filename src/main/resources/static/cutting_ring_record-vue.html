@@ -19,7 +19,7 @@
         input[type="text"]:focus, textarea:focus { background-color: #f0f8ff; }
         textarea { resize: none; overflow: hidden; text-align: left; }
         .footer-info { display: flex; justify-content: space-between; margin-top: 30px; margin-bottom: 20px; font-size: 16px; font-weight: bold; padding: 0 50px; }
-        .page-footer { margin-top: 10px; font-size: 14px; margin-bottom: 20px; }
+        .page-footer { margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 50px; font-size: 14px; }
         @media print { body { width: 100%; margin: 0; padding: 0; } input[type="text"], textarea { background-color: transparent !important; } .no-print { display: none; } }
     </style>
 </head>
@@ -86,7 +86,6 @@
             </div>
 
             <div class="page-footer">
-                <span>版次：<input type="text" v-model="formData.version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
                 <span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
                 <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
             </div>

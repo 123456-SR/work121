@@ -14,7 +14,7 @@ table { width: 100%; border-collapse: collapse; border: 1px solid black; table-l
 td, th { border: 1px solid black; padding: 5px; text-align: center; font-size: 14px; vertical-align: middle; word-wrap: break-word; }
 input[type="text"] { width: 95%; border: none; outline: none; text-align: center; font-family: inherit; font-size: inherit; background: transparent; }
 .label { text-align: center; }
-.footer-line { display: flex; justify-content: space-between; margin-bottom: 10px; margin-top: 20px; }
+.footer-line { display: flex; justify-content: center; align-items: center; gap: 50px; margin-top: 10px; font-size: 14px; }
 .no-print { margin-bottom: 20px; }
 .no-print a { text-decoration: none; color: blue; }
 @media print { .no-print { display: none; } }
@@ -51,7 +51,6 @@ input[type="text"] { width: 95%; border: none; outline: none; text-align: center
 </table>
 
 <div class="footer-line">
-<span>版次：<input type="text" v-model="formData.version" style="width: 40px; border-bottom: 1px solid black; text-align: center;"></span>
 <span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
 <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>

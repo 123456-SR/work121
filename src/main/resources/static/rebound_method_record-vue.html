@@ -87,6 +87,10 @@
         }
         .page-footer {
             margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
             font-size: 14px;
             margin-bottom: 20px;
         }
@@ -216,7 +220,6 @@
             </div>
 
             <div class="page-footer">
-                <span>版次：<input type="text" v-model="formData.version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
                 <span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
                 <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
             </div>
