@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电子签名</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <style>
+        body { font-family: 'SimSun', 'Songti SC', serif; width: 100%; max-width: 210mm; margin: 0 auto; padding: 20px; min-height: 100vh; box-sizing: border-box; }
+#app { width: 100%; max-width: 210mm; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 30px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .canvas-container { border: 2px solid #007bff; border-radius: 8px; margin-bottom: 20px; background: white; display: inline-block; }
+        #signatureCanvas { border: 1px solid #ddd; border-radius: 5px; cursor: crosshair; }
+        .button-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn { padding: 12px 24px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0056b3; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-success:hover { background-color: #218838; }
+        .no-print { margin-bottom: 20px; }
+        .no-print a { text-decoration: none; color: blue; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="no-print">
+            <a href="index.html" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        </div>
+
+        <div class="container">
+            <h1>电子签名</h1>
+            
+            <div class="canvas-container">
+                <canvas id="signatureCanvas" width="800" height="300"></canvas>
+            </div>
+
+            <div class="button-group">
+                <button @click="clearCanvas" class="btn btn-danger">清除签名</button>
+                <button @click="saveSignature" class="btn btn-success">保存签名</button>
+                <button @click="printDocument" class="btn btn-primary">打印签名</button>
+            </div>
+
+            <div v-if="signatureData" style="margin-top: 20px;">
+                <p>签名已保存，可随时打印或重新签名</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                signatureData: null,
+                canvas: null,
+                ctx: null,
+                isDrawing: false
+            },
+            mounted() {
+                this.initCanvas();
+            },
+            methods: {
+                initCanvas() {
+                    this.canvas = document.getElementById('signatureCanvas');
+                    this.ctx = this.canvas.getContext('2d');
+                    
+                    this.ctx.strokeStyle = '#000000';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+                    
+                    this.canvas.addEventListener('mousedown', this.startDrawing);
+                    this.canvas.addEventListener('mousemove', this.draw);
+                    this.canvas.addEventListener('mouseup', this.stopDrawing);
+                    this.canvas.addEventListener('mouseout', this.stopDrawing);
+                    
+                    this.canvas.addEventListener('touchstart', this.handleTouch);
+                    this.canvas.addEventListener('touchmove', this.handleTouch);
+                },
+                startDrawing(e) {
+                    this.isDrawing = true;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y);
+                },
+                draw(e) {
+                    if (!this.isDrawing) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    this.ctx.lineTo(x, y);
+                    this.ctx.stroke();
+                },
+                stopDrawing() {
+                    this.isDrawing = false;
+                },
+                handleTouch(e) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    });
+                    this.canvas.dispatchEvent(mouseEvent);
+                },
+                clearCanvas() {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.signatureData = null;
+                },
+                saveSignature() {
+                    this.signatureData = this.canvas.toDataURL('image/png');
+                    alert('签名已保存！');
+                },
+                printDocument() {
+                    window.print();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
