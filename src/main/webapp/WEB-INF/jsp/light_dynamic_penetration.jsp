@@ -233,24 +233,26 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检验：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>批准：<input type="text" name="approve" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>审核：<input type="text" name="review" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>检验：<input type="text" name="inspect" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
-    <div class="statement">
+    <div class="statement" style="font-size: 12px; margin-top: 10px;">
         声明：<br>
         1. 对本检测报告的复印件未加盖公司检验检测专用章无效。<br>
-        2. 对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。<br>
-        公司名称：河北金涛建设工程质量检测有限公司。<br>
-        公司地址：石家庄高新区方亿科技工业园A区第2号楼。&nbsp;&nbsp;&nbsp;&nbsp;电话：0311—86107634&nbsp;&nbsp;0311—67300616
+        2. 对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。
     </div>
 
-    <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+    <div class="company-info" style="display: block; margin-top: 5px; font-size: 14px; font-weight: bold;">
+        <div>公司名称：<input type="text" name="companyName" style="width: 70%; border: none; text-align: left;" value="河北金涛建设工程质量检测有限公司"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+            <span>公司地址：<input type="text" name="companyAddress" style="width: 300px; border: none; text-align: left;" value="石家庄高新区方亿科技工业园A区第2号楼。"></span>
+            <span>电话：<input type="text" name="companyPhone" style="width: 200px; border: none;" value="0311—86107634  0311—67300616"></span>
+        </div>
     </div>
+
+
     </form>
 
 <script>

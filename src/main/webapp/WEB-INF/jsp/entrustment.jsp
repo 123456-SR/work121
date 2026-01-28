@@ -225,9 +225,21 @@
             <td class="label">检测报告<br>交付日期</td>
             <td>
                 <div class="checkbox-group">
-                    <label><input type="checkbox">可以为:</label><br>
-                    <label><input type="checkbox">严格限定为:</label><br>
-                    <label><input type="checkbox">不要求:</label>
+                    <div style="margin-bottom: 5px;">
+                        <label><input type="radio" name="deliveryMode" value="1">可以为:</label>
+                        <input type="text" name="deliveryDate1_y" style="width: 40px; border-bottom: 1px solid black;">年
+                        <input type="text" name="deliveryDate1_m" style="width: 25px; border-bottom: 1px solid black;">月
+                        <input type="text" name="deliveryDate1_d" style="width: 25px; border-bottom: 1px solid black;">日
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                        <label><input type="radio" name="deliveryMode" value="2">严格限定为:</label>
+                        <input type="text" name="deliveryDate2_y" style="width: 40px; border-bottom: 1px solid black;">年
+                        <input type="text" name="deliveryDate2_m" style="width: 25px; border-bottom: 1px solid black;">月
+                        <input type="text" name="deliveryDate2_d" style="width: 25px; border-bottom: 1px solid black;">日
+                    </div>
+                    <div>
+                        <label><input type="radio" name="deliveryMode" value="3" checked>不要求</label>
+                    </div>
                 </div>
             </td>
             <td class="label">应缴检测(验)费(元)</td>
@@ -260,11 +272,7 @@
 
     </form>
 
-    <div class="page-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <span>版次：<input type="text" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
-        <span>第 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
-    </div>
+
 
     <script>
         function generatePdf() {

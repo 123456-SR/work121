@@ -72,6 +72,33 @@ public class PdfController {
                 .body(pdfBytes);
     }
 
+    @PostMapping("/light_dynamic_penetration_result/generate")
+    public ResponseEntity<byte[]> generateLightDynamicPenetrationResultPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationResultPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "light_dynamic_penetration_result.pdf");
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @PostMapping("/light_dynamic_penetration_result/preview")
+    public ResponseEntity<byte[]> previewLightDynamicPenetrationResultPdf(HttpServletRequest request) {
+        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationResultPdf(request);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentLength(pdfBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
     @PostMapping("/light_dynamic_penetration_record/generate")
     public ResponseEntity<byte[]> generateLightDynamicPenetrationRecordPdf(HttpServletRequest request) {
         byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationRecordPdf(request);

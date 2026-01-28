@@ -118,8 +118,8 @@
     <h2>原位密度检测报告</h2>
 
     <div class="header-info">
-        <span>委托单位：<input type="text" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" name="client" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
     <table>
@@ -216,9 +216,9 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检测：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>批准：<input type="text" name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>检测：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
     <div class="statement">
@@ -226,19 +226,15 @@
         1. 对本检测报告的复印件未加盖公司检验检测专用章无效。 2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。
     </div>
 
-    <div class="company-info">
-        <span>公司名称：<input type="text" style="width: 200px; border: none;"></span>
-        <span>电话：<input type="text" style="width: 150px; border: none;"></span>
-    </div>
-     <div class="company-info" style="border-bottom: none; margin-top:0;">
-        <span>公司地址：<input type="text" style="width: 400px; border: none;"></span>
+    <div class="company-info" style="display: block;">
+        <div>公司名称：<input type="text" name="companyName" style="width: 70%; border: none; text-align: left;" value="河北金涛建设工程质量检测有限公司"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+            <span>公司地址：<input type="text" name="companyAddress" style="width: 300px; border: none; text-align: left;" value="石家庄高新区方亿科技工业园A区第2号楼。"></span>
+            <span>电话：<input type="text" name="companyPhone" style="width: 200px; border: none;" value="0311—86107634  0311—67300616"></span>
+        </div>
     </div>
 
-    <div class="page-footer">
-        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span><input type="text" name="footerDate" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD" value="2018-12-15"></span>
-        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
-    </div>
+
     </form>
 
 <script>

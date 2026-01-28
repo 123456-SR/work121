@@ -83,7 +83,6 @@
     <div id="preliminary" class="section active">
         <div class="button-container">
             <a href="/entrustment" class="nav-button">检测（前）委托单（带合同）</a>
-            <a href="/light_dynamic_penetration" class="nav-button">轻型动力触探检测报告</a>
             <a href="/light_dynamic_penetration_record" class="nav-button">轻型动力触探检测记录表</a>
             <a href="/nuclear_density_record" class="nav-button">原位密度检测记录表（核子法）</a>
             <a href="/sand_replacement_record" class="nav-button">原位密度检测记录表（灌砂法）</a>
@@ -99,6 +98,8 @@
         <div class="button-container">
             <a href="/density_test_report" class="nav-button">原位密度检测报告</a>
             <a href="/density_test_result" class="nav-button">原位密度检测结果</a>
+            <a href="/light_dynamic_penetration" class="nav-button">轻型动力触探检测报告</a>
+            <a href="/light_dynamic_penetration_result" class="nav-button">轻型动力触探检测结果</a>
             <a href="/rebound_method_report" class="nav-button">回弹法检测混凝土抗压强度报告</a>
             <a href="/beckman_beam_report" class="nav-button">路基路面回弹弯沉（回弹模量）检测报告</a>
             <a href="/beckman_beam_result" class="nav-button">路基路面回弹弯沉（回弹模量）检测结果</a>

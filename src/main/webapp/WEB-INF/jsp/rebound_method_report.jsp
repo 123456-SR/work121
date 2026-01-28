@@ -250,17 +250,14 @@
     </div>
 
     <div class="company-info">
-        <div>公司名称：<input type="text" name="companyName" style="width: 70%; border-bottom: 1px solid black; text-align: left;"></div>
+        <div>公司名称：<input type="text" name="companyName" style="width: 70%; border-bottom: 1px solid black; text-align: left;" value="河北金涛建设工程质量检测有限公司"></div>
         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-            <span>公司地址：<input type="text" name="companyAddress" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></span>
-            <span>电话：<input type="text" name="companyPhone" style="width: 150px; border-bottom: 1px solid black;"></span>
+            <span>公司地址：<input type="text" name="companyAddress" style="width: 300px; border-bottom: 1px solid black; text-align: left;" value="石家庄高新区方亿科技工业园A区第2号楼。"></span>
+            <span>电话：<input type="text" name="companyPhone" style="width: 200px; border-bottom: 1px solid black;" value="0311—86107634  0311—67300616"></span>
         </div>
     </div>
 
-    <div class="page-footer">
-        <span>版次：<input type="text" name="version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
-        <span>第 <input type="text" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
-    </div>
+
     </form>
 
     <script>

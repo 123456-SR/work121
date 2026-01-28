@@ -26,6 +26,11 @@ public class PageController {
         return "light_dynamic_penetration";
     }
 
+    @GetMapping("/light_dynamic_penetration_result")
+    public String lightDynamicPenetrationResult() {
+        return "light_dynamic_penetration_result";
+    }
+
     @GetMapping("/light_dynamic_penetration_record")
     public String lightDynamicPenetrationRecord() {
         return "light_dynamic_penetration_record";

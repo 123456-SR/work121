@@ -118,11 +118,7 @@
             </tbody>
         </table>
 
-        <div class="footer-info">
-            <span>版次：<input type="text" name="version" style="width: 100px; text-align: left;" value=""></span>
-            <span>日期：<input type="text" name="reportDate" style="width: 100px; text-align: left;"></span>
-            <span>第 <input type="text" name="page" style="width: 30px;"> 页，共 <input type="text" name="totalPages" style="width: 30px;"> 页</span>
-        </div>
+
     </form>
 
     <script>

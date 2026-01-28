@@ -266,10 +266,7 @@
             </div>
         </div>
 
-        <div class="footer-line" style="font-size: 12px; margin-top: 10px;">
-            <div>版次：<input type="text" name="version" style="width: 100px; border-bottom: 1px solid black;"></div>
-            <div>第 <input type="text" name="page" style="width: 30px; border-bottom: 1px solid black;"> 页，共 <input type="text" name="totalPages" style="width: 30px; border-bottom: 1px solid black;"> 页</div>
-        </div>
+
     </div>
     </form>
 
