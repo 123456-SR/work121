@@ -2,87 +2,88 @@ package org.example.work121.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Controller
 public class PageController {
 
     @GetMapping("/")
-    public String index() {
-        return "index";
+    public RedirectView index() {
+        return new RedirectView("index.html");
     }
 
     @GetMapping("/entrustment")
-    public String entrustment() {
-        return "entrustment";
+    public RedirectView entrustment() {
+        return new RedirectView("entrustment-vue.html");
     }
 
     @GetMapping("/signature")
-    public String signature() {
-        return "signature";
+    public RedirectView signature() {
+        return new RedirectView("signature-vue.html");
     }
 
     @GetMapping("/light_dynamic_penetration")
-    public String lightDynamicPenetration() {
-        return "light_dynamic_penetration";
+    public RedirectView lightDynamicPenetration() {
+        return new RedirectView("light_dynamic_penetration-vue.html");
     }
 
     @GetMapping("/light_dynamic_penetration_record")
-    public String lightDynamicPenetrationRecord() {
-        return "light_dynamic_penetration_record";
+    public RedirectView lightDynamicPenetrationRecord() {
+        return new RedirectView("light_dynamic_penetration_record-vue.html");
     }
 
     @GetMapping("/nuclear_density_record")
-    public String nuclearDensityRecord() {
-        return "nuclear_density_record";
+    public RedirectView nuclearDensityRecord() {
+        return new RedirectView("nuclear_density_record-vue.html");
     }
 
     @GetMapping("/density_test_report")
-    public String densityTestReport() {
-        return "density_test_report";
+    public RedirectView densityTestReport() {
+        return new RedirectView("density_test_report-vue.html");
     }
 
     @GetMapping("/density_test_result")
-    public String densityTestResult() {
-        return "density_test_result";
+    public RedirectView densityTestResult() {
+        return new RedirectView("density_test_result-vue.html");
     }
 
     @GetMapping("/sand_replacement_record")
-    public String sandReplacementRecord() {
-        return "sand_replacement_record";
+    public RedirectView sandReplacementRecord() {
+        return new RedirectView("sand_replacement_record-vue.html");
     }
 
     @GetMapping("/water_replacement_record")
-    public String waterReplacementRecord() {
-        return "water_replacement_record";
+    public RedirectView waterReplacementRecord() {
+        return new RedirectView("water_replacement_record-vue.html");
     }
 
     @GetMapping("/cutting_ring_record")
-    public String cuttingRingRecord() {
-        return "cutting_ring_record";
+    public RedirectView cuttingRingRecord() {
+        return new RedirectView("cutting_ring_record-vue.html");
     }
 
     @GetMapping("/rebound_method_record")
-    public String reboundMethodRecord() {
-        return "rebound_method_record";
+    public RedirectView reboundMethodRecord() {
+        return new RedirectView("rebound_method_record-vue.html");
     }
 
     @GetMapping("/rebound_method_report")
-    public String reboundMethodReport() {
-        return "rebound_method_report";
+    public RedirectView reboundMethodReport() {
+        return new RedirectView("rebound_method_report-vue.html");
     }
 
     @GetMapping("/beckman_beam_record")
-    public String beckmanBeamRecord() {
-        return "beckman_beam_record";
+    public RedirectView beckmanBeamRecord() {
+        return new RedirectView("beckman_beam_record-vue.html");
     }
 
     @GetMapping("/beckman_beam_report")
-    public String beckmanBeamReport() {
-        return "beckman_beam_report";
+    public RedirectView beckmanBeamReport() {
+        return new RedirectView("beckman_beam_report-vue.html");
     }
 
     @GetMapping("/beckman_beam_result")
-    public String beckmanBeamResult() {
-        return "beckman_beam_result";
+    public RedirectView beckmanBeamResult() {
+        return new RedirectView("beckman_beam_result-vue.html");
     }
 }

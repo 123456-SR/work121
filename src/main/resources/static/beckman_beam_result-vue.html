@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>路基路面回弹弯沉（回弹模量）检测结果</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<style>
+body { font-family: 'SimSun', 'Songti SC', serif; width: 100%; max-width: 210mm; margin: 0 auto; padding: 20px; min-height: 100vh; box-sizing: border-box; }
+#app { width: 100%; max-width: 210mm; margin: 0 auto; }
+h1 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+.header-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
+table { width: 100%; border-collapse: collapse; border: 1px solid black; table-layout: fixed; margin-bottom: -1px; }
+td, th { border: 1px solid black; padding: 5px; text-align: center; font-size: 14px; vertical-align: middle; word-wrap: break-word; }
+input[type="text"] { width: 95%; border: none; outline: none; text-align: center; font-family: inherit; font-size: inherit; background: transparent; }
+.label { text-align: center; }
+.footer-line { display: flex; justify-content: space-between; margin-bottom: 10px; margin-top: 20px; }
+.no-print { margin-bottom: 20px; }
+.no-print a { text-decoration: none; color: blue; }
+@media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="no-print">
+<a href="index.html" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+<button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
+<button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
+<button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+</div>
+
+<form id="pdfForm" method="post">
+<h1>路基路面回弹弯沉（回弹模量）检测结果</h1>
+
+<div class="header-info">
+<div>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
+</div>
+
+<table>
+<colgroup><col style="width: 15%;"><col style="width: 35%;"><col style="width: 15%;"><col style="width: 35%;"></colgroup>
+<tr><td class="label">施工部位</td><td><input type="text" v-model="formData.constructionPart"></td><td class="label">弯沉仪类型</td><td><input type="text" v-model="formData.deflectometerType"></td></tr>
+<tr><td class="label">后轴重(kN)</td><td><input type="text" v-model="formData.axleWeight"></td><td class="label">轮胎接地压强(MPa)</td><td><input type="text" v-model="formData.tirePressure"></td></tr>
+</table>
+
+<table style="margin-top: 1px;">
+<colgroup><col style="width: 12%;"><col style="width: 20%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 8%;"></colgroup>
+<tr><td class="label">测点桩号</td><td class="label">测点位置</td><td class="label">初读数(0.01mm)</td><td class="label">终读数(0.01mm)</td><td class="label">回弹弯沉值(0.01mm)</td><td class="label">代表弯沉值(0.01mm)</td><td class="label">备注</td></tr>
+<template v-for="(row, index) in formData.dataRows" :key="index">
+<tr><td><input type="text" v-model="row.station"></td><td><input type="text" v-model="row.location"></td><td><input type="text" v-model="row.initialReading"></td><td><input type="text" v-model="row.finalReading"></td><td><input type="text" v-model="row.reboundDeflection"></td><td><input type="text" v-model="row.representativeDeflection"></td><td><input type="text" v-model="row.remarks"></td></tr>
+</template>
+</table>
+
+<div class="footer-line">
+<span>版次：<input type="text" v-model="formData.version" style="width: 40px; border-bottom: 1px solid black; text-align: center;"></span>
+<span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+<span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+</div>
+</form>
+</div>
+
+<script>
+new Vue({
+el: '#app',
+data: {
+formData: {
+unifiedNumber: '', constructionPart: '', deflectometerType: '', axleWeight: '', tirePressure: '',
+dataRows: Array.from({length: 25}, () => ({
+station: '', location: '', initialReading: '', finalReading: '', reboundDeflection: '', representativeDeflection: '', remarks: ''
+})),
+version: '', year: new Date().getFullYear(), month: String(new Date().getMonth() + 1).padStart(2, '0'),
+day: String(new Date().getDate()).padStart(2, '0'), page: '1', totalPages: '1'
+}
+},
+methods: {
+printDocument() { window.print(); },
+generatePdf() { const f = document.getElementById('pdfForm'); f.action = '/api/pdf/beckman_beam_result/generate'; f.target = '_blank'; f.submit(); },
+previewPdf() { const f = document.getElementById('pdfForm'); f.action = '/api/pdf/beckman_beam_result/preview'; f.target = '_blank'; f.submit(); }
+}
+});
+</script>
+</body>
+</html>

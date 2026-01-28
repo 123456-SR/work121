@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>路基路面回弹弯沉（回弹模量）检测报告</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<style>
+body { font-family: 'SimSun', 'Songti SC', serif; width: 100%; max-width: 210mm; margin: 0 auto; padding: 20px; min-height: 100vh; box-sizing: border-box; }
+#app { width: 100%; max-width: 210mm; margin: 0 auto; }
+h1 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+.header-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
+table { width: 100%; border-collapse: collapse; border: 1px solid black; table-layout: fixed; margin-bottom: -1px; }
+td, th { border: 1px solid black; padding: 5px; text-align: center; font-size: 14px; vertical-align: middle; word-wrap: break-word; }
+input[type="text"] { width: 95%; border: none; outline: none; text-align: center; font-family: inherit; font-size: inherit; background: transparent; }
+.label { text-align: center; }
+.footer-section { margin-top: 20px; }
+.footer-line { display: flex; justify-content: space-between; margin-bottom: 10px; }
+.company-info { margin-top: 20px; font-size: 14px; }
+.no-print { margin-bottom: 20px; }
+.no-print a { text-decoration: none; color: blue; }
+@media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="no-print">
+<a href="index.html" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+<button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
+<button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
+<button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+</div>
+
+<form id="pdfForm" method="post">
+<h1>路基路面回弹弯沉（回弹模量）检测报告</h1>
+
+<div class="header-info">
+<div>委托单位：<input type="text" v-model="formData.entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
+<div>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
+</div>
+
+<table>
+<colgroup><col style="width: 15%;"><col style="width: 35%;"><col style="width: 15%;"><col style="width: 35%;"></colgroup>
+<tr><td class="label">工程名称</td><td><input type="text" v-model="formData.projectName"></td><td class="label">委托日期</td><td><input type="text" v-model="formData.commissionDate"></td></tr>
+<tr><td class="label">施工部位</td><td><input type="text" v-model="formData.constructionPart"></td><td class="label">检测日期</td><td><input type="text" v-model="formData.testDate"></td></tr>
+<tr><td class="label">仪器设备及编码</td><td><input type="text" v-model="formData.equipmentCode"></td><td class="label">报告日期</td><td><input type="text" v-model="formData.reportDate"></td></tr>
+<tr><td class="label">样品名称及状态</td><td><input type="text" v-model="formData.sampleStatus"></td><td class="label">检测类别</td><td><input type="text" v-model="formData.testCategory"></td></tr>
+<tr><td class="label">依据标准</td><td><input type="text" v-model="formData.standard"></td><td class="label">检测方法</td><td><input type="text" v-model="formData.testMethod"></td></tr>
+<tr><td class="label">见证单位</td><td><input type="text" v-model="formData.witnessUnit"></td><td class="label">见证人</td><td><input type="text" v-model="formData.witness"></td></tr>
+<tr><td class="label">弯沉仪类型</td><td><input type="text" v-model="formData.deflectometerType"></td><td class="label">后轴重(kN)</td><td><input type="text" v-model="formData.axleWeight"></td></tr>
+<tr><td class="label">轮胎接地压强(MPa)</td><td><input type="text" v-model="formData.tirePressure"></td><td class="label">检测段长度(m)</td><td><input type="text" v-model="formData.testLength"></td></tr>
+</table>
+
+<table style="margin-top: 1px;">
+<colgroup><col style="width: 12%;"><col style="width: 20%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 8%;"></colgroup>
+<tr><td class="label">测点桩号</td><td class="label">测点位置</td><td class="label">初读数(0.01mm)</td><td class="label">终读数(0.01mm)</td><td class="label">回弹弯沉值(0.01mm)</td><td class="label">代表弯沉值(0.01mm)</td><td class="label">备注</td></tr>
+<template v-for="(row, index) in formData.dataRows" :key="index">
+<tr><td><input type="text" v-model="row.station"></td><td><input type="text" v-model="row.location"></td><td><input type="text" v-model="row.initialReading"></td><td><input type="text" v-model="row.finalReading"></td><td><input type="text" v-model="row.reboundDeflection"></td><td><input type="text" v-model="row.representativeDeflection"></td><td><input type="text" v-model="row.remarks"></td></tr>
+</template>
+</table>
+
+<table style="margin-top: 1px;">
+<colgroup><col style="width: 15%;"><col style="width: 85%;"></colgroup>
+<tr><td class="label">检测结论</td><td class="left-align" style="height: 80px; vertical-align: top;"><textarea v-model="formData.conclusion" style="width: 100%; height: 100%; border: none; resize: none;"></textarea></td></tr>
+<tr><td class="label">备注</td><td class="left-align" style="height: 60px; vertical-align: top;"><textarea v-model="formData.remarks" style="width: 100%; height: 100%; border: none; resize: none;"></textarea></td></tr>
+</table>
+
+<div class="footer-section">
+<div class="footer-line">
+<span>批准：<input type="text" v-model="formData.approval" style="width: 80px; border-bottom: 1px solid black;"></span>
+<span>审核：<input type="text" v-model="formData.reviewer" style="width: 80px; border-bottom: 1px solid black;"></span>
+<span>检测：<input type="text" v-model="formData.tester" style="width: 80px; border-bottom: 1px solid black;"></span>
+</div>
+</div>
+
+<div class="company-info">
+<div style="border-top: 2px solid black; padding-top: 10px; margin-top: 10px;">
+声明：1. 对本检测报告的复印件未加盖公司检验检测专用章无效。2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。
+</div>
+<div style="display: flex; justify-content: space-between; margin-top: 10px; border-bottom: 2px solid black; padding-bottom: 5px;">
+<span>公司名称：<input type="text" v-model="formData.companyName" style="width: 180px; border: none;"></span>
+<span>电话：<input type="text" v-model="formData.companyPhone" style="width: 120px; border: none;"></span>
+</div>
+<div style="margin-top: 5px;">
+<span>公司地址：<input type="text" v-model="formData.companyAddress" style="width: 350px; border: none;"></span>
+</div>
+<div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px;">
+<span>版次：<input type="text" v-model="formData.version" style="width: 40px; border-bottom: 1px solid black; text-align: center;"></span>
+<span><input type="text" v-model="formData.footerDate" style="width: 80px; border-bottom: 1px solid black; text-align: center;"></span>
+<span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+</div>
+</div>
+</form>
+</div>
+
+<script>
+new Vue({
+el: '#app',
+data: {
+formData: {
+entrustingUnit: '', unifiedNumber: '', projectName: '', commissionDate: '', constructionPart: '', testDate: '',
+equipmentCode: '', reportDate: '', sampleStatus: '', testCategory: '', standard: '', testMethod: '',
+witnessUnit: '', witness: '', deflectometerType: '', axleWeight: '', tirePressure: '', testLength: '',
+dataRows: Array.from({length: 15}, () => ({
+station: '', location: '', initialReading: '', finalReading: '', reboundDeflection: '', representativeDeflection: '', remarks: ''
+})),
+conclusion: '', remarks: '', approval: '', reviewer: '', tester: '',
+companyName: '', companyPhone: '', companyAddress: '',
+version: '', footerDate: new Date().toISOString().split('T')[0], page: '1', totalPages: '1'
+}
+},
+methods: {
+printDocument() { window.print(); },
+generatePdf() { const f = document.getElementById('pdfForm'); f.action = '/api/pdf/beckman_beam_report/generate'; f.target = '_blank'; f.submit(); },
+previewPdf() { const f = document.getElementById('pdfForm'); f.action = '/api/pdf/beckman_beam_report/preview'; f.target = '_blank'; f.submit(); }
+}
+});
+</script>
+</body>
+</html>
