@@ -33,26 +33,26 @@ input[type="text"] { width: 95%; border: none; outline: none; text-align: center
 <h1>路基路面回弹弯沉（回弹模量）检测结果</h1>
 
 <div class="header-info">
-<div>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
+<div>统一编号：<input type="text" v-model="formData.unifiedNumber" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
 </div>
 
 <table>
 <colgroup><col style="width: 15%;"><col style="width: 35%;"><col style="width: 15%;"><col style="width: 35%;"></colgroup>
-<tr><td class="label">施工部位</td><td><input type="text" v-model="formData.constructionPart"></td><td class="label">弯沉仪类型</td><td><input type="text" v-model="formData.deflectometerType"></td></tr>
-<tr><td class="label">后轴重(kN)</td><td><input type="text" v-model="formData.axleWeight"></td><td class="label">轮胎接地压强(MPa)</td><td><input type="text" v-model="formData.tirePressure"></td></tr>
+<tr><td class="label">施工部位</td><td><input type="text" v-model="formData.constructionPart" name="constructionPart"></td><td class="label">弯沉仪类型</td><td><input type="text" v-model="formData.deflectometerType" name="deflectometerType"></td></tr>
+<tr><td class="label">后轴重(kN)</td><td><input type="text" v-model="formData.axleWeight" name="axleWeight"></td><td class="label">轮胎接地压强(MPa)</td><td><input type="text" v-model="formData.tirePressure" name="tirePressure"></td></tr>
 </table>
 
 <table style="margin-top: 1px;">
 <colgroup><col style="width: 12%;"><col style="width: 20%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 8%;"></colgroup>
 <tr><td class="label">测点桩号</td><td class="label">测点位置</td><td class="label">初读数(0.01mm)</td><td class="label">终读数(0.01mm)</td><td class="label">回弹弯沉值(0.01mm)</td><td class="label">代表弯沉值(0.01mm)</td><td class="label">备注</td></tr>
 <template v-for="(row, index) in formData.dataRows" :key="index">
-<tr><td><input type="text" v-model="row.station"></td><td><input type="text" v-model="row.location"></td><td><input type="text" v-model="row.initialReading"></td><td><input type="text" v-model="row.finalReading"></td><td><input type="text" v-model="row.reboundDeflection"></td><td><input type="text" v-model="row.representativeDeflection"></td><td><input type="text" v-model="row.remarks"></td></tr>
+<tr><td><input type="text" v-model="row.station" name="station_{{index + 1}}"></td><td><input type="text" v-model="row.location" name="lane_{{index + 1}}"></td><td><input type="text" v-model="row.initialReading"></td><td><input type="text" v-model="row.finalReading"></td><td><input type="text" v-model="row.reboundDeflection" name="left_val_{{index + 1}}"></td><td><input type="text" v-model="row.representativeDeflection" name="right_val_{{index + 1}}"></td><td><input type="text" v-model="row.remarks" name="remark_{{index + 1}}"></td></tr>
 </template>
 </table>
 
 <div class="footer-line">
-<span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
-<span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+<span><input type="text" v-model="formData.year" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+<span>第 <input type="text" v-model="formData.page" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>
 </form>
 </div>

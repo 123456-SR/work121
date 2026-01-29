@@ -36,39 +36,39 @@ textarea { resize: none; overflow: hidden; text-align: left; }
 
 <form id="pdfForm" method="post">
 <div class="header-info">
-<span>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+<span>统一编号：<input type="text" v-model="formData.unifiedNumber" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
 <span></span>
 </div>
 
 <h2>原位密度检测结果</h2>
 
 <table>
-<tr><td class="label" style="width: 15%;">施工部位</td><td colspan="9" class="left-align"><input type="text" v-model="formData.constructionPart"></td></tr>
-<tr><td class="label">最大干密度<br>(g/cm³)</td><td colspan="2"><input type="text" v-model="formData.maxDryDensity"></td><td class="label">最优含水率 %</td><td colspan="2"><input type="text" v-model="formData.optimumMoisture"></td><td class="label">最小干密度<br>(g/cm³)</td><td colspan="3"><input type="text" v-model="formData.minDryDensity"></td></tr>
+<tr><td class="label" style="width: 15%;">施工部位</td><td colspan="9" class="left-align"><input type="text" v-model="formData.constructionPart" name="constructionPart"></td></tr>
+<tr><td class="label">最大干密度<br>(g/cm³)</td><td colspan="2"><input type="text" v-model="formData.maxDryDensity" name="maxDryDensity"></td><td class="label">最优含水率 %</td><td colspan="2"><input type="text" v-model="formData.optimumMoisture" name="optimumMoisture"></td><td class="label">最小干密度<br>(g/cm³)</td><td colspan="3"><input type="text" v-model="formData.minDryDensity" name="minDryDensity"></td></tr>
 
 <tr><td class="label" style="width: 10%;">样品编号</td><td class="label" style="width: 25%;" colspan="2">检测部位<br>(桩号、高程)</td><td class="label" style="width: 15%;" colspan="2">检测日期</td><td class="label" style="width: 12.5%;">湿密度<br>(g/cm³)</td><td class="label" style="width: 12.5%;">干密度<br>(g/cm³)</td><td class="label" style="width: 12.5%;">含水率<br>%</td><td class="label" style="width: 12.5%;" colspan="2">压实度%</td></tr>
 
 <template v-for="(row, index) in formData.dataRows" :key="index">
 <tr>
-<td rowspan="2"><input type="text" v-model="row.sampleId"></td>
-<td rowspan="2" colspan="2"><input type="text" v-model="row.location"></td>
-<td rowspan="2" colspan="2"><input type="text" v-model="row.date"></td>
-<td><input type="text" v-model="row.wetDensity"></td>
-<td><input type="text" v-model="row.dryDensity"></td>
-<td><input type="text" v-model="row.moisture"></td>
-<td rowspan="2" colspan="2"><input type="text" v-model="row.compaction"></td>
+<td rowspan="2"><input type="text" v-model="row.sampleId" name="sampleId_{{index + 1}}"></td>
+<td rowspan="2" colspan="2"><input type="text" v-model="row.location" name="location_{{index + 1}}"></td>
+<td rowspan="2" colspan="2"><input type="text" v-model="row.date" name="date_{{index + 1}}"></td>
+<td><input type="text" v-model="row.wetDensity" name="wetDensity_{{index + 1}}"></td>
+<td><input type="text" v-model="row.dryDensity" name="dryDensity_{{index + 1}}"></td>
+<td><input type="text" v-model="row.moisture" name="moisture_{{index + 1}}"></td>
+<td rowspan="2" colspan="2"><input type="text" v-model="row.compaction" name="compaction_{{index + 1}}"></td>
 </tr>
 <tr>
-<td><input type="text" v-model="row.wetDensity2"></td>
-<td><input type="text" v-model="row.dryDensity2"></td>
-<td><input type="text" v-model="row.moisture2"></td>
+<td><input type="text" v-model="row.wetDensity2" name="wetDensity2_{{index + 1}}"></td>
+<td><input type="text" v-model="row.dryDensity2" name="dryDensity2_{{index + 1}}"></td>
+<td><input type="text" v-model="row.moisture2" name="moisture2_{{index + 1}}"></td>
 </tr>
 </template>
 </table>
 
 <div class="page-footer">
-<span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
-<span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+<span><input type="text" v-model="formData.year" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+<span>第 <input type="text" v-model="formData.page" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>
 </form>
 </div>

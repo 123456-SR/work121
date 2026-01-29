@@ -122,7 +122,7 @@
             <td>贝克曼梁法</td>
         </tr>
     </table>
-    
+
     <!-- Detailed Info Table (6 columns) -->
     <table>
         <colgroup>
@@ -315,8 +315,6 @@
             form.target = '_blank';
             form.submit();
         }
-
-        // Set current date for date inputs
         document.addEventListener('DOMContentLoaded', function() {
             const dateInputs = document.querySelectorAll('.date-input');
             const today = new Date().toISOString().split('T')[0];

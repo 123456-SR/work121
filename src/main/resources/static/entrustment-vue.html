@@ -128,30 +128,30 @@
             <h2>检测 (验) 委托单 (代合同)</h2>
 
             <div class="header-info">
-                <span>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black;">
+                <span>统一编号：<input type="text" v-model="formData.unifiedNumber" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;">
                 <button type="button" @click="queryEntrustment" class="query-btn">查询</button></span>
-                <span>样品编号：<input type="text" v-model="formData.sampleNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+                <span>样品编号：<input type="text" v-model="formData.sampleNumber" name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
             </div>
 
             <table>
                 <tr>
                     <td class="label">委托单位：</td>
-                    <td><input type="text" v-model="formData.clientUnit"></td>
+                    <td><input type="text" v-model="formData.clientUnit" name="clientUnit"></td>
                     <td class="label">委托日期：</td>
-                    <td><input type="text" v-model="formData.clientDate"></td>
+                    <td><input type="text" v-model="formData.clientDate" name="clientDate"></td>
                 </tr>
                 <tr>
                     <td class="label">施工单位：</td>
-                    <td><input type="text" v-model="formData.constructionUnit"></td>
+                    <td><input type="text" v-model="formData.constructionUnit" name="constructionUnit"></td>
                     <td class="label">建设单位：</td>
-                    <td><input type="text" v-model="formData.buildingUnit"></td>
+                    <td><input type="text" v-model="formData.buildingUnit" name="buildingUnit"></td>
                 </tr>
                 <tr>
                     <td class="label">工程名称：</td>
-                    <td colspan="2"><input type="text" v-model="formData.projectName"></td>
+                    <td colspan="2"><input type="text" v-model="formData.projectName" name="projectName"></td>
                     <td style="width: 150px;">
                         <span class="label">施工 (使用) 部位：</span><br>
-                        <input type="text" v-model="formData.constructionPart">
+                        <input type="text" v-model="formData.constructionPart" name="constructionPart">
                     </td>
                 </tr>
                 <tr>
@@ -159,11 +159,11 @@
                         <table style="width: 100%; border: none; margin: -1px; border-collapse: collapse;">
                             <tr>
                                 <td class="label" style="width: 15%; border: none; border-right: 1px solid black; padding: 5px;">样品名称：</td>
-                                <td style="width: 18%; border: none; border-right: 1px solid black; padding: 5px;"><input type="text" v-model="formData.sampleName"></td>
+                                <td style="width: 18%; border: none; border-right: 1px solid black; padding: 5px;"><input type="text" v-model="formData.sampleName" name="sampleName"></td>
                                 <td class="label" style="width: 15%; border: none; border-right: 1px solid black; padding: 5px;">规格/型号：</td>
-                                <td style="width: 18%; border: none; border-right: 1px solid black; padding: 5px;"><input type="text" v-model="formData.spec"></td>
+                                <td style="width: 18%; border: none; border-right: 1px solid black; padding: 5px;"><input type="text" v-model="formData.spec" name="spec"></td>
                                 <td class="label" style="width: 15%; border: none; border-right: 1px solid black; padding: 5px;">生产厂家<br>或产地</td>
-                                <td style="width: 19%; border: none; padding: 5px;"><input type="text" v-model="formData.manufacturer"></td>
+                                <td style="width: 19%; border: none; padding: 5px;"><input type="text" v-model="formData.manufacturer" name="manufacturer"></td>
                             </tr>
                         </table>
                     </td>
@@ -174,19 +174,19 @@
                             <tr>
                                 <td style="border: none; border-right: 1px solid black; width: 25%;">
                                     <div class="center-text label">样品<br>数量：</div>
-                                    <input type="text" v-model="formData.sampleQuantity" class="center-text">
+                                    <input type="text" v-model="formData.sampleQuantity" name="sampleQuantity" class="center-text">
                                 </td>
                                 <td style="border: none; border-right: 1px solid black; width: 25%;">
                                     <div class="center-text label">代表<br>批量：</div>
-                                    <input type="text" v-model="formData.representativeBatch" class="center-text">
+                                    <input type="text" v-model="formData.representativeBatch" name="representativeBatch" class="center-text">
                                 </td>
                                 <td style="border: none; border-right: 1px solid black; width: 25%;">
                                     <div class="center-text label">批号：</div>
-                                    <input type="text" v-model="formData.batchNumber" class="center-text">
+                                    <input type="text" v-model="formData.batchNumber" name="batchNumber" class="center-text">
                                 </td>
                                 <td style="border: none; width: 25%;">
                                     <div class="center-text label">检测(验)<br>类别：</div>
-                                    <input type="text" v-model="formData.testCategory" class="center-text">
+                                    <input type="text" v-model="formData.testCategory" name="testCategory" class="center-text">
                                 </td>
                             </tr>
                         </table>
@@ -195,45 +195,45 @@
                 <tr>
                     <td colspan="2" style="height: 100px; vertical-align: top;">
                         <div class="label">样品历史及概况：</div>
-                        <textarea v-model="formData.sampleHistory" rows="4" style="width: 100%; height: 80px;"></textarea>
+                        <textarea v-model="formData.sampleHistory" rows="4" style="width: 100%; height: 80px;" name="sampleHistory"></textarea>
                     </td>
                     <td colspan="2" style="height: 100px; vertical-align: top;">
                         <div class="label">样品状态：</div>
-                        <textarea v-model="formData.sampleStatus" rows="4" style="width: 100%; height: 80px;"></textarea>
+                        <textarea v-model="formData.sampleStatus" rows="4" style="width: 100%; height: 80px;" name="sampleStatus"></textarea>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="4" style="height: 60px; vertical-align: top;">
                         <div class="label">检测(验)项目及依据：</div>
-                        <textarea v-model="formData.testItems" rows="2" style="width: 100%; height: 40px;"></textarea>
+                        <textarea v-model="formData.testItems" rows="2" style="width: 100%; height: 40px;" name="testItems"></textarea>
                     </td>
                 </tr>
                 <tr>
                     <td class="label">委托单位地址<br>及电话(传真)：</td>
-                    <td colspan="3"><textarea v-model="formData.clientAddressPhone" rows="2" style="width: 100%; border: none; border-bottom: 1px solid black; resize: none;"></textarea></td>
+                    <td colspan="3"><textarea v-model="formData.clientAddressPhone" rows="2" style="width: 100%; border: none; border-bottom: 1px solid black; resize: none;" name="clientAddressPhone"></textarea></td>
                 </tr>
                 <tr>
                     <td class="label">报告发送</td>
                     <td>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" v-model="formData.reportSend" value="1">1.自取</label>
-                            <label><input type="checkbox" v-model="formData.reportSend" value="2">2.邮寄</label>
-                            <label><input type="checkbox" v-model="formData.reportSend" value="3">3.其它</label>
+                            <label><input type="checkbox" v-model="formData.reportSend" value="1" name="reportSend">1.自取</label>
+                            <label><input type="checkbox" v-model="formData.reportSend" value="2" name="reportSend">2.邮寄</label>
+                            <label><input type="checkbox" v-model="formData.reportSend" value="3" name="reportSend">3.其它</label>
                         </div>
                     </td>
                     <td class="label">样品处置</td>
                     <td>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" v-model="formData.sampleDisposal" value="1">1.取回</label>
-                            <label><input type="checkbox" v-model="formData.sampleDisposal" value="2">2.不取回</label>
+                            <label><input type="checkbox" v-model="formData.sampleDisposal" value="1" name="sampleDisposal">1.取回</label>
+                            <label><input type="checkbox" v-model="formData.sampleDisposal" value="2" name="sampleDisposal">2.不取回</label>
                         </div>
                     </td>
                 </tr>
                 <tr>
                     <td class="label">见证人</td>
-                    <td><input type="text" v-model="formData.witness"></td>
+                    <td><input type="text" v-model="formData.witness" name="witness"></td>
                     <td class="label">见证单位</td>
-                    <td><input type="text" v-model="formData.witnessUnit"></td>
+                    <td><input type="text" v-model="formData.witnessUnit" name="witnessUnit"></td>
                 </tr>
                 <tr>
                     <td class="label">检测报告<br>交付日期</td>
@@ -245,11 +245,11 @@
                         </div>
                     </td>
                     <td class="label">应缴检测(验)费(元)</td>
-                    <td><input type="text" v-model="formData.fee"></td>
+                    <td><input type="text" v-model="formData.fee" name="fee"></td>
                 </tr>
                 <tr>
                     <td class="label">备注</td>
-                    <td colspan="3"><input type="text" v-model="formData.remarks"></td>
+                    <td colspan="3"><input type="text" v-model="formData.remarks" name="remarks"></td>
                 </tr>
                 <tr>
                     <td class="label" style="vertical-align: top;">说明：</td>
@@ -266,15 +266,15 @@
             </table>
 
             <div class="footer-info">
-                <span>委托(送样)人：<input type="text" v-model="formData.clientPerson" style="width: 150px; border-bottom: 1px solid black;"></span>
-                <span>承接(收样)人：<input type="text" v-model="formData.receiverPerson" style="width: 150px; border-bottom: 1px solid black;"></span>
+                <span>委托(送样)人：<input type="text" v-model="formData.clientPerson" name="clientPerson" style="width: 150px; border-bottom: 1px solid black;"></span>
+                <span>承接(收样)人：<input type="text" v-model="formData.receiverPerson" name="receiverPerson" style="width: 150px; border-bottom: 1px solid black;"></span>
+            </div>
+
+            <div class="page-footer" style="display: flex; justify-content: center; align-items: center; gap: 50px;">
+                <span><input type="text" v-model="formData.signDate" name="signDate" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
+                <span>第 <input type="text" v-model="formData.currentPage" name="currentPage" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
             </div>
         </form>
-
-        <div class="page-footer" style="display: flex; justify-content: center; align-items: center; gap: 50px;">
-            <span><input type="text" v-model="formData.signDate" style="width: 100px; border-bottom: 1px solid black; text-align: center;" placeholder="YYYY-MM-DD"></span>
-            <span>第 <input type="text" v-model="formData.currentPage" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
-        </div>
     </div>
 
     <script>
@@ -311,8 +311,8 @@
                     receiverPerson: '',
                     version: '',
                     signDate: '',
-                    currentPage: '1',
-                    totalPages: '1'
+                    currentPage: '',
+                    totalPages: ''
                 }
             },
             methods: {
@@ -373,15 +373,54 @@
                     }
                     return year + '-' + month + '-' + day;
                 },
-                generatePdf() {
+                syncDataToForm() {
+                    // 同步表单数据
+                    for (let key in this.formData) {
+                        if (key === 'reportSend' || key === 'sampleDisposal') {
+                            // 处理checkbox数组
+                            let checkboxes = document.querySelectorAll(`input[name="${key}"]`);
+                            checkboxes.forEach(checkbox => {
+                                checkbox.checked = this.formData[key].includes(checkbox.value);
+                            });
+                        } else {
+                            // 处理普通输入字段
+                            let input = document.querySelector(`input[name="${key}"], textarea[name="${key}"]`);
+                            if (input) {
+                                input.value = this.formData[key];
+                            }
+                        }
+                    }
+                },
+                debugFormData() {
+                    // 调试表单数据
+                    console.log('Form data:', this.formData);
+                    
+                    // 检查DOM中的表单数据
+                    console.log('DOM form data:');
                     let form = document.getElementById('entrustmentForm');
-                    form.action = '/api/pdf/generate';
-                    form.target = '_blank';
-                    form.submit();
+                    let formData = new FormData(form);
+                    for (let [key, value] of formData.entries()) {
+                        console.log(key, ':', value);
+                    }
+                },
+                generatePdf() {
+                    this.submitForm('/api/pdf/generate');
                 },
                 previewPdf() {
+                    this.submitForm('/api/pdf/preview');
+                },
+                submitForm(url) {
+                    // 打印表单数据到控制台
+                    console.log('Form data to submit:');
+                    console.log(this.formData);
+                    
+                    // 同步Vue数据到DOM
+                    this.syncDataToForm();
+                    
+                    // 使用传统的表单提交方式
                     let form = document.getElementById('entrustmentForm');
-                    form.action = '/api/pdf/preview';
+                    form.action = url;
+                    form.method = 'POST';
                     form.target = '_blank';
                     form.submit();
                 }

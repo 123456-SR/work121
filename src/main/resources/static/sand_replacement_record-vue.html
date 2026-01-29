@@ -36,14 +36,14 @@
             <h2>灌砂法检测记录表</h2>
 
             <div class="header-info">
-                <span>委托单位：<input type="text" v-model="formData.entrustingUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
-                <span>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+                <span>委托单位：<input type="text" v-model="formData.entrustingUnit" name="entrustingUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
+                <span>统一编号：<input type="text" v-model="formData.unifiedNumber" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
             </div>
 
             <table>
-                <tr><td class="label">工程名称</td><td colspan="4"><input type="text" v-model="formData.projectName"></td><td class="label">委托日期</td><td colspan="4"><input type="text" v-model="formData.commissionDate"></td></tr>
-                <tr><td class="label">施工部位</td><td colspan="4"><input type="text" v-model="formData.constructionPart"></td><td class="label">检测日期</td><td colspan="4"><input type="text" v-model="formData.testDate"></td></tr>
-                <tr><td class="label">土的种类</td><td colspan="4"><input type="text" v-model="formData.soilType"></td><td class="label">检测类别</td><td colspan="4"><input type="text" v-model="formData.testCategory"></td></tr>
+                <tr><td class="label">工程名称</td><td colspan="4"><input type="text" v-model="formData.projectName" name="projectName"></td><td class="label">委托日期</td><td colspan="4"><input type="text" v-model="formData.commissionDate" name="commissionDate"></td></tr>
+                <tr><td class="label">施工部位</td><td colspan="4"><input type="text" v-model="formData.constructionPart" name="constructionPart"></td><td class="label">检测日期</td><td colspan="4"><input type="text" v-model="formData.testDate" name="testDate"></td></tr>
+                <tr><td class="label">土的种类</td><td colspan="4"><input type="text" v-model="formData.soilType" name="soilType"></td><td class="label">检测类别</td><td colspan="4"><input type="text" v-model="formData.testCategory" name="testCategory"></td></tr>
 
                 <tr>
                     <td class="label">测点</td>
@@ -60,34 +60,34 @@
 
                 <template v-for="(row, index) in formData.testRows" :key="index">
                     <tr>
-                        <td><input type="text" v-model="row.point"></td>
-                        <td><input type="text" v-model="row.wetWeight"></td>
-                        <td><input type="text" v-model="row.dryWeight"></td>
-                        <td><input type="text" v-model="row.moistureContent"></td>
-                        <td><input type="text" v-model="row.wetDensity"></td>
-                        <td><input type="text" v-model="row.dryDensity"></td>
-                        <td><input type="text" v-model="row.maxDryDensity"></td>
-                        <td><input type="text" v-model="row.minDryDensity"></td>
-                        <td><input type="text" v-model="row.compactionCoefficient"></td>
-                        <td><input type="text" v-model="row.qualifiedRate"></td>
+                        <td><input type="text" v-model="row.point" name="point_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.wetWeight" name="wetWeight_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.dryWeight" name="dryWeight_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.moistureContent" name="moistureContent_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.wetDensity" name="wetDensity_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.dryDensity" name="dryDensity_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.maxDryDensity" name="maxDryDensity_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.minDryDensity" name="minDryDensity_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.compactionCoefficient" name="compactionCoefficient_{{index + 1}}"></td>
+                        <td><input type="text" v-model="row.qualifiedRate" name="qualifiedRate_{{index + 1}}"></td>
                     </tr>
                 </template>
 
-                <tr><td class="label">检测依据</td><td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"></td></tr>
-                <tr><td class="label">仪器设备</td><td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"></td></tr>
-                <tr><td class="label" style="height: 60px;">检测结论</td><td colspan="9" class="left-align" style="vertical-align: top;"><textarea v-model="formData.conclusion" rows="3" style="width: 100%; height: 100%;"></textarea></td></tr>
-                <tr><td class="label">备注</td><td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"></td></tr>
+                <tr><td class="label">检测依据</td><td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis" name="testBasis"></td></tr>
+                <tr><td class="label">仪器设备</td><td colspan="9" class="left-align"><input type="text" v-model="formData.equipment" name="equipment"></td></tr>
+                <tr><td class="label" style="height: 60px;">检测结论</td><td colspan="9" class="left-align" style="vertical-align: top;"><textarea v-model="formData.conclusion" rows="3" style="width: 100%; height: 100%;" name="conclusion"></textarea></td></tr>
+                <tr><td class="label">备注</td><td colspan="9" class="left-align"><input type="text" v-model="formData.remarks" name="remarks"></td></tr>
             </table>
 
             <div class="footer-info">
-                <span>审核：<input type="text" v-model="formData.reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
-                <span>计算：<input type="text" v-model="formData.calculator" style="width: 100px; border-bottom: 1px solid black;"></span>
-                <span>检测：<input type="text" v-model="formData.tester" style="width: 100px; border-bottom: 1px solid black;"></span>
+                <span>审核：<input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
+                <span>计算：<input type="text" v-model="formData.calculator" name="calculator" style="width: 100px; border-bottom: 1px solid black;"></span>
+                <span>检测：<input type="text" v-model="formData.tester" name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
             </div>
 
             <div class="page-footer">
-                <span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
-                <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+                <span><input type="text" v-model="formData.year" name="year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" name="month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" name="day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
+                <span>第 <input type="text" v-model="formData.page" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
             </div>
         </form>
     </div>
