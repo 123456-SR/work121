@@ -187,7 +187,7 @@
         <span>审核：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
         <span>试验：<input type="text" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
-
+    </form>
 
 
 <script>

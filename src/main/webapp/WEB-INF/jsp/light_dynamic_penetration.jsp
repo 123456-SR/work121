@@ -94,9 +94,11 @@
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
 </head>
 <body>
 
+    <div id="app">
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
         <button onclick="window.print()" style="float: right; margin-left: 10px;">打印此单</button>
@@ -152,61 +154,43 @@
             <td class="label">检测类别</td>
             <td colspan="2"><input type="text" name="testCategory"></td>
         </tr>
-        <!-- Row 6: Table Header for Data -->
+        <!-- Row 6: 行数控制 -->
         <tr>
-            <td class="label">测点位置</td>
-            <td class="label">贯入<br>深度<br>(cm)</td>
-            <td class="label">实测<br>锤击数</td>
-            <td class="label">平均<br>锤击数<br>N<sub>10</sub></td>
-            <td class="label">承载力<br>特征值<br>(kPa)</td>
-            <td class="label">测点位置</td>
-            <td class="label">贯入<br>深度<br>(cm)</td>
-            <td class="label">实测<br>锤击数</td>
-            <td class="label">平均<br>锤击数<br>N<sub>10</sub></td>
-            <td class="label">承载力<br>特征值<br>(kPa)</td>
+            <td class="label">总行数</td>
+            <td colspan="9" class="left-align">
+                <input type="text" v-model.number="rowCount" style="width: 80px; text-align: center;">
+                <input type="hidden" name="rowCount" :value="rowCount">
+            </td>
+        </tr>
+        <!-- Row 7: 数据表头（与后端生成方法匹配） -->
+        <tr>
+            <td class="label">点号</td>
+            <td class="label">深度<br>(m)</td>
+            <td class="label">0.3m<br>锤击数</td>
+            <td class="label">0.6m<br>锤击数</td>
+            <td class="label">0.9m<br>锤击数</td>
+            <td class="label">1.2m<br>锤击数</td>
+            <td class="label">1.5m<br>锤击数</td>
+            <td class="label">1.8m<br>锤击数</td>
+            <td class="label">2.1m<br>锤击数</td>
+            <td class="label">2.4m<br>锤击数</td>
         </tr>
 
-        <!-- Data Rows -->
-        <%
-        // 左右两栏，每栏4个大测点块，每个测点块包含2个小行（深度记录）
-        // 外层循环控制“大行”（测点），共4个（保持总行数8行不变：4*2=8）
-        for(int block=0; block<4; block++) {
-            // 内层循环控制“小行”（深度），共2个
-            for(int sub=0; sub<2; sub++) {
-                // 计算全局行索引，用于唯一标识输入框名称
-                int globalRowIndex = block * 2 + sub;
-        %>
-        <tr>
-            <!-- 左栏 -->
-            <% if(sub == 0) { %>
-                <td rowspan="2"><textarea name="pos_L_<%=block%>" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
-            <% } %>
-
-            <td><input type="text" name="depth_L_<%=globalRowIndex%>"></td>
-            <td><input type="text" name="actual_L_<%=globalRowIndex%>"></td>
-
-            <% if(sub == 0) { %>
-                <td rowspan="2"><input type="text" name="avg_L_<%=block%>" style="height: 100%;"></td>
-                <td rowspan="2"><input type="text" name="capacity_L_<%=block%>" style="height: 100%;"></td>
-            <% } %>
-
-            <!-- 右栏 -->
-            <% if(sub == 0) { %>
-                <td rowspan="2"><textarea name="pos_R_<%=block%>" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
-            <% } %>
-
-            <td><input type="text" name="depth_R_<%=globalRowIndex%>"></td>
-            <td><input type="text" name="actual_R_<%=globalRowIndex%>"></td>
-
-            <% if(sub == 0) { %>
-                <td rowspan="2"><input type="text" name="avg_R_<%=block%>" style="height: 100%;"></td>
-                <td rowspan="2"><input type="text" name="capacity_R_<%=block%>" style="height: 100%;"></td>
-            <% } %>
-        </tr>
-        <%
-            }
-        }
-        %>
+        <!-- Data Rows（Vue渲染） -->
+        <tbody>
+            <tr v-for="i in rowCount">
+                <td><input type="text" :name="'pointNumber_' + (i-1)"></td>
+                <td><input type="text" :name="'depth_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount03_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount06_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount09_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount12_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount15_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount18_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount21_' + (i-1)"></td>
+                <td><input type="text" :name="'hammerCount24_' + (i-1)"></td>
+            </tr>
+        </tbody>
 
         <!-- Row: 检测依据 -->
         <tr>
@@ -233,9 +217,9 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" name="approve" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" name="review" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检验：<input type="text" name="inspect" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>批准：<input type="text" name="approval" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>审核：<input type="text" name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>检验：<input type="text" name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
 
     <div class="statement" style="font-size: 12px; margin-top: 10px;">
@@ -255,20 +239,27 @@
 
     </form>
 
+    </div>
 <script>
-        function generatePdf() {
-            var form = document.getElementById('pdfForm');
-            form.action = '/api/pdf/light_dynamic_penetration/generate';
-            form.target = '_blank';
-            form.submit();
+    new Vue({
+        el: '#app',
+        data: {
+            rowCount: 10
         }
+    });
+    function generatePdf() {
+        var form = document.getElementById('pdfForm');
+        form.action = '/api/pdf/light_dynamic_penetration/generate';
+        form.target = '_blank';
+        form.submit();
+    }
 
-        function previewPdf() {
-            var form = document.getElementById('pdfForm');
-            form.action = '/api/pdf/light_dynamic_penetration/preview';
-            form.target = '_blank';
-            form.submit();
-        }
-    </script>
+    function previewPdf() {
+        var form = document.getElementById('pdfForm');
+        form.action = '/api/pdf/light_dynamic_penetration/preview';
+        form.target = '_blank';
+        form.submit();
+    }
+</script>
 </body>
 </html>

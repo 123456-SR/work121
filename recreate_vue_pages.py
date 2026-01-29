@@ -69,7 +69,6 @@ textarea { resize: none; overflow: hidden; text-align: left; }
 </table>
 
 <div class="page-footer">
-<span>版次：<input type="text" v-model="formData.version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
 <span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
 <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>
@@ -86,7 +85,7 @@ dataRows: Array.from({length: 20}, () => ({
 sampleId: '', location: '', date: '', wetDensity: '', dryDensity: '', moisture: '',
 wetDensity2: '', dryDensity2: '', moisture2: '', compaction: ''
 })),
-version: '', year: new Date().getFullYear(), month: String(new Date().getMonth() + 1).padStart(2, '0'),
+ year: new Date().getFullYear(), month: String(new Date().getMonth() + 1).padStart(2, '0'),
 day: String(new Date().getDate()).padStart(2, '0'), page: '1', totalPages: '1'
 }
 },
@@ -193,7 +192,6 @@ textarea { resize: none; overflow: hidden; text-align: left; }
 </div>
 
 <div class="page-footer">
-<span>版次：<input type="text" v-model="formData.version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
 <span><input type="text" v-model="formData.footerDate" style="width: 100px; border-bottom: 1px solid black; text-align: center;"></span>
 <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>
@@ -216,7 +214,7 @@ strengthEstimation: '', remarks: ''
 conclusion: '', remarks: '',
 approval: '', reviewer: '', tester: '',
 companyName: '', companyPhone: '', companyAddress: '',
-version: '', footerDate: new Date().toISOString().split('T')[0], page: '1', totalPages: '1'
+        footerDate: new Date().toISOString().split('T')[0], page: '1', totalPages: '1'
 }
 },
 methods: {

@@ -69,7 +69,6 @@ textarea {{ resize: none; overflow: hidden; text-align: left; }}
 </div>
 
 <div class="page-footer">
-<span>版次：<input type="text" v-model="formData.version" style="width: 50px; border-bottom: 1px solid black; text-align: center;"></span>
 <span><input type="text" v-model="formData.year" style="width: 40px; border-bottom: 1px solid black; text-align: center;">年<input type="text" v-model="formData.month" style="width: 20px; border-bottom: 1px solid black; text-align: center;">月<input type="text" v-model="formData.day" style="width: 20px; border-bottom: 1px solid black; text-align: center;">日</span>
 <span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>
@@ -84,7 +83,7 @@ formData: {{
 entrustingUnit: '', unifiedNumber: '', projectName: '', commissionDate: '', constructionPart: '', testDate: '',
 testBasis: '', equipment: '', conclusion: '', remarks: '',
 reviewer: '', calculator: '', tester: '',
-version: '', year: new Date().getFullYear(), month: String(new Date().getMonth() + 1).padStart(2, '0'),
+year: new Date().getFullYear(), month: String(new Date().getMonth() + 1).padStart(2, '0'),
 day: String(new Date().getDate()).padStart(2, '0'), page: '1', totalPages: '1'
 }}
 }},
