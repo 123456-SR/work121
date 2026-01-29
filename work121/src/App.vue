@@ -1,43 +1,43 @@
 <template>
-  <div id="app">
-    <div v-if="!currentView" class="home-container">
-      <h1>表格管理系统</h1>
-
-      <div class="tabs">
-        <button class="tab-button" :class="{ active: activeTab === 'preliminary' }" @click="activeTab = 'preliminary'">前置</button>
-        <button class="tab-button" :class="{ active: activeTab === 'report' }" @click="activeTab = 'report'">报告</button>
+  <div id="app" class="app-container">
+    <!-- 左侧导航栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>表格管理系统</h1>
       </div>
+      <nav class="nav-menu">
+        <div class="nav-section">
+          <div class="section-title">前置表格</div>
+          <div v-for="item in menuItems.preliminary" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
+            <span class="nav-item-text">{{ item.name }}</span>
+          </div>
+        </div>
+        <div class="nav-section">
+          <div class="section-title">报告表格</div>
+          <div v-for="item in menuItems.report" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
+            <span class="nav-item-text">{{ item.name }}</span>
+          </div>
+        </div>
+      </nav>
+    </aside>
 
-      <div v-show="activeTab === 'preliminary'" class="section active">
-        <div class="button-container">
-          <button class="nav-button" @click="currentView = 'Entrustment'">检测（前）委托单（带合同）</button>
-          <button class="nav-button" @click="currentView = 'LightDynamicPenetrationRecord'">轻型动力触探检测记录表</button>
-          <button class="nav-button" @click="currentView = 'NuclearDensityRecord'">原位密度检测记录表（核子法）</button>
-          <button class="nav-button" @click="currentView = 'SandReplacementRecord'">原位密度检测记录表（灌砂法）</button>
-          <button class="nav-button" @click="currentView = 'WaterReplacementRecord'">相对密度试验记录表（灌水法）</button>
-          <button class="nav-button" @click="currentView = 'CuttingRingRecord'">原位密度检测记录表（环刀法）</button>
-          <button class="nav-button" @click="currentView = 'ReboundMethodRecord'">回弹法检测混凝土抗压强度记录表</button>
-          <button class="nav-button" @click="currentView = 'BeckmanBeamRecord'">路基路面回弹弯沉试验检测记录表（贝克曼梁法）</button>
-          <button class="nav-button" style="background-color: #28a745;" @click="currentView = 'Signature'">电子签名</button>
+    <!-- 右侧内容区域 -->
+    <main class="main-content">
+      <header class="content-header">
+        <div class="header-title">{{ currentPageTitle }}</div>
+        <div class="header-actions">
+          <button class="btn btn-primary" @click="refreshPage">刷新</button>
+          <button class="btn btn-success" @click="printPage">打印</button>
+        </div>
+      </header>
+      <div class="content-wrapper">
+        <component v-if="currentView" :is="components[currentView]" />
+        <div v-else class="welcome-message">
+          <h2>欢迎使用表格管理系统</h2>
+          <p>请从左侧导航栏选择要操作的表格</p>
         </div>
       </div>
-
-      <div v-show="activeTab === 'report'" class="section active">
-        <div class="button-container">
-          <button class="nav-button" @click="currentView = 'DensityTestReport'">原位密度检测报告</button>
-          <button class="nav-button" @click="currentView = 'DensityTestResult'">原位密度检测结果</button>
-          <button class="nav-button" @click="currentView = 'LightDynamicPenetration'">轻型动力触探检测报告</button>
-          <button class="nav-button" @click="currentView = 'LightDynamicPenetrationResult'">轻型动力触探检测结果</button>
-          <button class="nav-button" @click="currentView = 'ReboundMethodReport'">回弹法检测混凝土抗压强度报告</button>
-          <button class="nav-button" @click="currentView = 'BeckmanBeamReport'">路基路面回弹弯沉（回弹模量）检测报告</button>
-          <button class="nav-button" @click="currentView = 'BeckmanBeamResult'">路基路面回弹弯沉（回弹模量）检测结果</button>
-        </div>
-      </div>
-    </div>
-
-    <div v-else>
-      <component :is="components[currentView]" />
-    </div>
+    </main>
   </div>
 </template>
 
@@ -60,8 +60,30 @@ import ReboundMethodReport from './components/ReboundMethodReport.vue'
 import BeckmanBeamReport from './components/BeckmanBeamReport.vue'
 import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
 
-const activeTab = ref('preliminary')
 const currentView = ref('')
+const currentPageTitle = ref('欢迎使用表格管理系统')
+
+const menuItems = {
+  preliminary: [
+    { id: 'Entrustment', name: '检测委托单' },
+    { id: 'LightDynamicPenetration', name: '轻型动力触探检测报告' },
+    { id: 'LightDynamicPenetrationRecord', name: '轻型动力触探检测记录表' },
+    { id: 'NuclearDensityRecord', name: '原位密度检测记录表（核子法）' },
+    { id: 'SandReplacementRecord', name: '原位密度检测记录表（灌砂法）' },
+    { id: 'WaterReplacementRecord', name: '相对密度试验记录表（灌水法）' },
+    { id: 'CuttingRingRecord', name: '原位密度检测记录表（环刀法）' },
+    { id: 'ReboundMethodRecord', name: '回弹法检测混凝土抗压强度记录表' },
+    { id: 'BeckmanBeamRecord', name: '路基路面回弹弯沉试验检测记录表' },
+    { id: 'Signature', name: '电子签名' }
+  ],
+  report: [
+    { id: 'DensityTestReport', name: '原位密度检测报告' },
+    { id: 'DensityTestResult', name: '原位密度检测结果' },
+    { id: 'ReboundMethodReport', name: '回弹法检测混凝土抗压强度报告' },
+    { id: 'BeckmanBeamReport', name: '路基路面回弹弯沉检测报告' },
+    { id: 'BeckmanBeamResult', name: '路基路面回弹弯沉检测结果' }
+  ]
+}
 
 const components = {
   Entrustment,
@@ -82,89 +104,191 @@ const components = {
   BeckmanBeamResult
 }
 
-// Handle Back Navigation (simple hash check or window event if needed, but for now simple state)
-// Since components use <a href="/">, they will reload the page, which effectively resets currentView to '' (Home).
-// This works without extra logic.
+const navigateTo = (item) => {
+  currentView.value = item.id
+  currentPageTitle.value = item.name
+}
+
+const refreshPage = () => {
+  // For Vue components, we can just re-mount the component or trigger a refresh
+  const currentComp = currentView.value
+  currentView.value = ''
+  setTimeout(() => {
+    currentView.value = currentComp
+  }, 100)
+}
+
+const printPage = () => {
+  window.print()
+}
 </script>
 
 <style>
-body {
-  margin: 0;
-  padding: 0;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f7fa; }
+.app-container { display: flex; height: 100vh; overflow: hidden; }
+
+/* 左侧导航栏 */
+.sidebar {
+width: 280px;
+background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+color: white;
+display: flex;
+flex-direction: column;
+box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+}
+.sidebar-header {
+padding: 20px;
+text-align: center;
+border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar-header h1 {
+font-size: 20px;
+font-weight: 600;
+background: linear-gradient(90deg, #3498db, #2ecc71);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+margin: 0;
+}
+.nav-menu {
+flex: 1;
+overflow-y: auto;
+padding: 15px 0;
+}
+.nav-section {
+margin-bottom: 20px;
+}
+.section-title {
+padding: 10px 20px;
+font-size: 12px;
+font-weight: 600;
+color: #95a5a6;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
+.nav-item {
+ display: flex;
+ align-items: center;
+ padding: 12px 20px;
+ cursor: pointer;
+ transition: all 0.3s ease;
+ border-left: 3px solid transparent;
+}
+.nav-item:hover {
+background: rgba(255,255,255,0.1);
+border-left-color: #3498db;
+}
+.nav-item.active {
+background: rgba(52, 152, 219, 0.3);
+border-left-color: #3498db;
 }
 
-.home-container {
-  font-family: 'Microsoft YaHei', Arial, sans-serif;
-  text-align: center;
-  background-color: #f4f6f9;
-  min-height: 100vh;
-  padding-bottom: 20px;
-  overflow: auto;
+.nav-item-text {
+font-size: 14px;
 }
 
-h1 {
-  color: #333;
-  margin-top: 50px;
-  margin-bottom: 40px;
+/* 右侧内容区域 */
+.main-content {
+flex: 1;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+}
+.content-header {
+height: 60px;
+border-bottom: 1px solid #e0e0e0;
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 0 30px;
+background: white;
+box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.header-title {
+font-size: 18px;
+font-weight: 600;
+color: #2c3e50;
+}
+.header-actions {
+ display: flex;
+ gap: 10px;
+}
+.btn {
+padding: 8px 16px;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+font-size: 14px;
+transition: all 0.3s ease;
+}
+.btn-primary {
+background: #3498db;
+color: white;
+}
+.btn-primary:hover {
+background: #2980b9;
+}
+.btn-success {
+background: #2ecc71;
+color: white;
+}
+.btn-success:hover {
+background: #27ae60;
 }
 
-.button-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  max-width: 800px;
-  margin: 0 auto;
+/* 内容区域 */
+.content-wrapper {
+flex: 1;
+overflow: auto;
+padding: 20px;
+background: #f5f7fa;
+}
+.welcome-message {
+text-align: center;
+padding: 100px 20px;
+}
+.welcome-message h2 {
+color: #2c3e50;
+margin-bottom: 20px;
+}
+.welcome-message p {
+color: #7f8c8d;
+font-size: 16px;
 }
 
-.nav-button {
-  padding: 20px 40px;
-  font-size: 18px;
-  cursor: pointer;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: background-color 0.3s;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+/* 响应式设计 */
+@media (max-width: 768px) {
+.sidebar {
+width: 60px;
+}
+.sidebar-header h1 {
+ display: none;
+}
+.nav-item-text {
+ display: none;
+}
+.nav-item-icon {
+ margin-right: 0;
+}
+.section-title {
+ display: none;
+}
 }
 
-.nav-button:hover {
-  background-color: #0056b3;
-  transform: translateY(-2px);
+/* 滚动条样式 */
+::-webkit-scrollbar {
+width: 8px;
+height: 8px;
 }
-
-.tabs {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 30px;
-  gap: 10px;
+::-webkit-scrollbar-track {
+background: #f1f1f1;
 }
-
-.tab-button {
-  padding: 10px 30px;
-  font-size: 20px;
-  cursor: pointer;
-  background-color: #e9ecef;
-  border: none;
-  border-radius: 5px;
-  color: #495057;
-  transition: all 0.3s;
+::-webkit-scrollbar-thumb {
+background: #c1c1c1;
+border-radius: 4px;
 }
-
-.tab-button.active {
-  background-color: #007bff;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.section {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+::-webkit-scrollbar-thumb:hover {
+background: #a8a8a8;
 }
 </style>

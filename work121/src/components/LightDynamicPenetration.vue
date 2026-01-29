@@ -13,8 +13,8 @@
     <h2>轻型动力触探检测报告</h2>
 
     <div class="header-info">
-        <span>委托单位：<input type="text" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
     <table>
@@ -72,46 +72,35 @@
         </tr>
 
         <!-- Data Rows -->
-        <%
-        // 左右两栏，每栏4个大测点块，每个测点块包含2个小行（深度记录）
-        // 外层循环控制“大行”（测点），共4个（保持总行数8行不变：4*2=8）
-        for(int block=0; block<4; block++) {
-            // 内层循环控制“小行”（深度），共2个
-            for(int sub=0; sub<2; sub++) {
-                // 计算全局行索引，用于唯一标识输入框名称
-                int globalRowIndex = block * 2 + sub;
-        %>
-        <tr>
-            <!-- 左栏 -->
-            <% if(sub == 0) { %>
-                <td rowspan="2"><textarea  name="pos_L_<%=block%>" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
-            <% } %>
+        <template v-for="(block, blockIndex) in formData.dataBlocks" :key="blockIndex">
+            <template v-for="(depth, subIndex) in block.depths" :key="`${blockIndex}-${subIndex}`">
+                <tr>
+                    <!-- 左栏 -->
+                    <td v-if="subIndex === 0" rowspan="2"><textarea v-model="block.pos_L" :name="`pos_L_${blockIndex}`" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
+                    <td v-else></td>
 
-            <td><input type="text" name="depth_L_<%=globalRowIndex%>"></td>
-            <td><input type="text" name="actual_L_<%=globalRowIndex%>"></td>
+                    <td><input type="text" v-model="depth.depth_L" :name="`depth_L_${blockIndex * 2 + subIndex}`"></td>
+                    <td><input type="text" v-model="depth.actual_L" :name="`actual_L_${blockIndex * 2 + subIndex}`"></td>
 
-            <% if(sub == 0) { %>
-                <td rowspan="2"><input type="text" name="avg_L_<%=block%>" style="height: 100%;"></td>
-                <td rowspan="2"><input type="text" name="capacity_L_<%=block%>" style="height: 100%;"></td>
-            <% } %>
+                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.avg_L" :name="`avg_L_${blockIndex}`" style="height: 100%;"></td>
+                    <td v-else></td>
+                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.capacity_L" :name="`capacity_L_${blockIndex}`" style="height: 100%;"></td>
+                    <td v-else></td>
 
-            <!-- 右栏 -->
-            <% if(sub == 0) { %>
-                <td rowspan="2"><textarea  name="pos_R_<%=block%>" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
-            <% } %>
+                    <!-- 右栏 -->
+                    <td v-if="subIndex === 0" rowspan="2"><textarea v-model="block.pos_R" :name="`pos_R_${blockIndex}`" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
+                    <td v-else></td>
 
-            <td><input type="text" name="depth_R_<%=globalRowIndex%>"></td>
-            <td><input type="text" name="actual_R_<%=globalRowIndex%>"></td>
+                    <td><input type="text" v-model="block.depths_R[subIndex].depth_R" :name="`depth_R_${blockIndex * 2 + subIndex}`"></td>
+                    <td><input type="text" v-model="block.depths_R[subIndex].actual_R" :name="`actual_R_${blockIndex * 2 + subIndex}`"></td>
 
-            <% if(sub == 0) { %>
-                <td rowspan="2"><input type="text" name="avg_R_<%=block%>" style="height: 100%;"></td>
-                <td rowspan="2"><input type="text" name="capacity_R_<%=block%>" style="height: 100%;"></td>
-            <% } %>
-        </tr>
-        <%
-            }
-        }
-        %>
+                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.avg_R" :name="`avg_R_${blockIndex}`" style="height: 100%;"></td>
+                    <td v-else></td>
+                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.capacity_R" :name="`capacity_R_${blockIndex}`" style="height: 100%;"></td>
+                    <td v-else></td>
+                </tr>
+            </template>
+        </template>
 
         <!-- Row: 检测依据 -->
         <tr>
@@ -171,6 +160,8 @@ import { reactive, ref, onMounted } from 'vue'
 const pdfForm = ref(null)
 
 const formData = reactive({
+  entrustingUnit: '',
+  unifiedNumber: '',
   projectName: '',
   entrustDate: '',
   constructionPart: '',
@@ -193,6 +184,12 @@ const formData = reactive({
   companyAddress: '',
   companyPhone: '',
   conclusion: '',
+  dataBlocks: [
+    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' },
+    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' },
+    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' },
+    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' }
+  ]
 })
 
 onMounted(() => {

@@ -13,7 +13,8 @@
     <h2>检测 (验) 委托单 (代合同)</h2>
 
     <div class="header-info">
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;">
+        <button type="button" @click="queryEntrustment" class="query-btn" style="margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">查询</button></span>
         <span>样品编号：<input type="text" v-model="formData.sampleNumber"   name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
@@ -191,6 +192,7 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
+import axios from 'axios'
 
 const pdfForm = ref(null)
 
@@ -251,6 +253,53 @@ const previewPdf = () => {
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
   }
+}
+
+const queryEntrustment = () => {
+  if (!formData.unifiedNumber) {
+    alert('请输入统一编号');
+    return;
+  }
+
+  axios.get('/api/jc-core-wt-info/by-wt-num', {
+    params: {
+      wtNum: formData.unifiedNumber
+    }
+  })
+  .then(response => {
+    if (response.data.success && response.data.data) {
+      let data = response.data.data;
+      
+      formData.clientUnit = data.wtUnit || '';
+      formData.clientDate = formatDate(data.wtDate, 'YYYY-MM');
+      formData.constructionUnit = data.sgUnit || '';
+      formData.buildingUnit = data.jsUnit || '';
+      formData.witnessUnit = data.jzUnit || '';
+      formData.witness = data.jzMan || '';
+      formData.projectName = data.gcName || '';
+      formData.constructionPart = data.gcArea || '';
+      formData.clientAddressPhone = data.wtUnitAddr || '' + (data.wtUnitTel || '');
+      formData.projectName = data.gcName || '';
+    } else {
+      alert('未找到该统一编号的委托单');
+    }
+  })
+  .catch(error => {
+    console.error('查询委托单失败:', error);
+    alert('查询失败，请稍后重试');
+  });
+}
+
+const formatDate = (dateStr, format) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return format.replace('YYYY', year).replace('MM', month).replace('DD', day);
 }
 </script>
 
