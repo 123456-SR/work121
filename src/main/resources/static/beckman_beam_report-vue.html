@@ -35,41 +35,41 @@ input[type="text"] { width: 95%; border: none; outline: none; text-align: center
 <h1>路基路面回弹弯沉（回弹模量）检测报告</h1>
 
 <div class="header-info">
-<div>委托单位：<input type="text" v-model="formData.entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
-<div>统一编号：<input type="text" v-model="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
+<div>委托单位：<input type="text" v-model="formData.entrustingUnit" name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
+<div>统一编号：<input type="text" v-model="formData.unifiedNumber" name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
 </div>
 
 <table>
 <colgroup><col style="width: 15%;"><col style="width: 35%;"><col style="width: 15%;"><col style="width: 35%;"></colgroup>
-<tr><td class="label">工程名称</td><td><input type="text" v-model="formData.projectName"></td><td class="label">委托日期</td><td><input type="text" v-model="formData.commissionDate"></td></tr>
-<tr><td class="label">施工部位</td><td><input type="text" v-model="formData.constructionPart"></td><td class="label">检测日期</td><td><input type="text" v-model="formData.testDate"></td></tr>
-<tr><td class="label">仪器设备及编码</td><td><input type="text" v-model="formData.equipmentCode"></td><td class="label">报告日期</td><td><input type="text" v-model="formData.reportDate"></td></tr>
-<tr><td class="label">样品名称及状态</td><td><input type="text" v-model="formData.sampleStatus"></td><td class="label">检测类别</td><td><input type="text" v-model="formData.testCategory"></td></tr>
-<tr><td class="label">依据标准</td><td><input type="text" v-model="formData.standard"></td><td class="label">检测方法</td><td><input type="text" v-model="formData.testMethod"></td></tr>
-<tr><td class="label">见证单位</td><td><input type="text" v-model="formData.witnessUnit"></td><td class="label">见证人</td><td><input type="text" v-model="formData.witness"></td></tr>
-<tr><td class="label">弯沉仪类型</td><td><input type="text" v-model="formData.deflectometerType"></td><td class="label">后轴重(kN)</td><td><input type="text" v-model="formData.axleWeight"></td></tr>
-<tr><td class="label">轮胎接地压强(MPa)</td><td><input type="text" v-model="formData.tirePressure"></td><td class="label">检测段长度(m)</td><td><input type="text" v-model="formData.testLength"></td></tr>
+<tr><td class="label">工程名称</td><td><input type="text" v-model="formData.projectName" name="projectName"></td><td class="label">委托日期</td><td><input type="text" v-model="formData.commissionDate" name="commissionDate"></td></tr>
+<tr><td class="label">施工部位</td><td><input type="text" v-model="formData.constructionPart" name="constructionPart"></td><td class="label">检测日期</td><td><input type="text" v-model="formData.testDate" name="testDate"></td></tr>
+<tr><td class="label">仪器设备及编码</td><td><input type="text" v-model="formData.equipmentCode" name="equipmentCode"></td><td class="label">报告日期</td><td><input type="text" v-model="formData.reportDate" name="reportDate"></td></tr>
+<tr><td class="label">样品名称及状态</td><td><input type="text" v-model="formData.sampleStatus" name="sampleStatus"></td><td class="label">检测类别</td><td><input type="text" v-model="formData.testCategory" name="testCategory"></td></tr>
+<tr><td class="label">依据标准</td><td><input type="text" v-model="formData.standard" name="standard"></td><td class="label">检测方法</td><td><input type="text" v-model="formData.testMethod" name="testMethod"></td></tr>
+<tr><td class="label">见证单位</td><td><input type="text" v-model="formData.witnessUnit" name="witnessUnit"></td><td class="label">见证人</td><td><input type="text" v-model="formData.witness" name="witness"></td></tr>
+<tr><td class="label">弯沉仪类型</td><td><input type="text" v-model="formData.deflectometerType" name="deflectometerType"></td><td class="label">后轴重(kN)</td><td><input type="text" v-model="formData.axleWeight" name="axleWeight"></td></tr>
+<tr><td class="label">轮胎接地压强(MPa)</td><td><input type="text" v-model="formData.tirePressure" name="tirePressure"></td><td class="label">检测段长度(m)</td><td><input type="text" v-model="formData.testLength" name="testLength"></td></tr>
 </table>
 
 <table style="margin-top: 1px;">
 <colgroup><col style="width: 12%;"><col style="width: 20%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 8%;"></colgroup>
 <tr><td class="label">测点桩号</td><td class="label">测点位置</td><td class="label">初读数(0.01mm)</td><td class="label">终读数(0.01mm)</td><td class="label">回弹弯沉值(0.01mm)</td><td class="label">代表弯沉值(0.01mm)</td><td class="label">备注</td></tr>
 <template v-for="(row, index) in formData.dataRows" :key="index">
-<tr><td><input type="text" v-model="row.station"></td><td><input type="text" v-model="row.location"></td><td><input type="text" v-model="row.initialReading"></td><td><input type="text" v-model="row.finalReading"></td><td><input type="text" v-model="row.reboundDeflection"></td><td><input type="text" v-model="row.representativeDeflection"></td><td><input type="text" v-model="row.remarks"></td></tr>
+<tr><td><input type="text" v-model="row.station" name="station_{{index + 1}}"></td><td><input type="text" v-model="row.location" name="location_{{index + 1}}"></td><td><input type="text" v-model="row.initialReading" name="initialReading_{{index + 1}}"></td><td><input type="text" v-model="row.finalReading" name="finalReading_{{index + 1}}"></td><td><input type="text" v-model="row.reboundDeflection" name="reboundDeflection_{{index + 1}}"></td><td><input type="text" v-model="row.representativeDeflection" name="representativeDeflection_{{index + 1}}"></td><td><input type="text" v-model="row.remarks" name="remarks_{{index + 1}}"></td></tr>
 </template>
 </table>
 
 <table style="margin-top: 1px;">
 <colgroup><col style="width: 15%;"><col style="width: 85%;"></colgroup>
-<tr><td class="label">检测结论</td><td class="left-align" style="height: 80px; vertical-align: top;"><textarea v-model="formData.conclusion" style="width: 100%; height: 100%; border: none; resize: none;"></textarea></td></tr>
-<tr><td class="label">备注</td><td class="left-align" style="height: 60px; vertical-align: top;"><textarea v-model="formData.remarks" style="width: 100%; height: 100%; border: none; resize: none;"></textarea></td></tr>
+<tr><td class="label">检测结论</td><td class="left-align" style="height: 80px; vertical-align: top;"><textarea v-model="formData.conclusion" style="width: 100%; height: 100%; border: none; resize: none;" name="conclusion"></textarea></td></tr>
+<tr><td class="label">备注</td><td class="left-align" style="height: 60px; vertical-align: top;"><textarea v-model="formData.remarks" style="width: 100%; height: 100%; border: none; resize: none;" name="remarks"></textarea></td></tr>
 </table>
 
 <div class="footer-section">
 <div class="footer-line">
-<span>批准：<input type="text" v-model="formData.approval" style="width: 80px; border-bottom: 1px solid black;"></span>
-<span>审核：<input type="text" v-model="formData.reviewer" style="width: 80px; border-bottom: 1px solid black;"></span>
-<span>检测：<input type="text" v-model="formData.tester" style="width: 80px; border-bottom: 1px solid black;"></span>
+<span>批准：<input type="text" v-model="formData.approval" name="approval" style="width: 80px; border-bottom: 1px solid black;"></span>
+<span>审核：<input type="text" v-model="formData.reviewer" name="reviewer" style="width: 80px; border-bottom: 1px solid black;"></span>
+<span>检测：<input type="text" v-model="formData.tester" name="tester" style="width: 80px; border-bottom: 1px solid black;"></span>
 </div>
 </div>
 
@@ -78,16 +78,15 @@ input[type="text"] { width: 95%; border: none; outline: none; text-align: center
 声明：1. 对本检测报告的复印件未加盖公司检验检测专用章无效。2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。
 </div>
 <div style="display: flex; justify-content: space-between; margin-top: 10px; border-bottom: 2px solid black; padding-bottom: 5px;">
-<span>公司名称：<input type="text" v-model="formData.companyName" style="width: 180px; border: none;"></span>
-<span>电话：<input type="text" v-model="formData.companyPhone" style="width: 120px; border: none;"></span>
+<span>公司名称：<input type="text" v-model="formData.companyName" name="companyName" style="width: 180px; border: none;"></span>
+<span>电话：<input type="text" v-model="formData.companyPhone" name="companyPhone" style="width: 120px; border: none;"></span>
 </div>
 <div style="margin-top: 5px;">
-<span>公司地址：<input type="text" v-model="formData.companyAddress" style="width: 350px; border: none;"></span>
+<span>公司地址：<input type="text" v-model="formData.companyAddress" name="companyAddress" style="width: 350px; border: none;"></span>
 </div>
-<div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px;">
-<span>版次：<input type="text" v-model="formData.version" style="width: 40px; border-bottom: 1px solid black; text-align: center;"></span>
-<span><input type="text" v-model="formData.footerDate" style="width: 80px; border-bottom: 1px solid black; text-align: center;"></span>
-<span>第 <input type="text" v-model="formData.page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
+<div style="display: flex; justify-content: center; align-items: center; gap: 50px; margin-top: 10px; font-size: 12px;">
+<span><input type="text" v-model="formData.footerDate" name="footerDate" style="width: 80px; border-bottom: 1px solid black; text-align: center;"></span>
+<span>第 <input type="text" v-model="formData.page" name="page" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页，共 <input type="text" v-model="formData.totalPages" name="totalPages" style="width: 20px; border-bottom: 1px solid black; text-align: center;"> 页</span>
 </div>
 </div>
 </form>
