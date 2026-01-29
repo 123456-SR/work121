@@ -767,10 +767,14 @@ public class PdfGeneratorService {
 
                 mainTable.completeRow();
 
+                // 第二行：只需要添加深度和实际锤击数，其他单元格由rowspan覆盖
                 addCell(mainTable, depth_L_2, valueFont, Element.ALIGN_CENTER, 1);
                 addCell(mainTable, actual_L_2, valueFont, Element.ALIGN_CENTER, 1);
+                // 跳过avgCell1和capacityCell1的位置（由rowspan覆盖）
                 addCell(mainTable, depth_R_2, valueFont, Element.ALIGN_CENTER, 1);
                 addCell(mainTable, actual_R_2, valueFont, Element.ALIGN_CENTER, 1);
+                // 跳过avgCell2和capacityCell2的位置（由rowspan覆盖）
+                mainTable.completeRow();
             }
 
             String testBasis = request.getParameter("testBasis") != null ? request.getParameter("testBasis") : "";
@@ -1030,7 +1034,17 @@ public class PdfGeneratorService {
                         rightCapacityCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                         rightCapacityCell.setRowspan(5);
                         mainTable.addCell(rightCapacityCell);
+                    } else {
+                        // 非第一行，添加占位单元格来匹配rowspan
+                        // 左侧平均锤击数和承载力的位置
+                        addCell(mainTable, "", valueFont, Element.ALIGN_CENTER, 1);
+                        addCell(mainTable, "", valueFont, Element.ALIGN_CENTER, 1);
+                        // 右侧平均锤击数和承载力的位置
+                        addCell(mainTable, "", valueFont, Element.ALIGN_CENTER, 1);
+                        addCell(mainTable, "", valueFont, Element.ALIGN_CENTER, 1);
                     }
+                    // 确保每行都有10个单元格
+                    mainTable.completeRow();
                 }
             }
 
@@ -2607,8 +2621,8 @@ public class PdfGeneratorService {
             for (int i = 1; i <= 25; i++) {
                 String station = request.getParameter("station_" + i) != null ? request.getParameter("station_" + i) : "";
                 String location = request.getParameter("lane_" + i) != null ? request.getParameter("lane_" + i) : "";
-                String initialReading = request.getParameter("initialReading") != null ? request.getParameter("initialReading") : "";
-                String finalReading = request.getParameter("finalReading") != null ? request.getParameter("finalReading") : "";
+                String initialReading = request.getParameter("initialReading_" + i) != null ? request.getParameter("initialReading_" + i) : "";
+                String finalReading = request.getParameter("finalReading_" + i) != null ? request.getParameter("finalReading_" + i) : "";
                 String reboundDeflection = request.getParameter("left_val_" + i) != null ? request.getParameter("left_val_" + i) : "";
                 String representativeDeflection = request.getParameter("right_val_" + i) != null ? request.getParameter("right_val_" + i) : "";
                 String remarks = request.getParameter("remark_" + i) != null ? request.getParameter("remark_" + i) : "";
