@@ -58,6 +58,23 @@ public interface JcCoreWtInfoMapper {
             "t.* " +
             "FROM JC_CORE_WT_INFO t " +
             "WHERE WT_REG_NAME = #{regName} " +
+            "OR WT_MAN = #{regName} " +
+            "OR JD_MAN = #{regName} " +
+            "OR JZ_MAN = #{regName} " +
+            "OR CY_MAN = #{regName} " +
+            "OR JC_TASK_JS_MAN = #{regName} " +
+            "OR JC_TASK_REG_MAN = #{regName} " +
+            "OR JC_TASK_SH_MAN = #{regName} " +
+            "OR PRODUCE_GD_MAN = #{regName} " +
+            "OR YW_MAN = #{regName} " +
+            "OR JS_MAN = #{regName} " +
+            "OR KC_MAN = #{regName} " +
+            "OR SG_MAN = #{regName} " +
+            "OR SJ_MAN = #{regName} " +
+            "OR JC_TASK_XD_MAN = #{regName} " +
+            "OR SEND_BACK_MAN = #{regName} " +
+            "OR JC_TASK_TJ_MAN = #{regName} " +
+            "OR JL_MAN = #{regName} " +
             "ORDER BY WT_DATE DESC")
     java.util.List<JcCoreWtInfo> selectByRegName(@Param("regName") String regName);
 

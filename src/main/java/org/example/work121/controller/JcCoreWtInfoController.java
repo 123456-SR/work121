@@ -57,16 +57,18 @@ public class JcCoreWtInfoController {
     }
 
     @GetMapping("/by-reg-name")
-    public Map<String, Object> getByRegName(@RequestParam String regName) {
+    public Map<String, Object> getByRegName(@RequestParam String regName,
+                                            @RequestParam(defaultValue = "1") int pageNum,
+                                            @RequestParam(defaultValue = "7") int pageSize) {
         Map<String, Object> result = new HashMap<>();
-        logger.info("接收到根据登记人查询请求，REG_NAME: {}", regName);
+        logger.info("接收到根据登记人查询请求，REG_NAME: {}, pageNum: {}, pageSize: {}", regName, pageNum, pageSize);
         
         try {
-            java.util.List<JcCoreWtInfo> list = jcCoreWtInfoService.getByRegName(regName);
+            com.github.pagehelper.PageInfo<JcCoreWtInfo> pageInfo = jcCoreWtInfoService.getByRegName(regName, pageNum, pageSize);
             result.put("success", true);
             result.put("message", "查询成功");
-            result.put("data", list);
-            logger.info("查询成功，找到 {} 条记录", list.size());
+            result.put("data", pageInfo);
+            logger.info("查询成功，找到 {} 条记录", pageInfo.getTotal());
         } catch (Exception e) {
             logger.error("查询异常，REG_NAME: {}", regName, e);
             result.put("success", false);

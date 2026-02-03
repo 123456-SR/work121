@@ -29,9 +29,11 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
     }
 
     @Override
-    public java.util.List<JcCoreWtInfo> getByRegName(String regName) {
-        logger.info("正在根据登记人查询委托列表，WT_REG_NAME: {}", regName);
-        return jcCoreWtInfoMapper.selectByRegName(regName);
+    public com.github.pagehelper.PageInfo<JcCoreWtInfo> getByRegName(String regName, int pageNum, int pageSize) {
+        logger.info("正在根据登记人查询委托列表，WT_REG_NAME: {}, pageNum: {}, pageSize: {}", regName, pageNum, pageSize);
+        com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
+        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByRegName(regName);
+        return new com.github.pagehelper.PageInfo<>(list);
     }
 
     @Override

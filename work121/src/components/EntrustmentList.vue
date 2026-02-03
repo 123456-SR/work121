@@ -40,6 +40,12 @@
         </tbody>
       </table>
     </div>
+
+    <div class="pagination-container">
+      <button class="btn btn-secondary" :disabled="pageNum <= 1" @click="changePage(pageNum - 1)">上一页</button>
+      <span class="page-info">第 {{ pageNum }} 页 / 共 {{ Math.ceil(total / pageSize) || 1 }} 页 (共 {{ total }} 条)</span>
+      <button class="btn btn-secondary" :disabled="pageNum * pageSize >= total" @click="changePage(pageNum + 1)">下一页</button>
+    </div>
   </div>
 </template>
 
@@ -50,6 +56,9 @@ import axios from 'axios'
 const list = ref([])
 const loading = ref(false)
 const navigateTo = inject('navigateTo')
+const pageNum = ref(1)
+const pageSize = ref(7)
+const total = ref(0)
 
 // 获取当前用户信息
 const getCurrentUser = () => {
@@ -75,9 +84,10 @@ const loadData = async () => {
   try {
     loading.value = true
     // 使用用户真实姓名查询
-    const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(user.userName)}`)
+    const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(user.userName)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
     if (response.data.success) {
-      list.value = response.data.data
+      list.value = response.data.data.list
+      total.value = response.data.data.total
     } else {
       console.error('Failed to load data:', response.data.message)
     }
@@ -86,6 +96,12 @@ const loadData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 翻页
+const changePage = (newPage) => {
+  pageNum.value = newPage
+  loadData()
 }
 
 // 格式化日期
@@ -172,5 +188,32 @@ onMounted(() => {
 
 .btn-primary:hover {
   background-color: #0056b3;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.page-info {
+  color: #666;
+  font-size: 14px;
 }
 </style>

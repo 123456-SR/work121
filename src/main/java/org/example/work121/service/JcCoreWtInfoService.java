@@ -9,9 +9,11 @@ public interface JcCoreWtInfoService {
     /**
      * 根据登记人姓名查询委托信息列表
      * @param regName 登记人姓名
-     * @return 委托信息列表
+     * @param pageNum 页码
+     * @param pageSize 每页数量
+     * @return 委托信息分页列表
      */
-    java.util.List<JcCoreWtInfo> getByRegName(String regName);
+    com.github.pagehelper.PageInfo<JcCoreWtInfo> getByRegName(String regName, int pageNum, int pageSize);
 
     /**
      * 根据ID查询委托信息
