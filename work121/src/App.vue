@@ -1,48 +1,60 @@
 <template>
-  <div id="app" class="app-container">
-    <!-- 左侧导航栏 -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h1>表格管理系统</h1>
-      </div>
-      <nav class="nav-menu">
-        <div class="nav-section">
-          <div class="section-title">前置表格</div>
-          <div v-for="item in menuItems.preliminary" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
-            <span class="nav-item-text">{{ item.name }}</span>
-          </div>
+  <div id="app">
+    <!-- 登录页面 -->
+    <Login 
+      v-if="!isLoggedIn" 
+      @login-success="handleLoginSuccess" 
+    />
+    
+    <!-- 主应用界面 -->
+    <div v-else class="app-container">
+      <!-- 左侧导航栏 -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>表格管理系统</h1>
         </div>
-        <div class="nav-section">
-          <div class="section-title">报告表格</div>
-          <div v-for="item in menuItems.report" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
-            <span class="nav-item-text">{{ item.name }}</span>
+        <nav class="nav-menu">
+          <div class="nav-section">
+            <div class="section-title">前置表格</div>
+            <div v-for="item in menuItems.preliminary" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
+              <span class="nav-item-text">{{ item.name }}</span>
+            </div>
           </div>
+          <div class="nav-section">
+            <div class="section-title">报告表格</div>
+            <div v-for="item in menuItems.report" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
+              <span class="nav-item-text">{{ item.name }}</span>
+            </div>
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <button @click="logout" class="logout-button">退出登录</button>
         </div>
-      </nav>
-    </aside>
+      </aside>
 
-    <!-- 右侧内容区域 -->
-    <main class="main-content">
-      <header class="content-header">
-        <div class="header-title">{{ currentPageTitle }}</div>
-        <div class="header-actions">
-          <button class="btn btn-primary" @click="refreshPage">刷新</button>
-          <button class="btn btn-success" @click="printPage">打印</button>
+      <!-- 右侧内容区域 -->
+      <main class="main-content">
+        <header class="content-header">
+          <div class="header-title">{{ currentPageTitle }}</div>
+          <div class="header-actions">
+            <button class="btn btn-primary" @click="refreshPage">刷新</button>
+            <button class="btn btn-success" @click="printPage">打印</button>
+          </div>
+        </header>
+        <div class="content-wrapper">
+          <component v-if="currentView" :is="components[currentView]" />
+          <div v-else class="welcome-message">
+            <h2>欢迎使用表格管理系统</h2>
+            <p>请从左侧导航栏选择要操作的表格</p>
+          </div>
         </div>
-      </header>
-      <div class="content-wrapper">
-        <component v-if="currentView" :is="components[currentView]" />
-        <div v-else class="welcome-message">
-          <h2>欢迎使用表格管理系统</h2>
-          <p>请从左侧导航栏选择要操作的表格</p>
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Entrustment from './components/Entrustment.vue'
 import LightDynamicPenetrationRecord from './components/LightDynamicPenetrationRecord.vue'
 import NuclearDensityRecord from './components/NuclearDensityRecord.vue'
@@ -59,9 +71,11 @@ import LightDynamicPenetrationResult from './components/LightDynamicPenetrationR
 import ReboundMethodReport from './components/ReboundMethodReport.vue'
 import BeckmanBeamReport from './components/BeckmanBeamReport.vue'
 import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
+import Login from './components/Login.vue'
 
 const currentView = ref('')
 const currentPageTitle = ref('欢迎使用表格管理系统')
+const isLoggedIn = ref(false)
 
 const menuItems = {
   preliminary: [
@@ -121,11 +135,39 @@ const refreshPage = () => {
 const printPage = () => {
   window.print()
 }
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('token')
+  const userInfo = localStorage.getItem('userInfo')
+  isLoggedIn.value = !!token && !!userInfo
+}
+
+// 处理登录成功
+const handleLoginSuccess = () => {
+  isLoggedIn.value = true
+  currentPageTitle.value = '欢迎使用表格管理系统'
+}
+
+// 退出登录
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('userInfo')
+  isLoggedIn.value = false
+  currentView.value = ''
+  currentPageTitle.value = ''
+}
+
+// 组件挂载时检查登录状态
+onMounted(() => {
+  checkLoginStatus()
+})
 </script>
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f7fa; }
+#app { width: 100%; height: 100vh; }
 .app-container { display: flex; height: 100vh; overflow: hidden; }
 
 /* 左侧导航栏 */
@@ -186,6 +228,29 @@ border-left-color: #3498db;
 
 .nav-item-text {
 font-size: 14px;
+}
+
+/* 侧边栏底部 */
+.sidebar-footer {
+padding: 20px;
+border-top: 1px solid rgba(255,255,255,0.1);
+margin-top: auto;
+}
+
+.logout-button {
+width: 100%;
+padding: 10px;
+background: rgba(231, 76, 60, 0.2);
+color: #e74c3c;
+border: 1px solid rgba(231, 76, 60, 0.4);
+border-radius: 4px;
+font-size: 14px;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+background: rgba(231, 76, 60, 0.3);
 }
 
 /* 右侧内容区域 */
