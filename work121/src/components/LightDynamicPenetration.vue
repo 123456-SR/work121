@@ -7,6 +7,7 @@
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <button @click="submitForm" style="float: right; margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -156,6 +157,7 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
+import axios from 'axios'
 
 const pdfForm = ref(null)
 
@@ -213,6 +215,59 @@ const previewPdf = () => {
     pdfForm.value.action = '/api/pdf/light_dynamic_penetration/preview'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
+  }
+}
+
+const submitForm = async () => {
+  try {
+    // 获取当前登录用户信息
+    const userInfoStr = localStorage.getItem('userInfo');
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
+    
+    // 构建提交数据
+    const submitData = {
+      unifiedNumber: formData.unifiedNumber,
+      entrustingUnit: formData.entrustingUnit,
+      projectName: formData.projectName,
+      entrustDate: formData.entrustDate,
+      constructionPart: formData.constructionPart,
+      testDate: formData.testDate,
+      soilProperty: formData.soilProperty,
+      reportDate: formData.reportDate,
+      witnessUnit: formData.witnessUnit,
+      witness: formData.witness,
+      designCapacity: formData.designCapacity,
+      hammerWeight: formData.hammerWeight,
+      dropDistance: formData.dropDistance,
+      testCategory: formData.testCategory,
+      testBasis: formData.testBasis,
+      equipment: formData.equipment,
+      remarks: formData.remarks,
+      approve: formData.approve,
+      review: formData.review,
+      inspect: formData.inspect,
+      companyName: formData.companyName,
+      companyAddress: formData.companyAddress,
+      companyPhone: formData.companyPhone,
+      conclusion: formData.conclusion,
+      dataBlocks: JSON.stringify(formData.dataBlocks),
+      reviewer: formData.review || userInfo.userName || '',
+      inspector: formData.inspect || userInfo.userName || '',
+      approver: formData.approve || userInfo.userName || '',
+      creator: userInfo.userName || userInfo.username || ''
+    };
+    
+    // 发送请求
+    const response = await axios.post('/api/light-dynamic-penetration/save', submitData);
+    
+    if (response.data.success) {
+      alert('提交成功');
+    } else {
+      alert('提交失败: ' + response.data.message);
+    }
+  } catch (error) {
+    console.error('提交错误:', error);
+    alert('提交失败，请稍后重试');
   }
 }
 </script>

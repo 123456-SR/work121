@@ -7,6 +7,7 @@
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <button @click="submitForm" style="float: right; margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
     </div>
 
     <form id="entrustmentForm" ref="pdfForm" method="post">
@@ -359,6 +360,66 @@ const formatDate = (dateStr, format) => {
   const day = String(date.getDate()).padStart(2, '0');
   
   return format.replace('YYYY', year).replace('MM', month).replace('DD', day);
+}
+
+const submitForm = async () => {
+  try {
+    // 获取当前登录用户信息
+    const userInfoStr = localStorage.getItem('userInfo');
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
+    
+    // 构建提交数据
+    const submitData = {
+      unifiedNumber: formData.unifiedNumber,
+      sampleNumber: formData.sampleNumber,
+      clientUnit: formData.clientUnit,
+      clientDate: formData.clientDate,
+      constructionUnit: formData.constructionUnit,
+      buildingUnit: formData.buildingUnit,
+      projectName: formData.projectName,
+      constructionPart: formData.constructionPart,
+      sampleName: formData.sampleName,
+      spec: formData.spec,
+      manufacturer: formData.manufacturer,
+      sampleQuantity: formData.sampleQuantity,
+      representativeBatch: formData.representativeBatch,
+      batchNumber: formData.batchNumber,
+      testCategory: formData.testCategory,
+      clientAddressPhone: formData.clientAddressPhone,
+      reportSend: formData.reportSend.join(','),
+      sampleDisposal: formData.sampleDisposal.join(','),
+      witness: formData.witness,
+      witnessUnit: formData.witnessUnit,
+      deliveryMode: formData.deliveryMode,
+      deliveryDate1_y: formData.deliveryDate1_y,
+      deliveryDate1_m: formData.deliveryDate1_m,
+      deliveryDate1_d: formData.deliveryDate1_d,
+      deliveryDate2_y: formData.deliveryDate2_y,
+      deliveryDate2_m: formData.deliveryDate2_m,
+      deliveryDate2_d: formData.deliveryDate2_d,
+      fee: formData.fee,
+      remarks: formData.remarks,
+      sampleHistory: formData.sampleHistory,
+      sampleStatus: formData.sampleStatus,
+      testItems: formData.testItems,
+      reviewer: formData.review || userInfo.userName || '',
+      inspector: formData.inspect || userInfo.userName || '',
+      approver: formData.approve || userInfo.userName || '',
+      creator: userInfo.userName || userInfo.username || ''
+    };
+    
+    // 发送请求
+    const response = await axios.post('/api/entrustment/save', submitData);
+    
+    if (response.data.success) {
+      alert('提交成功');
+    } else {
+      alert('提交失败: ' + response.data.message);
+    }
+  } catch (error) {
+    console.error('提交错误:', error);
+    alert('提交失败，请稍后重试');
+  }
 }
 </script>
 
