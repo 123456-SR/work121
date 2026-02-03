@@ -5,6 +5,7 @@ public class User {
     private String userAccount;
     private String userPass;
     private String userStatus;
+    private String userName;
 
     public String getUserId() {
         return userId;
@@ -36,5 +37,13 @@ public class User {
 
     public void setUserStatus(String userStatus) {
         this.userStatus = userStatus;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

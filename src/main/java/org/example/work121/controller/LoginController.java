@@ -78,6 +78,7 @@ public class LoginController {
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("userId", user.getUserId());
             userInfo.put("username", user.getUserAccount());
+            userInfo.put("userName", user.getUserName());
             userInfo.put("status", user.getUserStatus());
             
             result.put("data", userInfo);

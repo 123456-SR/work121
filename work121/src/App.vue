@@ -35,12 +35,13 @@
       <!-- 右侧内容区域 -->
       <main class="main-content">
         <header class="content-header">
-          <div class="header-title">{{ currentPageTitle }}</div>
-          <div class="header-actions">
-            <button class="btn btn-primary" @click="refreshPage">刷新</button>
-            <button class="btn btn-success" @click="printPage">打印</button>
-          </div>
-        </header>
+        <div class="header-title">{{ currentPageTitle }}</div>
+        <div class="header-actions">
+          <span class="user-info">{{ getCurrentUserName() }}</span>
+          <button class="btn btn-primary" @click="refreshPage">刷新</button>
+          <button class="btn btn-success" @click="printPage">打印</button>
+        </div>
+      </header>
         <div class="content-wrapper">
           <component v-if="currentView" :is="components[currentView]" />
           <div v-else class="welcome-message">
@@ -156,6 +157,21 @@ const logout = () => {
   isLoggedIn.value = false
   currentView.value = ''
   currentPageTitle.value = ''
+}
+
+// 获取当前登录用户的姓名
+const getCurrentUserName = () => {
+  try {
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      return userInfo.userName || userInfo.username || '未知用户'
+    }
+    return ''
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    return ''
+  }
 }
 
 // 组件挂载时检查登录状态
@@ -278,6 +294,18 @@ color: #2c3e50;
 .header-actions {
  display: flex;
  gap: 10px;
+ align-items: center;
+}
+
+.user-info {
+ font-size: 14px;
+ color: #333;
+ font-weight: 500;
+ margin-right: 10px;
+ padding: 6px 12px;
+ background: #f5f7fa;
+ border-radius: 4px;
+ border: 1px solid #e0e0e0;
 }
 .btn {
 padding: 8px 16px;
