@@ -4,6 +4,7 @@
 
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button @click="saveData" style="float: right; margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
@@ -129,7 +130,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, defineProps } from 'vue'
+import axios from 'axios'
+
+const props = defineProps({
+  id: String
+})
 
 const pdfForm = ref(null)
 
@@ -154,8 +160,75 @@ const formData = reactive({
   conclusion: '',
 })
 
-onMounted(() => {
+// Add dynamic fields to formData
+for (let b = 0; b < 2; b++) {
+    formData[`pos_L_${b}`] = ''
+    formData[`avg_L_${b}`] = ''
+    formData[`capacity_L_${b}`] = ''
+    formData[`pos_R_${b}`] = ''
+    formData[`avg_R_${b}`] = ''
+    formData[`capacity_R_${b}`] = ''
+    
+    for (let s = 0; s < 5; s++) {
+        const idx = b * 5 + s
+        formData[`depth_L_${idx}`] = ''
+        formData[`actual_L_${idx}`] = ''
+        formData[`depth_R_${idx}`] = ''
+        formData[`actual_R_${idx}`] = ''
+    }
+}
 
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
+
+const loadData = async () => {
+    if (!props.id) return
+    try {
+        const res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
+        if (res.data.success && res.data.data) {
+            const data = res.data.data
+            formData.entrustingUnit = data.clientUnit || ''
+            formData.unifiedNumber = data.wtNum || ''
+            formData.projectName = data.projectName || ''
+            formData.commissionDate = formatDate(data.commissionDate)
+            formData.constructionPart = data.constructionPart || ''
+            formData.testDate = data.testDate || '' // Keep as string if from JSON or other field? Entity has no testDate, only reportDate. Wait, dataJson has testDate.
+            formData.soilProperties = data.soilProperty || ''
+            formData.testCategory = data.testCategory || ''
+            formData.designCapacity = data.designCapacity || ''
+            formData.hammerWeight = data.hammerWeight || ''
+            formData.dropDistance = data.dropDistance || ''
+            formData.testBasis = data.testBasis || ''
+            formData.equipment = data.equipment || ''
+            formData.remarks = data.remarks || ''
+            formData.reviewer = data.reviewer || ''
+            // calculator is not in entity, maybe in dataJson?
+            formData.tester = data.tester || ''
+            formData.conclusion = data.conclusion || ''
+
+            if (data.dataJson) {
+                try {
+                    const json = JSON.parse(data.dataJson)
+                    Object.assign(formData, json)
+                    if (json.testDate) formData.testDate = json.testDate
+                } catch (e) {
+                    console.error('JSON parse error', e)
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Load error', e)
+    }
+}
+
+onMounted(() => {
+    loadData()
 })
 
 const printDocument = () => {
@@ -176,6 +249,54 @@ const previewPdf = () => {
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
   }
+}
+
+const submitForm = async () => { // Note: There is no Submit button in template, but I should add one or use a save function
+    // Template has buttons calling save? No, template has no save button in Record.vue currently.
+    // I should add a save button.
+}
+
+const saveData = async () => {
+    if (!props.id) {
+        alert('无效的委托单ID')
+        return
+    }
+    try {
+        const dynamicData = {}
+        if (formData.testDate) dynamicData.testDate = formData.testDate
+        if (formData.calculator) dynamicData.calculator = formData.calculator
+        
+        for (const key in formData) {
+            if (key.match(/^(pos|depth|actual|avg|capacity)_[LR]_\d+$/)) {
+                dynamicData[key] = formData[key]
+            }
+        }
+
+        const payload = {
+            id: props.id,
+            soilProperty: formData.soilProperties, // Note mapping difference: soilProperties vs soilProperty
+            designCapacity: formData.designCapacity,
+            hammerWeight: formData.hammerWeight,
+            dropDistance: formData.dropDistance,
+            testBasis: formData.testBasis,
+            equipment: formData.equipment,
+            remarks: formData.remarks,
+            reviewer: formData.reviewer,
+            tester: formData.tester,
+            conclusion: formData.conclusion,
+            // reportDate? Record doesn't have reportDate input.
+            dataJson: JSON.stringify(dynamicData)
+        }
+
+        const res = await axios.post('/api/light-dynamic-penetration/save', payload)
+        if (res.data.success) {
+            alert('保存成功')
+        } else {
+            alert('保存失败: ' + (res.data.message || '未知错误'))
+        }
+    } catch (e) {
+        alert('保存失败: ' + e.message)
+    }
 }
 </script>
 

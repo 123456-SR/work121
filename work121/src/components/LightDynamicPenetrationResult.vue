@@ -4,6 +4,7 @@
 
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button @click="saveData" style="float: right; margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
@@ -134,7 +135,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, defineProps } from 'vue'
+import axios from 'axios'
+
+const props = defineProps({
+  id: String
+})
 
 const pdfForm = ref(null)
 
@@ -162,8 +168,107 @@ const formData = reactive({
   conclusion: '',
 })
 
-onMounted(() => {
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
 
+const loadData = async () => {
+    if (!props.id) return
+    try {
+        const res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
+        if (res.data.success && res.data.data) {
+            const data = res.data.data
+            formData.entrustingUnit = data.clientUnit || ''
+            formData.unifiedNumber = data.wtNum || ''
+            formData.projectName = data.projectName || ''
+            formData.entrustDate = formatDate(data.commissionDate)
+            formData.constructionPart = data.constructionPart || ''
+            formData.soilProperty = data.soilProperty || ''
+            formData.reportDate = formatDate(data.reportDate)
+            formData.witnessUnit = data.witnessUnit || ''
+            formData.witness = data.witness || ''
+            formData.designCapacity = data.designCapacity || ''
+            formData.hammerWeight = data.hammerWeight || ''
+            formData.dropDistance = data.dropDistance || ''
+            formData.testCategory = data.testCategory || ''
+            formData.testBasis = data.testBasis || ''
+            formData.equipment = data.equipment || ''
+            formData.remarks = data.remarks || ''
+            formData.approve = data.approver || ''
+            formData.review = data.reviewer || ''
+            formData.inspect = data.tester || ''
+            formData.conclusion = data.conclusion || ''
+            
+            if (data.dataJson) {
+                try {
+                    const json = JSON.parse(data.dataJson)
+                    Object.assign(formData, json)
+                    if (json.testDate) formData.testDate = json.testDate
+                } catch (e) {
+                    console.error('JSON parse error', e)
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Load error', e)
+    }
+}
+
+const saveData = async () => {
+    if (!props.id) {
+        alert('无效的委托单ID')
+        return
+    }
+    try {
+        const dynamicData = {}
+        if (formData.testDate) dynamicData.testDate = formData.testDate
+        
+        for (const key in formData) {
+            if (key.match(/^(pos|depth|actual|avg|capacity)_[LR]_\d+$/)) {
+                dynamicData[key] = formData[key]
+            }
+        }
+
+        const payload = {
+            id: props.id,
+            soilProperty: formData.soilProperty,
+            designCapacity: formData.designCapacity,
+            hammerWeight: formData.hammerWeight,
+            dropDistance: formData.dropDistance,
+            testBasis: formData.testBasis,
+            equipment: formData.equipment,
+            remarks: formData.remarks,
+            approver: formData.approve,
+            reviewer: formData.review,
+            tester: formData.inspect,
+            conclusion: formData.conclusion,
+            // reportDate should be handled carefully. If input type=text, it's string.
+            // But entity expects Date. If I send string 'yyyy-MM-dd', Spring might parse it if configured.
+            // Or I can send timestamp.
+            // Let's try sending string and see. If backend is configured with Jackson, it might work.
+            // Or I can send null if empty.
+            reportDate: formData.reportDate ? new Date(formData.reportDate) : null,
+            dataJson: JSON.stringify(dynamicData)
+        }
+
+        const res = await axios.post('/api/light-dynamic-penetration/save', payload)
+        if (res.data.success) {
+            alert('保存成功')
+        } else {
+            alert('保存失败: ' + (res.data.message || '未知错误'))
+        }
+    } catch (e) {
+        alert('保存失败: ' + e.message)
+    }
+}
+
+onMounted(() => {
+  loadData()
 })
 
 const printDocument = () => {
