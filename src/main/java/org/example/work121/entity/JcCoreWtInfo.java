@@ -2,18 +2,15 @@ package org.example.work121.entity;
 
 import java.util.Date;
 
-public class JcCoreWtInfo {
-    private String wtId;
-    private String wtNum;
-    private Date wtDate;
-    private String wtMan;
-    private String wtManTel;
+/**
+ * 检测委托信息实体类
+ */
+public class JcCoreWtInfo extends BusinessEntity {
+    
     private String wtRegId;
     private String wtRegName;
     private String wtStatus;
-    private String wtUnit;
-    private String wtUnitPerson;
-    private String wtUnitPostalcode;
+    
     private String customerId;
     private String datacid;
     private String ywdepartment;
@@ -27,84 +24,137 @@ public class JcCoreWtInfo {
     private String directMoney;
     private String reallocateMoney;
     private String accountNumber;
-    private String beizhu;
+    
     private String jsStatus;
-    private String jsUnit;
     private String jsUnitId;
+    
     private String remainingMoney;
     private String backMoney;
     private String tozhMoney;
     private String alreadyMoney;
     private String xnMoney;
+    
     private String gcCode;
-    private String gcName;
-    private String gcArea;
     private String gcXmjl;
     private String gcZj;
     private String gcJianduId;
     private String gcAreaCode;
-    private String kcUnit;
+    
     private String kcUnitId;
     private String sgCode;
-    private String sgUnit;
     private String sgUnitId;
+    
     private String jdUnit;
     private String jdUnitId;
     private String jdMan;
     private String jdManId;
     private String jdManTel;
     private String jianduke;
-    private String jlUnit;
+    
     private String jlUnitId;
+    
     private String jzUnit;
     private String jzUnitId;
     private String jzManId;
     private String jzMan;
     private String jzManTel;
+    
     private String olWtNum;
     private String stationId;
     private String province;
     private String city;
 
+    // ================= Compatibility Methods =================
+
     public String getWtId() {
-        return wtId;
+        return getId();
     }
 
     public void setWtId(String wtId) {
-        this.wtId = wtId;
-    }
-
-    public String getWtNum() {
-        return wtNum;
-    }
-
-    public void setWtNum(String wtNum) {
-        this.wtNum = wtNum;
+        setId(wtId);
     }
 
     public Date getWtDate() {
-        return wtDate;
+        return getCommissionDate();
     }
 
     public void setWtDate(Date wtDate) {
-        this.wtDate = wtDate;
+        setCommissionDate(wtDate);
     }
 
     public String getWtMan() {
-        return wtMan;
+        return getClient();
     }
 
     public void setWtMan(String wtMan) {
-        this.wtMan = wtMan;
+        setClient(wtMan);
     }
 
-    public String getWtManTel() {
-        return wtManTel;
+    public String getWtUnit() {
+        return getClientUnit();
     }
 
-    public void setWtManTel(String wtManTel) {
-        this.wtManTel = wtManTel;
+    public void setWtUnit(String wtUnit) {
+        setClientUnit(wtUnit);
     }
+
+    public String getGcName() {
+        return getProjectName();
+    }
+
+    public void setGcName(String gcName) {
+        setProjectName(gcName);
+    }
+
+    public String getGcArea() {
+        return getProjectArea();
+    }
+
+    public void setGcArea(String gcArea) {
+        setProjectArea(gcArea);
+    }
+
+    public String getSgUnit() {
+        return getConstructionUnit();
+    }
+
+    public void setSgUnit(String sgUnit) {
+        setConstructionUnit(sgUnit);
+    }
+
+    public String getJsUnit() {
+        return getBuildingUnit();
+    }
+
+    public void setJsUnit(String jsUnit) {
+        setBuildingUnit(jsUnit);
+    }
+
+    public String getJlUnit() {
+        return getSupervisionUnit();
+    }
+
+    public void setJlUnit(String jlUnit) {
+        setSupervisionUnit(jlUnit);
+    }
+
+    public String getKcUnit() {
+        return getSurveyUnit();
+    }
+
+    public void setKcUnit(String kcUnit) {
+        setSurveyUnit(kcUnit);
+    }
+
+    public String getBeizhu() {
+        return getRemarks();
+    }
+
+    public void setBeizhu(String beizhu) {
+        setRemarks(beizhu);
+    }
+
+    // ================= Existing Methods =================
 
     public String getWtRegId() {
         return wtRegId;
@@ -128,30 +178,6 @@ public class JcCoreWtInfo {
 
     public void setWtStatus(String wtStatus) {
         this.wtStatus = wtStatus;
-    }
-
-    public String getWtUnit() {
-        return wtUnit;
-    }
-
-    public void setWtUnit(String wtUnit) {
-        this.wtUnit = wtUnit;
-    }
-
-    public String getWtUnitPerson() {
-        return wtUnitPerson;
-    }
-
-    public void setWtUnitPerson(String wtUnitPerson) {
-        this.wtUnitPerson = wtUnitPerson;
-    }
-
-    public String getWtUnitPostalcode() {
-        return wtUnitPostalcode;
-    }
-
-    public void setWtUnitPostalcode(String wtUnitPostalcode) {
-        this.wtUnitPostalcode = wtUnitPostalcode;
     }
 
     public String getCustomerId() {
@@ -258,28 +284,12 @@ public class JcCoreWtInfo {
         this.accountNumber = accountNumber;
     }
 
-    public String getBeizhu() {
-        return beizhu;
-    }
-
-    public void setBeizhu(String beizhu) {
-        this.beizhu = beizhu;
-    }
-
     public String getJsStatus() {
         return jsStatus;
     }
 
     public void setJsStatus(String jsStatus) {
         this.jsStatus = jsStatus;
-    }
-
-    public String getJsUnit() {
-        return jsUnit;
-    }
-
-    public void setJsUnit(String jsUnit) {
-        this.jsUnit = jsUnit;
     }
 
     public String getJsUnitId() {
@@ -338,22 +348,6 @@ public class JcCoreWtInfo {
         this.gcCode = gcCode;
     }
 
-    public String getGcName() {
-        return gcName;
-    }
-
-    public void setGcName(String gcName) {
-        this.gcName = gcName;
-    }
-
-    public String getGcArea() {
-        return gcArea;
-    }
-
-    public void setGcArea(String gcArea) {
-        this.gcArea = gcArea;
-    }
-
     public String getGcXmjl() {
         return gcXmjl;
     }
@@ -386,14 +380,6 @@ public class JcCoreWtInfo {
         this.gcAreaCode = gcAreaCode;
     }
 
-    public String getKcUnit() {
-        return kcUnit;
-    }
-
-    public void setKcUnit(String kcUnit) {
-        this.kcUnit = kcUnit;
-    }
-
     public String getKcUnitId() {
         return kcUnitId;
     }
@@ -408,14 +394,6 @@ public class JcCoreWtInfo {
 
     public void setSgCode(String sgCode) {
         this.sgCode = sgCode;
-    }
-
-    public String getSgUnit() {
-        return sgUnit;
-    }
-
-    public void setSgUnit(String sgUnit) {
-        this.sgUnit = sgUnit;
     }
 
     public String getSgUnitId() {
@@ -472,14 +450,6 @@ public class JcCoreWtInfo {
 
     public void setJianduke(String jianduke) {
         this.jianduke = jianduke;
-    }
-
-    public String getJlUnit() {
-        return jlUnit;
-    }
-
-    public void setJlUnit(String jlUnit) {
-        this.jlUnit = jlUnit;
     }
 
     public String getJlUnitId() {

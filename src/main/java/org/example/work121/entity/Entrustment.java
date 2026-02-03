@@ -7,24 +7,23 @@ import java.sql.Timestamp;
  * 委托单实体类
  * 映射数据库委托单表的所有字段
  */
-public class Entrustment implements Serializable {
+public class Entrustment extends BusinessEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // ===================== 基础信息字段 =====================
-    /** 统一编号（WT_ID） */
-    private String unifiedNumber;
-    /** 样品编号（WT_NUM） */
-    private String sampleNumber;
+    // 统一编号（WT_ID） - 映射到 BaseEntity.id
+    // 样品编号（WT_NUM） - 映射到 BusinessEntity.wtNum
+    
     /** 客户ID（CUSTOMER_ID） */
     private String customerId;
     /** 数据ID（DATACID） */
     private String dataCid;
-    /** 样品名称（DATANAME） */
-    private String sampleName;
+    // 样品名称（DATANAME） - 映射到 BusinessEntity.sampleName
+    
     /** 业务部门ID（YWDEPARTMENTID） */
     private String ywDepartmentId;
-    /** 业务部门（YWDEPARTMENT）- 检测类别 */
-    private String testCategory;
+    // 业务部门（YWDEPARTMENT）- 检测类别 - 映射到 BusinessEntity.testCategory
+    
     /** 接收部门ID（DESTDEPARTMENTID） */
     private String destDepartmentId;
     /** 接收部门（DESTDEPARTMENT）- 报告发送部门 */
@@ -35,18 +34,15 @@ public class Entrustment implements Serializable {
     private String reportSendUser;
     /** 委托单位ID（WT_UNIT_ID） */
     private String clientUnitId;
-    /** 委托单位（WT_UNIT） */
-    private String clientUnit;
-    /** 委托(送样)人（WT_MAN） */
-    private String client;
-    /** 委托人电话（WT_MAN_TEL） */
-    private String clientTel;
+    // 委托单位（WT_UNIT） - 映射到 BusinessEntity.clientUnit
+    // 委托(送样)人（WT_MAN） - 映射到 BusinessEntity.client
+    // 委托人电话（WT_MAN_TEL） - 映射到 BusinessEntity.clientTel
+    
     /** 委托单位地址（WT_UNIT_ADDRESS） */
     private String clientUnitAddress;
-    /** 委托单位邮编（WT_UNIT_POSTALCODE） */
-    private String clientUnitPostalcode;
-    /** 委托单位联系人（WT_UNIT_PERSON） */
-    private String clientUnitPerson;
+    // 委托单位邮编（WT_UNIT_POSTALCODE） - 映射到 BusinessEntity.clientUnitPostalcode
+    // 委托单位联系人（WT_UNIT_PERSON） - 映射到 BusinessEntity.clientUnitPerson
+    
     /** 委托单位电话（WT_UNIT_TEL）- 委托单位地址及电话 */
     private String clientUnitTel;
     /** 合同编号（CONTRACT_CODE） */
@@ -55,46 +51,45 @@ public class Entrustment implements Serializable {
     private String projectPayment;
     /** 工程编码（GC_CODE） */
     private String projectCode;
-    /** 工程名称（GC_NAME） */
-    private String projectName;
-    /** 施工(使用)部位（GC_SUB） */
-    private String constructionPart;
+    // 工程名称（GC_NAME） - 映射到 BusinessEntity.projectName
+    // 施工(使用)部位（GC_SUB） - 映射到 BusinessEntity.constructionPart
+    
     /** 工程地址（GC_ADDRESS） */
     private String projectAddress;
-    /** 工程区域（GC_AREA） */
-    private String projectArea;
+    // 工程区域（GC_AREA） - 映射到 BusinessEntity.projectArea
+    
     /** 建设单位ID（JS_UNIT_ID） */
     private String buildingUnitId;
-    /** 建设单位（JS_UNIT） */
-    private String buildingUnit;
+    // 建设单位（JS_UNIT） - 映射到 BusinessEntity.buildingUnit
+    
     /** 勘察单位代码（KC_UNIT_ID） */
     private String surveyUnitId;
-    /** 勘察单位（KC_UNIT） */
-    private String surveyUnit;
+    // 勘察单位（KC_UNIT） - 映射到 BusinessEntity.surveyUnit
+    
     /** 施工编码（SG_CODE） */
     private String constructionCode;
     /** 施工单位ID（SG_UNIT_ID） */
     private String constructionUnitId;
-    /** 施工单位（SG_UNIT） */
-    private String constructionUnit;
+    // 施工单位（SG_UNIT） - 映射到 BusinessEntity.constructionUnit
+    
     /** 工程监督ID（GC_JIANDU_ID） */
     private String projectSuperviseId;
     /** 见证单位ID（JD_UNIT_ID） */
     private String witnessUnitId;
-    /** 见证单位（JD_UNIT） */
-    private String witnessUnit;
+    // 见证单位（JD_UNIT） - 映射到 BusinessEntity.witnessUnit
+    
     /** 监督科（JIANDUKE） */
     private String superviseDept;
     /** 见证人ID（JD_MAN_ID） */
     private String witnessId;
-    /** 见证人（JD_MAN） */
-    private String witness;
+    // 见证人（JD_MAN） - 映射到 BusinessEntity.witness
+    
     /** 见证人电话（JD_MAN_TEL） */
     private String witnessTel;
     /** 监理单位ID（JL_UNIT_ID） */
     private String supervisionUnitId;
-    /** 监理单位（JL_UNIT） */
-    private String supervisionUnit;
+    // 监理单位（JL_UNIT） - 映射到 BusinessEntity.supervisionUnit
+    
     /** 建设人员ID（JZ_MAN_ID） */
     private String buildingManId;
     /** 建设人员（JZ_MAN） */
@@ -105,8 +100,8 @@ public class Entrustment implements Serializable {
     private String buildingUnitId2;
     /** 建设单位（JZ_UNIT） */
     private String buildingUnit2;
-    /** 委托日期（WT_DATE） */
-    private Timestamp clientDate;
+    // 委托日期（WT_DATE） - 映射到 BusinessEntity.commissionDate
+    
     /** 业务员ID（YY_MAN_ID） */
     private String ywManId;
     /** 业务员（YY_MAN）- 承接(收样)人 */
@@ -175,8 +170,9 @@ public class Entrustment implements Serializable {
     private String clientRegId;
     /** 委托登记人（WT_REG_NAME） */
     private String clientRegName;
-    /** 设计单位（SJ_UNIT） */
-    private String designUnit;
+    /** 设计单位（SJ_UNIT） - 映射到 BusinessEntity.designUnit (注意这里有重复字段，保留原样还是合并？BusinessEntity有designUnit) */
+    // BusinessEntity 已经有 designUnit，这里不需要重复定义
+    
     /** 抽样单位（CY_UNIT） */
     private String samplingUnit;
     /** 抽样人（CY_MAN） */
@@ -366,11 +362,14 @@ public class Entrustment implements Serializable {
 
     // ===================== 所有字段的getter/setter方法 =====================
     // 基础信息字段
-    public String getUnifiedNumber() { return unifiedNumber; }
-    public void setUnifiedNumber(String unifiedNumber) { this.unifiedNumber = unifiedNumber; }
+    
+    // 兼容性方法：unifiedNumber -> id
+    public String getUnifiedNumber() { return getId(); }
+    public void setUnifiedNumber(String unifiedNumber) { setId(unifiedNumber); }
 
-    public String getSampleNumber() { return sampleNumber; }
-    public void setSampleNumber(String sampleNumber) { this.sampleNumber = sampleNumber; }
+    // 兼容性方法：sampleNumber -> wtNum
+    public String getSampleNumber() { return getWtNum(); }
+    public void setSampleNumber(String sampleNumber) { setWtNum(sampleNumber); }
 
     public String getCustomerId() { return customerId; }
     public void setCustomerId(String customerId) { this.customerId = customerId; }
@@ -378,14 +377,12 @@ public class Entrustment implements Serializable {
     public String getDataCid() { return dataCid; }
     public void setDataCid(String dataCid) { this.dataCid = dataCid; }
 
-    public String getSampleName() { return sampleName; }
-    public void setSampleName(String sampleName) { this.sampleName = sampleName; }
+    // BusinessEntity methods: getSampleName, setSampleName are inherited
 
     public String getYwDepartmentId() { return ywDepartmentId; }
     public void setYwDepartmentId(String ywDepartmentId) { this.ywDepartmentId = ywDepartmentId; }
 
-    public String getTestCategory() { return testCategory; }
-    public void setTestCategory(String testCategory) { this.testCategory = testCategory; }
+    // BusinessEntity methods: getTestCategory, setTestCategory are inherited
 
     public String getDestDepartmentId() { return destDepartmentId; }
     public void setDestDepartmentId(String destDepartmentId) { this.destDepartmentId = destDepartmentId; }
@@ -398,27 +395,19 @@ public class Entrustment implements Serializable {
 
     public String getReportSendUser() { return reportSendUser; }
     public void setReportSendUser(String reportSendUser) { this.reportSendUser = reportSendUser; }
-
+    
     public String getClientUnitId() { return clientUnitId; }
     public void setClientUnitId(String clientUnitId) { this.clientUnitId = clientUnitId; }
 
-    public String getClientUnit() { return clientUnit; }
-    public void setClientUnit(String clientUnit) { this.clientUnit = clientUnit; }
-
-    public String getClient() { return client; }
-    public void setClient(String client) { this.client = client; }
-
-    public String getClientTel() { return clientTel; }
-    public void setClientTel(String clientTel) { this.clientTel = clientTel; }
+    // BusinessEntity methods: getClientUnit, setClientUnit are inherited
+    // BusinessEntity methods: getClient, setClient are inherited
+    // BusinessEntity methods: getClientTel, setClientTel are inherited
 
     public String getClientUnitAddress() { return clientUnitAddress; }
     public void setClientUnitAddress(String clientUnitAddress) { this.clientUnitAddress = clientUnitAddress; }
 
-    public String getClientUnitPostalcode() { return clientUnitPostalcode; }
-    public void setClientUnitPostalcode(String clientUnitPostalcode) { this.clientUnitPostalcode = clientUnitPostalcode; }
-
-    public String getClientUnitPerson() { return clientUnitPerson; }
-    public void setClientUnitPerson(String clientUnitPerson) { this.clientUnitPerson = clientUnitPerson; }
+    // BusinessEntity methods: getClientUnitPostalcode, setClientUnitPostalcode are inherited
+    // BusinessEntity methods: getClientUnitPerson, setClientUnitPerson are inherited
 
     public String getClientUnitTel() { return clientUnitTel; }
     public void setClientUnitTel(String clientUnitTel) { this.clientUnitTel = clientUnitTel; }
@@ -432,29 +421,23 @@ public class Entrustment implements Serializable {
     public String getProjectCode() { return projectCode; }
     public void setProjectCode(String projectCode) { this.projectCode = projectCode; }
 
-    public String getProjectName() { return projectName; }
-    public void setProjectName(String projectName) { this.projectName = projectName; }
-
-    public String getConstructionPart() { return constructionPart; }
-    public void setConstructionPart(String constructionPart) { this.constructionPart = constructionPart; }
+    // BusinessEntity methods: getProjectName, setProjectName are inherited
+    // BusinessEntity methods: getConstructionPart, setConstructionPart are inherited
 
     public String getProjectAddress() { return projectAddress; }
     public void setProjectAddress(String projectAddress) { this.projectAddress = projectAddress; }
 
-    public String getProjectArea() { return projectArea; }
-    public void setProjectArea(String projectArea) { this.projectArea = projectArea; }
+    // BusinessEntity methods: getProjectArea, setProjectArea are inherited
 
     public String getBuildingUnitId() { return buildingUnitId; }
     public void setBuildingUnitId(String buildingUnitId) { this.buildingUnitId = buildingUnitId; }
 
-    public String getBuildingUnit() { return buildingUnit; }
-    public void setBuildingUnit(String buildingUnit) { this.buildingUnit = buildingUnit; }
+    // BusinessEntity methods: getBuildingUnit, setBuildingUnit are inherited
 
     public String getSurveyUnitId() { return surveyUnitId; }
     public void setSurveyUnitId(String surveyUnitId) { this.surveyUnitId = surveyUnitId; }
 
-    public String getSurveyUnit() { return surveyUnit; }
-    public void setSurveyUnit(String surveyUnit) { this.surveyUnit = surveyUnit; }
+    // BusinessEntity methods: getSurveyUnit, setSurveyUnit are inherited
 
     public String getConstructionCode() { return constructionCode; }
     public void setConstructionCode(String constructionCode) { this.constructionCode = constructionCode; }
@@ -462,8 +445,7 @@ public class Entrustment implements Serializable {
     public String getConstructionUnitId() { return constructionUnitId; }
     public void setConstructionUnitId(String constructionUnitId) { this.constructionUnitId = constructionUnitId; }
 
-    public String getConstructionUnit() { return constructionUnit; }
-    public void setConstructionUnit(String constructionUnit) { this.constructionUnit = constructionUnit; }
+    // BusinessEntity methods: getConstructionUnit, setConstructionUnit are inherited
 
     public String getProjectSuperviseId() { return projectSuperviseId; }
     public void setProjectSuperviseId(String projectSuperviseId) { this.projectSuperviseId = projectSuperviseId; }
@@ -471,8 +453,7 @@ public class Entrustment implements Serializable {
     public String getWitnessUnitId() { return witnessUnitId; }
     public void setWitnessUnitId(String witnessUnitId) { this.witnessUnitId = witnessUnitId; }
 
-    public String getWitnessUnit() { return witnessUnit; }
-    public void setWitnessUnit(String witnessUnit) { this.witnessUnit = witnessUnit; }
+    // BusinessEntity methods: getWitnessUnit, setWitnessUnit are inherited
 
     public String getSuperviseDept() { return superviseDept; }
     public void setSuperviseDept(String superviseDept) { this.superviseDept = superviseDept; }
@@ -480,8 +461,7 @@ public class Entrustment implements Serializable {
     public String getWitnessId() { return witnessId; }
     public void setWitnessId(String witnessId) { this.witnessId = witnessId; }
 
-    public String getWitness() { return witness; }
-    public void setWitness(String witness) { this.witness = witness; }
+    // BusinessEntity methods: getWitness, setWitness are inherited
 
     public String getWitnessTel() { return witnessTel; }
     public void setWitnessTel(String witnessTel) { this.witnessTel = witnessTel; }
@@ -489,8 +469,7 @@ public class Entrustment implements Serializable {
     public String getSupervisionUnitId() { return supervisionUnitId; }
     public void setSupervisionUnitId(String supervisionUnitId) { this.supervisionUnitId = supervisionUnitId; }
 
-    public String getSupervisionUnit() { return supervisionUnit; }
-    public void setSupervisionUnit(String supervisionUnit) { this.supervisionUnit = supervisionUnit; }
+    // BusinessEntity methods: getSupervisionUnit, setSupervisionUnit are inherited
 
     public String getBuildingManId() { return buildingManId; }
     public void setBuildingManId(String buildingManId) { this.buildingManId = buildingManId; }
@@ -507,8 +486,14 @@ public class Entrustment implements Serializable {
     public String getBuildingUnit2() { return buildingUnit2; }
     public void setBuildingUnit2(String buildingUnit2) { this.buildingUnit2 = buildingUnit2; }
 
-    public Timestamp getClientDate() { return clientDate; }
-    public void setClientDate(Timestamp clientDate) { this.clientDate = clientDate; }
+    // 兼容性方法：clientDate -> commissionDate
+    public Timestamp getClientDate() {
+        if (getCommissionDate() == null) return null;
+        return new Timestamp(getCommissionDate().getTime());
+    }
+    public void setClientDate(Timestamp clientDate) {
+        setCommissionDate(clientDate);
+    }
 
     public String getYwManId() { return ywManId; }
     public void setYwManId(String ywManId) { this.ywManId = ywManId; }
@@ -612,8 +597,8 @@ public class Entrustment implements Serializable {
     public String getClientRegName() { return clientRegName; }
     public void setClientRegName(String clientRegName) { this.clientRegName = clientRegName; }
 
-    public String getDesignUnit() { return designUnit; }
-    public void setDesignUnit(String designUnit) { this.designUnit = designUnit; }
+    public String getDesignUnit() { return super.getDesignUnit(); }
+    public void setDesignUnit(String designUnit) { super.setDesignUnit(designUnit); }
 
     public String getSamplingUnit() { return samplingUnit; }
     public void setSamplingUnit(String samplingUnit) { this.samplingUnit = samplingUnit; }
@@ -886,15 +871,14 @@ public class Entrustment implements Serializable {
     public String getFee() { return fee; }
     public void setFee(String fee) { this.fee = fee; }
 
-    // toString方法（简化版，避免过长）
     @Override
     public String toString() {
         return "Entrustment{" +
-                "unifiedNumber='" + unifiedNumber + '\'' +
-                ", sampleNumber='" + sampleNumber + '\'' +
-                ", clientUnit='" + clientUnit + '\'' +
-                ", projectName='" + projectName + '\'' +
-                ", sampleName='" + sampleName + '\'' +
+                "unifiedNumber='" + getId() + '\'' +
+                ", sampleNumber='" + getWtNum() + '\'' +
+                ", clientUnit='" + getClientUnit() + '\'' +
+                ", projectName='" + getProjectName() + '\'' +
+                ", sampleName='" + getSampleName() + '\'' +
                 '}';
     }
 }

@@ -21,7 +21,7 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
         logger.info("正在查询委托信息，WT_NUM: {}", wtNum);
         JcCoreWtInfo result = jcCoreWtInfoMapper.selectByWtNum(wtNum);
         if (result != null) {
-            logger.info("查询到委托信息，WT_ID: {}", result.getWtId());
+            logger.info("查询到委托信息，WT_ID: {}", result.getId());
         } else {
             logger.info("未找到委托信息，WT_NUM: {}", wtNum);
         }

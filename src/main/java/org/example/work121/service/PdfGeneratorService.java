@@ -564,7 +564,11 @@ public class PdfGeneratorService {
             sigCell7.setBorder(Rectangle.NO_BORDER);
             signatureTable.addCell(sigCell7);
 
-            PdfPCell sigCell8 = new PdfPCell(new Paragraph("检测：", valueFont));
+            String approvalReport = request.getParameter("approval") != null ? request.getParameter("approval") : "";
+            String reviewerReport = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
+            String testerReport = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+
+            PdfPCell sigCell8 = new PdfPCell(new Paragraph("检测：" + testerReport, valueFont));
             sigCell8.setBorder(Rectangle.NO_BORDER);
             sigCell8.setHorizontalAlignment(Element.ALIGN_CENTER);
             signatureTable.addCell(sigCell8);
@@ -818,9 +822,7 @@ public class PdfGeneratorService {
             String approval = request.getParameter("approval") != null ? request.getParameter("approval") : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
-            String year = request.getParameter("year") != null ? request.getParameter("year") : "";
-            String month = request.getParameter("month") != null ? request.getParameter("month") : "";
-            String day = request.getParameter("day") != null ? request.getParameter("day") : "";
+            String reportDateFooter = request.getParameter("reportDate") != null ? request.getParameter("reportDate") : "";
 
             PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approval, valueFont));
             footerCell1.setBorder(Rectangle.NO_BORDER);
@@ -845,14 +847,17 @@ public class PdfGeneratorService {
             footerCell5.setBorder(Rectangle.NO_BORDER);
             footerTable.addCell(footerCell5);
 
-            PdfPCell footerCell6 = new PdfPCell(new Paragraph("日期：" + year + "年" + month + "月" + day + "日", valueFont));
+            PdfPCell footerCell6 = new PdfPCell(new Paragraph("日期：" + reportDateFooter, valueFont));
             footerCell6.setBorder(Rectangle.NO_BORDER);
             footerCell6.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell6);
 
             document.add(footerTable);
 
-            Paragraph statement = new Paragraph("声明：\n1. 对本检测报告的复印件未加盖公司检验检测专用章无效。\n2. 对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。\n公司名称：河北金涛建设工程质量检测有限公司。\n公司地址：石家庄高新区方亿科技工业园A区第2号楼。    电话：0311—86107634    0311—67300616", smallFont);
+            String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
+            String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
+            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
+            Paragraph statement = new Paragraph("声明：\n1. 对本检测报告的复印件未加盖公司检验检测专用章无效。\n2. 对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。\n公司名称：" + companyName + "。\n公司地址：" + companyAddress + "    电话：" + companyPhone, smallFont);
             statement.setSpacingBefore(20);
             statement.setLeading(14f);
             document.add(statement);

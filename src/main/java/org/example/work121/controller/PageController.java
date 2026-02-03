@@ -8,7 +8,7 @@ public class PageController {
 
     @GetMapping("/")
     public String index() {
-        return "index";
+        return "redirect:http://localhost:5173/";
     }
 
     @GetMapping("/entrustment")

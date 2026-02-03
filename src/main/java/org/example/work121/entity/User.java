@@ -1,17 +1,23 @@
 package org.example.work121.entity;
 
-public class User {
-    private String userId;
+import java.io.Serializable;
+
+public class User extends BaseEntity implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    // userId 映射到 BaseEntity.id
+    
     private String userAccount;
     private String userPass;
     private String userStatus;
+    private String userName;
 
     public String getUserId() {
-        return userId;
+        return getId();
     }
 
     public void setUserId(String userId) {
-        this.userId = userId;
+        setId(userId);
     }
 
     public String getUserAccount() {
@@ -36,5 +42,13 @@ public class User {
 
     public void setUserStatus(String userStatus) {
         this.userStatus = userStatus;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }
