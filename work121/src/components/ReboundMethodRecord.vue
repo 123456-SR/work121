@@ -7,6 +7,7 @@
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+        <button @click="submitForm" style="float: right; margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -82,7 +83,7 @@
         <tr>
             <td>{{ (i_idx + 1) }}</td>
             <template v-for="(n, j_idx) in 16" :key="j_idx">
-            <td><input type="text" :name="'reboundValue_{{ (i_idx + 1) }}_' + (j_idx + 1)" v-model="formData['reboundValue_{{ (i_idx + 1) }}_' + (j_idx + 1)]"></td>
+            <td><input type="text" :name="'reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)" v-model="formData['reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)]"></td>
             </template>
             <td><input type="text" :name="'avgRebound_' + (i_idx + 1)" v-model="formData['avgRebound_' + (i_idx + 1)]"></td>
             <td><input type="text" :name="'carbonDepth_' + (i_idx + 1)" v-model="formData['carbonDepth_' + (i_idx + 1)]"></td>
@@ -154,6 +155,7 @@
 
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
+import axios from 'axios'
 
 const pdfForm = ref(null)
 
@@ -189,19 +191,16 @@ const formData = reactive({
 
 onMounted(() => {
 
-  // Initialize dynamic fields for loop variable 'j_idx'
-  // Please verify the loop count match the template
-  for (let j_idx = 0; j_idx < 50; j_idx++) {
-    formData['reboundValue_{{ (i_idx + 1) }}_' + j_idx] = ''
-  }
-
-  // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
-    formData['avgRebound_' + i_idx] = ''
-    formData['correctedStrength_' + i_idx] = ''
-    formData['carbonDepth_' + i_idx] = ''
-    formData['estimatedStrength_' + i_idx] = ''
+  // Initialize dynamic fields for rebound values (10 rows x 16 columns)
+  for (let i = 1; i <= 10; i++) {
+    for (let j = 1; j <= 16; j++) {
+      formData['reboundValue_' + i + '_' + j] = ''
+    }
+    // Initialize other dynamic fields for each row
+    formData['avgRebound_' + i] = ''
+    formData['correctedStrength_' + i] = ''
+    formData['carbonDepth_' + i] = ''
+    formData['estimatedStrength_' + i] = ''
   }
 
 })
@@ -223,6 +222,56 @@ const previewPdf = () => {
     pdfForm.value.action = '/api/pdf/rebound_method_record/preview'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
+  }
+}
+
+const submitForm = async () => {
+  try {
+    // 获取当前登录用户信息
+    const userInfoStr = localStorage.getItem('userInfo')
+    let userInfo = null
+    if (userInfoStr) {
+      userInfo = JSON.parse(userInfoStr)
+    }
+
+    // 构建提交数据
+    const submitData = {
+      id: formData.unifiedNumber || '',
+      entrustingUnit: formData.entrustingUnit || '',
+      projectName: formData.projectName || '',
+      structurePart: formData.structurePart || '',
+      testCategory: formData.testCategory || '',
+      sampleStatus: formData.sampleStatus || '',
+      testAngle: formData.testAngle || '',
+      designIndex: formData.designIndex || '',
+      aggregateSize: formData.aggregateSize || '',
+      avgStrength: formData.avgStrength || '',
+      stdDev: formData.stdDev || '',
+      coefVariation: formData.coefVariation || '',
+      compEstimatedStrength: formData.compEstimatedStrength || '',
+      equipment: formData.equipment || '',
+      avgCarbonation: formData.avgCarbonation || '',
+      standard: formData.standard || '',
+      calibrationBefore: formData.calibrationBefore || '',
+      calibrationAfter: formData.calibrationAfter || '',
+      conclusion: formData.conclusion || '',
+      remarks: formData.remarks || '',
+      approver: formData.approver || userInfo?.userName || '',
+      reviewer: formData.reviewer || userInfo?.userName || '',
+      tester: formData.tester || userInfo?.userName || ''
+    };
+
+    // 发送请求
+    const response = await axios.post('/api/reboundMethod/save', submitData);
+
+    if (response.data.success) {
+      alert('提交成功');
+    } else {
+      alert('提交失败: ' + response.data.message);
+    }
+  } catch (error) {
+    console.error('提交错误:', error);
+    alert('提交失败，请稍后重试');
   }
 }
 </script>
