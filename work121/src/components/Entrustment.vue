@@ -191,8 +191,15 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, watch } from 'vue'
 import axios from 'axios'
+
+const props = defineProps({
+  id: {
+    type: String,
+    default: null
+  }
+})
 
 const pdfForm = ref(null)
 
@@ -231,8 +238,60 @@ const formData = reactive({
   testItems: '',
 })
 
-onMounted(() => {
+// 加载数据
+const loadData = async (id) => {
+  if (!id) return
+  
+  try {
+    const response = await axios.get(`/api/jc-core-wt-info/by-id?id=${id}`)
+    if (response.data.success && response.data.data) {
+      const data = response.data.data
+      
+      // 映射字段
+      formData.unifiedNumber = data.wtNum
+      formData.sampleNumber = data.wtNum // 根据实体类注释，样品编号可能与统一编号相同
+      
+      formData.clientUnit = data.clientUnit
+      formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM-DD')
+      
+      formData.constructionUnit = data.constructionUnit
+      formData.buildingUnit = data.buildingUnit
+      
+      formData.projectName = data.projectName
+      formData.constructionPart = data.projectArea // 使用 projectArea 映射 constructionPart
+      
+      // 其他字段根据 JcCoreWtInfo 的字段进行映射
+      // 由于 JcCoreWtInfo 字段有限，部分字段可能需要根据实际情况调整
+      formData.witnessUnit = data.supervisionUnit // 监理单位映射为见证单位? 需要确认业务逻辑
+      formData.witness = data.client // 委托人映射为见证人? 暂且如此，或者留空
+      
+      // 假设 JcCoreWtInfo 只有部分基础字段，其他字段可能需要从其他关联表获取或者为空
+      // 这里尽量填充已有字段
+      
+    } else {
+      console.error('Failed to load data:', response.data.message)
+    }
+  } catch (error) {
+    console.error('Error loading data:', error)
+  }
+}
 
+onMounted(() => {
+  if (props.id) {
+    loadData(props.id)
+  }
+})
+
+watch(() => props.id, (newId) => {
+  if (newId) {
+    loadData(newId)
+  } else {
+    // 重置表单
+    Object.keys(formData).forEach(key => {
+      if (Array.isArray(formData[key])) formData[key] = []
+      else formData[key] = ''
+    })
+  }
 })
 
 const printDocument = () => {
@@ -270,16 +329,16 @@ const queryEntrustment = () => {
     if (response.data.success && response.data.data) {
       let data = response.data.data;
       
-      formData.clientUnit = data.wtUnit || '';
-      formData.clientDate = formatDate(data.wtDate, 'YYYY-MM');
-      formData.constructionUnit = data.sgUnit || '';
-      formData.buildingUnit = data.jsUnit || '';
-      formData.witnessUnit = data.jzUnit || '';
-      formData.witness = data.jzMan || '';
-      formData.projectName = data.gcName || '';
-      formData.constructionPart = data.gcArea || '';
-      formData.clientAddressPhone = data.wtUnitAddr || '' + (data.wtUnitTel || '');
-      formData.projectName = data.gcName || '';
+      formData.clientUnit = data.clientUnit || '';
+      formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM');
+      formData.constructionUnit = data.constructionUnit || '';
+      formData.buildingUnit = data.buildingUnit || '';
+      formData.witnessUnit = data.witnessUnit || '';
+      formData.witness = data.witness || '';
+      formData.projectName = data.projectName || '';
+      formData.constructionPart = data.projectArea || '';
+      formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientTel || '');
+      formData.projectName = data.projectName || '';
     } else {
       alert('未找到该统一编号的委托单');
     }

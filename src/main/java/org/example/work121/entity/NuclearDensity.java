@@ -3,7 +3,7 @@ package org.example.work121.entity;
 /**
  * 核子密度仪法检测实体类
  */
-public class NuclearDensity extends BusinessEntity {
+public class NuclearDensity extends Entrustment {
 
     /** 核子仪型号 */
     private String nuclearModel;

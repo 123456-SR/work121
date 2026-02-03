@@ -3,7 +3,7 @@ package org.example.work121.entity;
 /**
  * 灌水法检测实体类
  */
-public class WaterReplacement extends BusinessEntity {
+public class WaterReplacement extends Entrustment {
     
     /** 土的种类 */
     private String soilType;

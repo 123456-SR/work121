@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * 回弹法检测实体类
  */
-public class ReboundMethod extends BusinessEntity {
+public class ReboundMethod extends Entrustment {
     
     /** 结构部位 */
     private String structurePart;

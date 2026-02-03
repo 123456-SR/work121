@@ -43,7 +43,7 @@
         </div>
       </header>
         <div class="content-wrapper">
-          <component v-if="currentView" :is="components[currentView]" />
+          <component v-if="currentView" :is="components[currentView]" v-bind="currentProps" />
           <div v-else class="welcome-message">
             <h2>欢迎使用表格管理系统</h2>
             <p>请从左侧导航栏选择要操作的表格</p>
@@ -55,8 +55,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, provide, shallowRef } from 'vue'
 import Entrustment from './components/Entrustment.vue'
+import EntrustmentList from './components/EntrustmentList.vue'
 import LightDynamicPenetrationRecord from './components/LightDynamicPenetrationRecord.vue'
 import NuclearDensityRecord from './components/NuclearDensityRecord.vue'
 import SandReplacementRecord from './components/SandReplacementRecord.vue'
@@ -75,12 +76,33 @@ import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
 import Login from './components/Login.vue'
 
 const currentView = ref('')
+const currentProps = ref({})
 const currentPageTitle = ref('欢迎使用表格管理系统')
 const isLoggedIn = ref(false)
 
+const components = {
+  Entrustment,
+  EntrustmentList,
+  LightDynamicPenetrationRecord,
+  NuclearDensityRecord,
+  SandReplacementRecord,
+  WaterReplacementRecord,
+  CuttingRingRecord,
+  ReboundMethodRecord,
+  BeckmanBeamRecord,
+  Signature,
+  DensityTestReport,
+  DensityTestResult,
+  LightDynamicPenetration,
+  LightDynamicPenetrationResult,
+  ReboundMethodReport,
+  BeckmanBeamReport,
+  BeckmanBeamResult
+}
+
 const menuItems = {
   preliminary: [
-    { id: 'Entrustment', name: '检测委托单' },
+    { id: 'EntrustmentList', name: '检测委托单' },
     { id: 'LightDynamicPenetration', name: '轻型动力触探检测报告' },
     { id: 'LightDynamicPenetrationRecord', name: '轻型动力触探检测记录表' },
     { id: 'NuclearDensityRecord', name: '原位密度检测记录表（核子法）' },
@@ -100,29 +122,26 @@ const menuItems = {
   ]
 }
 
-const components = {
-  Entrustment,
-  LightDynamicPenetrationRecord,
-  NuclearDensityRecord,
-  SandReplacementRecord,
-  WaterReplacementRecord,
-  CuttingRingRecord,
-  ReboundMethodRecord,
-  BeckmanBeamRecord,
-  Signature,
-  DensityTestReport,
-  DensityTestResult,
-  LightDynamicPenetration,
-  LightDynamicPenetrationResult,
-  ReboundMethodReport,
-  BeckmanBeamReport,
-  BeckmanBeamResult
+// 导航逻辑
+const navigateTo = (target, props = {}) => {
+  if (typeof target === 'string') {
+    // 查找标题
+    let title = ''
+    if (menuItems.preliminary.find(i => i.id === target)) title = menuItems.preliminary.find(i => i.id === target).name
+    else if (menuItems.report.find(i => i.id === target)) title = menuItems.report.find(i => i.id === target).name
+    else if (target === 'Entrustment') title = '检测委托单详情'
+    
+    currentView.value = target
+    currentPageTitle.value = title
+    currentProps.value = props
+  } else {
+    currentView.value = target.id
+    currentPageTitle.value = target.name
+    currentProps.value = props
+  }
 }
 
-const navigateTo = (item) => {
-  currentView.value = item.id
-  currentPageTitle.value = item.name
-}
+provide('navigateTo', navigateTo)
 
 const refreshPage = () => {
   // For Vue components, we can just re-mount the component or trigger a refresh

@@ -55,4 +55,48 @@ public class JcCoreWtInfoController {
         
         return result;
     }
+
+    @GetMapping("/by-reg-name")
+    public Map<String, Object> getByRegName(@RequestParam String regName) {
+        Map<String, Object> result = new HashMap<>();
+        logger.info("接收到根据登记人查询请求，REG_NAME: {}", regName);
+        
+        try {
+            java.util.List<JcCoreWtInfo> list = jcCoreWtInfoService.getByRegName(regName);
+            result.put("success", true);
+            result.put("message", "查询成功");
+            result.put("data", list);
+            logger.info("查询成功，找到 {} 条记录", list.size());
+        } catch (Exception e) {
+            logger.error("查询异常，REG_NAME: {}", regName, e);
+            result.put("success", false);
+            result.put("message", "查询失败: " + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    @GetMapping("/by-id")
+    public Map<String, Object> getById(@RequestParam String id) {
+        Map<String, Object> result = new HashMap<>();
+        logger.info("接收到根据ID查询请求，ID: {}", id);
+        
+        try {
+            JcCoreWtInfo wtInfo = jcCoreWtInfoService.getById(id);
+            if (wtInfo != null) {
+                result.put("success", true);
+                result.put("message", "查询成功");
+                result.put("data", wtInfo);
+            } else {
+                result.put("success", false);
+                result.put("message", "未找到记录");
+            }
+        } catch (Exception e) {
+            logger.error("查询异常，ID: {}", id, e);
+            result.put("success", false);
+            result.put("message", "查询失败: " + e.getMessage());
+        }
+        
+        return result;
+    }
 }

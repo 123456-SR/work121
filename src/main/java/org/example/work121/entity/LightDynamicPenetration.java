@@ -3,7 +3,7 @@ package org.example.work121.entity;
 /**
  * 轻型动力触探检测实体类
  */
-public class LightDynamicPenetration extends BusinessEntity {
+public class LightDynamicPenetration extends Entrustment {
 
     /** 岩土性状 */
     private String soilProperty;

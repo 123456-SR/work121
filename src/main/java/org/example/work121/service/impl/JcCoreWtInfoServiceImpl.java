@@ -28,4 +28,16 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
         return result;
     }
 
+    @Override
+    public java.util.List<JcCoreWtInfo> getByRegName(String regName) {
+        logger.info("正在根据登记人查询委托列表，WT_REG_NAME: {}", regName);
+        return jcCoreWtInfoMapper.selectByRegName(regName);
+    }
+
+    @Override
+    public JcCoreWtInfo getById(String id) {
+        logger.info("正在根据ID查询委托信息，WT_ID: {}", id);
+        return jcCoreWtInfoMapper.selectById(id);
+    }
+
 }
