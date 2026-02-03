@@ -14,14 +14,15 @@
             <th>委托单位</th>
             <th>委托日期</th>
             <th>登记人</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="5" class="text-center">加载中...</td>
+            <td colspan="6" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="5" class="text-center">暂无数据</td>
+            <td colspan="6" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -36,6 +37,13 @@
             <td>{{ item.clientUnit }}</td>
             <td>{{ formatDate(item.commissionDate) }}</td>
             <td>{{ item.clientRegName }}</td>
+            <td class="actions-cell">
+              <span class="action-link" @click.stop="openReport(item, 'LightDynamicPenetrationRecord')">触探记录</span>
+              <span class="separator">|</span>
+              <span class="action-link" @click.stop="openReport(item, 'LightDynamicPenetration')">触探报告</span>
+              <span class="separator">|</span>
+              <span class="action-link" @click.stop="openReport(item, 'LightDynamicPenetrationResult')">触探结果</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -114,6 +122,13 @@ const formatDate = (dateStr) => {
 const handleRowDblClick = (item) => {
   if (navigateTo) {
     navigateTo('Entrustment', { id: item.id })
+  }
+}
+
+// 打开报告
+const openReport = (item, componentName) => {
+  if (navigateTo) {
+    navigateTo(componentName, { id: item.id })
   }
 }
 
@@ -215,5 +230,26 @@ onMounted(() => {
 .page-info {
   color: #666;
   font-size: 14px;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.action-link {
+  color: #007bff;
+  cursor: pointer;
+  margin: 0 2px;
+  font-size: 12px;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+  color: #0056b3;
+}
+
+.separator {
+  color: #ccc;
+  margin: 0 2px;
 }
 </style>

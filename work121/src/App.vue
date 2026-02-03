@@ -103,7 +103,6 @@ const components = {
 const menuItems = {
   preliminary: [
     { id: 'EntrustmentList', name: '检测委托单' },
-    { id: 'LightDynamicPenetration', name: '轻型动力触探检测报告' },
     { id: 'LightDynamicPenetrationRecord', name: '轻型动力触探检测记录表' },
     { id: 'NuclearDensityRecord', name: '原位密度检测记录表（核子法）' },
     { id: 'SandReplacementRecord', name: '原位密度检测记录表（灌砂法）' },
@@ -116,6 +115,8 @@ const menuItems = {
   report: [
     { id: 'DensityTestReport', name: '原位密度检测报告' },
     { id: 'DensityTestResult', name: '原位密度检测结果' },
+    { id: 'LightDynamicPenetration', name: '轻型动力触探检测报告' },
+    { id: 'LightDynamicPenetrationResult', name: '轻型动力触探检测结果' },
     { id: 'ReboundMethodReport', name: '回弹法检测混凝土抗压强度报告' },
     { id: 'BeckmanBeamReport', name: '路基路面回弹弯沉检测报告' },
     { id: 'BeckmanBeamResult', name: '路基路面回弹弯沉检测结果' }

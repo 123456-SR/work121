@@ -156,8 +156,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, defineProps } from 'vue'
 import axios from 'axios'
+
+const props = defineProps({
+  id: String
+})
 
 const pdfForm = ref(null)
 
@@ -194,8 +198,82 @@ const formData = reactive({
   ]
 })
 
-onMounted(() => {
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
 
+const loadData = async () => {
+    if (!props.id) return
+    try {
+        const res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
+        if (res.data.success && res.data.data) {
+            const data = res.data.data
+            formData.entrustingUnit = data.clientUnit || ''
+            formData.unifiedNumber = data.wtNum || ''
+            formData.projectName = data.projectName || ''
+            formData.entrustDate = formatDate(data.commissionDate)
+            formData.constructionPart = data.constructionPart || ''
+            formData.soilProperty = data.soilProperty || ''
+            formData.reportDate = formatDate(data.reportDate)
+            formData.witnessUnit = data.witnessUnit || ''
+            formData.witness = data.witness || ''
+            formData.designCapacity = data.designCapacity || ''
+            formData.hammerWeight = data.hammerWeight || ''
+            formData.dropDistance = data.dropDistance || ''
+            formData.testCategory = data.testCategory || ''
+            formData.testBasis = data.testBasis || ''
+            formData.equipment = data.equipment || ''
+            formData.remarks = data.remarks || ''
+            formData.approve = data.approver || ''
+            formData.review = data.reviewer || ''
+            formData.inspect = data.tester || ''
+            formData.conclusion = data.conclusion || ''
+            formData.companyName = '河北金涛建设工程质量检测有限公司' // Default
+            formData.companyAddress = '石家庄高新区方亿科技工业园A区第2号楼。' // Default
+            formData.companyPhone = '0311—86107634  0311—67300616' // Default
+
+            if (data.dataJson) {
+                try {
+                    const json = JSON.parse(data.dataJson)
+                    if (json.testDate) formData.testDate = json.testDate
+                    
+                    // Map flat keys to dataBlocks
+                    for (let b = 0; b < 4; b++) {
+                        formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
+                        formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
+                        formData.dataBlocks[b].capacity_L = json[`capacity_L_${b}`] || ''
+                        
+                        formData.dataBlocks[b].pos_R = json[`pos_R_${b}`] || ''
+                        formData.dataBlocks[b].avg_R = json[`avg_R_${b}`] || ''
+                        formData.dataBlocks[b].capacity_R = json[`capacity_R_${b}`] || ''
+
+                        for (let s = 0; s < 2; s++) {
+                            const idx = b * 2 + s
+                            formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${idx}`] || ''
+                            formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${idx}`] || ''
+                            
+                            formData.dataBlocks[b].depths_R[s].depth_R = json[`depth_R_${idx}`] || ''
+                            formData.dataBlocks[b].depths_R[s].actual_R = json[`actual_R_${idx}`] || ''
+                        }
+                    }
+
+                } catch (e) {
+                    console.error('JSON parse error', e)
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Load error', e)
+    }
+}
+
+onMounted(() => {
+    loadData()
 })
 
 const printDocument = () => {
@@ -224,37 +302,54 @@ const submitForm = async () => {
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
     
+    // Convert dataBlocks to flat keys
+    const dynamicData = {}
+    if (formData.testDate) dynamicData.testDate = formData.testDate
+
+    for (let b = 0; b < 4; b++) {
+        const block = formData.dataBlocks[b]
+        if (block.pos_L) dynamicData[`pos_L_${b}`] = block.pos_L
+        if (block.avg_L) dynamicData[`avg_L_${b}`] = block.avg_L
+        if (block.capacity_L) dynamicData[`capacity_L_${b}`] = block.capacity_L
+        
+        if (block.pos_R) dynamicData[`pos_R_${b}`] = block.pos_R
+        if (block.avg_R) dynamicData[`avg_R_${b}`] = block.avg_R
+        if (block.capacity_R) dynamicData[`capacity_R_${b}`] = block.capacity_R
+
+        for (let s = 0; s < 2; s++) {
+            const idx = b * 2 + s
+            if (block.depths[s].depth_L) dynamicData[`depth_L_${idx}`] = block.depths[s].depth_L
+            if (block.depths[s].actual_L) dynamicData[`actual_L_${idx}`] = block.depths[s].actual_L
+            
+            if (block.depths_R[s].depth_R) dynamicData[`depth_R_${idx}`] = block.depths_R[s].depth_R
+            if (block.depths_R[s].actual_R) dynamicData[`actual_R_${idx}`] = block.depths_R[s].actual_R
+        }
+    }
+
     // 构建提交数据
     const submitData = {
-      unifiedNumber: formData.unifiedNumber,
+      id: props.id, // Ensure ID is passed
+      unifiedNumber: formData.unifiedNumber, // These might be ignored if using ID, but good to have
       entrustingUnit: formData.entrustingUnit,
       projectName: formData.projectName,
-      entrustDate: formData.entrustDate,
-      constructionPart: formData.constructionPart,
-      testDate: formData.testDate,
+      // entrustDate: formData.entrustDate, // Read-only usually
+      // constructionPart: formData.constructionPart, // Read-only
+      
+      // Editable fields
       soilProperty: formData.soilProperty,
-      reportDate: formData.reportDate,
-      witnessUnit: formData.witnessUnit,
-      witness: formData.witness,
       designCapacity: formData.designCapacity,
       hammerWeight: formData.hammerWeight,
       dropDistance: formData.dropDistance,
-      testCategory: formData.testCategory,
       testBasis: formData.testBasis,
       equipment: formData.equipment,
       remarks: formData.remarks,
-      approve: formData.approve,
-      review: formData.review,
-      inspect: formData.inspect,
-      companyName: formData.companyName,
-      companyAddress: formData.companyAddress,
-      companyPhone: formData.companyPhone,
+      approver: formData.approve,
+      reviewer: formData.review,
+      tester: formData.inspect,
       conclusion: formData.conclusion,
-      dataBlocks: JSON.stringify(formData.dataBlocks),
-      reviewer: formData.review || userInfo.userName || '',
-      inspector: formData.inspect || userInfo.userName || '',
-      approver: formData.approve || userInfo.userName || '',
-      creator: userInfo.userName || userInfo.username || ''
+      reportDate: formData.reportDate ? new Date(formData.reportDate) : null,
+      
+      dataJson: JSON.stringify(dynamicData)
     };
     
     // 发送请求
