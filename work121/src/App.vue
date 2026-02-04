@@ -73,6 +73,7 @@ import LightDynamicPenetrationResult from './components/LightDynamicPenetrationR
 import ReboundMethodReport from './components/ReboundMethodReport.vue'
 import BeckmanBeamReport from './components/BeckmanBeamReport.vue'
 import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
+import DirectoryList from './components/DirectoryList.vue'
 import Login from './components/Login.vue'
 
 const currentView = ref('')
@@ -97,11 +98,13 @@ const components = {
   LightDynamicPenetrationResult,
   ReboundMethodReport,
   BeckmanBeamReport,
-  BeckmanBeamResult
+  BeckmanBeamResult,
+  DirectoryList
 }
 
 const menuItems = {
   preliminary: [
+    { id: 'DirectoryList', name: '目录管理' },
     { id: 'EntrustmentList', name: '检测委托单' },
     { id: 'LightDynamicPenetrationRecord', name: '轻型动力触探检测记录表' },
     { id: 'NuclearDensityRecord', name: '原位密度检测记录表（核子法）' },
@@ -167,7 +170,8 @@ const checkLoginStatus = () => {
 // 处理登录成功
 const handleLoginSuccess = () => {
   isLoggedIn.value = true
-  currentPageTitle.value = '欢迎使用表格管理系统'
+  // 登录后默认显示目录列表
+  navigateTo({ id: 'DirectoryList', name: '目录管理' })
 }
 
 // 退出登录

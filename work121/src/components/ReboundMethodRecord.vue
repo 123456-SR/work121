@@ -4,10 +4,14 @@
 
     <div class="no-print" style="margin-bottom: 20px;">
         <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
-        <button @click="submitForm" style="float: right; margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
+        <div style="float: right;">
+            <button @click="prevForm" style="margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">上一页</button>
+            <button @click="nextForm" style="margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下一页</button>
+            <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
+            <button @click="generatePdf" style="margin-left: 10px;">下载PDF</button>
+            <button @click="previewPdf" style="margin-left: 10px;">预览PDF</button>
+            <button @click="submitForm" style="margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
+        </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -272,6 +276,89 @@ const submitForm = async () => {
   } catch (error) {
     console.error('提交错误:', error);
     alert('提交失败，请稍后重试');
+  }
+}
+
+const prevForm = () => {
+  navigateBetweenForms(-1)
+}
+
+const nextForm = () => {
+  navigateBetweenForms(1)
+}
+
+const navigateBetweenForms = (direction) => {
+  try {
+    // 获取当前目录
+    const directoryStr = localStorage.getItem('currentDirectory')
+    if (!directoryStr) {
+      alert('未找到目录信息');
+      return;
+    }
+
+    const directory = JSON.parse(directoryStr)
+    
+    // 构建表单序列
+    const formSequence = []
+    for (let i = 1; i <= 10; i++) {
+      const type = directory[`table${i}Type`]
+      const id = directory[`table${i}Id`]
+      if (type) {
+        formSequence.push({ type, id, tableIndex: i })
+      }
+    }
+
+    if (formSequence.length === 0) {
+      alert('该目录未关联任何表单');
+      return;
+    }
+
+    // 找到当前表单在序列中的位置
+    let currentIndex = -1
+    for (let i = 0; i < formSequence.length; i++) {
+      if (formSequence[i].type === 'REBOUND_METHOD_RECORD') {
+        currentIndex = i
+        break
+      }
+    }
+
+    // 计算目标索引
+    const targetIndex = currentIndex + direction
+    if (targetIndex < 0 || targetIndex >= formSequence.length) {
+      alert(direction === -1 ? '已经是第一个表单' : '已经是最后一个表单');
+      return;
+    }
+
+    // 跳转到目标表单
+    const targetForm = formSequence[targetIndex]
+    const routeMap = {
+      'ENTRUSTMENT_LIST': '/entrustment-list',
+      'REBOUND_METHOD_RECORD': '/rebound-method-record',
+      'LIGHT_DYNAMIC_PENETRATION_RECORD': '/light-dynamic-penetration-record',
+      'NUCLEAR_DENSITY_RECORD': '/nuclear-density-record',
+      'SAND_REPLACEMENT_RECORD': '/sand-replacement-record',
+      'WATER_REPLACEMENT_RECORD': '/water-replacement-record',
+      'CUTTING_RING_RECORD': '/cutting-ring-record',
+      'BECKMAN_BEAM_RECORD': '/beckman-beam-record',
+      'SIGNATURE': '/signature',
+      'DENSITY_TEST_REPORT': '/density-test-report',
+      'DENSITY_TEST_RESULT': '/density-test-result',
+      'LIGHT_DYNAMIC_PENETRATION': '/light-dynamic-penetration',
+      'LIGHT_DYNAMIC_PENETRATION_RESULT': '/light-dynamic-penetration-result',
+      'REBOUND_METHOD_REPORT': '/rebound-method-report',
+      'BECKMAN_BEAM_REPORT': '/beckman-beam-report',
+      'BECKMAN_BEAM_RESULT': '/beckman-beam-result'
+    }
+    
+    const route = routeMap[targetForm.type]
+    if (route) {
+      window.location.href = route
+    } else {
+      alert('暂不支持该类型的页面跳转');
+    }
+  } catch (error) {
+    console.error('导航错误:', error);
+    alert('导航失败，请稍后重试');
   }
 }
 </script>
