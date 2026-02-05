@@ -22,24 +22,22 @@ public class UserServiceImpl implements UserService {
     private String driverClassName;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private UserMapper userMapper;
 
     @Override
     public User getUserByAccount(String userAccount) {
         logger.info("根据用户名查询用户: {}", userAccount);
         
-        String sql = "SELECT * FROM JZS_USERS WHERE USER_ACCOUNT = ?";
-        
         try {
-            User user = jdbcTemplate.queryForObject(
-                sql,
-                new Object[]{userAccount},
-                new BeanPropertyRowMapper<>(User.class)
-            );
-            logger.info("查询到用户: {}", user.getUserId());
+            User user = userMapper.selectByAccount(userAccount);
+            if (user != null) {
+                logger.info("查询到用户: {}", user.getUserId());
+            } else {
+                logger.warn("未找到用户: {}", userAccount);
+            }
             return user;
         } catch (Exception e) {
-            logger.warn("未找到用户: {}", userAccount, e);
+            logger.warn("查询用户出错: {}", userAccount, e);
             return null;
         }
     }

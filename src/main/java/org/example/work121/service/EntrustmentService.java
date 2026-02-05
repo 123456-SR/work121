@@ -20,4 +20,10 @@ public interface EntrustmentService {
      * @return 检测委托单实体
      */
     Entrustment getEntrustmentByUnifiedNumber(String unifiedNumber);
+
+    /**
+     * 获取所有检测委托单
+     * @return 检测委托单列表
+     */
+    java.util.List<Entrustment> getAllEntrustments();
 }

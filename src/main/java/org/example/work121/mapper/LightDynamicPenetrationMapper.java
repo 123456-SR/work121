@@ -7,71 +7,70 @@ import org.example.work121.entity.LightDynamicPenetration;
 public interface LightDynamicPenetrationMapper {
 
     @Select("SELECT " +
-            "t1.WT_ID as id, " +
-            "t1.WT_NUM as wtNum, " +
-            "t1.WT_DATE as commissionDate, " +
-            "t1.WT_UNIT as clientUnit, " +
-            "t1.WT_MAN as client, " +
-            "t1.GC_NAME as projectName, " +
-            "t1.GC_AREA as projectArea, " +
-            "t1.GC_SUB as constructionPart, " +
-            "t1.SG_UNIT as constructionUnit, " +
-            "t1.JS_UNIT as buildingUnit, " +
-            "t1.JL_UNIT as supervisionUnit, " +
-            "t1.JD_UNIT as witnessUnit, " +
-            "t1.JD_MAN as witness, " +
-            "t1.JZ_UNIT as buildingUnit2, " +
-            "t1.JZ_MAN as buildingMan, " +
-            "t1.KC_UNIT as surveyUnit, " +
-            "t1.WT_REG_NAME as clientRegName, " +
-            "t1.WT_STATUS as sampleStatus, " +
-            "t1.WT_MAN_TEL as clientTel, " +
-            "t1.WT_UNIT_ADDRESS as clientUnitAddress, " +
-            "t1.WT_UNIT_TEL as clientUnitTel, " +
-            "t1.YWDEPARTMENT as testCategory, " +
-            "t2.SOIL_PROPERTY as soilProperty, " +
-            "t2.DESIGN_CAPACITY as designCapacity, " +
-            "t2.HAMMER_WEIGHT as hammerWeight, " +
-            "t2.DROP_DISTANCE as dropDistance, " +
-            "t2.DATA_JSON as dataJson, " +
-            "t2.TEST_BASIS as testBasis, " +
-            "t2.EQUIPMENT as equipment, " +
-            "t2.CONCLUSION as conclusion, " +
-            "t2.APPROVE_BY as approver, " +
-            "t2.CHECK_BY as reviewer, " +
-            "t2.TEST_BY as tester, " +
-            "t2.REPORT_DATE as reportDate, " +
-            "t2.REMARKS as remarks " +
-            "FROM JC_CORE_WT_INFO t1 " +
-            "LEFT JOIN LIGHT_DYNAMIC_PENETRATION t2 ON t1.WT_ID = t2.WT_ID " +
-            "WHERE t1.WT_ID = #{id}")
+            "UNIFIED_NUMBER as id, " +
+            "ENTRUSTING_UNIT as clientUnit, " +
+            "PROJECT_NAME as projectName, " +
+            "ENTRUST_DATE as commissionDate, " +
+            "CONSTRUCTION_PART as constructionPart, " +
+            "TEST_DATE as testDate, " +
+            "SOIL_PROPERTY as soilProperty, " +
+            "REPORT_DATE as reportDate, " +
+            "WITNESS_UNIT as witnessUnit, " +
+            "WITNESS as witness, " +
+            "DESIGN_CAPACITY as designCapacity, " +
+            "HAMMER_WEIGHT as hammerWeight, " +
+            "DROP_DISTANCE as dropDistance, " +
+            "TEST_CATEGORY as testCategory, " +
+            "TEST_BASIS as testBasis, " +
+            "EQUIPMENT as equipment, " +
+            "REMARKS as remarks, " +
+            "APPROVE as approver, " +
+            "REVIEW as reviewer, " +
+            "INSPECT as tester, " +
+            "COMPANY_NAME as constructionUnit, " + // Assuming Company Name maps to Construction Unit or similar, or just map it if entity has field
+            "CONCLUSION as conclusion, " +
+            "DATA_BLOCKS as dataJson " +
+            "FROM JZS_LIGHT_DYNAMIC_PENETRATION " +
+            "WHERE UNIFIED_NUMBER = #{id}")
     LightDynamicPenetration selectById(@Param("id") String id);
 
-    @Insert("INSERT INTO LIGHT_DYNAMIC_PENETRATION " +
-            "(WT_ID, SOIL_PROPERTY, DESIGN_CAPACITY, HAMMER_WEIGHT, DROP_DISTANCE, DATA_JSON, " +
-            "TEST_BASIS, EQUIPMENT, CONCLUSION, APPROVE_BY, CHECK_BY, TEST_BY, REPORT_DATE, REMARKS) " +
+    @Insert("INSERT INTO JZS_LIGHT_DYNAMIC_PENETRATION " +
+            "(UNIFIED_NUMBER, ENTRUSTING_UNIT, PROJECT_NAME, ENTRUST_DATE, CONSTRUCTION_PART, " +
+            "TEST_DATE, SOIL_PROPERTY, REPORT_DATE, WITNESS_UNIT, WITNESS, DESIGN_CAPACITY, " +
+            "HAMMER_WEIGHT, DROP_DISTANCE, TEST_CATEGORY, TEST_BASIS, EQUIPMENT, REMARKS, " +
+            "APPROVE, REVIEW, INSPECT, CONCLUSION, DATA_BLOCKS) " +
             "VALUES " +
-            "(#{id}, #{soilProperty}, #{designCapacity}, #{hammerWeight}, #{dropDistance}, #{dataJson}, " +
-            "#{testBasis}, #{equipment}, #{conclusion}, #{approver}, #{reviewer}, #{tester}, #{reportDate}, #{remarks})")
+            "(#{id}, #{clientUnit}, #{projectName}, #{commissionDate}, #{constructionPart}, " +
+            "#{testDate}, #{soilProperty}, #{reportDate}, #{witnessUnit}, #{witness}, #{designCapacity}, " +
+            "#{hammerWeight}, #{dropDistance}, #{testCategory}, #{testBasis}, #{equipment}, #{remarks}, " +
+            "#{approver}, #{reviewer}, #{tester}, #{conclusion}, #{dataJson})")
     void insert(LightDynamicPenetration entity);
 
-    @Update("UPDATE LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
+            "ENTRUSTING_UNIT = #{clientUnit}, " +
+            "PROJECT_NAME = #{projectName}, " +
+            "ENTRUST_DATE = #{commissionDate}, " +
+            "CONSTRUCTION_PART = #{constructionPart}, " +
+            "TEST_DATE = #{testDate}, " +
             "SOIL_PROPERTY = #{soilProperty}, " +
+            "REPORT_DATE = #{reportDate}, " +
+            "WITNESS_UNIT = #{witnessUnit}, " +
+            "WITNESS = #{witness}, " +
             "DESIGN_CAPACITY = #{designCapacity}, " +
             "HAMMER_WEIGHT = #{hammerWeight}, " +
             "DROP_DISTANCE = #{dropDistance}, " +
-            "DATA_JSON = #{dataJson}, " +
+            "TEST_CATEGORY = #{testCategory}, " +
             "TEST_BASIS = #{testBasis}, " +
             "EQUIPMENT = #{equipment}, " +
+            "REMARKS = #{remarks}, " +
+            "APPROVE = #{approver}, " +
+            "REVIEW = #{reviewer}, " +
+            "INSPECT = #{tester}, " +
             "CONCLUSION = #{conclusion}, " +
-            "APPROVE_BY = #{approver}, " +
-            "CHECK_BY = #{reviewer}, " +
-            "TEST_BY = #{tester}, " +
-            "REPORT_DATE = #{reportDate}, " +
-            "REMARKS = #{remarks} " +
-            "WHERE WT_ID = #{id}")
+            "DATA_BLOCKS = #{dataJson} " +
+            "WHERE UNIFIED_NUMBER = #{id}")
     void update(LightDynamicPenetration entity);
 
-    @Select("SELECT COUNT(*) FROM LIGHT_DYNAMIC_PENETRATION WHERE WT_ID = #{id}")
+    @Select("SELECT COUNT(*) FROM JZS_LIGHT_DYNAMIC_PENETRATION WHERE UNIFIED_NUMBER = #{id}")
     int countById(@Param("id") String id);
 }

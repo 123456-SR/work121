@@ -23,6 +23,17 @@ public class BeckmanBeam extends Entrustment {
     /** 数据JSON */
     private String dataJson;
 
+    /** 关联委托单ID */
+    private String entrustmentId;
+
+    public String getEntrustmentId() {
+        return entrustmentId;
+    }
+
+    public void setEntrustmentId(String entrustmentId) {
+        this.entrustmentId = entrustmentId;
+    }
+
     public String getSubgradeType() {
         return subgradeType;
     }

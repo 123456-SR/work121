@@ -32,8 +32,19 @@ public class SandReplacement extends Entrustment {
     /** 最小干密度 */
     private String minDryDensity;
 
-    /** 压实系数 */
+  /** 压实系数 */
     private String compactionCoefficient;
+
+    /** 关联委托单ID */
+    private String entrustmentId;
+
+    public String getEntrustmentId() {
+        return entrustmentId;
+    }
+
+    public void setEntrustmentId(String entrustmentId) {
+        this.entrustmentId = entrustmentId;
+    }
 
     public String getMinDryDensity() {
         return minDryDensity;

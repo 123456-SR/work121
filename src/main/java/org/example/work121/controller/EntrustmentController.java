@@ -80,4 +80,25 @@ public class EntrustmentController {
 
         return result;
     }
+
+    /**
+     * 获取所有检测委托单
+     * @return 响应结果
+     */
+    @GetMapping("/getAll")
+    public Map<String, Object> getAllEntrustments() {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            java.util.List<Entrustment> list = entrustmentService.getAllEntrustments();
+            result.put("success", true);
+            result.put("data", list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "查询异常: " + e.getMessage());
+        }
+
+        return result;
+    }
 }

@@ -1,0 +1,25 @@
+package org.example.work121.mapper;
+
+import org.apache.ibatis.annotations.*;
+import org.example.work121.entity.WaterReplacementReport;
+
+@Mapper
+public interface WaterReplacementReportMapper {
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_WATER_REPLACEMENT " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+    WaterReplacementReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
+
+    @Insert("INSERT INTO T_WATER_REPLACEMENT (ID, ENTRUSTMENT_ID, DATA_JSON) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson})")
+    int insert(WaterReplacementReport report);
+
+    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+            "DATA_JSON = #{dataJson} " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+    int update(WaterReplacementReport report);
+}

@@ -1,14 +1,11 @@
 package org.example.work121.service.impl;
 
 import org.example.work121.entity.JzsSignature;
+import org.example.work121.mapper.JzsSignatureMapper;
 import org.example.work121.service.JzsSignatureService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +16,7 @@ import java.util.UUID;
 public class JzsSignatureServiceImpl implements JzsSignatureService {
     
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private JzsSignatureMapper jzsSignatureMapper;
 
     @Override
     public boolean saveSignature(JzsSignature signature) {
@@ -30,29 +27,28 @@ public class JzsSignatureServiceImpl implements JzsSignatureService {
 
             if (existingSignature != null) {
                 // 更新现有签名
-                String sql = "UPDATE JZS_SIGNATURE SET " +
-                        "SIGNATURE_BLOB = ? " +
-                        "WHERE USER_ACCOUNT = ?";
-
-                int result = jdbcTemplate.update(sql,
-                        signature.getSignatureBlob(),
-                        signature.getUserAccount());
-
+                signature.setSignatureId(existingSignature.getSignatureId());
+                signature.setUpdateTime(new java.util.Date());
+                // 保留原有类型和其他信息，如果新对象没有设置
+                if (signature.getSignatureType() == null) {
+                    signature.setSignatureType(existingSignature.getSignatureType());
+                }
+                
+                int result = jzsSignatureMapper.update(signature);
                 return result > 0;
             } else {
                 // 插入新签名
-                String sql = "INSERT INTO JZS_SIGNATURE " +
-                        "(SIGNATURE_ID, USER_ACCOUNT, SIGNATURE_BLOB) " +
-                        "VALUES (?, ?, ?)";
+                if (signature.getSignatureId() == null) {
+                    signature.setSignatureId(UUID.randomUUID().toString());
+                }
+                if (signature.getSignatureType() == null) {
+                    signature.setSignatureType("DEFAULT");
+                }
+                if (signature.getCreateTime() == null) {
+                    signature.setCreateTime(new java.util.Date());
+                }
 
-                String signatureId = signature.getSignatureId() != null ? 
-                        signature.getSignatureId() : UUID.randomUUID().toString();
-
-                int result = jdbcTemplate.update(sql,
-                        signatureId,
-                        signature.getUserAccount(),
-                        signature.getSignatureBlob());
-
+                int result = jzsSignatureMapper.insert(signature);
                 return result > 0;
             }
         } catch (Exception e) {
@@ -64,8 +60,7 @@ public class JzsSignatureServiceImpl implements JzsSignatureService {
     @Override
     public JzsSignature getSignatureByUserAccount(String userAccount) {
         try {
-            String sql = "SELECT * FROM JZS_SIGNATURE WHERE USER_ACCOUNT = ?";
-            List<JzsSignature> signatures = jdbcTemplate.query(sql, new SignatureRowMapper(), userAccount);
+            List<JzsSignature> signatures = jzsSignatureMapper.selectListByUser(userAccount);
             return signatures.isEmpty() ? null : signatures.get(0);
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,28 +71,11 @@ public class JzsSignatureServiceImpl implements JzsSignatureService {
     @Override
     public boolean deleteSignature(String signatureId) {
         try {
-            String sql = "DELETE FROM JZS_SIGNATURE WHERE SIGNATURE_ID = ?";
-            int result = jdbcTemplate.update(sql, signatureId);
+            int result = jzsSignatureMapper.deleteById(signatureId);
             return result > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
-        }
-    }
-
-    // 行映射器
-    private class SignatureRowMapper implements RowMapper<JzsSignature> {
-        @Override
-        public JzsSignature mapRow(ResultSet rs, int rowNum) throws SQLException {
-            JzsSignature signature = new JzsSignature();
-            signature.setSignatureId(rs.getString("SIGNATURE_ID"));
-            signature.setUserAccount(rs.getString("USER_ACCOUNT"));
-            // 将Blob转换为byte[]
-            java.sql.Blob blob = rs.getBlob("SIGNATURE_BLOB");
-            if (blob != null) {
-                signature.setSignatureBlob(blob.getBytes(1, (int) blob.length()));
-            }
-            return signature;
         }
     }
 }

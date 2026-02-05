@@ -1,15 +1,13 @@
 package org.example.work121.service.impl;
 
 import org.example.work121.entity.Entrustment;
+import org.example.work121.mapper.EntrustmentMapper;
 import org.example.work121.service.EntrustmentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -19,107 +17,47 @@ import java.util.UUID;
 public class EntrustmentServiceImpl implements EntrustmentService {
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private EntrustmentMapper entrustmentMapper;
 
     @Override
+    @Transactional
     public boolean saveEntrustment(Entrustment entrustment) {
         try {
             // 检查是否已存在该统一编号的记录
-            Entrustment existingRecord = getEntrustmentByUnifiedNumber(entrustment.getId());
+            String id = entrustment.getId();
+            Entrustment existingRecord = null;
+            
+            if (id != null) {
+                existingRecord = entrustmentMapper.selectById(id);
+            }
 
             if (existingRecord != null) {
                 // 更新现有记录
-                String sql = "UPDATE T_ENTRUSTMENT SET " +
-                        "WT_NUM = ?, " +
-                        "SAMPLE_NAME = ?, " +
-                        "TEST_CATEGORY = ?, " +
-                        "CLIENT_UNIT = ?, " +
-                        "CLIENT = ?, " +
-                        "CLIENT_TEL = ?, " +
-                        "CLIENT_UNIT_POSTALCODE = ?, " +
-                        "CLIENT_UNIT_PERSON = ?, " +
-                        "PROJECT_NAME = ?, " +
-                        "CONSTRUCTION_PART = ?, " +
-                        "PROJECT_AREA = ?, " +
-                        "BUILDING_UNIT = ?, " +
-                        "SURVEY_UNIT = ?, " +
-                        "CONSTRUCTION_UNIT = ?, " +
-                        "WITNESS_UNIT = ?, " +
-                        "WITNESS = ?, " +
-                        "SUPERVISION_UNIT = ?, " +
-                        "DESIGN_UNIT = ?, " +
-                        "COMMISSION_DATE = ?, " +
-                        "REMARKS = ?, " +
-                        "SAMPLE_STATUS = ?, " +
-                        "TEST_ITEMS = ? " +
-                        "WHERE ID = ?";
-
-                int result = jdbcTemplate.update(sql,
-                        entrustment.getWtNum(),
-                        entrustment.getSampleName(),
-                        entrustment.getTestCategory(),
-                        entrustment.getClientUnit(),
-                        entrustment.getClient(),
-                        entrustment.getClientTel(),
-                        entrustment.getClientUnitPostalcode(),
-                        entrustment.getClientUnitPerson(),
-                        entrustment.getProjectName(),
-                        entrustment.getConstructionPart(),
-                        entrustment.getProjectArea(),
-                        entrustment.getBuildingUnit(),
-                        entrustment.getSurveyUnit(),
-                        entrustment.getConstructionUnit(),
-                        entrustment.getWitnessUnit(),
-                        entrustment.getWitness(),
-                        entrustment.getSupervisionUnit(),
-                        entrustment.getDesignUnit(),
-                        entrustment.getCommissionDate(),
-                        entrustment.getRemarks(),
-                        entrustment.getSampleStatus(),
-                        entrustment.getTestItems(),
-                        entrustment.getId()
-                );
-
+                int result = entrustmentMapper.update(entrustment);
+                
+                // 如果更新返回0，说明该记录只存在于旧表(JZS_ENTRUSTMENT)中，不存在于新表(T_ENTRUSTMENT)
+                // 此时需要将其插入到新表中（相当于从旧表迁移并更新）
+                if (result == 0) {
+                    if (entrustment.getCreateTime() == null) {
+                        entrustment.setCreateTime(existingRecord.getCreateTime() != null ? existingRecord.getCreateTime() : new Date());
+                    }
+                    if (entrustment.getCreateBy() == null) {
+                        entrustment.setCreateBy(existingRecord.getCreateBy());
+                    }
+                    result = entrustmentMapper.insert(entrustment);
+                }
                 return result > 0;
             } else {
                 // 插入新记录
-                String sql = "INSERT INTO T_ENTRUSTMENT " +
-                        "(ID, WT_NUM, SAMPLE_NAME, TEST_CATEGORY, CLIENT_UNIT, CLIENT, CLIENT_TEL, " +
-                        "CLIENT_UNIT_POSTALCODE, CLIENT_UNIT_PERSON, PROJECT_NAME, CONSTRUCTION_PART, " +
-                        "PROJECT_AREA, BUILDING_UNIT, SURVEY_UNIT, CONSTRUCTION_UNIT, WITNESS_UNIT, " +
-                        "WITNESS, SUPERVISION_UNIT, DESIGN_UNIT, COMMISSION_DATE, REMARKS, " +
-                        "SAMPLE_STATUS, TEST_ITEMS) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                if (entrustment.getId() == null) {
+                    entrustment.setId(UUID.randomUUID().toString());
+                }
+                
+                if (entrustment.getCreateTime() == null) {
+                    entrustment.setCreateTime(new Date());
+                }
 
-                String id = entrustment.getId() != null ? 
-                        entrustment.getId() : UUID.randomUUID().toString();
-
-                int result = jdbcTemplate.update(sql,
-                        id,
-                        entrustment.getWtNum(),
-                        entrustment.getSampleName(),
-                        entrustment.getTestCategory(),
-                        entrustment.getClientUnit(),
-                        entrustment.getClient(),
-                        entrustment.getClientTel(),
-                        entrustment.getClientUnitPostalcode(),
-                        entrustment.getClientUnitPerson(),
-                        entrustment.getProjectName(),
-                        entrustment.getConstructionPart(),
-                        entrustment.getProjectArea(),
-                        entrustment.getBuildingUnit(),
-                        entrustment.getSurveyUnit(),
-                        entrustment.getConstructionUnit(),
-                        entrustment.getWitnessUnit(),
-                        entrustment.getWitness(),
-                        entrustment.getSupervisionUnit(),
-                        entrustment.getDesignUnit(),
-                        entrustment.getCommissionDate(),
-                        entrustment.getRemarks(),
-                        entrustment.getSampleStatus(),
-                        entrustment.getTestItems()
-                );
-
+                int result = entrustmentMapper.insert(entrustment);
                 return result > 0;
             }
         } catch (Exception e) {
@@ -131,44 +69,20 @@ public class EntrustmentServiceImpl implements EntrustmentService {
     @Override
     public Entrustment getEntrustmentByUnifiedNumber(String unifiedNumber) {
         try {
-            String sql = "SELECT * FROM T_ENTRUSTMENT WHERE ID = ?";
-            List<Entrustment> records = jdbcTemplate.query(sql, new EntrustmentRowMapper(), unifiedNumber);
-            return records.isEmpty() ? null : records.get(0);
+            return entrustmentMapper.selectById(unifiedNumber);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    // 行映射器
-    private class EntrustmentRowMapper implements RowMapper<Entrustment> {
-        @Override
-        public Entrustment mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Entrustment record = new Entrustment();
-            record.setId(rs.getString("ID"));
-            record.setWtNum(rs.getString("WT_NUM"));
-            record.setSampleName(rs.getString("SAMPLE_NAME"));
-            record.setTestCategory(rs.getString("TEST_CATEGORY"));
-            record.setClientUnit(rs.getString("CLIENT_UNIT"));
-            record.setClient(rs.getString("CLIENT"));
-            record.setClientTel(rs.getString("CLIENT_TEL"));
-            record.setClientUnitPostalcode(rs.getString("CLIENT_UNIT_POSTALCODE"));
-            record.setClientUnitPerson(rs.getString("CLIENT_UNIT_PERSON"));
-            record.setProjectName(rs.getString("PROJECT_NAME"));
-            record.setConstructionPart(rs.getString("CONSTRUCTION_PART"));
-            record.setProjectArea(rs.getString("PROJECT_AREA"));
-            record.setBuildingUnit(rs.getString("BUILDING_UNIT"));
-            record.setSurveyUnit(rs.getString("SURVEY_UNIT"));
-            record.setConstructionUnit(rs.getString("CONSTRUCTION_UNIT"));
-            record.setWitnessUnit(rs.getString("WITNESS_UNIT"));
-            record.setWitness(rs.getString("WITNESS"));
-            record.setSupervisionUnit(rs.getString("SUPERVISION_UNIT"));
-            record.setDesignUnit(rs.getString("DESIGN_UNIT"));
-            record.setCommissionDate(rs.getDate("COMMISSION_DATE"));
-            record.setRemarks(rs.getString("REMARKS"));
-            record.setSampleStatus(rs.getString("SAMPLE_STATUS"));
-            record.setTestItems(rs.getString("TEST_ITEMS"));
-            return record;
+    @Override
+    public java.util.List<Entrustment> getAllEntrustments() {
+        try {
+            return entrustmentMapper.selectAll();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new java.util.ArrayList<>();
         }
     }
 }

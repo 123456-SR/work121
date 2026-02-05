@@ -356,8 +356,19 @@ public class Entrustment extends BusinessEntity implements Serializable {
     /** 费用（非数据库字段，对应standardMoney） */
     private String fee;
 
+    /** 是否可编辑（非数据库字段，用于前端控制修改/删除按钮） */
+    private boolean canEdit;
+
     // 无参构造器
     public Entrustment() {
+    }
+
+    public boolean isCanEdit() {
+        return canEdit;
+    }
+
+    public void setCanEdit(boolean canEdit) {
+        this.canEdit = canEdit;
     }
 
     // ===================== 所有字段的getter/setter方法 =====================
