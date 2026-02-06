@@ -297,6 +297,39 @@ public class Entrustment extends BusinessEntity implements Serializable {
     private String blindNumber;
     /** 任务登记预检日期（JC_DATE） */
     private Timestamp jcDate;
+
+    /** 复核人签名照片 */
+    private String reviewSignaturePhoto;
+
+    /** 检测人签名照片 */
+    private String inspectSignaturePhoto;
+
+    /** 批准人签名照片 */
+    private String approveSignaturePhoto;
+
+    public String getReviewSignaturePhoto() {
+        return reviewSignaturePhoto;
+    }
+
+    public void setReviewSignaturePhoto(String reviewSignaturePhoto) {
+        this.reviewSignaturePhoto = reviewSignaturePhoto;
+    }
+
+    public String getInspectSignaturePhoto() {
+        return inspectSignaturePhoto;
+    }
+
+    public void setInspectSignaturePhoto(String inspectSignaturePhoto) {
+        this.inspectSignaturePhoto = inspectSignaturePhoto;
+    }
+
+    public String getApproveSignaturePhoto() {
+        return approveSignaturePhoto;
+    }
+
+    public void setApproveSignaturePhoto(String approveSignaturePhoto) {
+        this.approveSignaturePhoto = approveSignaturePhoto;
+    }
     /** 工程监管编号（GC_JGCODE） */
     private String projectSuperviseCode;
     /** 合同执行阶段（CONTRACT_PHASE） */

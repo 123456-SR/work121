@@ -85,6 +85,7 @@ public interface SandReplacementMapper {
     void insert(SandReplacement entity);
 
     @Update("UPDATE T_SAND_REPLACEMENT SET " +
+            "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "SOIL_TYPE = #{soilType}, " +
             "PIT_VOLUME = #{pitVolume}, " +
             "WET_WEIGHT = #{wetWeight}, " +
