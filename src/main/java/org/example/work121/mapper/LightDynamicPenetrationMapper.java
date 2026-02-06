@@ -66,6 +66,10 @@ public interface LightDynamicPenetrationMapper {
             "APPROVE = #{approver}, " +
             "REVIEW = #{reviewer}, " +
             "INSPECT = #{tester}, " +
+            "COMPANY_NAME = #{constructionUnit}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "CONCLUSION = #{conclusion}, " +
             "DATA_BLOCKS = #{dataJson} " +
             "WHERE UNIFIED_NUMBER = #{id}")
