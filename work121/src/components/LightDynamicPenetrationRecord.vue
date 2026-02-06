@@ -3,7 +3,7 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
         <button @click="saveData" style="float: right; margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
@@ -130,8 +130,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, defineProps } from 'vue'
+import { reactive, ref, onMounted, defineProps, inject } from 'vue'
 import axios from 'axios'
+
+// 注入导航方法
+const navigateTo = inject('navigateTo')
 
 const props = defineProps({
   id: String
@@ -233,6 +236,13 @@ onMounted(() => {
 
 const printDocument = () => {
   window.print()
+}
+
+// 返回主页（目录列表）
+const goToHome = () => {
+  if (navigateTo) {
+    navigateTo('DirectoryList');
+  }
 }
 
 const generatePdf = () => {

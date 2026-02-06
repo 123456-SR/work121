@@ -3,7 +3,9 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
+        <button @click="prevForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">上一页</button>
+        <button @click="nextForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下一页</button>
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
@@ -192,8 +194,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, inject } from 'vue'
 import axios from 'axios'
+
+// 注入导航方法
+const navigateTo = inject('navigateTo')
 
 const props = defineProps({
   id: {
@@ -278,7 +283,23 @@ const loadData = async (id) => {
 }
 
 onMounted(() => {
-  if (props.id) {
+  // 检查是否从目录跳转而来
+  const currentDirectory = localStorage.getItem('currentDirectory')
+  if (currentDirectory) {
+    try {
+      const directory = JSON.parse(currentDirectory)
+      // 保存目录信息
+      localStorage.setItem('currentDirectory', JSON.stringify(directory))
+      
+      // 检查当前页面是否是目录中的第一个表
+      if (directory.table1Type === 'ENTRUSTMENT_LIST' && directory.table1Id) {
+        // 加载目录中的数据
+        loadData(directory.table1Id)
+      }
+    } catch (e) {
+      console.error('Failed to parse directory:', e)
+    }
+  } else if (props.id) {
     loadData(props.id)
   }
 })
@@ -294,6 +315,106 @@ watch(() => props.id, (newId) => {
     })
   }
 })
+
+// 上一页
+const prevForm = () => {
+  navigateBetweenForms(-1)
+}
+
+// 下一页
+const nextForm = () => {
+  navigateBetweenForms(1)
+}
+
+// 表单导航
+const navigateBetweenForms = (direction) => {
+  const currentDirectory = localStorage.getItem('currentDirectory')
+  if (!currentDirectory) {
+    alert('未找到流程信息')
+    return
+  }
+  
+  try {
+    const directory = JSON.parse(currentDirectory)
+    
+    // 构建表单队列（只需要type，不需要id）
+    const formQueue = []
+    for (let i = 1; i <= 10; i++) {
+      const type = directory[`table${i}Type`]
+      if (type) {
+        formQueue.push({ type, index: i })
+      }
+    }
+    
+    if (formQueue.length === 0) {
+      alert('流程中没有表单')
+      return
+    }
+    
+    // 动态获取当前表单类型
+    const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+    
+    // 找到当前表单在队列中的位置
+    let currentIndex = -1
+    for (let i = 0; i < formQueue.length; i++) {
+      if (formQueue[i].type === currentFormType) {
+        currentIndex = i
+        break
+      }
+    }
+    
+    // 如果没找到，默认从第一个开始
+    if (currentIndex === -1) {
+      currentIndex = 0
+    }
+    
+    // 计算目标表单的位置
+    const targetIndex = currentIndex + direction
+    if (targetIndex < 0 || targetIndex >= formQueue.length) {
+      alert('已经是第' + (direction === -1 ? '一' : '最后') + '个表单了')
+      return
+    }
+    
+    // 跳转到目标表单
+    const targetForm = formQueue[targetIndex]
+    const componentMap = {
+      'ENTRUSTMENT_LIST': 'Entrustment',
+      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
+      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
+      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
+      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
+      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
+      'CUTTING_RING_RECORD': 'CuttingRingRecord',
+      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
+      'SIGNATURE': 'Signature',
+      'DENSITY_TEST_REPORT': 'DensityTestReport',
+      'DENSITY_TEST_RESULT': 'DensityTestResult',
+      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
+      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
+      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
+      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
+      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
+    }
+    
+    const componentName = componentMap[targetForm.type]
+    if (componentName && navigateTo) {
+      // 保存当前表单的状态
+      localStorage.setItem('currentFormType', targetForm.type)
+      localStorage.setItem('currentFormIndex', targetIndex.toString())
+      
+      // 构建参数
+      const props = {}
+      
+      // 使用navigateTo方法导航到对应的组件
+      navigateTo(componentName, props)
+    } else {
+      alert('暂不支持该类型的页面跳转')
+    }
+  } catch (e) {
+    console.error('Navigation error:', e)
+    alert('导航失败，请重试')
+  }
+}
 
 const printDocument = () => {
   window.print()
@@ -360,6 +481,13 @@ const formatDate = (dateStr, format) => {
   const day = String(date.getDate()).padStart(2, '0');
   
   return format.replace('YYYY', year).replace('MM', month).replace('DD', day);
+}
+
+// 返回主页（目录列表）
+const goToHome = () => {
+  if (navigateTo) {
+    navigateTo('DirectoryList');
+  }
 }
 
 const submitForm = async () => {

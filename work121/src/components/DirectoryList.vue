@@ -1,16 +1,16 @@
 <template>
-  <div class="directory-list-container">
+  <div class="process-list-container">
     <div class="header">
-      <h2>目录列表</h2>
-      <button @click="openAddModal" class="add-btn">+ 增加目录</button>
+      <h2>流程列表</h2>
+      <button @click="openAddModal" class="add-btn">+ 增加流程</button>
     </div>
 
-    <div class="directory-table">
+    <div class="process-table">
       <table>
         <thead>
           <tr>
             <th>序号</th>
-            <th>目录名称</th>
+            <th>流程名称</th>
             <th>关联表1</th>
             <th>关联表2</th>
             <th>关联表3</th>
@@ -26,7 +26,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in directories" :key="item.id">
+          <tr v-for="(item, index) in processes" :key="item.id">
             <td>{{ index + 1 }}</td>
             <td>{{ item.dirName }}</td>
             <td>{{ item.table1Type || '-' }}</td>
@@ -41,29 +41,29 @@
             <td>{{ item.table10Type || '-' }}</td>
             <td>{{ getStatusText(item.status) }}</td>
             <td>
-              <button @click="viewDirectory(item)" class="view-btn">查看详情</button>
-              <button @click="editDirectory(item)" class="edit-btn">编辑</button>
-              <button @click="deleteDirectory(item.id)" class="delete-btn">删除</button>
+              <button @click="viewProcess(item)" class="view-btn">查看详情</button>
+              <button @click="editProcess(item)" class="edit-btn">编辑</button>
+              <button @click="deleteProcess(item.id)" class="delete-btn">删除</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 增加/编辑目录弹窗 -->
+    <!-- 增加/编辑流程弹窗 -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>{{ isEditing ? '编辑目录' : '增加目录' }}</h3>
+          <h3>{{ isEditing ? '编辑流程' : '增加流程' }}</h3>
           <button @click="closeModal" class="close-btn">×</button>
         </div>
         <div class="modal-body">
-          <form @submit.prevent="saveDirectory">
+          <form @submit.prevent="saveProcess">
             <div class="form-layout">
-              <!-- 左侧：目录名称和队列显示 -->
+              <!-- 左侧：流程名称和队列显示 -->
               <div class="left-panel">
                 <div class="form-group">
-                  <label>目录名称：</label>
+                  <label>流程名称：</label>
                   <input type="text" v-model="formData.dirName" required>
                 </div>
                 
@@ -127,10 +127,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, inject } from 'vue'
 import axios from 'axios'
 
-const directories = ref([])
+// 注入导航方法
+const navigateTo = inject('navigateTo')
+
+const processes = ref([])
 const showModal = ref(false)
 const isEditing = ref(false)
 
@@ -175,17 +178,17 @@ const formData = reactive({
 })
 
 onMounted(() => {
-  loadDirectories()
+  loadProcesses()
 })
 
-const loadDirectories = async () => {
+const loadProcesses = async () => {
   try {
     const response = await axios.post('/api/directory/getAll')
     if (response.data.success) {
-      directories.value = response.data.data
+      processes.value = response.data.data
     }
   } catch (error) {
-    console.error('加载目录列表失败:', error)
+    console.error('加载流程列表失败:', error)
   }
 }
 
@@ -195,7 +198,7 @@ const openAddModal = () => {
   showModal.value = true
 }
 
-const editDirectory = (item) => {
+const editProcess = (item) => {
   // 重置表单
   resetForm()
   
@@ -261,7 +264,7 @@ const removeFromQueue = (index) => {
   selectedForms.value.splice(index, 1)
 }
 
-const saveDirectory = async () => {
+const saveProcess = async () => {
   try {
     // 将队列中的表单类型映射到table1Type-table10Type
     for (let i = 1; i <= 10; i++) {
@@ -286,54 +289,65 @@ const saveDirectory = async () => {
     if (response.data.success) {
       alert('保存成功')
       closeModal()
-      loadDirectories()
+      loadProcesses()
     } else {
       alert('保存失败: ' + response.data.message)
     }
   } catch (error) {
-    console.error('保存目录失败:', error)
+    console.error('保存流程失败:', error)
     alert('保存失败，请稍后重试')
   }
 }
 
-const viewDirectory = (item) => {
-  // 保存目录详情到localStorage，用于后续跳转
+const viewProcess = (item) => {
+  // 保存流程详情到localStorage，用于后续跳转
   localStorage.setItem('currentDirectory', JSON.stringify(item))
   
   // 跳转到表1类型对应的页面
   if (item.table1Type) {
-    const routeMap = {
-      'ENTRUSTMENT_LIST': '/entrustment-list',
-      'REBOUND_METHOD_RECORD': '/rebound-method-record',
-      'LIGHT_DYNAMIC_PENETRATION_RECORD': '/light-dynamic-penetration-record',
-      'NUCLEAR_DENSITY_RECORD': '/nuclear-density-record',
-      'SAND_REPLACEMENT_RECORD': '/sand-replacement-record',
-      'WATER_REPLACEMENT_RECORD': '/water-replacement-record',
-      'CUTTING_RING_RECORD': '/cutting-ring-record',
-      'BECKMAN_BEAM_RECORD': '/beckman-beam-record',
-      'SIGNATURE': '/signature',
-      'DENSITY_TEST_REPORT': '/density-test-report',
-      'DENSITY_TEST_RESULT': '/density-test-result',
-      'LIGHT_DYNAMIC_PENETRATION': '/light-dynamic-penetration',
-      'LIGHT_DYNAMIC_PENETRATION_RESULT': '/light-dynamic-penetration-result',
-      'REBOUND_METHOD_REPORT': '/rebound-method-report',
-      'BECKMAN_BEAM_REPORT': '/beckman-beam-report',
-      'BECKMAN_BEAM_RESULT': '/beckman-beam-result'
+    const componentMap = {
+      'ENTRUSTMENT_LIST': 'Entrustment',
+      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
+      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
+      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
+      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
+      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
+      'CUTTING_RING_RECORD': 'CuttingRingRecord',
+      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
+      'SIGNATURE': 'Signature',
+      'DENSITY_TEST_REPORT': 'DensityTestReport',
+      'DENSITY_TEST_RESULT': 'DensityTestResult',
+      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
+      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
+      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
+      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
+      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
     }
     
-    const route = routeMap[item.table1Type]
-    if (route) {
-      window.location.href = route
+    const componentName = componentMap[item.table1Type]
+    if (componentName && navigateTo) {
+      // 保存当前表单的状态
+      localStorage.setItem('currentFormType', item.table1Type)
+      localStorage.setItem('currentFormIndex', '0')
+      
+      // 构建参数，传递流程中的ID
+      const props = {}
+      if (item.table1Id) {
+        props.id = item.table1Id
+      }
+      
+      // 使用navigateTo方法导航到对应的组件
+      navigateTo(componentName, props)
     } else {
       alert('暂不支持该类型的页面跳转')
     }
   } else {
-    alert('该目录未关联任何表单')
+    alert('该流程未关联任何表单')
   }
 }
 
-const deleteDirectory = async (id) => {
-  if (confirm('确定要删除该目录吗？')) {
+const deleteProcess = async (id) => {
+  if (confirm('确定要删除该流程吗？')) {
     try {
       const response = await axios.post('/api/directory/delete', { id })
       if (response.data.success) {

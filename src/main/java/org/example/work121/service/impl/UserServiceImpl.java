@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,20 +24,29 @@ public class UserServiceImpl implements UserService {
     private String driverClassName;
 
     @Autowired
-    private UserMapper userMapper;
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public User getUserByAccount(String userAccount) {
         logger.info("根据用户名查询用户: {}", userAccount);
         
+        String sql = "SELECT * FROM JZS_USERS WHERE USER_ACCOUNT = ?";
+        
         try {
-            User user = userMapper.selectByAccount(userAccount);
-            if (user != null) {
+            List<User> users = jdbcTemplate.query(
+                sql,
+                new Object[]{userAccount},
+                new BeanPropertyRowMapper<>(User.class)
+            );
+            
+            if (!users.isEmpty()) {
+                User user = users.get(0);
                 logger.info("查询到用户: {}", user.getUserId());
+                return user;
             } else {
                 logger.warn("未找到用户: {}", userAccount);
+                return null;
             }
-            return user;
         } catch (Exception e) {
             logger.warn("查询用户出错: {}", userAccount, e);
             return null;
@@ -57,13 +68,20 @@ public class UserServiceImpl implements UserService {
         String sql = "SELECT * FROM JZS_USERS WHERE USER_ACCOUNT = ?";
         
         try {
-            User user = tempJdbcTemplate.queryForObject(
+            List<User> users = tempJdbcTemplate.query(
                 sql,
                 new Object[]{userAccount},
                 new BeanPropertyRowMapper<>(User.class)
             );
-            logger.info("查询到用户: {}", user.getUserId());
-            return user;
+            
+            if (!users.isEmpty()) {
+                User user = users.get(0);
+                logger.info("查询到用户: {}", user.getUserId());
+                return user;
+            } else {
+                logger.warn("未找到用户: {}", userAccount);
+                return null;
+            }
         } catch (Exception e) {
             logger.warn("未找到用户: {}", userAccount);
             return null;

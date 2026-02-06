@@ -3,7 +3,7 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
         <div style="float: right;">
             <button @click="prevForm" style="margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">上一页</button>
             <button @click="nextForm" style="margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下一页</button>
@@ -158,8 +158,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, inject } from 'vue'
 import axios from 'axios'
+
+// 注入导航方法
+const navigateTo = inject('navigateTo')
 
 const pdfForm = ref(null)
 
@@ -194,6 +197,33 @@ const formData = reactive({
 })
 
 onMounted(() => {
+  // 检查是否从目录跳转而来
+  const currentDirectory = localStorage.getItem('currentDirectory')
+  if (currentDirectory) {
+    try {
+      const directory = JSON.parse(currentDirectory)
+      // 保存目录信息
+      localStorage.setItem('currentDirectory', JSON.stringify(directory))
+      
+      // 检查当前页面是否是目录中的表
+      for (let i = 1; i <= 10; i++) {
+        if (directory[`table${i}Type`] === 'REBOUND_METHOD_RECORD' && directory[`table${i}Id`]) {
+          // 加载目录中的数据
+          loadData(directory[`table${i}Id`])
+          break
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse directory:', e)
+    }
+  }
+  
+  // 检查URL参数中是否有ID
+  const urlParams = new URLSearchParams(window.location.search)
+  const id = urlParams.get('id')
+  if (id) {
+    loadData(id)
+  }
 
   // Initialize dynamic fields for rebound values (10 rows x 16 columns)
   for (let i = 1; i <= 10; i++) {
@@ -209,8 +239,33 @@ onMounted(() => {
 
 })
 
+// 加载数据
+const loadData = async (id) => {
+  try {
+    const response = await axios.get(`/api/rebound-method/${id}`)
+    if (response.data.success && response.data.data) {
+      const data = response.data.data
+      formData.unifiedNumber = data.id || ''
+      formData.entrustingUnit = data.entrustingUnit || ''
+      formData.projectName = data.projectName || ''
+      formData.structurePart = data.structurePart || ''
+      formData.commissionDate = data.commissionDate || ''
+      // 加载其他字段...
+    }
+  } catch (error) {
+    console.error('Failed to load data:', error)
+  }
+}
+
 const printDocument = () => {
   window.print()
+}
+
+// 返回主页（目录列表）
+const goToHome = () => {
+  if (navigateTo) {
+    navigateTo('DirectoryList');
+  }
 }
 
 const generatePdf = () => {
@@ -292,7 +347,7 @@ const navigateBetweenForms = (direction) => {
     // 获取当前目录
     const directoryStr = localStorage.getItem('currentDirectory')
     if (!directoryStr) {
-      alert('未找到目录信息');
+      alert('未找到流程信息');
       return;
     }
 
@@ -309,17 +364,25 @@ const navigateBetweenForms = (direction) => {
     }
 
     if (formSequence.length === 0) {
-      alert('该目录未关联任何表单');
+      alert('该流程未关联任何表单');
       return;
     }
 
+    // 动态获取当前表单类型
+    const currentFormType = localStorage.getItem('currentFormType') || 'REBOUND_METHOD_RECORD'
+    
     // 找到当前表单在序列中的位置
     let currentIndex = -1
     for (let i = 0; i < formSequence.length; i++) {
-      if (formSequence[i].type === 'REBOUND_METHOD_RECORD') {
+      if (formSequence[i].type === currentFormType) {
         currentIndex = i
         break
       }
+    }
+
+    // 如果没找到，默认从第一个开始
+    if (currentIndex === -1) {
+      currentIndex = 0
     }
 
     // 计算目标索引
@@ -331,28 +394,39 @@ const navigateBetweenForms = (direction) => {
 
     // 跳转到目标表单
     const targetForm = formSequence[targetIndex]
-    const routeMap = {
-      'ENTRUSTMENT_LIST': '/entrustment-list',
-      'REBOUND_METHOD_RECORD': '/rebound-method-record',
-      'LIGHT_DYNAMIC_PENETRATION_RECORD': '/light-dynamic-penetration-record',
-      'NUCLEAR_DENSITY_RECORD': '/nuclear-density-record',
-      'SAND_REPLACEMENT_RECORD': '/sand-replacement-record',
-      'WATER_REPLACEMENT_RECORD': '/water-replacement-record',
-      'CUTTING_RING_RECORD': '/cutting-ring-record',
-      'BECKMAN_BEAM_RECORD': '/beckman-beam-record',
-      'SIGNATURE': '/signature',
-      'DENSITY_TEST_REPORT': '/density-test-report',
-      'DENSITY_TEST_RESULT': '/density-test-result',
-      'LIGHT_DYNAMIC_PENETRATION': '/light-dynamic-penetration',
-      'LIGHT_DYNAMIC_PENETRATION_RESULT': '/light-dynamic-penetration-result',
-      'REBOUND_METHOD_REPORT': '/rebound-method-report',
-      'BECKMAN_BEAM_REPORT': '/beckman-beam-report',
-      'BECKMAN_BEAM_RESULT': '/beckman-beam-result'
+    const componentMap = {
+      'ENTRUSTMENT_LIST': 'Entrustment',
+      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
+      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
+      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
+      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
+      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
+      'CUTTING_RING_RECORD': 'CuttingRingRecord',
+      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
+      'SIGNATURE': 'Signature',
+      'DENSITY_TEST_REPORT': 'DensityTestReport',
+      'DENSITY_TEST_RESULT': 'DensityTestResult',
+      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
+      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
+      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
+      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
+      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
     }
     
-    const route = routeMap[targetForm.type]
-    if (route) {
-      window.location.href = route
+    const componentName = componentMap[targetForm.type]
+    if (componentName && navigateTo) {
+      // 保存当前表单的状态
+      localStorage.setItem('currentFormType', targetForm.type)
+      localStorage.setItem('currentFormIndex', targetIndex.toString())
+      
+      // 构建参数，传递目录中的ID
+      const props = {}
+      if (targetForm.id) {
+        props.id = targetForm.id
+      }
+      
+      // 使用navigateTo方法导航到对应的组件
+      navigateTo(componentName, props)
     } else {
       alert('暂不支持该类型的页面跳转');
     }

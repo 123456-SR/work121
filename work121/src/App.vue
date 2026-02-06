@@ -104,7 +104,7 @@ const components = {
 
 const menuItems = {
   preliminary: [
-    { id: 'DirectoryList', name: '目录管理' },
+    { id: 'DirectoryList', name: '流程管理' },
     { id: 'EntrustmentList', name: '检测委托单' },
     { id: 'LightDynamicPenetrationRecord', name: '轻型动力触探检测记录表' },
     { id: 'NuclearDensityRecord', name: '原位密度检测记录表（核子法）' },

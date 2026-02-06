@@ -3,7 +3,7 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
+        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
@@ -97,7 +97,10 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, inject } from 'vue'
+
+// 注入导航方法
+const navigateTo = inject('navigateTo')
 
 const pdfForm = ref(null)
 
@@ -139,6 +142,13 @@ onMounted(() => {
 
 const printDocument = () => {
   window.print()
+}
+
+// 返回主页（目录列表）
+const goToHome = () => {
+  if (navigateTo) {
+    navigateTo('DirectoryList');
+  }
 }
 
 const generatePdf = () => {

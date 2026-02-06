@@ -33,11 +33,11 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 // 保留创建信息
                 directory.setCreateBy(existingRecord.getCreateBy());
                 directory.setCreateTime(existingRecord.getCreateTime());
-                
+
                 // 设置更新信息
                 directory.setUpdateBy(directory.getUpdateBy() != null ? directory.getUpdateBy() : "admin"); // Or get from context
                 directory.setUpdateTime(new java.util.Date());
-                
+
                 int result = simpleDirectoryMapper.update(directory);
                 return result > 0;
             } else {
@@ -48,7 +48,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 if (directory.getDirId() == null || directory.getDirId().isEmpty()) {
                     directory.setDirId(UUID.randomUUID().toString());
                 }
-                
+
                 // 设置创建信息
                 if (directory.getCreateBy() == null) {
                     directory.setCreateBy("admin");
