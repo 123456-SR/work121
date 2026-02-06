@@ -22,4 +22,12 @@ public interface NuclearDensityRecordMapper {
             "DATA_JSON = #{dataJson} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(NuclearDensityRecord record);
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_NUCLEAR_DENSITY " +
+            "WHERE ID = #{id}")
+    NuclearDensityRecord selectById(@Param("id") String id);
 }

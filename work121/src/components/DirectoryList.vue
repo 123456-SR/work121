@@ -11,16 +11,6 @@
           <tr>
             <th>序号</th>
             <th>流程名称</th>
-            <th>关联表1</th>
-            <th>关联表2</th>
-            <th>关联表3</th>
-            <th>关联表4</th>
-            <th>关联表5</th>
-            <th>关联表6</th>
-            <th>关联表7</th>
-            <th>关联表8</th>
-            <th>关联表9</th>
-            <th>关联表10</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
@@ -29,16 +19,6 @@
           <tr v-for="(item, index) in processes" :key="item.id">
             <td>{{ index + 1 }}</td>
             <td>{{ item.dirName }}</td>
-            <td>{{ item.table1Type || '-' }}</td>
-            <td>{{ item.table2Type || '-' }}</td>
-            <td>{{ item.table3Type || '-' }}</td>
-            <td>{{ item.table4Type || '-' }}</td>
-            <td>{{ item.table5Type || '-' }}</td>
-            <td>{{ item.table6Type || '-' }}</td>
-            <td>{{ item.table7Type || '-' }}</td>
-            <td>{{ item.table8Type || '-' }}</td>
-            <td>{{ item.table9Type || '-' }}</td>
-            <td>{{ item.table10Type || '-' }}</td>
             <td>{{ getStatusText(item.status) }}</td>
             <td>
               <button @click="viewProcess(item)" class="view-btn">查看详情</button>

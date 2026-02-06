@@ -22,4 +22,14 @@ public interface EntrustmentMapper {
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto} " +
             "WHERE ID = #{id}")
     int updateSignatures(Entrustment entrustment);
+
+    @Update("UPDATE T_ENTRUSTMENT SET " +
+            "WT_NUM = #{wtNum}, " +
+            "PROJECT_NAME = #{projectName}, " +
+            "CLIENT_UNIT = #{clientUnit} " +
+            "WHERE ID = #{id}")
+    int update(Entrustment entrustment);
+
+    @Select("SELECT * FROM T_ENTRUSTMENT")
+    java.util.List<Entrustment> selectAll();
 }

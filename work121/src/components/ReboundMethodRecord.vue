@@ -158,11 +158,19 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps } from 'vue'
 import axios from 'axios'
 
 // 注入导航方法
 const navigateTo = inject('navigateTo')
+
+// 定义props
+const props = defineProps({
+  id: {
+    type: String,
+    default: null
+  }
+})
 
 const pdfForm = ref(null)
 
@@ -205,24 +213,38 @@ onMounted(() => {
       // 保存目录信息
       localStorage.setItem('currentDirectory', JSON.stringify(directory))
       
-      // 检查当前页面是否是目录中的表
+      // 获取当前表单类型
+      const currentFormType = localStorage.getItem('currentFormType') || 'REBOUND_METHOD_RECORD'
+      
+      // 查找当前表单在目录中的id
+      let formId = null
       for (let i = 1; i <= 10; i++) {
-        if (directory[`table${i}Type`] === 'REBOUND_METHOD_RECORD' && directory[`table${i}Id`]) {
-          // 加载目录中的数据
-          loadData(directory[`table${i}Id`])
+        if (directory[`table${i}Type`] === currentFormType && directory[`table${i}Id`]) {
+          formId = directory[`table${i}Id`]
           break
         }
+      }
+      
+      // 如果找到对应的id，加载数据
+      if (formId) {
+        loadData(formId)
+      } else if (props.id) {
+        // 如果目录中没有对应的id，但props中有id，也加载数据
+        loadData(props.id)
       }
     } catch (e) {
       console.error('Failed to parse directory:', e)
     }
-  }
-  
-  // 检查URL参数中是否有ID
-  const urlParams = new URLSearchParams(window.location.search)
-  const id = urlParams.get('id')
-  if (id) {
-    loadData(id)
+  } else if (props.id) {
+    // 如果没有目录信息，但有props.id，加载数据
+    loadData(props.id)
+  } else {
+    // 检查URL参数中是否有ID
+    const urlParams = new URLSearchParams(window.location.search)
+    const id = urlParams.get('id')
+    if (id) {
+      loadData(id)
+    }
   }
 
   // Initialize dynamic fields for rebound values (10 rows x 16 columns)
@@ -242,15 +264,53 @@ onMounted(() => {
 // 加载数据
 const loadData = async (id) => {
   try {
-    const response = await axios.get(`/api/rebound-method/${id}`)
+    // 获取当前表单类型
+    const currentFormType = localStorage.getItem('currentFormType') || 'REBOUND_METHOD_RECORD'
+    
+    // 调用通用的表单数据接口
+    const response = await axios.get(`/api/form-data/get-by-type-and-id?formType=${currentFormType}&id=${id}`)
     if (response.data.success && response.data.data) {
       const data = response.data.data
-      formData.unifiedNumber = data.id || ''
-      formData.entrustingUnit = data.entrustingUnit || ''
-      formData.projectName = data.projectName || ''
-      formData.structurePart = data.structurePart || ''
-      formData.commissionDate = data.commissionDate || ''
-      // 加载其他字段...
+      
+      // 根据表单类型处理数据
+      if (currentFormType === 'REBOUND_METHOD_RECORD') {
+        // 处理回弹法检测记录数据
+        formData.unifiedNumber = data.id || ''
+        formData.entrustingUnit = data.entrustingUnit || ''
+        formData.projectName = data.projectName || ''
+        formData.structurePart = data.structurePart || ''
+        formData.commissionDate = data.commissionDate || ''
+        formData.testCategory = data.testCategory || ''
+        formData.sampleStatus = data.sampleStatus || ''
+        formData.testAngle = data.testAngle || ''
+        formData.designIndex = data.designIndex || ''
+        formData.aggregateSize = data.aggregateSize || ''
+        formData.avgStrength = data.avgStrength || ''
+        formData.stdDev = data.stdDev || ''
+        formData.coefVariation = data.coefVariation || ''
+        formData.compEstimatedStrength = data.compEstimatedStrength || ''
+        formData.equipment = data.equipment || ''
+        formData.avgCarbonation = data.avgCarbonation || ''
+        formData.standard = data.standard || ''
+        formData.calibrationBefore = data.calibrationBefore || ''
+        formData.calibrationAfter = data.calibrationAfter || ''
+        formData.conclusion = data.conclusion || ''
+        formData.remarks = data.remarks || ''
+        
+        // 获取用户信息
+        let userInfo = null
+        const userInfoStr = localStorage.getItem('userInfo')
+        if (userInfoStr) {
+          userInfo = JSON.parse(userInfoStr)
+        }
+        
+        formData.approver = data.approver || userInfo?.userName || ''
+        formData.reviewer = data.reviewer || userInfo?.userName || ''
+        formData.tester = data.tester || userInfo?.userName || ''
+      } else {
+        // 对于其他表单类型，可能需要根据实际情况处理数据
+        console.log('Loading data for form type:', currentFormType, 'with data:', data)
+      }
     }
   } catch (error) {
     console.error('Failed to load data:', error)
@@ -419,7 +479,7 @@ const navigateBetweenForms = (direction) => {
       localStorage.setItem('currentFormType', targetForm.type)
       localStorage.setItem('currentFormIndex', targetIndex.toString())
       
-      // 构建参数，传递目录中的ID
+      // 构建参数，传递表单的ID
       const props = {}
       if (targetForm.id) {
         props.id = targetForm.id

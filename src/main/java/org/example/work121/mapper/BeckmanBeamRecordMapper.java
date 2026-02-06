@@ -22,4 +22,12 @@ public interface BeckmanBeamRecordMapper {
             "DATA_JSON = #{dataJson} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(BeckmanBeamRecord record);
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_BECKMAN_BEAM " +
+            "WHERE ID = #{id}")
+    BeckmanBeamRecord selectById(@Param("id") String id);
 }

@@ -22,4 +22,12 @@ public interface SandReplacementRecordMapper {
             "DATA_JSON = #{dataJson} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(SandReplacementRecord record);
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_SAND_REPLACEMENT " +
+            "WHERE ID = #{id}")
+    SandReplacementRecord selectById(@Param("id") String id);
 }

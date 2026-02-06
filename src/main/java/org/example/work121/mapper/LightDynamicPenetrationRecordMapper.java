@@ -21,4 +21,11 @@ public interface LightDynamicPenetrationRecordMapper {
             "DATA_BLOCKS = #{dataJson} " +
             "WHERE UNIFIED_NUMBER = #{entrustmentId}")
     int update(LightDynamicPenetrationRecord record);
+
+    @Select("SELECT " +
+            "UNIFIED_NUMBER as entrustmentId, " +
+            "DATA_BLOCKS as dataJson " +
+            "FROM JZS_LIGHT_DYNAMIC_PENETRATION " +
+            "WHERE UNIFIED_NUMBER = #{id}")
+    LightDynamicPenetrationRecord selectById(@Param("id") String id);
 }

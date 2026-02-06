@@ -249,30 +249,40 @@ const loadData = async (id) => {
   if (!id) return
   
   try {
-    const response = await axios.get(`/api/jc-core-wt-info/by-id?id=${id}`)
+    // 获取当前表单类型
+    const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+    
+    // 调用通用的表单数据接口
+    const response = await axios.get(`/api/form-data/get-by-type-and-id?formType=${currentFormType}&id=${id}`)
     if (response.data.success && response.data.data) {
       const data = response.data.data
       
-      // 映射字段
-      formData.unifiedNumber = data.wtNum
-      formData.sampleNumber = data.wtNum // 根据实体类注释，样品编号可能与统一编号相同
-      
-      formData.clientUnit = data.clientUnit
-      formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM-DD')
-      
-      formData.constructionUnit = data.constructionUnit
-      formData.buildingUnit = data.buildingUnit
-      
-      formData.projectName = data.projectName
-      formData.constructionPart = data.projectArea // 使用 projectArea 映射 constructionPart
-      
-      // 其他字段根据 JcCoreWtInfo 的字段进行映射
-      // 由于 JcCoreWtInfo 字段有限，部分字段可能需要根据实际情况调整
-      formData.witnessUnit = data.supervisionUnit // 监理单位映射为见证单位? 需要确认业务逻辑
-      formData.witness = data.client // 委托人映射为见证人? 暂且如此，或者留空
-      
-      // 假设 JcCoreWtInfo 只有部分基础字段，其他字段可能需要从其他关联表获取或者为空
-      // 这里尽量填充已有字段
+      // 根据表单类型处理数据
+      if (currentFormType === 'ENTRUSTMENT_LIST') {
+        // 映射字段
+        formData.unifiedNumber = data.wtNum || data.unifiedNumber || ''
+        formData.sampleNumber = data.wtNum || data.sampleNumber || '' // 根据实体类注释，样品编号可能与统一编号相同
+        
+        formData.clientUnit = data.clientUnit || ''
+        formData.clientDate = data.commissionDate ? formatDate(data.commissionDate, 'YYYY-MM-DD') : ''
+        
+        formData.constructionUnit = data.constructionUnit || ''
+        formData.buildingUnit = data.buildingUnit || ''
+        
+        formData.projectName = data.projectName || ''
+        formData.constructionPart = data.projectArea || data.constructionPart || '' // 使用 projectArea 映射 constructionPart
+        
+        // 其他字段根据 JcCoreWtInfo 的字段进行映射
+        // 由于 JcCoreWtInfo 字段有限，部分字段可能需要根据实际情况调整
+        formData.witnessUnit = data.supervisionUnit || data.witnessUnit || '' // 监理单位映射为见证单位? 需要确认业务逻辑
+        formData.witness = data.client || data.witness || '' // 委托人映射为见证人? 暂且如此，或者留空
+        
+        // 假设 JcCoreWtInfo 只有部分基础字段，其他字段可能需要从其他关联表获取或者为空
+        // 这里尽量填充已有字段
+      } else {
+        // 对于其他表单类型，可能需要根据实际情况处理数据
+        console.log('Loading data for form type:', currentFormType, 'with data:', data)
+      }
       
     } else {
       console.error('Failed to load data:', response.data.message)
@@ -291,10 +301,24 @@ onMounted(() => {
       // 保存目录信息
       localStorage.setItem('currentDirectory', JSON.stringify(directory))
       
-      // 检查当前页面是否是目录中的第一个表
-      if (directory.table1Type === 'ENTRUSTMENT_LIST' && directory.table1Id) {
-        // 加载目录中的数据
-        loadData(directory.table1Id)
+      // 获取当前表单类型
+      const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+      
+      // 查找当前表单在目录中的id
+      let formId = null
+      for (let i = 1; i <= 10; i++) {
+        if (directory[`table${i}Type`] === currentFormType) {
+          formId = directory[`table${i}Id`]
+          break
+        }
+      }
+      
+      // 如果找到对应的id，加载数据
+      if (formId) {
+        loadData(formId)
+      } else if (props.id) {
+        // 如果目录中没有对应的id，但props中有id，也加载数据
+        loadData(props.id)
       }
     } catch (e) {
       console.error('Failed to parse directory:', e)
@@ -337,12 +361,13 @@ const navigateBetweenForms = (direction) => {
   try {
     const directory = JSON.parse(currentDirectory)
     
-    // 构建表单队列（只需要type，不需要id）
+    // 构建表单队列（包含type和id）
     const formQueue = []
     for (let i = 1; i <= 10; i++) {
       const type = directory[`table${i}Type`]
+      const id = directory[`table${i}Id`]
       if (type) {
-        formQueue.push({ type, index: i })
+        formQueue.push({ type, id, index: i })
       }
     }
     
@@ -402,8 +427,11 @@ const navigateBetweenForms = (direction) => {
       localStorage.setItem('currentFormType', targetForm.type)
       localStorage.setItem('currentFormIndex', targetIndex.toString())
       
-      // 构建参数
+      // 构建参数，传递表单的ID
       const props = {}
+      if (targetForm.id) {
+        props.id = targetForm.id
+      }
       
       // 使用navigateTo方法导航到对应的组件
       navigateTo(componentName, props)

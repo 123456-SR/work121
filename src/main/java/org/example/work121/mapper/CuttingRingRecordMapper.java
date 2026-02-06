@@ -22,4 +22,12 @@ public interface CuttingRingRecordMapper {
             "DATA_JSON = #{dataJson} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(CuttingRingRecord record);
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_CUTTING_RING " +
+            "WHERE ID = #{id}")
+    CuttingRingRecord selectById(@Param("id") String id);
 }

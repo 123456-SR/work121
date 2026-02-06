@@ -22,4 +22,12 @@ public interface ReboundMethodRecordMapper {
             "DATA_JSON = #{dataJson} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(ReboundMethodRecord record);
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_REBOUND_METHOD " +
+            "WHERE ID = #{id}")
+    ReboundMethodRecord selectById(@Param("id") String id);
 }
