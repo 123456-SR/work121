@@ -155,7 +155,7 @@ public interface JcCoreWtInfoMapper {
             "<if test='wtNum != null and wtNum != \"\"'>" +
             "t2.WT_NUM LIKE '%' || #{wtNum} || '%' " +
             "</if>" +
-            "<if test='names != null and names.size() > 0'>" +
+            "<if test='names != null'>" +
             " AND (" +
             "<foreach collection='names' item='name' separator=' OR '>" +
             "   UPPER(TRIM(TO_CHAR(t2.WT_REG_NAME))) LIKE '%' || UPPER(#{name}) || '%' " +
@@ -335,7 +335,7 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_ID " +
             "<where>" +
-            "<if test='categories != null and categories.size() > 0'>" +
+            "<if test='categories != null'>" +
             " (" +
             "<foreach collection='categories' item='category' separator=' OR '>" +
             "t1.TEST_CATEGORY LIKE '%' || #{category} || '%'" +
@@ -345,7 +345,7 @@ public interface JcCoreWtInfoMapper {
             "<if test='wtNum != null and wtNum != \"\"'>" +
             " AND t2.WT_NUM LIKE '%' || #{wtNum} || '%' " +
             "</if>" +
-            "<if test='names != null and names.size() > 0'>" +
+            "<if test='names != null'>" +
             " AND (" +
             "<foreach collection='names' item='name' separator=' OR '>" +
             "   UPPER(TRIM(TO_CHAR(t2.WT_REG_NAME))) LIKE '%' || UPPER(#{name}) || '%' " +
@@ -519,16 +519,16 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN JZS_USERS u_approver ON u_approver.USER_ACCOUNT = TO_CHAR(t1.APPROVER) " +
             "LEFT JOIN JZS_USERS u_update ON u_update.USER_ACCOUNT = TO_CHAR(t1.UPDATE_BY) " +
             "LEFT JOIN T_SIMPLE_DIRECTORY t3 ON t3.DIR_NAME = t2.WT_NUM " +
-            "LEFT JOIN T_DENSITY_TEST_RECORD t_density ON t_density.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN T_NUCLEAR_DENSITY t_nuclear ON t_nuclear.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN T_SAND_REPLACEMENT t_sand ON t_sand.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN T_WATER_REPLACEMENT t_water ON t_water.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN T_CUTTING_RING t_cutting ON t_cutting.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN T_REBOUND_METHOD t_rebound ON t_rebound.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_ID " +
+            "LEFT JOIN T_DENSITY_TEST t_density ON t_density.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN T_NUCLEAR_DENSITY t_nuclear ON t_nuclear.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN T_SAND_REPLACEMENT t_sand ON t_sand.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN T_WATER_REPLACEMENT t_water ON t_water.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN T_CUTTING_RING t_cutting ON t_cutting.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN T_REBOUND_METHOD t_rebound ON t_rebound.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_NUM " +
+            "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_NUM " +
             "<where>" +
-            "<if test='categories != null and categories.size() > 0'>" +
+            "<if test='categories != null'>" +
             " (" +
             "<foreach collection='categories' item='category' separator=' OR '>" +
             "t1.TEST_CATEGORY LIKE '%' || #{category} || '%'" +
@@ -538,33 +538,57 @@ public interface JcCoreWtInfoMapper {
             "<if test='wtNum != null and wtNum != \"\"'>" +
             " AND t2.WT_NUM LIKE '%' || #{wtNum} || '%' " +
             "</if>" +
-            "<if test='names != null and names.size() > 0'>" +
+            "<if test='names != null'>" +
             " AND (" +
             "<foreach collection='names' item='name' separator=' OR '>" +
             "   UPPER(TRIM(TO_CHAR(t_density.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "</foreach> " +
             ")" +
             "</if>" +

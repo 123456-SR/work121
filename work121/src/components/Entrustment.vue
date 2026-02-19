@@ -499,7 +499,6 @@ const populateVirtualData = () => {
     spec: '测试规格',
     manufacturer: '测试厂家',
     clientAddressPhone: '测试地址 13800138000',
-    testCategory: '测试类别',
     sampleQuantity: '1组',
     representativeBatch: '100',
     batchNumber: 'P-001',

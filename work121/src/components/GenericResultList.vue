@@ -27,16 +27,17 @@
             <th>登记人</th>
             <th>检测人</th>
             <th>校核人</th>
+            <th>批准人</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="9" class="text-center">加载中...</td>
+            <td colspan="10" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="9" class="text-center">暂无数据</td>
+            <td colspan="10" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -53,6 +54,7 @@
             <td>{{ item.clientRegRealName || item.clientRegName }}</td>
             <td>{{ item.testerName }}</td>
             <td>{{ item.reviewerName }}</td>
+            <td>{{ item.approverName }}</td>
             <td>
               <span :class="['status-badge', getStatusClass(item.status)]">
                 {{ getStatusText(item.status) }}
@@ -83,7 +85,7 @@ import axios from 'axios'
 const props = defineProps({
   title: {
     type: String,
-    default: '记录'
+    default: '结果'
   },
   category: {
     type: String,
@@ -95,9 +97,9 @@ const props = defineProps({
   },
   dataType: {
     type: String,
-    default: 'entrustment', // 'entrustment', 'record', 'report', 'result'
+    default: 'result',
     validator: (value) => {
-      return ['entrustment', 'record', 'report', 'result'].includes(value)
+      return ['result'].includes(value)
     }
   }
 })
@@ -110,30 +112,13 @@ const pageSize = ref(7)
 const total = ref(0)
 const searchWtNum = ref('')
 
-// 计算API端点
-const apiEndpoint = computed(() => {
-  switch (props.dataType) {
-    case 'record':
-      return '/api/jc-core-test-record'
-    case 'report':
-      return '/api/jc-core-test-report'
-    case 'result':
-      return '/api/jc-core-test-result'
-    case 'entrustment':
-    default:
-      return '/api/jc-core-wt-info'
-  }
-})
+const apiEndpoint = computed(() => '/api/jc-core-test-result')
 
-// 获取当前登录用户
 const getCurrentUser = () => {
   try {
     const userInfoStr = localStorage.getItem('userInfo')
     if (userInfoStr) {
       const userInfo = JSON.parse(userInfoStr)
-      // LoginController returns 'username' key for the account
-      // DirectoryList/User entity uses 'userAccount'
-      // We check both to be safe, prioritizing the one from LoginController (username)
       return userInfo.username || userInfo.userAccount || userInfo.userName || ''
     }
     return ''
@@ -143,19 +128,16 @@ const getCurrentUser = () => {
   }
 }
 
-// 加载数据
 const loadData = async () => {
   try {
     loading.value = true
     const regName = getCurrentUser()
-    // 使用检测类别和登记人查询
     const response = await axios.get(`${apiEndpoint.value}/by-category?category=${encodeURIComponent(props.category)}&regName=${encodeURIComponent(regName)}&wtNum=${encodeURIComponent(searchWtNum.value)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
     if (response.data.success) {
       list.value = response.data.data.list
       total.value = response.data.data.total
     } else {
       console.error('Failed to load data:', response.data.message)
-      // 如果没有数据或接口报错，清空列表
       list.value = []
       total.value = 0
     }
@@ -168,34 +150,29 @@ const loadData = async () => {
   }
 }
 
-// 监听category变化，重新加载
 watch(() => props.category, () => {
   pageNum.value = 1
   loadData()
 })
 
-// 翻页
 const changePage = (newPage) => {
   pageNum.value = newPage
   loadData()
 }
 
-// 搜索
 const handleSearch = () => {
   pageNum.value = 1
   loadData()
 }
 
-// 格式化日期
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString()
 }
 
-// 状态文本
 const getStatusText = (status) => {
   const s = parseInt(status)
-  switch(s) {
+  switch (s) {
     case 0: return '草稿'
     case 1: return '待审核'
     case 2: return '已打回'
@@ -208,7 +185,7 @@ const getStatusText = (status) => {
 
 const getStatusClass = (status) => {
   const s = parseInt(status)
-  switch(s) {
+  switch (s) {
     case 0: return 'status-draft'
     case 1: return 'status-pending'
     case 2: return 'status-rejected'
@@ -219,7 +196,6 @@ const getStatusClass = (status) => {
   }
 }
 
-// 编辑/双击
 const handleEdit = (item) => {
   if (navigateTo && props.formComponent) {
     navigateTo(props.formComponent, { id: item.id, wtNum: item.wtNum })
@@ -230,14 +206,12 @@ const handleRowDblClick = (item) => {
   handleEdit(item)
 }
 
-// 新建
 const createNew = () => {
   if (navigateTo && props.formComponent) {
     navigateTo(props.formComponent, { id: null })
   }
 }
 
-// 删除
 const handleDelete = async (item) => {
   if (confirm(`确定要删除 ${item.wtNum} 吗？`)) {
     try {
@@ -461,3 +435,4 @@ onMounted(() => {
   color: #7b1fa2;
 }
 </style>
+
