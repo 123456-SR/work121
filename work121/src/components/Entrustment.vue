@@ -1015,13 +1015,42 @@ const submitWorkflow = async (action) => {
             alert('操作成功')
             await loadData(idToSubmit)
             
-            // If approved or passed audit, automatically jump to next form (Record Table)
+            // If approved or passed audit, check if current user is the record tester before jumping
             if ((action === 'AUDIT_PASS' || action === 'SIGN_APPROVE') && formData.status >= 3) {
                 // Refresh directory info to get the latest IDs (synced by backend)
                 if (formData.unifiedNumber) {
                     await fetchDirectoryInfo(formData.unifiedNumber)
                 }
-                nextForm()
+                
+                // Check if current user matches the record tester in the process
+                let currentDirectory = localStorage.getItem('currentDirectory')
+                if (!currentDirectory && formData.unifiedNumber) {
+                    try {
+                        const dirResponse = await axios.post('/api/directory/get-by-dirname', { dirName: formData.unifiedNumber })
+                        if (dirResponse.data.success && dirResponse.data.data) {
+                            currentDirectory = JSON.stringify(dirResponse.data.data)
+                            localStorage.setItem('currentDirectory', currentDirectory)
+                        }
+                    } catch (e) {
+                        console.error('Failed to fetch directory info', e)
+                    }
+                }
+                
+                if (currentDirectory) {
+                    try {
+                        const directory = JSON.parse(currentDirectory)
+                        // Check if current user matches the record tester (jcTester)
+                        if (directory.jcTester && user.username !== directory.jcTester) {
+                            alert('您不是该流程的记录检测人，无法继续填写记录表')
+                            navigateTo('EntrustmentList')
+                            return
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse directory info', e)
+                    }
+                }
+                
+                // nextForm() // Commented out to prevent auto-navigation after approval
             }
         } else {
             alert('操作失败: ' + response.data.message)
