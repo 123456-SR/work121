@@ -1,13 +1,42 @@
 <template>
   <div class="beckmanBeamResult-container">
 
-    <div class="no-print" style="margin-bottom: 20px;">
-        <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
-        <button @click="handleSign" style="float: right; margin-left: 10px;">签字</button>
-        <button @click="saveData" style="float: right; margin-left: 10px;">保存</button>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+    <div class="no-print toolbar">
+      <div class="toolbar-left">
+        <button @click="goToList" class="link-button">&lt; 返回列表</button>
+      </div>
+      <div class="toolbar-right">
+        <button
+          @click="handleSign"
+          class="btn btn-secondary btn-small"
+        >
+          签字
+        </button>
+        <button
+          @click="saveData"
+          class="btn btn-secondary btn-small"
+        >
+          保存
+        </button>
+        <button
+          @click="printDocument"
+          class="btn btn-secondary btn-small"
+        >
+          打印此单
+        </button>
+        <button
+          @click="generatePdf"
+          class="btn btn-secondary btn-small"
+        >
+          下载PDF
+        </button>
+        <button
+          @click="previewPdf"
+          class="btn btn-secondary btn-small"
+        >
+          预览PDF
+        </button>
+      </div>
     </div>
     <form id="pdfForm" ref="pdfForm" method="post">
         <h2>路基路面回弹弯沉(回弹模量) 检测结果</h2>
@@ -298,6 +327,69 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
+        .no-print {
+            margin-bottom: 20px;
+        }
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .toolbar-left,
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .link-button {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0;
+        }
+        .link-button:hover {
+            text-decoration: underline;
+        }
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+            font-size: 13px;
+            cursor: pointer;
+            background-color: #f5f7fa;
+            color: #333;
+            transition: all 0.2s;
+        }
+        .btn-small {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+        .btn-secondary {
+            background-color: #fff;
+            border-color: #d0d7de;
+            color: #34495e;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+            color: #fff;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn:not(:disabled):hover {
+            filter: brightness(0.95);
+        }
 
         .beckmanBeamResult-container {
             font-family: "SimSun", "Songti SC", serif;

@@ -2,33 +2,104 @@
   <div class="densityTestReport-container">
 
 
-    <div class="no-print" style="margin-bottom: 20px;">
-        <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
-        
-        <!-- Status Badge -->
-        <span v-if="formData.status !== undefined" :style="{ backgroundColor: getStatusColor(formData.status), color: 'white', padding: '3px 8px', borderRadius: '3px', marginLeft: '10px', fontSize: '12px' }">
-          {{ getStatusText(formData.status) }}
+    <div class="no-print toolbar">
+      <div class="toolbar-left">
+        <button @click="goToList" class="link-button">&lt; 返回列表</button>
+        <span v-if="formData.status !== undefined" class="status-text">
+          状态:
+          <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
+            {{ getStatusText(formData.status) }}
+          </span>
         </span>
+      </div>
 
-        <div style="float: right;">
-          <!-- Workflow Buttons -->
-          <button v-if="formData.status === 0 || formData.status === 2" @click="saveData" style="margin-left: 10px;">保存</button>
-          <button v-if="formData.status === 0 || formData.status === 2" @click="handleSign" style="margin-left: 10px;">签字</button>
-          <button v-if="formData.status === 0 || formData.status === 2" @click="submitWorkflow('SUBMIT')" style="margin-left: 10px; background-color: #ffc107; color: black;">提交</button>
-          
-          <button v-if="formData.status === 1" @click="submitWorkflow('AUDIT_PASS')" style="margin-left: 10px; background-color: #17a2b8; color: white;">审核通过</button>
-          <button v-if="formData.status === 1" @click="submitWorkflow('REJECT')" style="margin-left: 10px; background-color: #dc3545; color: white;">退回</button>
-          
-          <button v-if="formData.status === 3" @click="handleSign" style="margin-left: 10px;">签字</button>
-          <button v-if="formData.status === 3" @click="submitWorkflow('SIGN_REVIEW')" style="margin-left: 10px; background-color: #28a745; color: white;">复核签字</button>
-          
-          <button v-if="formData.status === 4" @click="handleSign" style="margin-left: 10px;">签字</button>
-          <button v-if="formData.status === 4" @click="submitWorkflow('SIGN_APPROVE')" style="margin-left: 10px; background-color: #28a745; color: white;">批准签字</button>
+      <div class="toolbar-right">
+        <button
+          v-if="formData.status === 0 || formData.status === 2"
+          @click="saveData"
+          class="btn btn-secondary btn-small"
+        >
+          保存
+        </button>
+        <button
+          v-if="formData.status === 0 || formData.status === 2"
+          @click="handleSign"
+          class="btn btn-secondary btn-small"
+        >
+          签字
+        </button>
+        <button
+          v-if="formData.status === 0 || formData.status === 2"
+          @click="submitWorkflow('SUBMIT')"
+          class="btn btn-primary btn-small"
+        >
+          提交
+        </button>
 
-          <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
-          <button @click="generatePdf" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-          <button @click="previewPdf" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
-        </div>
+        <button
+          v-if="formData.status === 1"
+          @click="submitWorkflow('AUDIT_PASS')"
+          class="btn btn-primary btn-small"
+        >
+          审核通过
+        </button>
+        <button
+          v-if="formData.status === 1"
+          @click="submitWorkflow('REJECT')"
+          class="btn btn-danger btn-small"
+        >
+          退回
+        </button>
+
+        <button
+          v-if="formData.status === 3"
+          @click="handleSign"
+          class="btn btn-secondary btn-small"
+        >
+          签字
+        </button>
+        <button
+          v-if="formData.status === 3"
+          @click="submitWorkflow('SIGN_REVIEW')"
+          class="btn btn-primary btn-small"
+        >
+          复核签字
+        </button>
+
+        <button
+          v-if="formData.status === 4"
+          @click="handleSign"
+          class="btn btn-secondary btn-small"
+        >
+          签字
+        </button>
+        <button
+          v-if="formData.status === 4"
+          @click="submitWorkflow('SIGN_APPROVE')"
+          class="btn btn-primary btn-small"
+        >
+          批准签字
+        </button>
+
+        <button
+          @click="printDocument"
+          class="btn btn-secondary btn-small"
+        >
+          打印此单
+        </button>
+        <button
+          @click="generatePdf"
+          class="btn btn-secondary btn-small"
+        >
+          下载PDF
+        </button>
+        <button
+          @click="previewPdf"
+          class="btn btn-secondary btn-small"
+        >
+          预览PDF
+        </button>
+      </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -532,6 +603,77 @@ const previewPdf = () => {
   width: 80px;
   height: auto;
   opacity: 0.8;
+}
+.no-print {
+  margin-bottom: 20px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.link-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+.link-button:hover {
+  text-decoration: underline;
+}
+.status-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+.status-label {
+  margin-left: 4px;
+}
+.btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  cursor: pointer;
+  background-color: #f5f7fa;
+  color: #333;
+  transition: all 0.2s;
+}
+.btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.btn-primary {
+  background-color: #3498db;
+  color: #fff;
+  border-color: #3498db;
+}
+.btn-secondary {
+  background-color: #fff;
+  border-color: #d0d7de;
+  color: #34495e;
+}
+.btn-danger {
+  background-color: #e74c3c;
+  border-color: #e74c3c;
+  color: #fff;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn:not(:disabled):hover {
+  filter: brightness(0.95);
 }
 
         .densityTestReport-container {
