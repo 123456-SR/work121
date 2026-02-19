@@ -28,15 +28,14 @@
             <th>检测人</th>
             <th>校核人</th>
             <th>状态</th>
-            <th>操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="9" class="text-center">加载中...</td>
+            <td colspan="8" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="9" class="text-center">暂无数据</td>
+            <td colspan="8" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -57,11 +56,6 @@
               <span :class="['status-badge', getStatusClass(item.status)]">
                 {{ getStatusText(item.status) }}
               </span>
-            </td>
-            <td class="actions-cell">
-              <span class="action-link" @click.stop="handleEdit(item)">编辑</span>
-              <span class="separator">|</span>
-              <span class="action-link delete-link" @click.stop="handleDelete(item)">删除</span>
             </td>
           </tr>
         </tbody>

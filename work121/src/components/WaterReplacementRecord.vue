@@ -263,15 +263,13 @@
         </tr>
     </table>
 
-        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; display: flex; flex-wrap: wrap;">
+        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; display: flex; flex-wrap: wrap; justify-content: space-between;">
             <div style="position: relative; display: inline-block; margin-right: 20px;">
-                <span>检测：<input type="text" v-model="formData.tester" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
+                <span>试验：<input type="text" v-model="formData.tester" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
                 <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; width: 80px; height: 40px; mix-blend-mode: multiply;" />
-                <button @click="showSignatureModal('tester')" v-if="canSign('tester')" style="margin-left: 5px;">签字</button>
             </div>
-            <!-- 校核人签字移除 -->
-             <div style="position: relative; display: inline-block; margin-right: 20px;">
-                <span>校核：<input type="text" v-model="formData.reviewer" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
+            <div style="position: relative; display: inline-block; margin-right: 20px;">
+                <span>审核：<input type="text" v-model="formData.reviewer" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
             </div>
         </div>
 
@@ -460,19 +458,6 @@ onMounted(() => {
       formData.unifiedNumber = props.id
       loadData(props.id)
   } else {
-      // No entrustment context (e.g. from list "新建灌水法"): create a new empty record
-      const userInfoStr = localStorage.getItem('userInfo')
-      if (userInfoStr) {
-          try {
-              const userInfo = JSON.parse(userInfoStr)
-              const name = userInfo.userName || userInfo.username || ''
-              formData.reviewer = name
-              formData.tester = name
-          } catch (e) {
-              console.error('Failed to parse userInfo', e)
-          }
-      }
-      
       const newRecord = {
           id: '',
           entrustmentId: '',

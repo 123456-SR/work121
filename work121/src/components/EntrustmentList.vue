@@ -26,7 +26,7 @@
             <th>委托日期</th>
             <th>登记人</th>
             <th>检测人</th>
-            <th>操作</th>
+            <th>状态</th>
           </tr>
         </thead>
         <tbody>
@@ -49,17 +49,10 @@
             <td>{{ formatDate(item.commissionDate) }}</td>
             <td>{{ item.clientRegRealName || item.clientRegName }}</td>
             <td>{{ item.testerName }}</td>
-            <td class="actions-cell">
-              <span 
-                v-for="(action, index) in getActions(item)" 
-                :key="index"
-              >
-                <span v-if="index > 0" class="separator">|</span>
-                <a class="action-link" @click.stop="executeAction(item, action)">
-                  {{ action.label }}
-                </a>
+            <td>
+              <span :class="['status-badge', getStatusClass(item.status)]">
+                {{ getStatusText(item.status) }}
               </span>
-              <span v-if="getActions(item).length === 0" style="color: #999; font-size: 12px;">无操作</span>
             </td>
           </tr>
         </tbody>
@@ -99,96 +92,29 @@ const getCurrentUser = () => {
   return null
 }
 
-// 获取操作列表
-const getActions = (item) => {
-  const user = getCurrentUser()
-  if (!user || !user.username) return []
-  
-  const actions = []
-  const username = user.username
-  
-  // 默认为轻型动力触探，如果有testCategory则使用映射
-  // 这里简化处理，根据testCategory判断，如果没有则默认为LightDynamicPenetration
-  // 实际项目中可能需要更完善的映射表
-  
-  // 匹配规则
-  const isTester = item.tester === username || item.clientRegName === username // 登记人也可以填写
-  const isCreator = item.createBy === username || item.clientRegName === username // 创建者
-  const isReviewer = item.reviewer === username
-  const isApprover = item.approver === username
-  
-  if (isTester || isCreator) {
-    actions.push({ label: '填写数据', type: 'record', component: getRecordComponent(item.testCategory) })
+const getStatusText = (status) => {
+  const s = parseInt(status)
+  switch (s) {
+    case 0: return '草稿'
+    case 1: return '待审核'
+    case 2: return '已打回'
+    case 3: return '待签字'
+    case 4: return '待批准'
+    case 5: return '已通过'
+    default: return '未知'
   }
-  
-  if (isCreator || isTester) {
-     // 避免重复添加（如果既是检测人又是创建者）
-     if (!actions.some(a => a.type === 'delete')) {
-        actions.push({ label: '删除', type: 'delete' })
-     }
-  }
-  
-  if (isReviewer) {
-    actions.push({ label: '签名', type: 'sign', component: getReportComponent(item.testCategory) }) 
-  }
-  
-  if (isApprover) {
-    actions.push({ label: '审批', type: 'approve', component: getReportComponent(item.testCategory) }) 
-  }
-  
-  // 如果没有匹配的角色，但用户是管理员或有权限查看结果
-  if (actions.length === 0 || item.status === 'completed') {
-    actions.push({ label: '查看结果', type: 'result', component: getReportComponent(item.testCategory) })
-  }
-  
-  return actions
 }
 
-const getRecordComponent = (category) => {
-    if (!category) return 'LightDynamicPenetrationRecord'
-    
-    if (category.includes('灌砂')) return 'SandReplacementRecord'
-    if (category.includes('灌水')) return 'WaterReplacementRecord'
-    if (category.includes('环刀')) return 'CuttingRingRecord'
-    if (category.includes('核子')) return 'NuclearDensityRecord'
-    if (category.includes('回弹')) return 'ReboundMethodRecord'
-    if (category.includes('弯沉')) return 'BeckmanBeamRecord'
-    if (category.includes('触探')) return 'LightDynamicPenetrationRecord'
-    
-    return 'LightDynamicPenetrationRecord'
-}
-
-const getReportComponent = (category) => {
-    if (!category) return 'LightDynamicPenetration' 
-    
-    if (category.includes('密度') || category.includes('灌砂') || category.includes('灌水') || category.includes('环刀') || category.includes('核子')) {
-        return 'DensityTestReport'
-    }
-    if (category.includes('回弹')) return 'ReboundMethodReport'
-    if (category.includes('弯沉')) return 'BeckmanBeamReport'
-    if (category.includes('触探')) return 'LightDynamicPenetration' 
-    
-    return 'LightDynamicPenetration'
-}
-
-const executeAction = (item, action) => {
-  if (action.type === 'record') {
-     const status = parseInt(item.status) || 0
-     if (status < 3) {
-       alert('委托单未审核通过，无法填写记录表')
-       return
-     }
-  }
-
-  if (action.type === 'delete') {
-    if (confirm('确定要删除这条委托单吗？此操作不可恢复。')) {
-      handleDelete(item.id)
-    }
-    return
-  }
-
-  if (navigateTo && action.component) {
-    navigateTo(action.component, { id: item.id, wtNum: item.wtNum })
+const getStatusClass = (status) => {
+  const s = parseInt(status)
+  switch (s) {
+    case 0: return 'status-draft'
+    case 1: return 'status-pending'
+    case 2: return 'status-rejected'
+    case 3: return 'status-signing'
+    case 4: return 'status-approving'
+    case 5: return 'status-completed'
+    default: return ''
   }
 }
 

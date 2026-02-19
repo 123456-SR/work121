@@ -771,7 +771,7 @@ public interface JcCoreWtInfoMapper {
     int insert(JcCoreWtInfo info);
 
     @org.apache.ibatis.annotations.Update("UPDATE JC_CORE_WT_INFO SET " +
-            "WT_STATUS = #{status, jdbcType=VARCHAR}, " +
+            "WT_STATUS = NVL(#{status, jdbcType=VARCHAR}, WT_STATUS), " +
             "JZ_UNIT = #{buildingUnit2, jdbcType=VARCHAR}, " +
             "KC_UNIT = #{surveyUnit, jdbcType=VARCHAR}, " +
             "WT_MAN_TEL = #{clientTel, jdbcType=VARCHAR}, " +

@@ -844,6 +844,7 @@ const saveForm = async (silent = false) => {
     // Map other fields
     sampleStatus: formData.sampleStatus, // Maintain current status
     remarks: formData.remarks,
+    projectRemarks: formData.remarks,
     testCategory: formData.testCategory,
     reviewer: formData.reviewer,
     tester: formData.tester,

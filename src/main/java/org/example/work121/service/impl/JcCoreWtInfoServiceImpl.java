@@ -99,6 +99,16 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
         }
 
         try {
+            // 如果没有ID，但有统一编号，优先根据 WT_NUM 查找已有记录并复用其ID，避免生成重复记录
+            if ((info.getId() == null || info.getId().trim().isEmpty())
+                    && info.getWtNum() != null && !info.getWtNum().trim().isEmpty()) {
+                JcCoreWtInfo existing = getByWtNum(info.getWtNum());
+                if (existing != null && existing.getId() != null && !existing.getId().trim().isEmpty()) {
+                    info.setId(existing.getId());
+                    logger.info("根据 WT_NUM {} 找到已有记录，复用 ID: {}", info.getWtNum(), info.getId());
+                }
+            }
+
             if (info.getId() == null || info.getId().trim().isEmpty()) {
                 // 如果没有ID，生成新的UUID
                 String newId = java.util.UUID.randomUUID().toString().replace("-", "");
