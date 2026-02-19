@@ -2,64 +2,80 @@
   <div class="entrustment-container">
 
 
-    <div class="no-print" style="margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-             <div>
-                <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
-             </div>
-         <div style="display: flex; justify-content: flex-end; align-items: center;">
-             <div v-if="formData.status !== undefined" style="margin-right: 20px; font-weight: bold; color: #666;">
-                状态: <span :style="{color: getStatusColor(formData.status)}">{{ getStatusText(formData.status) }}</span>
-            </div>
-            
-            <!-- Workflow Buttons -->
-            <button
-              v-if="showSubmitButton"
-              @click="submitForm"
-              :disabled="!formData.testerSignature"
-              :style="{
-                marginRight: '10px',
-                backgroundColor: formData.testerSignature ? '#ffc107' : '#e0e0e0',
-                color: formData.testerSignature ? '#212529' : '#9e9e9e',
-                border: 'none',
-                padding: '5px 10px',
-                borderRadius: '3px',
-                cursor: formData.testerSignature ? 'pointer' : 'not-allowed'
-              }"
-            >
-              提交
-            </button>
-    <template v-if="currentId">
-        
+    <div class="no-print toolbar">
+      <div class="toolbar-left">
+        <button @click="goToList" class="link-button">&lt; 返回列表</button>
+      </div>
+      <div class="toolbar-right">
+        <div v-if="formData.status !== undefined" class="status-text">
+          状态:
+          <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
+            {{ getStatusText(formData.status) }}
+          </span>
+        </div>
+
         <button
-          v-if="showAuditButtons"
-          @click="submitWorkflow('AUDIT_PASS')"
-          style="margin-right: 10px; background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;"
+          v-if="showSubmitButton"
+          @click="submitForm"
+          :disabled="!formData.testerSignature"
+          class="btn btn-primary btn-small"
         >
-          审核通过
+          提交
+        </button>
+
+        <template v-if="currentId">
+          <button
+            v-if="showAuditButtons"
+            @click="submitWorkflow('AUDIT_PASS')"
+            class="btn btn-primary btn-small"
+          >
+            审核通过
+          </button>
+          <button
+            v-if="showAuditButtons"
+            @click="submitWorkflow('REJECT')"
+            class="btn btn-danger btn-small"
+          >
+            打回
+          </button>
+        </template>
+
+        <button
+          @click="printDocument"
+          class="btn btn-secondary btn-small"
+        >
+          打印此单
         </button>
         <button
-          v-if="showAuditButtons"
-          @click="submitWorkflow('REJECT')"
-          style="margin-right: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;"
+          @click="generatePdf"
+          class="btn btn-secondary btn-small"
         >
-          打回
+          下载PDF
         </button>
-    </template>
-
-
-    <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
-    <button @click="generatePdf" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-    <button @click="previewPdf" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
-    <button @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
-    <button @click="saveForm" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
+        <button
+          @click="previewPdf"
+          class="btn btn-secondary btn-small"
+        >
+          预览PDF
+        </button>
+        <button
+          @click="handleSign"
+          class="btn btn-secondary btn-small"
+        >
+          签字
+        </button>
+        <button
+          @click="saveForm"
+          class="btn btn-secondary btn-small"
+        >
+          保存
+        </button>
+      </div>
     </div>
-</div>
 
-<div v-if="formData.status === 2 && formData.rejectReason" style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #ef9a9a;">
-    <strong>打回原因：</strong> {{ formData.rejectReason }}
-</div>
-</div>
+    <div v-if="formData.status === 2 && formData.rejectReason" style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #ef9a9a;">
+      <strong>打回原因：</strong> {{ formData.rejectReason }}
+    </div>
 
 <form id="entrustmentForm" ref="pdfForm" method="post">
 <h2>检测 (验) 委托单 (代合同)</h2>
@@ -249,6 +265,77 @@
 </template>
 
 <style scoped>
+.no-print {
+  margin-bottom: 20px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.link-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+.link-button:hover {
+  text-decoration: underline;
+}
+.status-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+.status-label {
+  margin-left: 4px;
+}
+.btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  cursor: pointer;
+  background-color: #f5f7fa;
+  color: #333;
+  transition: all 0.2s;
+}
+.btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.btn-primary {
+  background-color: #3498db;
+  color: #fff;
+  border-color: #3498db;
+}
+.btn-secondary {
+  background-color: #fff;
+  border-color: #d0d7de;
+  color: #34495e;
+}
+.btn-danger {
+  background-color: #e74c3c;
+  border-color: #e74c3c;
+  color: #fff;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn:not(:disabled):hover {
+  filter: brightness(0.95);
+}
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -267,6 +354,11 @@
   border-radius: 5px;
   width: 400px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+@media print {
+  .no-print {
+    display: none;
+  }
 }
 </style>
 
