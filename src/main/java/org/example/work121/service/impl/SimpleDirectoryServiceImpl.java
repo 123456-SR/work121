@@ -423,24 +423,46 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 reboundMethodReportMapper.insert(entity);
                 return id;
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
+                // Get the actual entrustment ID from JC_CORE_WT_INFO
+                String actualEntrustmentId = dirName;
+                try {
+                    JcCoreWtInfo wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
+                    if (wtInfo != null) {
+                        actualEntrustmentId = wtInfo.getId();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to get entrustment ID for dirName: " + dirName);
+                }
+                
                 LightDynamicPenetrationRecord entity = new LightDynamicPenetrationRecord();
                 entity.setId(id);
                 entity.setWtNum(dirName);
                 entity.setCreateBy(creator);
                 entity.setCreateTime(now);
-                entity.setEntrustmentId(dirName);
+                entity.setEntrustmentId(actualEntrustmentId);
                 
                 setDefaultValues(entity, directory, category);
                 
                 lightDynamicPenetrationRecordMapper.insert(entity);
                 return id;
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "LIGHT_DYNAMIC_PENETRATION_REPORT", "轻型动力触探检测报告")) {
+                // Get the actual entrustment ID from JC_CORE_WT_INFO
+                String actualEntrustmentId = dirName;
+                try {
+                    JcCoreWtInfo wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
+                    if (wtInfo != null) {
+                        actualEntrustmentId = wtInfo.getId();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to get entrustment ID for dirName: " + dirName);
+                }
+                
                 LightDynamicPenetrationReport entity = new LightDynamicPenetrationReport();
                 entity.setId(id);
                 entity.setWtNum(dirName);
                 entity.setCreateBy(creator);
                 entity.setCreateTime(now);
-                entity.setEntrustmentId(dirName);
+                entity.setEntrustmentId(actualEntrustmentId);
                 
                 setDefaultValues(entity, directory, category);
                 

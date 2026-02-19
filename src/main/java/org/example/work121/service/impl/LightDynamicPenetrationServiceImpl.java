@@ -35,7 +35,35 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
 
     @Override
     public LightDynamicPenetration getById(String id) {
-        return mapper.selectById(id);
+        LightDynamicPenetration entity = mapper.selectById(id);
+        if (entity != null && entity.getDataJson() != null && !entity.getDataJson().isEmpty()) {
+            try {
+                Map<String, Object> jsonData = objectMapper.readValue(entity.getDataJson(), Map.class);
+                if (jsonData != null) {
+                    if (jsonData.get("clientUnit") != null) entity.setClientUnit((String) jsonData.get("clientUnit"));
+                    if (jsonData.get("projectName") != null) entity.setProjectName((String) jsonData.get("projectName"));
+                    if (jsonData.get("commissionDate") != null) entity.setCommissionDate((java.util.Date) jsonData.get("commissionDate"));
+                    if (jsonData.get("constructionPart") != null) entity.setConstructionPart((String) jsonData.get("constructionPart"));
+                    if (jsonData.get("testDate") != null) entity.setTestDate((java.util.Date) jsonData.get("testDate"));
+                    if (jsonData.get("soilProperty") != null) entity.setSoilProperty((String) jsonData.get("soilProperty"));
+                    if (jsonData.get("reportDate") != null) entity.setReportDate((java.util.Date) jsonData.get("reportDate"));
+                    if (jsonData.get("witnessUnit") != null) entity.setWitnessUnit((String) jsonData.get("witnessUnit"));
+                    if (jsonData.get("witness") != null) entity.setWitness((String) jsonData.get("witness"));
+                    if (jsonData.get("designCapacity") != null) entity.setDesignCapacity((String) jsonData.get("designCapacity"));
+                    if (jsonData.get("hammerWeight") != null) entity.setHammerWeight((String) jsonData.get("hammerWeight"));
+                    if (jsonData.get("dropDistance") != null) entity.setDropDistance((String) jsonData.get("dropDistance"));
+                    if (jsonData.get("testCategory") != null) entity.setTestCategory((String) jsonData.get("testCategory"));
+                    if (jsonData.get("testBasis") != null) entity.setTestBasis((String) jsonData.get("testBasis"));
+                    if (jsonData.get("equipment") != null) entity.setEquipment((String) jsonData.get("equipment"));
+                    if (jsonData.get("remarks") != null) entity.setRemarks((String) jsonData.get("remarks"));
+                    if (jsonData.get("conclusion") != null) entity.setConclusion((String) jsonData.get("conclusion"));
+                    if (jsonData.get("constructionUnit") != null) entity.setConstructionUnit((String) jsonData.get("constructionUnit"));
+                }
+            } catch (Exception e) {
+                System.err.println("Error parsing DATA_JSON: " + e.getMessage());
+            }
+        }
+        return entity;
     }
 
     @Override
@@ -46,15 +74,59 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
     @Override
     @Transactional
     public void save(LightDynamicPenetration entity) {
-        if (entity.getId() == null || entity.getId().trim().isEmpty()) {
-            entity.setId(UUID.randomUUID().toString());
-            mapper.insert(entity);
-        } else {
-            if (mapper.countById(entity.getId()) > 0) {
-                mapper.update(entity);
-            } else {
-                mapper.insert(entity);
+        try {
+            // Prepare data map for DATA_JSON
+            Map<String, Object> recordData = new HashMap<>();
+            
+            // Parse existing DATA_JSON if present
+            if (entity.getDataJson() != null && !entity.getDataJson().isEmpty()) {
+                try {
+                    Map<String, Object> existingJson = objectMapper.readValue(entity.getDataJson(), Map.class);
+                    if (existingJson != null) {
+                        recordData.putAll(existingJson);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error parsing record JSON: " + e.getMessage());
+                }
             }
+            
+            // Add all business fields to DATA_JSON
+            recordData.put("clientUnit", entity.getClientUnit());
+            recordData.put("projectName", entity.getProjectName());
+            recordData.put("commissionDate", entity.getCommissionDate());
+            recordData.put("constructionPart", entity.getConstructionPart());
+            recordData.put("testDate", entity.getTestDate());
+            recordData.put("soilProperty", entity.getSoilProperty());
+            recordData.put("reportDate", entity.getReportDate());
+            recordData.put("witnessUnit", entity.getWitnessUnit());
+            recordData.put("witness", entity.getWitness());
+            recordData.put("designCapacity", entity.getDesignCapacity());
+            recordData.put("hammerWeight", entity.getHammerWeight());
+            recordData.put("dropDistance", entity.getDropDistance());
+            recordData.put("testCategory", entity.getTestCategory());
+            recordData.put("testBasis", entity.getTestBasis());
+            recordData.put("equipment", entity.getEquipment());
+            recordData.put("remarks", entity.getRemarks());
+            recordData.put("conclusion", entity.getConclusion());
+            recordData.put("constructionUnit", entity.getConstructionUnit());
+            
+            // Serialize to JSON
+            String mergedJson = objectMapper.writeValueAsString(recordData);
+            entity.setDataJson(mergedJson);
+            
+            if (entity.getId() == null || entity.getId().trim().isEmpty()) {
+                entity.setId(UUID.randomUUID().toString());
+                mapper.insert(entity);
+            } else {
+                if (mapper.countById(entity.getId()) > 0) {
+                    mapper.update(entity);
+                } else {
+                    mapper.insert(entity);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error saving LightDynamicPenetration: " + e.getMessage());
         }
     }
 

@@ -386,6 +386,8 @@ const removeFromQueue = (index) => {
 
 const saveProcess = async () => {
   try {
+    console.log('开始保存流程')
+    
     // 将队列中的表单类型映射到table1Type-table10Type
     for (let i = 1; i <= 10; i++) {
       formData[`table${i}Type`] = selectedForms.value[i - 1]?.value || ''
@@ -405,8 +407,33 @@ const saveProcess = async () => {
       formData.createBy = 'admin'
     }
     
+    console.log('发送保存请求，表单数据:', formData)
+    console.log('axios实例:', axios)
+    console.log('请求URL:', '/api/directory/save')
+    
+    // 测试axios是否能发送简单请求
+    try {
+      console.log('开始发送测试请求')
+      const testResponse = await axios.get('https://jsonplaceholder.typicode.com/todos/1')
+      console.log('测试请求成功:', testResponse.data)
+    } catch (testError) {
+      console.error('测试请求失败:', testError)
+    }
+    
     const response = await axios.post('/api/directory/save', formData)
+    
+    console.log('保存请求响应:', response.data)
+    
     if (response.data.success) {
+      // 保存成功后，显示返回的流程对象，检查table1Id-table10Id是否已生成
+      if (response.data.data) {
+        console.log('后端返回的流程对象:', response.data.data)
+        console.log('table1Id:', response.data.data.table1Id)
+        console.log('table2Id:', response.data.data.table2Id)
+        console.log('table3Id:', response.data.data.table3Id)
+        console.log('table4Id:', response.data.data.table4Id)
+      }
+      
       alert('保存成功')
       closeModal()
       loadProcesses()
@@ -415,6 +442,16 @@ const saveProcess = async () => {
     }
   } catch (error) {
     console.error('保存流程失败:', error)
+    console.error('错误类型:', error.constructor.name)
+    console.error('错误消息:', error.message)
+    console.error('错误堆栈:', error.stack)
+    if (error.response) {
+      console.error('响应数据:', error.response.data)
+      console.error('响应状态:', error.response.status)
+      console.error('响应头:', error.response.headers)
+    } else if (error.request) {
+      console.error('请求配置:', error.request)
+    }
     alert('保存失败，请稍后重试')
   }
 }
