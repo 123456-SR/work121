@@ -45,6 +45,51 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     @Autowired
     private WaterReplacementMapper waterReplacementMapper;
 
+    @Autowired
+    private ReboundMethodRecordMapper reboundMethodRecordMapper;
+
+    @Autowired
+    private LightDynamicPenetrationRecordMapper lightDynamicPenetrationRecordMapper;
+
+    @Autowired
+    private NuclearDensityRecordMapper nuclearDensityRecordMapper;
+
+    @Autowired
+    private SandReplacementRecordMapper sandReplacementRecordMapper;
+
+    @Autowired
+    private WaterReplacementRecordMapper waterReplacementRecordMapper;
+
+    @Autowired
+    private CuttingRingRecordMapper cuttingRingRecordMapper;
+
+    @Autowired
+    private BeckmanBeamRecordMapper beckmanBeamRecordMapper;
+
+    @Autowired
+    private DensityTestReportMapper densityTestReportMapper;
+
+    @Autowired
+    private DensityTestResultMapper densityTestResultMapper;
+
+    @Autowired
+    private LightDynamicPenetrationReportMapper lightDynamicPenetrationReportMapper;
+
+    @Autowired
+    private LightDynamicPenetrationResultMapper lightDynamicPenetrationResultMapper;
+
+    @Autowired
+    private ReboundMethodReportMapper reboundMethodReportMapper;
+
+    @Autowired
+    private BeckmanBeamReportMapper beckmanBeamReportMapper;
+
+    @Autowired
+    private BeckmanBeamResultMapper beckmanBeamResultMapper;
+
+    @Autowired
+    private JzsSignatureMapper jzsSignatureMapper;
+
     @Override
     public boolean saveDirectory(SimpleDirectory directory) {
         try {
@@ -55,6 +100,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 existingRecord = simpleDirectoryMapper.selectByDirId(directory.getDirId());
             }
 
+            // 为每个表类型创建空表并生成ID
+            createEmptyTables(directory);
+            
             int result;
             if (existingRecord != null) {
                 // 更新现有记录
@@ -270,6 +318,361 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    private void createEmptyTables(SimpleDirectory directory) {
+        try {
+            System.out.println("开始为流程创建空表，流程名称: " + directory.getDirName());
+            
+            // 为每个表类型创建空表并生成ID
+            for (int i = 1; i <= 10; i++) {
+                String tableType = null;
+                
+                // 获取当前表的类型
+                switch (i) {
+                    case 1:
+                        tableType = directory.getTable1Type();
+                        break;
+                    case 2:
+                        tableType = directory.getTable2Type();
+                        break;
+                    case 3:
+                        tableType = directory.getTable3Type();
+                        break;
+                    case 4:
+                        tableType = directory.getTable4Type();
+                        break;
+                    case 5:
+                        tableType = directory.getTable5Type();
+                        break;
+                    case 6:
+                        tableType = directory.getTable6Type();
+                        break;
+                    case 7:
+                        tableType = directory.getTable7Type();
+                        break;
+                    case 8:
+                        tableType = directory.getTable8Type();
+                        break;
+                    case 9:
+                        tableType = directory.getTable9Type();
+                        break;
+                    case 10:
+                        tableType = directory.getTable10Type();
+                        break;
+                }
+                
+                // 如果表类型不为空，创建空表并生成ID
+                if (tableType != null && !tableType.isEmpty()) {
+                    System.out.println("创建表类型: " + tableType + "，序号: " + i);
+                    String generatedId = createEmptyTable(tableType);
+                    if (generatedId != null) {
+                        System.out.println("成功创建表，生成的ID: " + generatedId);
+                        // 将生成的ID设置到目录对象中
+                        switch (i) {
+                            case 1:
+                                directory.setTable1Id(generatedId);
+                                System.out.println("设置table1Id: " + generatedId);
+                                break;
+                            case 2:
+                                directory.setTable2Id(generatedId);
+                                System.out.println("设置table2Id: " + generatedId);
+                                break;
+                            case 3:
+                                directory.setTable3Id(generatedId);
+                                System.out.println("设置table3Id: " + generatedId);
+                                break;
+                            case 4:
+                                directory.setTable4Id(generatedId);
+                                System.out.println("设置table4Id: " + generatedId);
+                                break;
+                            case 5:
+                                directory.setTable5Id(generatedId);
+                                System.out.println("设置table5Id: " + generatedId);
+                                break;
+                            case 6:
+                                directory.setTable6Id(generatedId);
+                                System.out.println("设置table6Id: " + generatedId);
+                                break;
+                            case 7:
+                                directory.setTable7Id(generatedId);
+                                System.out.println("设置table7Id: " + generatedId);
+                                break;
+                            case 8:
+                                directory.setTable8Id(generatedId);
+                                System.out.println("设置table8Id: " + generatedId);
+                                break;
+                            case 9:
+                                directory.setTable9Id(generatedId);
+                                System.out.println("设置table9Id: " + generatedId);
+                                break;
+                            case 10:
+                                directory.setTable10Id(generatedId);
+                                System.out.println("设置table10Id: " + generatedId);
+                                break;
+                        }
+                    } else {
+                        System.out.println("创建表失败，类型: " + tableType);
+                    }
+                }
+            }
+            
+            System.out.println("空表创建完成，流程信息: ");
+            System.out.println("table1Type: " + directory.getTable1Type() + ", table1Id: " + directory.getTable1Id());
+            System.out.println("table2Type: " + directory.getTable2Type() + ", table2Id: " + directory.getTable2Id());
+            System.out.println("table3Type: " + directory.getTable3Type() + ", table3Id: " + directory.getTable3Id());
+            System.out.println("table4Type: " + directory.getTable4Type() + ", table4Id: " + directory.getTable4Id());
+        } catch (Exception e) {
+            System.out.println("创建空表时发生异常: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private String createEmptyTable(String tableType) {
+        try {
+            String id = UUID.randomUUID().toString();
+            System.out.println("开始创建表，类型: " + tableType + "，生成的ID: " + id);
+            
+            // 根据表类型创建对应的数据对象并插入
+            switch (tableType) {
+                case "ENTRUSTMENT_LIST":
+                    Entrustment entrustment = new Entrustment();
+                    entrustment.setId(id);
+                    entrustment.setCreateBy("admin");
+                    entrustment.setCreateTime(new java.util.Date());
+                    int insertResult = entrustmentMapper.insert(entrustment);
+                    System.out.println("插入委托单结果: " + insertResult);
+                    if (insertResult > 0) {
+                        System.out.println("成功创建委托单，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建委托单失败");
+                        return null;
+                    }
+                case "REBOUND_METHOD_RECORD":
+                    ReboundMethodRecord reboundRecord = new ReboundMethodRecord();
+                    reboundRecord.setId(id);
+                    reboundRecord.setEntrustmentId(id);
+                    reboundRecord.setDataJson("");
+                    int insertReboundResult = reboundMethodRecordMapper.insert(reboundRecord);
+                    System.out.println("插入回弹法记录结果: " + insertReboundResult);
+                    if (insertReboundResult > 0) {
+                        System.out.println("成功创建回弹法记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建回弹法记录失败");
+                        return null;
+                    }
+                case "LIGHT_DYNAMIC_PENETRATION_RECORD":
+                    LightDynamicPenetrationRecord lightRecord = new LightDynamicPenetrationRecord();
+                    lightRecord.setId(id);
+                    lightRecord.setEntrustmentId(id);
+                    lightRecord.setDataJson("");
+                    int insertLightResult = lightDynamicPenetrationRecordMapper.insert(lightRecord);
+                    System.out.println("插入轻型动力触探记录结果: " + insertLightResult);
+                    if (insertLightResult > 0) {
+                        System.out.println("成功创建轻型动力触探记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建轻型动力触探记录失败");
+                        return null;
+                    }
+                case "NUCLEAR_DENSITY_RECORD":
+                    NuclearDensityRecord nuclearRecord = new NuclearDensityRecord();
+                    nuclearRecord.setId(id);
+                    nuclearRecord.setEntrustmentId(id);
+                    nuclearRecord.setDataJson("");
+                    int insertNuclearResult = nuclearDensityRecordMapper.insert(nuclearRecord);
+                    System.out.println("插入核子密度仪记录结果: " + insertNuclearResult);
+                    if (insertNuclearResult > 0) {
+                        System.out.println("成功创建核子密度仪记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建核子密度仪记录失败");
+                        return null;
+                    }
+                case "SAND_REPLACEMENT_RECORD":
+                    SandReplacementRecord sandRecord = new SandReplacementRecord();
+                    sandRecord.setId(id);
+                    sandRecord.setEntrustmentId(id);
+                    sandRecord.setDataJson("");
+                    int insertSandResult = sandReplacementRecordMapper.insert(sandRecord);
+                    System.out.println("插入灌砂法记录结果: " + insertSandResult);
+                    if (insertSandResult > 0) {
+                        System.out.println("成功创建灌砂法记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建灌砂法记录失败");
+                        return null;
+                    }
+                case "WATER_REPLACEMENT_RECORD":
+                    WaterReplacementRecord waterRecord = new WaterReplacementRecord();
+                    waterRecord.setId(id);
+                    waterRecord.setEntrustmentId(id);
+                    waterRecord.setDataJson("");
+                    int insertWaterResult = waterReplacementRecordMapper.insert(waterRecord);
+                    System.out.println("插入灌水法记录结果: " + insertWaterResult);
+                    if (insertWaterResult > 0) {
+                        System.out.println("成功创建灌水法记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建灌水法记录失败");
+                        return null;
+                    }
+                case "CUTTING_RING_RECORD":
+                    CuttingRingRecord cuttingRecord = new CuttingRingRecord();
+                    cuttingRecord.setId(id);
+                    cuttingRecord.setEntrustmentId(id);
+                    cuttingRecord.setDataJson("");
+                    int insertCuttingResult = cuttingRingRecordMapper.insert(cuttingRecord);
+                    System.out.println("插入环刀法记录结果: " + insertCuttingResult);
+                    if (insertCuttingResult > 0) {
+                        System.out.println("成功创建环刀法记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建环刀法记录失败");
+                        return null;
+                    }
+                case "BECKMAN_BEAM_RECORD":
+                    BeckmanBeamRecord beckmanRecord = new BeckmanBeamRecord();
+                    beckmanRecord.setId(id);
+                    beckmanRecord.setEntrustmentId(id);
+                    beckmanRecord.setDataJson("");
+                    int insertBeckmanResult = beckmanBeamRecordMapper.insert(beckmanRecord);
+                    System.out.println("插入贝克曼梁记录结果: " + insertBeckmanResult);
+                    if (insertBeckmanResult > 0) {
+                        System.out.println("成功创建贝克曼梁记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建贝克曼梁记录失败");
+                        return null;
+                    }
+                case "DENSITY_TEST_REPORT":
+                    DensityTestReport densityReport = new DensityTestReport();
+                    densityReport.setId(id);
+                    densityReport.setEntrustmentId(id);
+                    densityReport.setDataJson("");
+                    int insertDensityReportResult = densityTestReportMapper.insert(densityReport);
+                    System.out.println("插入密度试验报告结果: " + insertDensityReportResult);
+                    if (insertDensityReportResult > 0) {
+                        System.out.println("成功创建密度试验报告，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建密度试验报告失败");
+                        return null;
+                    }
+                case "DENSITY_TEST_RESULT":
+                    DensityTestResult densityResult = new DensityTestResult();
+                    densityResult.setId(id);
+                    densityResult.setEntrustmentId(id);
+                    densityResult.setDataJson("");
+                    int insertDensityResultResult = densityTestResultMapper.insert(densityResult);
+                    System.out.println("插入密度试验检测结果: " + insertDensityResultResult);
+                    if (insertDensityResultResult > 0) {
+                        System.out.println("成功创建密度试验检测结果，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建密度试验检测结果失败");
+                        return null;
+                    }
+                case "LIGHT_DYNAMIC_PENETRATION":
+                    LightDynamicPenetrationReport lightReport = new LightDynamicPenetrationReport();
+                    lightReport.setId(id);
+                    lightReport.setEntrustmentId(id);
+                    lightReport.setDataJson("");
+                    int insertLightReportResult = lightDynamicPenetrationReportMapper.insert(lightReport);
+                    System.out.println("插入轻型动力触探报告结果: " + insertLightReportResult);
+                    if (insertLightReportResult > 0) {
+                        System.out.println("成功创建轻型动力触探报告，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建轻型动力触探报告失败");
+                        return null;
+                    }
+                case "LIGHT_DYNAMIC_PENETRATION_RESULT":
+                    LightDynamicPenetrationResult lightResult = new LightDynamicPenetrationResult();
+                    lightResult.setId(id);
+                    lightResult.setEntrustmentId(id);
+                    lightResult.setDataJson("");
+                    int insertLightResultResult = lightDynamicPenetrationResultMapper.insert(lightResult);
+                    System.out.println("插入轻型动力触探检测结果: " + insertLightResultResult);
+                    if (insertLightResultResult > 0) {
+                        System.out.println("成功创建轻型动力触探检测结果，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建轻型动力触探检测结果失败");
+                        return null;
+                    }
+                case "REBOUND_METHOD_REPORT":
+                    ReboundMethodReport reboundReport = new ReboundMethodReport();
+                    reboundReport.setId(id);
+                    reboundReport.setEntrustmentId(id);
+                    reboundReport.setDataJson("");
+                    int insertReboundReportResult = reboundMethodReportMapper.insert(reboundReport);
+                    System.out.println("插入回弹法报告结果: " + insertReboundReportResult);
+                    if (insertReboundReportResult > 0) {
+                        System.out.println("成功创建回弹法报告，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建回弹法报告失败");
+                        return null;
+                    }
+                case "BECKMAN_BEAM_REPORT":
+                    BeckmanBeamReport beckmanReport = new BeckmanBeamReport();
+                    beckmanReport.setId(id);
+                    beckmanReport.setEntrustmentId(id);
+                    beckmanReport.setDataJson("");
+                    int insertBeckmanReportResult = beckmanBeamReportMapper.insert(beckmanReport);
+                    System.out.println("插入贝克曼梁报告结果: " + insertBeckmanReportResult);
+                    if (insertBeckmanReportResult > 0) {
+                        System.out.println("成功创建贝克曼梁报告，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建贝克曼梁报告失败");
+                        return null;
+                    }
+                case "BECKMAN_BEAM_RESULT":
+                    BeckmanBeamResult beckmanResult = new BeckmanBeamResult();
+                    beckmanResult.setId(id);
+                    beckmanResult.setEntrustmentId(id);
+                    beckmanResult.setDataJson("");
+                    int insertBeckmanResultResult = beckmanBeamResultMapper.insert(beckmanResult);
+                    System.out.println("插入贝克曼梁检测结果: " + insertBeckmanResultResult);
+                    if (insertBeckmanResultResult > 0) {
+                        System.out.println("成功创建贝克曼梁检测结果，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建贝克曼梁检测结果失败");
+                        return null;
+                    }
+                case "SIGNATURE":
+                    JzsSignature signature = new JzsSignature();
+                    signature.setSignatureId(id);
+                    signature.setUserAccount("admin");
+                    signature.setSignatureType("default");
+                    signature.setImageType("png");
+                    signature.setImageSize(0L);
+                    signature.setCreateTime(new java.util.Date());
+                    signature.setRemarks("自动创建的签名记录");
+                    int insertSignatureResult = jzsSignatureMapper.insert(signature);
+                    System.out.println("插入签名记录结果: " + insertSignatureResult);
+                    if (insertSignatureResult > 0) {
+                        System.out.println("成功创建签名记录，ID: " + id);
+                        return id;
+                    } else {
+                        System.out.println("创建签名记录失败");
+                        return null;
+                    }
+                // 可以添加其他表类型的处理
+                default:
+                    System.out.println("未知表类型: " + tableType);
+                    return null;
+            }
+        } catch (Exception e) {
+            System.out.println("创建表时发生异常，类型: " + tableType + "，异常信息: " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
     }
 }

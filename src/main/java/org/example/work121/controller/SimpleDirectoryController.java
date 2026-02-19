@@ -29,16 +29,50 @@ public class SimpleDirectoryController {
         Map<String, Object> result = new HashMap<>();
 
         try {
+            System.out.println("=====================================");
+            System.out.println("收到保存流程请求");
+            System.out.println("流程名称: " + directory.getDirName());
+            System.out.println("table1Type: " + directory.getTable1Type());
+            System.out.println("table2Type: " + directory.getTable2Type());
+            System.out.println("table3Type: " + directory.getTable3Type());
+            System.out.println("table4Type: " + directory.getTable4Type());
+            System.out.println("table5Type: " + directory.getTable5Type());
+            System.out.println("table6Type: " + directory.getTable6Type());
+            System.out.println("table7Type: " + directory.getTable7Type());
+            System.out.println("table8Type: " + directory.getTable8Type());
+            System.out.println("table9Type: " + directory.getTable9Type());
+            System.out.println("table10Type: " + directory.getTable10Type());
+            System.out.println("=====================================");
+            
             boolean success = simpleDirectoryService.saveDirectory(directory);
 
             if (success) {
+                // 保存成功后，重新获取目录信息，确保返回包含table1Id-table10Id的完整数据
+                SimpleDirectory savedDirectory;
+                if (directory.getId() != null) {
+                    savedDirectory = simpleDirectoryService.getDirectoryById(directory.getId());
+                } else if (directory.getDirId() != null) {
+                    savedDirectory = simpleDirectoryService.getDirectoryByDirId(directory.getDirId());
+                } else {
+                    savedDirectory = directory;
+                }
+                
+                System.out.println("保存成功，返回的流程对象:");
+                System.out.println("table1Id: " + savedDirectory.getTable1Id());
+                System.out.println("table2Id: " + savedDirectory.getTable2Id());
+                System.out.println("table3Id: " + savedDirectory.getTable3Id());
+                System.out.println("table4Id: " + savedDirectory.getTable4Id());
+                
                 result.put("success", true);
                 result.put("message", "保存成功");
+                result.put("data", savedDirectory);
             } else {
+                System.out.println("保存失败");
                 result.put("success", false);
                 result.put("message", "保存失败");
             }
         } catch (Exception e) {
+            System.out.println("保存异常: " + e.getMessage());
             e.printStackTrace();
             result.put("success", false);
             result.put("message", "保存异常: " + e.getMessage());

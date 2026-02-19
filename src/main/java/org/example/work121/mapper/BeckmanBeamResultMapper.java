@@ -10,15 +10,15 @@ public interface BeckmanBeamResultMapper {
             "ID as id, " +
             "ENTRUSTMENT_ID as entrustmentId, " +
             "DATA_JSON as dataJson " +
-            "FROM T_BECKMAN_BEAM " +
+            "FROM T_BECKMAN_BEAM_RESULT " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     BeckmanBeamResult selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_BECKMAN_BEAM (ID, ENTRUSTMENT_ID, DATA_JSON) " +
+    @Insert("INSERT INTO T_BECKMAN_BEAM_RESULT (ID, ENTRUSTMENT_ID, DATA_JSON) " +
             "VALUES (#{id}, #{entrustmentId}, #{dataJson})")
     int insert(BeckmanBeamResult result);
 
-    @Update("UPDATE T_BECKMAN_BEAM SET " +
+    @Update("UPDATE T_BECKMAN_BEAM_RESULT SET " +
             "DATA_JSON = #{dataJson} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(BeckmanBeamResult result);

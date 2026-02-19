@@ -13,15 +13,15 @@ public interface DensityTestReportMapper {
             "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto " +
-            "FROM T_DENSITY_TEST " +
+            "FROM T_DENSITY_TEST_REPORT " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     DensityTestReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_DENSITY_TEST (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
+    @Insert("INSERT INTO T_DENSITY_TEST_REPORT (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto})")
     int insert(DensityTestReport report);
 
-    @Update("UPDATE T_DENSITY_TEST SET " +
+    @Update("UPDATE T_DENSITY_TEST_REPORT SET " +
             "DATA_JSON = #{dataJson}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +

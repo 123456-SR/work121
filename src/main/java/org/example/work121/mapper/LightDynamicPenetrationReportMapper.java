@@ -7,24 +7,25 @@ import org.example.work121.entity.LightDynamicPenetrationReport;
 public interface LightDynamicPenetrationReportMapper {
 
     @Select("SELECT " +
-            "UNIFIED_NUMBER as entrustmentId, " +
-            "DATA_BLOCKS as dataJson, " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson, " +
             "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto " +
-            "FROM JZS_LIGHT_DYNAMIC_PENETRATION " +
-            "WHERE UNIFIED_NUMBER = #{entrustmentId}")
+            "FROM T_LIGHT_DYNAMIC_PENETRATION_REPORT " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     LightDynamicPenetrationReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO JZS_LIGHT_DYNAMIC_PENETRATION (UNIFIED_NUMBER, DATA_BLOCKS, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
-            "VALUES (#{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto})")
+    @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION_REPORT (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto})")
     int insert(LightDynamicPenetrationReport report);
 
-    @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_BLOCKS = #{dataJson}, " +
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION_REPORT SET " +
+            "DATA_JSON = #{dataJson}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto} " +
-            "WHERE UNIFIED_NUMBER = #{entrustmentId}")
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(LightDynamicPenetrationReport report);
 }

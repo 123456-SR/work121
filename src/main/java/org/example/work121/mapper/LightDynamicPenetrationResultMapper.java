@@ -7,18 +7,19 @@ import org.example.work121.entity.LightDynamicPenetrationResult;
 public interface LightDynamicPenetrationResultMapper {
 
     @Select("SELECT " +
-            "UNIFIED_NUMBER as entrustmentId, " +
-            "DATA_BLOCKS as dataJson " +
-            "FROM JZS_LIGHT_DYNAMIC_PENETRATION " +
-            "WHERE UNIFIED_NUMBER = #{entrustmentId}")
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson " +
+            "FROM T_LIGHT_DYNAMIC_PENETRATION_RESULT " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     LightDynamicPenetrationResult selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO JZS_LIGHT_DYNAMIC_PENETRATION (UNIFIED_NUMBER, DATA_BLOCKS) " +
-            "VALUES (#{entrustmentId}, #{dataJson})")
+    @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION_RESULT (ID, ENTRUSTMENT_ID, DATA_JSON) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson})")
     int insert(LightDynamicPenetrationResult result);
 
-    @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_BLOCKS = #{dataJson} " +
-            "WHERE UNIFIED_NUMBER = #{entrustmentId}")
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION_RESULT SET " +
+            "DATA_JSON = #{dataJson} " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(LightDynamicPenetrationResult result);
 }

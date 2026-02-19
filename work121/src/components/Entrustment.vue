@@ -246,22 +246,34 @@ const formData = reactive({
 
 // 加载数据
 const loadData = async (id) => {
-  if (!id) return
+  console.log('loadData被调用，id:', id)
+  
+  if (!id) {
+    console.log('id为空，无法加载数据')
+    return
+  }
   
   try {
     // 获取当前表单类型
     const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+    console.log('currentFormType:', currentFormType)
     
     // 调用通用的表单数据接口
-    const response = await axios.get(`/api/form-data/get-by-type-and-id?formType=${currentFormType}&id=${id}`)
+    const apiUrl = `/api/form-data/get-by-type-and-id?formType=${currentFormType}&id=${id}`
+    console.log('调用API:', apiUrl)
+    
+    const response = await axios.get(apiUrl)
+    console.log('API响应:', response.data)
+    
     if (response.data.success && response.data.data) {
       const data = response.data.data
+      console.log('获取到的数据:', data)
       
       // 根据表单类型处理数据
       if (currentFormType === 'ENTRUSTMENT_LIST') {
-        // 映射字段
-        formData.unifiedNumber = data.wtNum || data.unifiedNumber || ''
-        formData.sampleNumber = data.wtNum || data.sampleNumber || '' // 根据实体类注释，样品编号可能与统一编号相同
+        // 映射字段 - 根据Entrustment实体类的字段进行映射
+        formData.unifiedNumber = data.id || data.wtNum || '' // id映射到统一编号
+        formData.sampleNumber = data.wtNum || data.sampleNumber || '' // wtNum映射到样品编号
         
         formData.clientUnit = data.clientUnit || ''
         formData.clientDate = data.commissionDate ? formatDate(data.commissionDate, 'YYYY-MM-DD') : ''
@@ -270,15 +282,29 @@ const loadData = async (id) => {
         formData.buildingUnit = data.buildingUnit || ''
         
         formData.projectName = data.projectName || ''
-        formData.constructionPart = data.projectArea || data.constructionPart || '' // 使用 projectArea 映射 constructionPart
+        formData.constructionPart = data.projectArea || data.constructionPart || ''
         
-        // 其他字段根据 JcCoreWtInfo 的字段进行映射
-        // 由于 JcCoreWtInfo 字段有限，部分字段可能需要根据实际情况调整
-        formData.witnessUnit = data.supervisionUnit || data.witnessUnit || '' // 监理单位映射为见证单位? 需要确认业务逻辑
-        formData.witness = data.client || data.witness || '' // 委托人映射为见证人? 暂且如此，或者留空
+        // 其他字段根据 Entrustment 的字段进行映射
+        formData.witnessUnit = data.witnessUnit || data.jdUnit || '' // 见证单位
+        formData.witness = data.witness || data.jdMan || '' // 见证人
+        formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientUnitTel || '')
+        formData.sampleName = data.sampleName || data.dataName || ''
+        formData.spec = data.spec || data.gcGcpq || ''
+        formData.manufacturer = data.manufacturer || data.pdPassCode || ''
+        formData.sampleQuantity = data.sampleQuantity || ''
+        formData.representativeBatch = data.representativeBatch || ''
+        formData.batchNumber = data.batchNumber || data.olWtNum || ''
+        formData.testCategory = data.testCategory || data.ywDepartment || ''
+        formData.reportSend = data.reportSend ? (Array.isArray(data.reportSend) ? data.reportSend : [data.reportSend]) : []
+        formData.sampleDisposal = data.sampleDisposal ? (Array.isArray(data.sampleDisposal) ? data.sampleDisposal : [data.sampleDisposal]) : []
+        formData.deliveryMode = data.deliveryMode || '3'
+        formData.fee = data.fee || data.standardMoney || ''
+        formData.remarks = data.remarks || data.beizhu || ''
+        formData.sampleHistory = data.sampleHistory || ''
+        formData.sampleStatus = data.sampleStatus || data.wtStatus || ''
+        formData.testItems = data.testItems || data.wtJccs || ''
         
-        // 假设 JcCoreWtInfo 只有部分基础字段，其他字段可能需要从其他关联表获取或者为空
-        // 这里尽量填充已有字段
+        console.log('表单数据已填充:', formData)
       } else {
         // 对于其他表单类型，可能需要根据实际情况处理数据
         console.log('Loading data for form type:', currentFormType, 'with data:', data)
@@ -293,38 +319,125 @@ const loadData = async (id) => {
 }
 
 onMounted(() => {
+  console.log('Entrustment onMounted - 开始加载')
+  
   // 检查是否从目录跳转而来
   const currentDirectory = localStorage.getItem('currentDirectory')
+  console.log('currentDirectory:', currentDirectory)
+  
   if (currentDirectory) {
     try {
       const directory = JSON.parse(currentDirectory)
+      console.log('解析后的directory:', directory)
+      
       // 保存目录信息
       localStorage.setItem('currentDirectory', JSON.stringify(directory))
       
       // 获取当前表单类型
       const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+      console.log('currentFormType:', currentFormType)
       
       // 查找当前表单在目录中的id
       let formId = null
       for (let i = 1; i <= 10; i++) {
+        console.log(`检查 table${i}Type: ${directory[`table${i}Type`]}, table${i}Id: ${directory[`table${i}Id`]}`)
         if (directory[`table${i}Type`] === currentFormType) {
           formId = directory[`table${i}Id`]
+          console.log('找到对应的formId:', formId)
           break
         }
       }
       
-      // 如果找到对应的id，加载数据
-      if (formId) {
-        loadData(formId)
-      } else if (props.id) {
-        // 如果目录中没有对应的id，但props中有id，也加载数据
-        loadData(props.id)
+      console.log('最终formId:', formId)
+      console.log('props.id:', props.id)
+      console.log('directory.dirName:', directory.dirName)
+      
+      // 如果是委托检验单，特殊处理
+      if (currentFormType === 'ENTRUSTMENT_LIST') {
+        console.log('是委托检验单，开始特殊处理')
+        
+        // 填充统一编号（目录名称）
+        if (directory.dirName) {
+          formData.unifiedNumber = directory.dirName
+          console.log('已填充统一编号:', formData.unifiedNumber)
+        }
+        
+        // 确保queryEntrustment方法存在
+        console.log('queryEntrustment方法是否存在:', typeof queryEntrustment === 'function')
+        
+        // 对于委托检验单，优先使用统一编号查询数据
+        if (directory.dirName) {
+          console.log('使用统一编号查询委托单:', directory.dirName)
+          // 直接调用API，不通过queryEntrustment方法
+          console.log('开始发送API请求，wtNum:', directory.dirName)
+          
+          // 构建完整的API URL
+          const apiUrl = '/api/jc-core-wt-info/by-wt-num?wtNum=' + encodeURIComponent(directory.dirName)
+          console.log('API URL:', apiUrl)
+          
+          // 发送API请求（使用Promise方式）
+          axios.get(apiUrl)
+            .then(response => {
+              console.log('API响应:', response)
+              console.log('API响应数据:', response.data)
+              
+              if (response.data.success && response.data.data) {
+                let data = response.data.data;
+                console.log('获取到的数据:', data)
+                
+                // 填充表单数据
+                formData.clientUnit = data.clientUnit || '';
+                formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM');
+                formData.constructionUnit = data.constructionUnit || '';
+                formData.buildingUnit = data.buildingUnit || '';
+                formData.witnessUnit = data.witnessUnit || '';
+                formData.witness = data.witness || '';
+                formData.projectName = data.projectName || '';
+                formData.constructionPart = data.projectArea || '';
+                formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientTel || '');
+                formData.projectName = data.projectName || '';
+                
+                console.log('表单数据已填充:', formData)
+              } else {
+                console.log('未找到该统一编号的委托单，响应:', response.data)
+                alert('未找到该统一编号的委托单');
+              }
+            })
+            .catch(error => {
+              console.error('查询委托单失败:', error);
+              console.error('错误详情:', error.message);
+              console.error('错误堆栈:', error.stack);
+              alert('查询失败，请稍后重试');
+            });
+        } else if (formId) {
+          console.log('使用formId加载数据:', formId)
+          loadData(formId)
+        } else if (props.id) {
+          // 如果目录中没有对应的id，但props中有id，也加载数据
+          console.log('使用props.id加载数据:', props.id)
+          loadData(props.id)
+        }
+      } else {
+        // 其他表，根据id实现自动填充
+        console.log('不是委托检验单，使用id加载数据')
+        if (formId) {
+          console.log('使用formId加载数据:', formId)
+          loadData(formId)
+        } else if (props.id) {
+          console.log('使用props.id加载数据:', props.id)
+          loadData(props.id)
+        } else {
+          console.log('没有找到id，无法加载数据')
+        }
       }
     } catch (e) {
       console.error('Failed to parse directory:', e)
     }
   } else if (props.id) {
+    console.log('没有currentDirectory，使用props.id加载数据:', props.id)
     loadData(props.id)
+  } else {
+    console.log('没有currentDirectory和props.id，无法加载数据')
   }
 })
 
@@ -465,19 +578,26 @@ const previewPdf = () => {
 }
 
 const queryEntrustment = () => {
+  console.log('queryEntrustment被调用，unifiedNumber:', formData.unifiedNumber)
+  
   if (!formData.unifiedNumber) {
+    console.log('unifiedNumber为空，无法查询')
     alert('请输入统一编号');
     return;
   }
 
+  console.log('开始发送API请求，wtNum:', formData.unifiedNumber)
+  
   axios.get('/api/jc-core-wt-info/by-wt-num', {
     params: {
       wtNum: formData.unifiedNumber
     }
   })
   .then(response => {
+    console.log('API响应:', response.data)
     if (response.data.success && response.data.data) {
       let data = response.data.data;
+      console.log('获取到的数据:', data)
       
       formData.clientUnit = data.clientUnit || '';
       formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM');
@@ -490,6 +610,7 @@ const queryEntrustment = () => {
       formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientTel || '');
       formData.projectName = data.projectName || '';
     } else {
+      console.log('未找到该统一编号的委托单')
       alert('未找到该统一编号的委托单');
     }
   })
