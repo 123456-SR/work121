@@ -2,9 +2,9 @@
   <div class="beckmanBeamResult-container">
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
-        <button @click="prevForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">上一页</button>
-        <button @click="nextForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下一页</button>
+        <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+        <button @click="handleSign" style="float: right; margin-left: 10px;">签字</button>
+        <button @click="saveData" style="float: right; margin-left: 10px;">保存</button>
         <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
         <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
         <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
@@ -50,6 +50,29 @@
             </tbody>
         </table>
 
+        <div class="footer-info">
+            <div style="width: 33%;">
+                批准：
+                <div style="display: inline-block; position: relative; width: 100px;">
+                    <input type="text" v-model="formData.approver" name="approver" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.approverSignature ? 0 : 1 }">
+                    <img v-if="formData.approverSignature" :src="formData.approverSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+                </div>
+            </div>
+            <div style="width: 33%;">
+                审核：
+                <div style="display: inline-block; position: relative; width: 100px;">
+                    <input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.reviewerSignature ? 0 : 1 }">
+                    <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+                </div>
+            </div>
+            <div style="width: 33%;">
+                检测：
+                <div style="display: inline-block; position: relative; width: 100px;">
+                    <input type="text" v-model="formData.tester" name="tester" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.testerSignature ? 0 : 1 }">
+                    <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+                </div>
+            </div>
+        </div>
 
     </form>
 
@@ -59,23 +82,42 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import axios from 'axios'
 
-// 注入导航方法
+const props = defineProps({
+    id: String
+})
+
 const navigateTo = inject('navigateTo')
+
+const goToList = () => {
+  if (navigateTo) {
+    navigateTo('BeckmanBeamResultList')
+  }
+}
 
 const pdfForm = ref(null)
 
 const formData = reactive({
+  id: '',
+  entrustmentId: '',
   entrustingUnit: '',
   unifiedNumber: '',
+  approver: '',
+  reviewer: '',
+  tester: '',
+  approverSignature: '',
+  reviewerSignature: '',
+  testerSignature: '',
 })
 
 onMounted(() => {
+  if (props.id) {
+    loadData(props.id)
+  }
 
-  // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
+  for (let i_idx = 0; i_idx < 25; i_idx++) {
     formData['remark_' + i_idx] = ''
     formData['lane_' + i_idx] = ''
     formData['right_val_' + i_idx] = ''
@@ -83,19 +125,160 @@ onMounted(() => {
     formData['station_' + i_idx] = ''
     formData['left_val_' + i_idx] = ''
   }
-
 })
+
+const loadData = async (entrustmentId) => {
+  try {
+    const entrustResponse = await axios.get('/api/jc-core-wt-info/by-id', {
+      params: { id: entrustmentId }
+    })
+    if (entrustResponse.data.success) {
+      const ent = entrustResponse.data.data
+      formData.entrustmentId = entrustmentId
+      formData.entrustingUnit = ent.clientUnit
+      formData.unifiedNumber = ent.wtNum
+      formData.tester = ent.tester
+      formData.reviewer = ent.reviewer
+    }
+
+    const response = await axios.get('/api/beckman-beam/result/get-by-entrustment-id', {
+      params: { entrustmentId }
+    })
+
+    let sourceJson = null
+
+    if (response.data.success && response.data.data) {
+      const data = response.data.data
+      formData.id = data.id
+      formData.entrustmentId = data.entrustmentId
+
+      if (data.dataJson) {
+        sourceJson = data.dataJson
+      }
+
+      if (data.reviewSignaturePhoto) formData.reviewerSignature = data.reviewSignaturePhoto
+      if (data.inspectSignaturePhoto) formData.testerSignature = data.inspectSignaturePhoto
+      if (data.approveSignaturePhoto) formData.approverSignature = data.approveSignaturePhoto
+    }
+
+    if (!sourceJson) {
+      try {
+        const recordRes = await axios.get('/api/beckman-beam/get-by-entrustment-id', {
+          params: { entrustmentId }
+        })
+        if (recordRes.data.success && recordRes.data.data && recordRes.data.data.length > 0) {
+          const record = recordRes.data.data[0]
+          if (record.dataJson) {
+            sourceJson = record.dataJson
+          }
+        }
+      } catch (e) {
+        console.error('beckman result autofill error', e)
+      }
+    }
+
+    if (sourceJson) {
+      try {
+        const parsedData = JSON.parse(sourceJson)
+        Object.assign(formData, parsedData)
+      } catch (e) {
+        console.error('beckman result autofill parse error', e)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load data', error)
+  }
+}
+
+const saveData = async () => {
+    try {
+        const dataToSave = {
+            id: formData.id,
+            entrustmentId: formData.entrustmentId || props.id,
+            dataJson: JSON.stringify(formData),
+            reviewSignaturePhoto: formData.reviewerSignature,
+            inspectSignaturePhoto: formData.testerSignature,
+            approveSignaturePhoto: formData.approverSignature
+        }
+        
+        const response = await axios.post('/api/beckman-beam/result/save', dataToSave)
+        if (response.data.success) {
+            alert('保存成功')
+            // If new record, update id
+            if (!formData.id && response.data.data && response.data.data.id) {
+                 formData.id = response.data.data.id
+            }
+        } else {
+            alert('保存失败: ' + response.data.message)
+        }
+    } catch (error) {
+        console.error('Save error:', error)
+        alert('保存失败')
+    }
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+        alert('请先登录')
+        return
+    }
+
+    try {
+        const response = await axios.post('/api/signature/get', {
+            userAccount: user.username
+        })
+
+        if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+            const signatureBlob = response.data.data.signatureBlob
+            let imgSrc = ''
+            
+            if (typeof signatureBlob === 'string') {
+                imgSrc = `data:image/png;base64,${signatureBlob}`
+            } else {
+                alert('签名数据格式不支持')
+                return
+            }
+
+            let signed = false
+            const currentName = user.fullName || user.username
+
+            // Match Tester
+            if (formData.tester === currentName) {
+                formData.testerSignature = imgSrc
+                signed = true
+            }
+
+            // Match Reviewer
+            if (formData.reviewer === currentName) {
+                formData.reviewerSignature = imgSrc
+                signed = true
+            }
+
+            // Match Approver
+            if (formData.approver === currentName) {
+                formData.approverSignature = imgSrc
+                signed = true
+            }
+            
+            if (signed) {
+                alert('签名成功')
+            } else {
+                alert(`当前用户(${currentName})与表单中的检测/审核/批准人员不匹配，无法签名`)
+            }
+        } else {
+            alert('未找到您的电子签名，请先去“电子签名”页面设置')
+        }
+    } catch (error) {
+        console.error('Sign error:', error)
+        alert('签名失败')
+    }
+}
 
 const printDocument = () => {
   window.print()
 }
 
-// 返回主页（目录列表）
-const goToHome = () => {
-  if (navigateTo) {
-    navigateTo('DirectoryList');
-  }
-}
 
 const generatePdf = () => {
   if (pdfForm.value) {
@@ -110,111 +293,6 @@ const previewPdf = () => {
     pdfForm.value.action = '/api/pdf/beckman_beam_result/preview'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
-  }
-}
-
-// 上一页
-const prevForm = () => {
-  navigateBetweenForms(-1)
-}
-
-// 下一页
-const nextForm = () => {
-  navigateBetweenForms(1)
-}
-
-// 表单导航
-const navigateBetweenForms = (direction) => {
-  try {
-    // 获取当前流程
-    const directoryStr = localStorage.getItem('currentDirectory')
-    if (!directoryStr) {
-      alert('未找到流程信息')
-      return
-    }
-
-    const directory = JSON.parse(directoryStr)
-    
-    // 构建表单序列
-    const formSequence = []
-    for (let i = 1; i <= 10; i++) {
-      const type = directory[`table${i}Type`]
-      const id = directory[`table${i}Id`]
-      if (type) {
-        formSequence.push({ type, id, tableIndex: i })
-      }
-    }
-
-    if (formSequence.length === 0) {
-      alert('该流程未关联任何表单')
-      return
-    }
-
-    // 动态获取当前表单类型
-    const currentFormType = localStorage.getItem('currentFormType') || 'BECKMAN_BEAM_RESULT'
-    
-    // 找到当前表单在序列中的位置
-    let currentIndex = -1
-    for (let i = 0; i < formSequence.length; i++) {
-      if (formSequence[i].type === currentFormType) {
-        currentIndex = i
-        break
-      }
-    }
-
-    // 如果没找到，默认从第一个开始
-    if (currentIndex === -1) {
-      currentIndex = 0
-    }
-
-    // 计算目标索引
-    const targetIndex = currentIndex + direction
-    if (targetIndex < 0 || targetIndex >= formSequence.length) {
-      alert(direction === -1 ? '已经是第一个表单' : '已经是最后一个表单')
-      return
-    }
-
-    // 跳转到目标表单
-    const targetForm = formSequence[targetIndex]
-    const componentMap = {
-      'ENTRUSTMENT_LIST': 'Entrustment',
-      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
-      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
-      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
-      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
-      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
-      'CUTTING_RING_RECORD': 'CuttingRingRecord',
-      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
-      'SIGNATURE': 'Signature',
-      'DENSITY_TEST_REPORT': 'DensityTestReport',
-      'DENSITY_TEST_RESULT': 'DensityTestResult',
-      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
-      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
-      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
-      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
-      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
-    }
-    
-    const componentName = componentMap[targetForm.type]
-    if (componentName && navigateTo) {
-      // 保存当前表单的状态
-      localStorage.setItem('currentFormType', targetForm.type)
-      localStorage.setItem('currentFormIndex', targetIndex.toString())
-      
-      // 构建参数，传递表单的ID
-      const props = {}
-      if (targetForm.id) {
-        props.id = targetForm.id
-      }
-      
-      // 使用navigateTo方法导航到对应的组件
-      navigateTo(componentName, props)
-    } else {
-      alert('暂不支持该类型的页面跳转')
-    }
-  } catch (error) {
-    console.error('导航错误:', error)
-    alert('导航失败，请稍后重试')
   }
 }
 </script>

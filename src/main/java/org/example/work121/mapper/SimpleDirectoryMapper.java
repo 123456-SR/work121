@@ -20,7 +20,30 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, " +
+            "STATUS, TESTER, REVIEWER, APPROVER, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "CREATE_MAN as createBy, " +
+            "CREATE_TIME, " +
+            "UPDATE_MAN as updateBy, " +
+            "UPDATE_TIME " +
+            "FROM T_SIMPLE_DIRECTORY " +
+            "WHERE DIR_NAME = #{dirName}")
+    SimpleDirectory selectByDirName(String dirName);
+
+    @Select("SELECT " +
+            "ID, DIR_ID, DIR_NAME, " +
+            "TABLE1_TYPE, TABLE1_ID, " +
+            "TABLE2_TYPE, TABLE2_ID, " +
+            "TABLE3_TYPE, TABLE3_ID, " +
+            "TABLE4_TYPE, TABLE4_ID, " +
+            "TABLE5_TYPE, TABLE5_ID, " +
+            "TABLE6_TYPE, TABLE6_ID, " +
+            "TABLE7_TYPE, TABLE7_ID, " +
+            "TABLE8_TYPE, TABLE8_ID, " +
+            "TABLE9_TYPE, TABLE9_ID, " +
+            "TABLE10_TYPE, TABLE10_ID, " +
+            "STATUS, TESTER, REVIEWER, APPROVER, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -41,7 +64,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, " +
+            "STATUS, TESTER, REVIEWER, APPROVER, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -62,7 +86,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, " +
+            "STATUS, TESTER, REVIEWER, APPROVER, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -83,9 +108,11 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, CREATE_MAN, CREATE_TIME, UPDATE_MAN, UPDATE_TIME" +
+            "STATUS, TESTER, REVIEWER, APPROVER, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "CREATE_MAN, CREATE_TIME, UPDATE_MAN, UPDATE_TIME" +
             ") VALUES (" +
-            "#{id}, #{dirId}, #{dirName}, " +
+            "#{id, jdbcType=VARCHAR}, #{dirId, jdbcType=VARCHAR}, #{dirName, jdbcType=VARCHAR}, " +
             "#{table1Type, jdbcType=VARCHAR}, #{table1Id, jdbcType=VARCHAR}, " +
             "#{table2Type, jdbcType=VARCHAR}, #{table2Id, jdbcType=VARCHAR}, " +
             "#{table3Type, jdbcType=VARCHAR}, #{table3Id, jdbcType=VARCHAR}, " +
@@ -96,12 +123,16 @@ public interface SimpleDirectoryMapper {
             "#{table8Type, jdbcType=VARCHAR}, #{table8Id, jdbcType=VARCHAR}, " +
             "#{table9Type, jdbcType=VARCHAR}, #{table9Id, jdbcType=VARCHAR}, " +
             "#{table10Type, jdbcType=VARCHAR}, #{table10Id, jdbcType=VARCHAR}, " +
-            "#{status}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=TIMESTAMP}, #{updateBy, jdbcType=VARCHAR}, #{updateTime, jdbcType=TIMESTAMP}" +
+            "#{status, jdbcType=INTEGER}, #{tester, jdbcType=VARCHAR}, #{reviewer, jdbcType=VARCHAR}, #{approver, jdbcType=VARCHAR}, " +
+            "#{wtUndertaker, jdbcType=VARCHAR}, #{wtReviewer, jdbcType=VARCHAR}, " +
+            "#{jcFiller, jdbcType=VARCHAR}, #{jcTester, jdbcType=VARCHAR}, #{jcReviewer, jdbcType=VARCHAR}, " +
+            "#{bgTester, jdbcType=VARCHAR}, #{bgReviewer, jdbcType=VARCHAR}, #{bgApprover, jdbcType=VARCHAR}, " +
+            "#{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=TIMESTAMP}, #{updateBy, jdbcType=VARCHAR}, #{updateTime, jdbcType=TIMESTAMP}" +
             ")")
     int insert(SimpleDirectory directory);
 
     @Update("UPDATE T_SIMPLE_DIRECTORY SET " +
-            "DIR_NAME = #{dirName}, " +
+            "DIR_NAME = #{dirName, jdbcType=VARCHAR}, " +
             "TABLE1_TYPE = #{table1Type, jdbcType=VARCHAR}, TABLE1_ID = #{table1Id, jdbcType=VARCHAR}, " +
             "TABLE2_TYPE = #{table2Type, jdbcType=VARCHAR}, TABLE2_ID = #{table2Id, jdbcType=VARCHAR}, " +
             "TABLE3_TYPE = #{table3Type, jdbcType=VARCHAR}, TABLE3_ID = #{table3Id, jdbcType=VARCHAR}, " +
@@ -112,10 +143,21 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE = #{table8Type, jdbcType=VARCHAR}, TABLE8_ID = #{table8Id, jdbcType=VARCHAR}, " +
             "TABLE9_TYPE = #{table9Type, jdbcType=VARCHAR}, TABLE9_ID = #{table9Id, jdbcType=VARCHAR}, " +
             "TABLE10_TYPE = #{table10Type, jdbcType=VARCHAR}, TABLE10_ID = #{table10Id, jdbcType=VARCHAR}, " +
-            "STATUS = #{status}, " +
+            "STATUS = #{status, jdbcType=INTEGER}, " +
+            "TESTER = #{tester, jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer, jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver, jdbcType=VARCHAR}, " +
+            "WT_UNDERTAKER = #{wtUndertaker, jdbcType=VARCHAR}, " +
+            "WT_REVIEWER = #{wtReviewer, jdbcType=VARCHAR}, " +
+            "JC_FILLER = #{jcFiller, jdbcType=VARCHAR}, " +
+            "JC_TESTER = #{jcTester, jdbcType=VARCHAR}, " +
+            "JC_REVIEWER = #{jcReviewer, jdbcType=VARCHAR}, " +
+            "BG_TESTER = #{bgTester, jdbcType=VARCHAR}, " +
+            "BG_REVIEWER = #{bgReviewer, jdbcType=VARCHAR}, " +
+            "BG_APPROVER = #{bgApprover, jdbcType=VARCHAR}, " +
             "UPDATE_MAN = #{updateBy, jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime, jdbcType=TIMESTAMP} " +
-            "WHERE ID = #{id}")
+            "WHERE ID = #{id, jdbcType=VARCHAR}")
     int update(SimpleDirectory directory);
 
     @Delete("DELETE FROM T_SIMPLE_DIRECTORY WHERE ID = #{id}")

@@ -2,13 +2,37 @@
   <div class="waterReplacementRecord-container">
 
 
-    <div class="no-print" style="margin-bottom: 20px;">
-        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
-        <button @click="prevForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">上一页</button>
-        <button @click="nextForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下一页</button>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+    <div class="no-print" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+            <span v-if="!draftMode" style="margin-left: 20px;">
+                <button @click="prevRecord" :disabled="currentIndex <= 0">上一页</button>
+                <span style="margin: 0 10px;">记录 {{ currentIndex + 1 }} / {{ totalRecords }}</span>
+                <button @click="nextRecord" :disabled="currentIndex >= totalRecords - 1">下一页</button>
+                <button @click="addRecord" style="margin-left: 10px;">添加记录</button>
+                <button @click="deleteRecord" style="margin-left: 10px; color: red;">删除当前记录</button>
+            </span>
+        </div>
+        
+        <div style="display: flex; align-items: center;">
+            <div v-if="formData.status !== undefined" style="margin-right: 20px; font-weight: bold; color: #666;">
+                状态: <span :style="{color: getStatusColor(formData.status)}">{{ getStatusText(formData.status) }}</span>
+            </div>
+
+            <!-- Workflow Buttons -->
+            <template v-if="formData.id && !draftMode">
+                <button v-if="formData.status === 0 || formData.status === 2" @click="submitWorkflow('SUBMIT')" style="margin-right: 10px; background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交审核</button>
+                
+                <button v-if="formData.status === 1" @click="submitWorkflow('AUDIT_PASS')" style="margin-right: 10px; background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">审核通过</button>
+                <button v-if="formData.status === 1" @click="submitWorkflow('REJECT')" style="margin-right: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">打回</button>
+            </template>
+
+            <button v-if="!draftMode" @click="handleSign">签字</button>
+            <button @click="submitForm" style="margin-left: 10px;">保存</button>
+            <button v-if="!draftMode" @click="printDocument" style="margin-left: 10px;">打印此单</button>
+            <button v-if="!draftMode" @click="generatePdf" style="margin-left: 10px;">下载PDF</button>
+            <button v-if="!draftMode" @click="previewPdf" style="margin-left: 10px;">预览PDF</button>
+        </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -167,11 +191,17 @@
         </tr>
     </table>
 
-    <div class="footer-info">
-        <span>批准：<input type="text" v-model="formData.approver"   name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" v-model="formData.reviewer"   name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>试验：<input type="text" v-model="formData.tester"   name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
-    </div>
+        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; display: flex; flex-wrap: wrap;">
+            <div style="position: relative; display: inline-block; margin-right: 20px;">
+                <span>检测：<input type="text" v-model="formData.tester" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
+                <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; width: 80px; height: 40px; mix-blend-mode: multiply;" />
+                <button @click="showSignatureModal('tester')" v-if="canSign('tester')" style="margin-left: 5px;">签字</button>
+            </div>
+            <!-- 校核人签字移除 -->
+             <div style="position: relative; display: inline-block; margin-right: 20px;">
+                <span>校核：<input type="text" v-model="formData.reviewer" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
+            </div>
+        </div>
 
 
     </form>
@@ -182,14 +212,39 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject } from 'vue'
+import { reactive, ref, onMounted, inject, computed } from 'vue'
+import axios from 'axios'
 
-// 注入导航方法
+const props = defineProps({
+  id: {
+    type: String,
+    default: ''
+  },
+  wtNum: {
+    type: String,
+    default: null
+  },
+  draftMode: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const draftMode = computed(() => props.draftMode)
+
 const navigateTo = inject('navigateTo')
+
 
 const pdfForm = ref(null)
 
+// 1:N State
+const records = ref([])
+const currentIndex = ref(0)
+const totalRecords = computed(() => records.value.length)
+
 const formData = reactive({
+  id: '',
+  entrustmentId: '',
   projectName: '',
   testDate: '',
   standard: '',
@@ -202,17 +257,97 @@ const formData = reactive({
   equipment: '',
   designCompaction: '',
   testCategory: '',
-  approver: '',
   reviewer: '',
   tester: '',
   remarks: '',
+  reviewerSignature: '',
+  testerSignature: '',
+  status: 0 // 0:Draft, 1:PendingAudit, 2:Returned, 3:PendingSign, 4:PendingApproval, 5:Approved
 })
 
-onMounted(() => {
+// Status Text Helper
+const getStatusText = (status) => {
+    switch(status) {
+        case 0: return '草稿'
+        case 1: return '待审核'
+        case 2: return '已打回'
+        case 3: return '待签字'
+        case 4: return '待批准'
+        case 5: return '已通过'
+        default: return '未知'
+    }
+}
 
-  // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
+const getStatusColor = (status) => {
+    switch(status) {
+        case 0: return '#9E9E9E' // Grey
+        case 1: return '#2196F3' // Blue
+        case 2: return '#F44336' // Red
+        case 3: return '#FF9800' // Orange
+        case 4: return '#9C27B0' // Purple
+        case 5: return '#4CAF50' // Green
+        default: return '#000000'
+    }
+}
+
+// Workflow Action Handler
+const submitWorkflow = async (action) => {
+    if (!formData.id) {
+        alert('请先保存记录')
+        return
+    }
+    
+    // Get current user
+    const user = JSON.parse(localStorage.getItem('userInfo'))
+    if (!user || !user.username) {
+        alert('请先登录')
+        return
+    }
+
+    let signatureData = null
+    
+    // Prepare signature based on action
+    if (action === 'SUBMIT') {
+        if (!formData.testerSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.testerSignature
+    }
+
+    const request = {
+        tableType: 'WATER_REPLACEMENT',
+        recordId: formData.id,
+        action: action,
+        userAccount: user.username,
+        signatureData: signatureData,
+        nextHandler: '' // Optional: could let user select next handler
+    }
+
+    if (action === 'REJECT') {
+        const reason = prompt('请输入打回原因:')
+        if (!reason) return
+        request.rejectReason = reason
+    }
+
+    try {
+        const response = await axios.post('/api/workflow/handle', request)
+        if (response.data.success) {
+            alert('操作成功')
+            // Reload data to reflect status change
+            loadData(formData.entrustmentId)
+        } else {
+            alert('操作失败: ' + response.data.message)
+        }
+    } catch (e) {
+        console.error('Workflow error', e)
+        alert('操作异常')
+    }
+}
+
+// Initialize dynamic fields
+const initDynamicFields = () => {
+  for (let i_idx = 0; i_idx < 16; i_idx++) {
     formData['drySampleMass_' + i_idx] = ''
     formData['tankArea_' + i_idx] = ''
     formData['relativeDensity_' + i_idx] = ''
@@ -231,17 +366,277 @@ onMounted(() => {
     formData['wetSampleMass_' + i_idx] = ''
     formData['sampleMass_' + i_idx] = ''
   }
+}
 
+onMounted(() => {
+  initDynamicFields()
+  
+  // Get entrustment ID (wtNum) from props or URL
+  let wtNum = props.wtNum
+  if (!wtNum) {
+      const urlParams = new URLSearchParams(window.location.search)
+      wtNum = urlParams.get('wtNum') || urlParams.get('id') // Fallback to id if wtNum missing
+  }
+
+  if (wtNum) {
+      formData.entrustmentId = wtNum
+      formData.unifiedNumber = wtNum
+      loadData(wtNum)
+  } else if (props.id) {
+      // If only id is provided (legacy or direct link), try using it as wtNum
+      formData.entrustmentId = props.id
+      formData.unifiedNumber = props.id
+      loadData(props.id)
+  }
 })
+
+const mapRecordToFormData = (record) => {
+  initDynamicFields()
+  
+  formData.id = record.id || ''
+  formData.entrustmentId = record.entrustmentId || props.id
+  formData.reviewerSignature = record.reviewSignaturePhoto || ''
+  formData.testerSignature = record.inspectSignaturePhoto || ''
+  
+  if (record.dataJson) {
+    try {
+      const parsed = JSON.parse(record.dataJson)
+      Object.keys(parsed).forEach(key => {
+        formData[key] = parsed[key]
+      })
+    } catch (e) {
+      console.error('JSON parse error', e)
+    }
+  }
+  
+  // Ensure entity fields override dataJson if they exist
+  if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto;
+  if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto;
+  
+  if (record.projectName) formData.projectName = record.projectName;
+  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId;
+  if (record.wtNum && !formData.unifiedNumber) formData.unifiedNumber = record.wtNum;
+
+  // Added mappings
+  if (record.clientUnit) formData.entrustingUnit = record.clientUnit
+  if (record.constructionPart) formData.constructionPart = record.constructionPart
+  if (record.testCategory) formData.testCategory = record.testCategory
+  if (record.equipment) formData.equipment = record.equipment
+  if (record.testBasis) formData.standard = record.testBasis
+  if (record.commissionDate && !formData.testDate) formData.testDate = record.commissionDate // Fallback if testDate empty
+  
+  if (record.status !== undefined) {
+      formData.status = record.status
+  } else {
+      formData.status = 0 // Default to Draft if not present
+  }
+}
+
+const saveCurrentRecordState = () => {
+  if (records.value.length === 0) return
+  
+  const record = records.value[currentIndex.value]
+  record.id = formData.id
+  record.entrustmentId = formData.entrustmentId || formData.unifiedNumber
+  record.reviewSignaturePhoto = formData.reviewerSignature
+  record.inspectSignaturePhoto = formData.testerSignature
+  record.projectName = formData.projectName
+  
+  record.dataJson = JSON.stringify(formData)
+}
+
+const prevRecord = () => {
+  if (currentIndex.value > 0) {
+    saveCurrentRecordState()
+    currentIndex.value--
+    mapRecordToFormData(records.value[currentIndex.value])
+  }
+}
+
+const nextRecord = () => {
+  if (currentIndex.value < records.value.length - 1) {
+    saveCurrentRecordState()
+    currentIndex.value++
+    mapRecordToFormData(records.value[currentIndex.value])
+  }
+}
+
+const addRecord = () => {
+  saveCurrentRecordState()
+  const newRecord = {
+    id: '',
+    entrustmentId: props.wtNum || props.id || formData.unifiedNumber,
+    dataJson: '{}'
+  }
+  records.value.push(newRecord)
+  currentIndex.value = records.value.length - 1
+  mapRecordToFormData(newRecord)
+}
+
+const deleteRecord = async () => {
+  if (records.value.length <= 1) {
+    alert('至少保留一条记录')
+    return
+  }
+  
+  if (!confirm('确定要删除当前记录吗？')) return
+
+  const currentRecord = records.value[currentIndex.value]
+  
+  if (currentRecord.id) {
+    try {
+      const response = await axios.post('/api/water-replacement/delete', { id: currentRecord.id })
+      if (!response.data.success) {
+        alert('删除失败: ' + response.data.message)
+        return
+      }
+    } catch (e) {
+      console.error('Delete error', e)
+      alert('删除失败')
+      return
+    }
+  }
+  
+  records.value.splice(currentIndex.value, 1)
+  if (currentIndex.value >= records.value.length) {
+    currentIndex.value = records.value.length - 1
+  }
+  mapRecordToFormData(records.value[currentIndex.value])
+}
+
+const loadData = async (entrustmentId) => {
+  try {
+    const response = await axios.get('/api/water-replacement/get-by-entrustment-id', {
+      params: { entrustmentId }
+    });
+    
+    if (response.data.success && response.data.data && response.data.data.length > 0) {
+      records.value = response.data.data
+      currentIndex.value = 0
+      mapRecordToFormData(records.value[0])
+    } else {
+        // Create new record
+        const newRecord = {
+            id: '',
+            entrustmentId: entrustmentId,
+            dataJson: '{}'
+        }
+        
+        // Fetch entrustment info to pre-fill
+        try {
+             const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
+              params: { unifiedNumber: entrustmentId }
+            })
+            if (entrustmentResponse.data.success) {
+                const eData = entrustmentResponse.data.data
+                formData.entrustmentId = entrustmentId
+                formData.unifiedNumber = entrustmentId
+                formData.projectName = eData.projectName || ''
+                // Pre-fill user names
+                const userInfoStr = localStorage.getItem('userInfo')
+                if (userInfoStr) {
+                    const userInfo = JSON.parse(userInfoStr)
+                    formData.reviewer = userInfo.userName
+                    formData.tester = userInfo.userName
+                }
+                newRecord.dataJson = JSON.stringify(formData)
+            }
+        } catch (e) {
+            console.error('Failed to load entrustment details', e)
+        }
+        
+        records.value = [newRecord]
+        currentIndex.value = 0
+        mapRecordToFormData(newRecord)
+    }
+  } catch (error) {
+    console.error('Failed to load data:', error);
+  }
+}
+
+const submitForm = async () => {
+  try {
+    const submitData = {
+      id: formData.id,
+      entrustmentId: props.id || formData.unifiedNumber,
+      dataJson: JSON.stringify(formData),
+      reviewSignaturePhoto: formData.reviewerSignature,
+      inspectSignaturePhoto: formData.testerSignature
+    }
+    
+    const response = await axios.post('/api/water-replacement/save', submitData)
+    if (response.data.success) {
+      alert('保存成功')
+      if (response.data.data && response.data.data.id) {
+         formData.id = response.data.data.id
+         // Update current record in list
+         if (records.value[currentIndex.value]) {
+             records.value[currentIndex.value].id = formData.id
+         }
+      }
+    } else {
+      alert('保存失败: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Save error:', error)
+    alert('保存失败')
+  }
+}
+
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentName = user.fullName || user.username
+
+      if (formData.tester === currentName) {
+        formData.testerSignature = imgSrc
+        signed = true
+      }
+
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
+}
 
 const printDocument = () => {
   window.print()
 }
 
-// 返回主页（目录列表）
-const goToHome = () => {
+// 返回列表
+const goToList = () => {
   if (navigateTo) {
-    navigateTo('DirectoryList');
+    navigateTo('WaterReplacementRecordList');
   }
 }
 
@@ -258,111 +653,6 @@ const previewPdf = () => {
     pdfForm.value.action = '/api/pdf/water_replacement_record/preview'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
-  }
-}
-
-// 上一页
-const prevForm = () => {
-  navigateBetweenForms(-1)
-}
-
-// 下一页
-const nextForm = () => {
-  navigateBetweenForms(1)
-}
-
-// 表单导航
-const navigateBetweenForms = (direction) => {
-  try {
-    // 获取当前流程
-    const directoryStr = localStorage.getItem('currentDirectory')
-    if (!directoryStr) {
-      alert('未找到流程信息')
-      return
-    }
-
-    const directory = JSON.parse(directoryStr)
-    
-    // 构建表单序列
-    const formSequence = []
-    for (let i = 1; i <= 10; i++) {
-      const type = directory[`table${i}Type`]
-      const id = directory[`table${i}Id`]
-      if (type) {
-        formSequence.push({ type, id, tableIndex: i })
-      }
-    }
-
-    if (formSequence.length === 0) {
-      alert('该流程未关联任何表单')
-      return
-    }
-
-    // 动态获取当前表单类型
-    const currentFormType = localStorage.getItem('currentFormType') || 'WATER_REPLACEMENT_RECORD'
-    
-    // 找到当前表单在序列中的位置
-    let currentIndex = -1
-    for (let i = 0; i < formSequence.length; i++) {
-      if (formSequence[i].type === currentFormType) {
-        currentIndex = i
-        break
-      }
-    }
-
-    // 如果没找到，默认从第一个开始
-    if (currentIndex === -1) {
-      currentIndex = 0
-    }
-
-    // 计算目标索引
-    const targetIndex = currentIndex + direction
-    if (targetIndex < 0 || targetIndex >= formSequence.length) {
-      alert(direction === -1 ? '已经是第一个表单' : '已经是最后一个表单')
-      return
-    }
-
-    // 跳转到目标表单
-    const targetForm = formSequence[targetIndex]
-    const componentMap = {
-      'ENTRUSTMENT_LIST': 'Entrustment',
-      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
-      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
-      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
-      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
-      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
-      'CUTTING_RING_RECORD': 'CuttingRingRecord',
-      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
-      'SIGNATURE': 'Signature',
-      'DENSITY_TEST_REPORT': 'DensityTestReport',
-      'DENSITY_TEST_RESULT': 'DensityTestResult',
-      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
-      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
-      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
-      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
-      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
-    }
-    
-    const componentName = componentMap[targetForm.type]
-    if (componentName && navigateTo) {
-      // 保存当前表单的状态
-      localStorage.setItem('currentFormType', targetForm.type)
-      localStorage.setItem('currentFormIndex', targetIndex.toString())
-      
-      // 构建参数，传递表单的ID
-      const props = {}
-      if (targetForm.id) {
-        props.id = targetForm.id
-      }
-      
-      // 使用navigateTo方法导航到对应的组件
-      navigateTo(componentName, props)
-    } else {
-      alert('暂不支持该类型的页面跳转')
-    }
-  } catch (error) {
-    console.error('导航错误:', error)
-    alert('导航失败，请稍后重试')
   }
 }
 </script>

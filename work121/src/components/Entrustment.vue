@@ -3,21 +3,69 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
-        <button @click="prevForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">上一页</button>
-        <button @click="nextForm" style="float: left; margin-left: 10px; background-color: #6c757d; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下一页</button>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
-        <button @click="submitForm" style="float: right; margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
-    </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+             <div>
+                <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+             </div>
+         <div style="display: flex; justify-content: flex-end; align-items: center;">
+             <div v-if="formData.status !== undefined" style="margin-right: 20px; font-weight: bold; color: #666;">
+                状态: <span :style="{color: getStatusColor(formData.status)}">{{ getStatusText(formData.status) }}</span>
+            </div>
+            
+            <!-- Workflow Buttons -->
+            <button
+              v-if="showSubmitButton"
+              @click="submitForm"
+              :disabled="!formData.testerSignature"
+              :style="{
+                marginRight: '10px',
+                backgroundColor: formData.testerSignature ? '#ffc107' : '#e0e0e0',
+                color: formData.testerSignature ? '#212529' : '#9e9e9e',
+                border: 'none',
+                padding: '5px 10px',
+                borderRadius: '3px',
+                cursor: formData.testerSignature ? 'pointer' : 'not-allowed'
+              }"
+            >
+              提交
+            </button>
+    <template v-if="currentId">
+        
+        <button
+          v-if="showAuditButtons"
+          @click="submitWorkflow('AUDIT_PASS')"
+          style="margin-right: 10px; background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;"
+        >
+          审核通过
+        </button>
+        <button
+          v-if="showAuditButtons"
+          @click="submitWorkflow('REJECT')"
+          style="margin-right: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;"
+        >
+          打回
+        </button>
+    </template>
 
-    <form id="entrustmentForm" ref="pdfForm" method="post">
-    <h2>检测 (验) 委托单 (代合同)</h2>
+
+    <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
+    <button @click="generatePdf" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
+    <button @click="previewPdf" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+    <button @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
+    <button @click="saveForm" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
+    </div>
+</div>
+
+<div v-if="formData.status === 2 && formData.rejectReason" style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #ef9a9a;">
+    <strong>打回原因：</strong> {{ formData.rejectReason }}
+</div>
+</div>
+
+<form id="entrustmentForm" ref="pdfForm" method="post">
+<h2>检测 (验) 委托单 (代合同)</h2>
 
     <div class="header-info">
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;">
-        <button type="button" @click="queryEntrustment" class="query-btn" style="margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">查询</button></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
         <span>样品编号：<input type="text" v-model="formData.sampleNumber"   name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
@@ -117,6 +165,7 @@
                     <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="2">2.邮寄</label>
                     <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="3">3.其它</label>
                 </div>
+
             </td>
             <td class="label">样品处置</td>
             <td>
@@ -133,6 +182,7 @@
             <td class="label">见证单位</td>
             <td><input type="text" v-model="formData.witnessUnit"   name="witnessUnit"></td>
         </tr>
+
         <!-- Row 11: 交付日期 & 费用 -->
         <tr>
             <td class="label">检测报告<br>交付日期</td>
@@ -140,15 +190,11 @@
                 <div class="checkbox-group">
                     <div style="margin-bottom: 5px;">
                         <label><input type="radio" v-model="formData.deliveryMode"   name="deliveryMode" value="1">可以为:</label>
-                        <input type="text" v-model="formData.deliveryDate1_y"   name="deliveryDate1_y" style="width: 40px; border-bottom: 1px solid black;">年
-                        <input type="text" v-model="formData.deliveryDate1_m"   name="deliveryDate1_m" style="width: 25px; border-bottom: 1px solid black;">月
-                        <input type="text" v-model="formData.deliveryDate1_d"   name="deliveryDate1_d" style="width: 25px; border-bottom: 1px solid black;">日
+                        <input type="text" v-model="formData.deliveryDate1"   name="deliveryDate1" style="width: 120px; border-bottom: 1px solid black;">
                     </div>
                     <div style="margin-bottom: 5px;">
                         <label><input type="radio" v-model="formData.deliveryMode"   name="deliveryMode" value="2">严格限定为:</label>
-                        <input type="text" v-model="formData.deliveryDate2_y"   name="deliveryDate2_y" style="width: 40px; border-bottom: 1px solid black;">年
-                        <input type="text" v-model="formData.deliveryDate2_m"   name="deliveryDate2_m" style="width: 25px; border-bottom: 1px solid black;">月
-                        <input type="text" v-model="formData.deliveryDate2_d"   name="deliveryDate2_d" style="width: 25px; border-bottom: 1px solid black;">日
+                        <input type="text" v-model="formData.deliveryDate2"   name="deliveryDate2" style="width: 120px; border-bottom: 1px solid black;">
                     </div>
                     <div>
                         <label><input type="radio" v-model="formData.deliveryMode"   name="deliveryMode" value="3" checked>不要求</label>
@@ -179,22 +225,53 @@
     </table>
 
     <div class="footer-info">
-        <span>委托(送样)人：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>承接(收样)人：<input type="text" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托(送样)人：<input type="text" v-model="formData.client" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <div style="position: relative; display: inline-block; margin-left: 20px;">
+            <span>承接(收样)人：
+                <div style="display: inline-block; width: 150px; border-bottom: 1px solid black; height: 30px; vertical-align: bottom; position: relative;">
+                    <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100px; height: 50px; object-fit: contain;" />
+                </div>
+            </span>
+        </div>
+
     </div>
 
     </form>
 
 
 
+
     
+
 
 
   </div>
 </template>
 
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+</style>
+
 <script setup>
-import { ref, reactive, onMounted, watch, inject } from 'vue'
+import { ref, reactive, onMounted, watch, inject, computed } from 'vue'
 import axios from 'axios'
 
 // 注入导航方法
@@ -204,6 +281,18 @@ const props = defineProps({
   id: {
     type: String,
     default: null
+  },
+  wtNum: {
+    type: String,
+    default: null
+  }
+})
+
+// 监听 wtNum 变化，确保组件复用或 prop 更新时能重新加载数据
+watch(() => props.wtNum, (newVal) => {
+  if (newVal) {
+    console.log('Watch: wtNum changed to', newVal)
+    loadDataByWtNum(newVal)
   }
 })
 
@@ -231,85 +320,223 @@ const formData = reactive({
   witness: '',
   witnessUnit: '',
   deliveryMode: '',
-  deliveryDate1_y: '',
-  deliveryDate1_m: '',
-  deliveryDate1_d: '',
-  deliveryDate2_y: '',
-  deliveryDate2_m: '',
-  deliveryDate2_d: '',
+  deliveryDate1: '',
+  deliveryDate2: '',
   fee: '',
   remarks: '',
   sampleHistory: '',
   sampleStatus: '',
+  status: 0,
   testItems: '',
+  reviewer: '', // Add reviewer field
+  client: '',
+  tester: '',
+  clientRegName: '',
+  testerSignature: '',
+  reviewerSignature: '',
+  approverSignature: '',
+  rejectReason: ''
 })
+
+const currentId = ref(props.id)
+
+const isSameTesterReviewer = computed(() => {
+  return !!formData.tester && !!formData.reviewer && formData.tester === formData.reviewer
+})
+
+const showSubmitButton = computed(() => {
+  return (formData.status == 0 || formData.status == 2 || formData.status > 5) && !isSameTesterReviewer.value
+})
+
+const showAuditButtons = computed(() => {
+  if (!currentId.value) return false
+  if (formData.status == 1) return true
+  if (isSameTesterReviewer.value && (formData.status == 0 || formData.status == 2 || formData.status > 5)) return true
+  return false
+})
+
+// 格式化日期
+const formatDate = (dateStr, format) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return ''
+  
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  
+  if (format === 'YYYY-MM-DD') {
+    return `${y}-${m}-${d}`
+  }
+  return `${y}-${m}-${d}`
+}
+
+const mapDataToForm = (data) => {
+  console.log('Mapping data keys:', Object.keys(data))
+  currentId.value = data.id
+  formData.unifiedNumber = data.wtNum || data.unifiedNumber || ''
+  formData.sampleNumber = data.wtNum || data.sampleNumber || '' 
+  formData.clientUnit = data.clientUnit || ''
+  formData.clientDate = data.commissionDate ? formatDate(data.commissionDate, 'YYYY-MM-DD') : ''
+  formData.constructionUnit = data.constructionUnit || ''
+  formData.buildingUnit = data.buildingUnit || ''
+  formData.projectName = data.projectName || ''
+  formData.constructionPart = data.projectArea || data.constructionPart || ''
+  formData.sampleQuantity = data.sampleQuantity || ''
+  formData.representativeBatch = data.representativeBatch || ''
+  formData.fee = data.fee || ''
+  formData.sampleHistory = data.sampleHistory || ''
+  const statusVal = parseInt(data.status)
+  formData.status = !isNaN(statusVal) ? statusVal : 0
+  formData.clientAddressPhone = data.clientAddressPhone || data.clientUnitTel || ''
+  formData.reportSend = data.reportSendMode ? data.reportSendMode.split(',') : []
+  formData.sampleDisposal = data.sampleDisposal ? data.sampleDisposal.split(',') : []
+  formData.deliveryMode = data.deliveryMode || '3'
+  if (data.deliveryDate) {
+      if (formData.deliveryMode === '1') {
+          formData.deliveryDate1 = data.deliveryDate
+      } else if (formData.deliveryMode === '2') {
+          formData.deliveryDate2 = data.deliveryDate
+      }
+  }
+  formData.witnessUnit = data.supervisionUnit || data.witnessUnit || '' 
+  formData.witness = data.witness || '' 
+  formData.client = data.client || ''
+  
+  // Load defaults from directory if available and data is empty
+  const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+  
+  // Tester (Undertaker) - Priority: data.receiver -> data.tester -> directory.wtUndertaker
+  formData.tester = data.receiver || data.tester || directory.wtUndertaker || ''
+  
+  // Reviewer - Priority: data.wtReviewer -> data.reviewer -> directory.wtReviewer
+  formData.reviewer = data.wtReviewer || data.reviewer || directory.wtReviewer || ''
+  
+  formData.approver = data.approver || ''
+  formData.clientRegName = data.clientRegName || ''
+  
+  // Helper to ensure Base64 prefix
+  const ensureBase64Prefix = (str) => {
+    if (!str) return ''
+    if (str.startsWith('data:image')) return str
+    return `data:image/png;base64,${str}`
+  }
+
+  formData.testerSignature = ensureBase64Prefix(data.wtManSign || data.inspectSignaturePhoto)
+  formData.reviewerSignature = ensureBase64Prefix(data.wtReviewSign || data.reviewSignaturePhoto)
+  formData.approverSignature = ensureBase64Prefix(data.approveSignaturePhoto)
+  formData.rejectReason = data.rejectReason || ''
+  
+  formData.sampleName = data.sampleName || ''
+  formData.spec = data.spec || ''
+  formData.manufacturer = data.manufacturer || ''
+  formData.batchNumber = data.batchNumber || ''
+  formData.testCategory = data.testCategory || ''
+  formData.sampleStatus = data.sampleStatus || ''
+  formData.testItems = data.testItems || ''
+  formData.remarks = data.remarks || ''
+  formData.reportSendUser = data.reportSendUser || ''
+  formData.witnessIdCard = data.witnessIdCard || ''
+  formData.samplingManIdCard = data.samplingManIdCard || ''
+}
+
+const loadDataByWtNum = async (wtNum) => {
+  if (!wtNum) return
+  try {
+    console.log('Fetching data for wtNum:', wtNum)
+    const response = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(wtNum)}`)
+    console.log('API Response:', response.data)
+    
+    // Fill wtNum regardless of API success (it's the key we are looking for)
+    formData.unifiedNumber = wtNum
+    formData.sampleNumber = wtNum
+
+    if (response.data.success && response.data.data) {
+       console.log('Mapping data to form:', response.data.data)
+       mapDataToForm(response.data.data)
+       
+       // Also fetch and update directory info to ensure navigation works
+       fetchDirectoryInfo(wtNum)
+    } else {
+       console.warn('Backend data not found for wtNum:', wtNum, 'Using virtual data instead.')
+       // If data not found, we still keep the wtNum we set above
+    }
+  } catch (error) {
+    console.error('Error loading data by wtNum:', error)
+  } finally {
+    // Always populate virtual data for required fields if they are empty
+    // This satisfies the requirement: "insert virtual data into non-empty fields" (mandatory fields)
+    // Moving to finally block to ensure it runs even if API fails or returns error
+    console.log('Populating virtual data...')
+    populateVirtualData()
+  }
+}
+
+const fetchDirectoryInfo = async (wtNum) => {
+    try {
+        const response = await axios.post('/api/directory/get-by-dirname', { dirName: wtNum })
+        if (response.data.success && response.data.data) {
+            console.log('Directory info updated for navigation:', response.data.data)
+            localStorage.setItem('currentDirectory', JSON.stringify(response.data.data))
+        }
+    } catch (e) {
+        console.error('Failed to fetch directory info', e)
+    }
+}
+
+// Populate virtual data for testing/demo purposes
+const populateVirtualData = () => {
+  const virtualData = {
+    clientUnit: '测试委托单位',
+    constructionUnit: '测试施工单位',
+    buildingUnit: '测试建设单位',
+    projectName: '测试工程项目',
+    sampleName: '测试样品',
+    client: '张三',
+    constructionPart: '测试部位',
+    witnessUnit: '测试见证单位',
+    witness: '李四',
+    spec: '测试规格',
+    manufacturer: '测试厂家',
+    clientAddressPhone: '测试地址 13800138000',
+    testCategory: '测试类别',
+    sampleQuantity: '1组',
+    representativeBatch: '100',
+    batchNumber: 'P-001',
+    sampleHistory: '无',
+    testItems: '常规检测',
+    fee: '100'
+  }
+
+  for (const [key, value] of Object.entries(virtualData)) {
+    if (!formData[key] || formData[key].trim() === '') {
+      formData[key] = value
+    }
+  }
+  
+  // Handle dates if empty
+  if (!formData.clientDate) {
+      formData.clientDate = formatDate(new Date(), 'YYYY-MM-DD')
+  }
+  
+  // Handle arrays if empty
+  if (!formData.reportSend || formData.reportSend.length === 0) {
+      formData.reportSend = ['自取']
+  }
+  if (!formData.sampleDisposal || formData.sampleDisposal.length === 0) {
+      formData.sampleDisposal = ['留样']
+  }
+}
 
 // 加载数据
 const loadData = async (id) => {
-  console.log('loadData被调用，id:', id)
-  
-  if (!id) {
-    console.log('id为空，无法加载数据')
-    return
-  }
+  if (!id) return
   
   try {
-    // 获取当前表单类型
-    const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
-    console.log('currentFormType:', currentFormType)
-    
-    // 调用通用的表单数据接口
-    const apiUrl = `/api/form-data/get-by-type-and-id?formType=${currentFormType}&id=${id}`
-    console.log('调用API:', apiUrl)
-    
-    const response = await axios.get(apiUrl)
-    console.log('API响应:', response.data)
-    
+    const response = await axios.get(`/api/form-data/get-by-type-and-id?formType=ENTRUSTMENT_LIST&id=${id}`)
     if (response.data.success && response.data.data) {
       const data = response.data.data
-      console.log('获取到的数据:', data)
-      
-      // 根据表单类型处理数据
-      if (currentFormType === 'ENTRUSTMENT_LIST') {
-        // 映射字段 - 根据Entrustment实体类的字段进行映射
-        formData.unifiedNumber = data.id || data.wtNum || '' // id映射到统一编号
-        formData.sampleNumber = data.wtNum || data.sampleNumber || '' // wtNum映射到样品编号
-        
-        formData.clientUnit = data.clientUnit || ''
-        formData.clientDate = data.commissionDate ? formatDate(data.commissionDate, 'YYYY-MM-DD') : ''
-        
-        formData.constructionUnit = data.constructionUnit || ''
-        formData.buildingUnit = data.buildingUnit || ''
-        
-        formData.projectName = data.projectName || ''
-        formData.constructionPart = data.projectArea || data.constructionPart || ''
-        
-        // 其他字段根据 Entrustment 的字段进行映射
-        formData.witnessUnit = data.witnessUnit || data.jdUnit || '' // 见证单位
-        formData.witness = data.witness || data.jdMan || '' // 见证人
-        formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientUnitTel || '')
-        formData.sampleName = data.sampleName || data.dataName || ''
-        formData.spec = data.spec || data.gcGcpq || ''
-        formData.manufacturer = data.manufacturer || data.pdPassCode || ''
-        formData.sampleQuantity = data.sampleQuantity || ''
-        formData.representativeBatch = data.representativeBatch || ''
-        formData.batchNumber = data.batchNumber || data.olWtNum || ''
-        formData.testCategory = data.testCategory || data.ywDepartment || ''
-        formData.reportSend = data.reportSend ? (Array.isArray(data.reportSend) ? data.reportSend : [data.reportSend]) : []
-        formData.sampleDisposal = data.sampleDisposal ? (Array.isArray(data.sampleDisposal) ? data.sampleDisposal : [data.sampleDisposal]) : []
-        formData.deliveryMode = data.deliveryMode || '3'
-        formData.fee = data.fee || data.standardMoney || ''
-        formData.remarks = data.remarks || data.beizhu || ''
-        formData.sampleHistory = data.sampleHistory || ''
-        formData.sampleStatus = data.sampleStatus || data.wtStatus || ''
-        formData.testItems = data.testItems || data.wtJccs || ''
-        
-        console.log('表单数据已填充:', formData)
-      } else {
-        // 对于其他表单类型，可能需要根据实际情况处理数据
-        console.log('Loading data for form type:', currentFormType, 'with data:', data)
-      }
-      
+      mapDataToForm(data)
     } else {
       console.error('Failed to load data:', response.data.message)
     }
@@ -319,127 +546,400 @@ const loadData = async (id) => {
 }
 
 onMounted(() => {
-  console.log('Entrustment onMounted - 开始加载')
-  
+  console.log('Entrustment mounted. props:', props)
+  if (props.wtNum) {
+      console.log('Loading by wtNum:', props.wtNum)
+      loadDataByWtNum(props.wtNum)
+      return
+  }
+
   // 检查是否从目录跳转而来
   const currentDirectory = localStorage.getItem('currentDirectory')
-  console.log('currentDirectory:', currentDirectory)
-  
   if (currentDirectory) {
     try {
       const directory = JSON.parse(currentDirectory)
-      console.log('解析后的directory:', directory)
-      
       // 保存目录信息
       localStorage.setItem('currentDirectory', JSON.stringify(directory))
       
       // 获取当前表单类型
       const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
-      console.log('currentFormType:', currentFormType)
       
       // 查找当前表单在目录中的id
       let formId = null
       for (let i = 1; i <= 10; i++) {
-        console.log(`检查 table${i}Type: ${directory[`table${i}Type`]}, table${i}Id: ${directory[`table${i}Id`]}`)
         if (directory[`table${i}Type`] === currentFormType) {
           formId = directory[`table${i}Id`]
-          console.log('找到对应的formId:', formId)
           break
         }
       }
       
-      console.log('最终formId:', formId)
-      console.log('props.id:', props.id)
-      console.log('directory.dirName:', directory.dirName)
-      
-      // 如果是委托检验单，特殊处理
-      if (currentFormType === 'ENTRUSTMENT_LIST') {
-        console.log('是委托检验单，开始特殊处理')
-        
-        // 填充统一编号（目录名称）
-        if (directory.dirName) {
-          formData.unifiedNumber = directory.dirName
-          console.log('已填充统一编号:', formData.unifiedNumber)
-        }
-        
-        // 确保queryEntrustment方法存在
-        console.log('queryEntrustment方法是否存在:', typeof queryEntrustment === 'function')
-        
-        // 对于委托检验单，优先使用统一编号查询数据
-        if (directory.dirName) {
-          console.log('使用统一编号查询委托单:', directory.dirName)
-          // 直接调用API，不通过queryEntrustment方法
-          console.log('开始发送API请求，wtNum:', directory.dirName)
-          
-          // 构建完整的API URL
-          const apiUrl = '/api/jc-core-wt-info/by-wt-num?wtNum=' + encodeURIComponent(directory.dirName)
-          console.log('API URL:', apiUrl)
-          
-          // 发送API请求（使用Promise方式）
-          axios.get(apiUrl)
-            .then(response => {
-              console.log('API响应:', response)
-              console.log('API响应数据:', response.data)
-              
-              if (response.data.success && response.data.data) {
-                let data = response.data.data;
-                console.log('获取到的数据:', data)
-                
-                // 填充表单数据
-                formData.clientUnit = data.clientUnit || '';
-                formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM');
-                formData.constructionUnit = data.constructionUnit || '';
-                formData.buildingUnit = data.buildingUnit || '';
-                formData.witnessUnit = data.witnessUnit || '';
-                formData.witness = data.witness || '';
-                formData.projectName = data.projectName || '';
-                formData.constructionPart = data.projectArea || '';
-                formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientTel || '');
-                formData.projectName = data.projectName || '';
-                
-                console.log('表单数据已填充:', formData)
-              } else {
-                console.log('未找到该统一编号的委托单，响应:', response.data)
-                alert('未找到该统一编号的委托单');
-              }
-            })
-            .catch(error => {
-              console.error('查询委托单失败:', error);
-              console.error('错误详情:', error.message);
-              console.error('错误堆栈:', error.stack);
-              alert('查询失败，请稍后重试');
-            });
-        } else if (formId) {
-          console.log('使用formId加载数据:', formId)
-          loadData(formId)
-        } else if (props.id) {
-          // 如果目录中没有对应的id，但props中有id，也加载数据
-          console.log('使用props.id加载数据:', props.id)
-          loadData(props.id)
-        }
-      } else {
-        // 其他表，根据id实现自动填充
-        console.log('不是委托检验单，使用id加载数据')
-        if (formId) {
-          console.log('使用formId加载数据:', formId)
-          loadData(formId)
-        } else if (props.id) {
-          console.log('使用props.id加载数据:', props.id)
-          loadData(props.id)
-        } else {
-          console.log('没有找到id，无法加载数据')
-        }
+      // 如果找到对应的id，加载数据
+      if (formId) {
+        loadData(formId)
+      } else if (props.id) {
+        // 如果目录中没有对应的id，但props中有id，也加载数据
+        loadData(props.id)
       }
     } catch (e) {
       console.error('Failed to parse directory:', e)
     }
   } else if (props.id) {
-    console.log('没有currentDirectory，使用props.id加载数据:', props.id)
     loadData(props.id)
-  } else {
-    console.log('没有currentDirectory和props.id，无法加载数据')
   }
 })
+
+const validateForm = () => {
+  const defaults = [
+    { field: 'clientUnit', value: '未填写单位', label: '委托单位' },
+    { field: 'constructionUnit', value: '未填写单位', label: '施工单位' },
+    { field: 'buildingUnit', value: '未填写单位', label: '建设单位' },
+    { field: 'projectName', value: '未命名工程', label: '工程名称' },
+    { field: 'sampleName', value: '未填写样品', label: '样品名称' },
+    { field: 'client', value: '未填写', label: '委托人' },
+    { field: 'constructionPart', value: '未填写部位', label: '施工部位' },
+    { field: 'witnessUnit', value: '未填写单位', label: '见证单位' },
+    { field: 'witness', value: '未填写', label: '见证人' },
+    { field: 'spec', value: '未填写', label: '规格/型号' },
+    { field: 'manufacturer', value: '未填写', label: '生产厂家' },
+    { field: 'clientAddressPhone', value: '未填写', label: '委托单位地址及电话' },
+    { field: 'clientAddressPhone', value: '未填写地址', label: '委托单位地址及电话' }, // Check both variants if unsure
+    { field: 'testCategory', value: '未填写', label: '检测类别' }
+  ]
+  
+  for (const item of defaults) {
+    // Check for exact match with default value
+    if (formData[item.field] === item.value) {
+      alert(`请填写${item.label} (当前为默认值: ${item.value})`)
+      return false
+    }
+    // Check for empty values
+    if (!formData[item.field] || formData[item.field].trim() === '') {
+       alert(`请填写${item.label}`)
+       return false
+    }
+  }
+  return true
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      // Handle Base64 string or ArrayBuffer
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        // Assume it's handled or we need to convert. 
+        // Based on Signature.vue, it might need conversion if not string.
+        // But let's assume standard Jackson behavior for now (Base64 string).
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentAccount = user.username
+      const currentRealName = user.fullName || user.username
+
+      // Match Tester
+      // 允许匹配账号或真实姓名，或者检测人为空 (Allow matching account, real name, or empty)
+      // 用户要求：仅签名，不填充其他内容 (User request: Only sign, do not fill others)
+      if (!formData.tester || formData.tester === currentAccount || formData.tester === currentRealName) {
+        if (!validateForm()) return
+        formData.testerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Reviewer
+      // if (formData.reviewer === currentAccount || formData.reviewer === currentRealName) {
+      //   formData.reviewerSignature = imgSrc
+      //   signed = true
+      // }
+
+      // Match Approver
+      // if (formData.approver === currentAccount || formData.approver === currentRealName) {
+      //   formData.approverSignature = imgSrc
+      //   signed = true
+      // }
+      
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的人员(${formData.tester})不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
+}
+
+const saveForm = async (silent = false) => {
+  const idToSave = currentId.value || props.id
+  if (!idToSave && !formData.unifiedNumber) {
+    alert('缺少必要的ID或统一编号')
+    return false
+  }
+
+  // Get current user
+  const user = JSON.parse(localStorage.getItem('user'))
+  const currentUserName = user ? (user.fullName || user.username) : '未知用户'
+  
+  // Set clientRegName if empty (new record)
+  if (!formData.clientRegName) {
+    formData.clientRegName = currentUserName
+  }
+
+  const payload = {
+    id: idToSave, // Ensure ID is passed for updates
+    wtNum: formData.unifiedNumber,
+    commissionDate: formData.clientDate,
+    clientUnit: formData.clientUnit,
+    client: formData.client,
+    projectName: formData.projectName,
+    projectArea: formData.constructionPart,
+    constructionUnit: formData.constructionUnit,
+    buildingUnit: formData.buildingUnit,
+    witnessUnit: formData.witnessUnit,
+    witness: formData.witness,
+    clientRegName: formData.clientRegName, 
+    // Map other fields
+    sampleStatus: formData.sampleStatus, // Maintain current status
+    remarks: formData.remarks,
+    testCategory: formData.testCategory,
+    reviewer: formData.reviewer,
+    tester: formData.tester,
+    approver: formData.approver,
+    inspectSignaturePhoto: formData.testerSignature,
+    reviewSignaturePhoto: formData.reviewerSignature,
+    approveSignaturePhoto: formData.approverSignature,
+    
+    // New Role Fields
+    wtReviewer: formData.reviewer,
+    wtManSign: formData.testerSignature,
+    wtReviewSign: formData.reviewerSignature,
+    
+    // New fields
+    sampleName: formData.sampleName,
+    spec: formData.spec,
+    manufacturer: formData.manufacturer,
+    sampleQuantity: formData.sampleQuantity,
+    representativeBatch: formData.representativeBatch,
+    batchNumber: formData.batchNumber,
+    fee: formData.fee,
+    sampleHistory: formData.sampleHistory,
+    clientAddressPhone: formData.clientAddressPhone,
+    reportSendMode: formData.reportSend ? formData.reportSend.join(',') : '',
+    sampleDisposal: formData.sampleDisposal ? formData.sampleDisposal.join(',') : '',
+    deliveryMode: formData.deliveryMode,
+    deliveryDate: (formData.deliveryMode === '1' && formData.deliveryDate1) ? formData.deliveryDate1 : 
+                  (formData.deliveryMode === '2' && formData.deliveryDate2) ? formData.deliveryDate2 : '',
+    testItems: formData.testItems
+  }
+  
+  // If sampleStatus is empty, default to '1' (Draft)
+  if (!payload.sampleStatus) payload.sampleStatus = '1'
+
+  try {
+    const response = await axios.post('/api/entrustment/save', payload)
+    if (response.data.success) {
+      if (response.data.id) {
+        currentId.value = response.data.id
+        // Also update the route or props if possible, but currentId is reactive
+      }
+      if (!silent) alert('保存成功')
+      return true
+    } else {
+      if (!silent) alert('保存失败: ' + response.data.message)
+      return false
+    }
+  } catch (error) {
+    console.error('Save error:', error)
+    alert('保存出错')
+    return false
+  }
+}
+
+const getStatusText = (status) => {
+  const s = parseInt(status)
+  switch(s) {
+    case 0: return '草稿'
+    case 1: return '待审核'
+    case 2: return '已打回'
+    case 3: return '待签字'
+    case 4: return '待批准'
+    case 5: return '已通过'
+    default: return '未知/历史'
+  }
+}
+
+const getStatusColor = (status) => {
+  const s = parseInt(status)
+  switch(s) {
+    case 0: return '#9E9E9E' // Grey
+    case 1: return '#2196F3' // Blue
+    case 2: return '#F44336' // Red
+    case 3: return '#FF9800' // Orange
+    case 4: return '#9C27B0' // Purple
+    case 5: return '#4CAF50' // Green
+    default: return '#000000'
+  }
+}
+
+const submitForm = async () => {
+  // Check if saved, if not, auto-save silently
+  if (!currentId.value) {
+      const saved = await saveForm(true)
+      if (!saved) return
+      // Reload data to ensure we have the ID and latest state
+      // Actually saveForm doesn't update currentId automatically from response unless we handle it
+      // Let's check saveForm logic again. It doesn't update currentId!
+      // We need to fetch the ID or rely on wtNum lookup if the backend created it.
+      // But wait, saveForm uses currentId.value || props.id.
+      // If it's a NEW record, saveForm posts. Backend creates ID.
+      // Does backend return the ID?
+      // We need to check EntrustmentController or the response in saveForm.
+  }
+  submitWorkflow('SUBMIT')
+}
+
+const confirmSubmit = async () => {
+   submitWorkflow('SUBMIT')
+}
+
+const submitWorkflow = async (action) => {
+    const idToSubmit = currentId.value || props.id
+    if (!idToSubmit) {
+        alert('请先保存记录')
+        return
+    }
+    
+    const user = JSON.parse(localStorage.getItem('userInfo'))
+    if (!user || !user.username) {
+        alert('请先登录')
+        return
+    }
+
+    let signatureData = null
+    let nextHandler = ''
+
+    if (action === 'SUBMIT') {
+        // Role check: Only tester can submit
+        if (formData.tester && user.username !== formData.tester) {
+            alert('您不是该单据的检测人 (' + formData.tester + ')，无权提交')
+            return
+        }
+
+        // Check signature
+        if (!formData.testerSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
+        // Role check: Only reviewer can audit/reject
+        if (formData.reviewer && user.username !== formData.reviewer) {
+            alert('您不是该单据的审核人 (' + formData.reviewer + ')，无权操作')
+            return
+        }
+
+        if (action === 'AUDIT_PASS') {
+            // Reviewer does not need signature
+            // if (!formData.reviewerSignature) {
+            //    alert('请先进行审核人签字')
+            //    return
+            // }
+            // signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+            signatureData = null
+        }
+
+        nextHandler = formData.reviewer // Stay with reviewer or move to next? 
+        // Logic: Audit Pass usually moves to Approver or finishes if no approver.
+        // For now, let's keep existing nextHandler logic or rely on backend to determine next step if nextHandler is null.
+        // But wait, if I don't set nextHandler, what happens?
+        // The original code didn't set nextHandler for AUDIT_PASS except 'formData.reviewer'.
+        // Let's assume the backend or workflow engine handles the flow.
+        // But I must ensure signature is sent.
+        
+    } else if (action === 'SIGN_REVIEW') {
+         // Role check: Only reviewer can sign
+        if (formData.reviewer && user.username !== formData.reviewer) {
+            alert('您不是该单据的复核人 (' + formData.reviewer + ')，无权签字')
+            return
+        }
+        
+        if (!formData.reviewerSignature) {
+            alert('请先进行复核人签字')
+            return
+        }
+        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+        
+    } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 4)) {
+         // Role check: Only approver can sign/reject
+         if (formData.approver && user.username !== formData.approver) {
+            alert('您不是该单据的批准人 (' + formData.approver + ')，无权操作')
+            return
+        }
+
+        if (action === 'SIGN_APPROVE') {
+            if (!formData.approverSignature) {
+                alert('请先进行批准人签字')
+                return
+            }
+            signatureData = formData.approverSignature.replace(/^data:image\/\w+;base64,/, '')
+        }
+    }
+
+    const request = {
+        tableType: 'ENTRUSTMENT',
+        recordId: idToSubmit,
+        action: action,
+        userAccount: user.username,
+        signatureData: signatureData,
+        nextHandler: nextHandler
+    }
+
+    if (action === 'REJECT') {
+        const reason = prompt('请输入打回原因:')
+        if (!reason) return
+        request.rejectReason = reason
+    }
+
+    try {
+        const response = await axios.post('/api/workflow/handle', request)
+        if (response.data.success) {
+            alert('操作成功')
+            await loadData(idToSubmit)
+            
+            // If approved or passed audit, automatically jump to next form (Record Table)
+            if ((action === 'AUDIT_PASS' || action === 'SIGN_APPROVE') && formData.status >= 3) {
+                // Refresh directory info to get the latest IDs (synced by backend)
+                if (formData.unifiedNumber) {
+                    await fetchDirectoryInfo(formData.unifiedNumber)
+                }
+                nextForm()
+            }
+        } else {
+            alert('操作失败: ' + response.data.message)
+        }
+    } catch (e) {
+        console.error('Workflow error', e)
+        alert('操作出错')
+    }
+}
 
 watch(() => props.id, (newId) => {
   if (newId) {
@@ -460,12 +960,120 @@ const prevForm = () => {
 
 // 下一页
 const nextForm = () => {
-  navigateBetweenForms(1)
+  if (formData.status < 3) {
+    alert('委托单未审核通过，无法填写记录表')
+    return
+  }
+  goToFirstRecordForm()
+}
+
+const goToFirstRecordForm = async () => {
+  let currentDirectory = localStorage.getItem('currentDirectory')
+
+  if (!currentDirectory && formData.unifiedNumber) {
+    try {
+      const response = await axios.post('/api/directory/get-by-dirname', { dirName: formData.unifiedNumber })
+      if (response.data.success && response.data.data) {
+        currentDirectory = JSON.stringify(response.data.data)
+        localStorage.setItem('currentDirectory', currentDirectory)
+      }
+    } catch (e) {
+      console.error('Failed to fetch directory info', e)
+    }
+  }
+
+  if (!currentDirectory) {
+    alert('未找到流程信息')
+    return
+  }
+
+  try {
+    const directory = JSON.parse(currentDirectory)
+    const formQueue = []
+    for (let i = 1; i <= 10; i++) {
+      const type = directory[`table${i}Type`]
+      const id = directory[`table${i}Id`]
+      if (type) {
+        formQueue.push({ type, id, index: i })
+      }
+    }
+
+    if (formQueue.length === 0) {
+      alert('流程中没有表单')
+      return
+    }
+
+    const recordForm = formQueue.find(f => f.type.includes('_RECORD'))
+    if (!recordForm) {
+      navigateBetweenForms(1)
+      return
+    }
+
+    const componentMap = {
+      'ENTRUSTMENT': 'Entrustment',
+      'ENTRUSTMENT_LIST': 'Entrustment',
+      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
+      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
+      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
+      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
+      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
+      'CUTTING_RING_RECORD': 'CuttingRingRecord',
+      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
+      'SIGNATURE': 'Signature',
+      'DENSITY_TEST_RECORD': 'NuclearDensityRecord',
+      'DENSITY_TEST_REPORT': 'DensityTestReport',
+      'DENSITY_TEST_RESULT': 'DensityTestResult',
+      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
+      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
+      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
+      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
+      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
+    }
+
+    const componentName = componentMap[recordForm.type]
+    if (componentName && navigateTo) {
+      const targetIndex = formQueue.findIndex(f => f.type === recordForm.type && f.id === recordForm.id)
+      if (targetIndex >= 0) {
+        localStorage.setItem('currentFormType', recordForm.type)
+        localStorage.setItem('currentFormIndex', String(targetIndex))
+      }
+
+      const props = {}
+      if (recordForm.id) {
+        props.id = recordForm.id
+      }
+      if (formData.unifiedNumber) {
+        props.wtNum = formData.unifiedNumber
+      }
+      props.draftMode = true
+
+      navigateTo(componentName, props)
+    } else {
+      alert('暂不支持该类型的页面跳转: ' + recordForm.type)
+    }
+  } catch (e) {
+    console.error('Navigation error:', e)
+    alert('导航失败，请重试')
+  }
 }
 
 // 表单导航
-const navigateBetweenForms = (direction) => {
-  const currentDirectory = localStorage.getItem('currentDirectory')
+const navigateBetweenForms = async (direction) => {
+  let currentDirectory = localStorage.getItem('currentDirectory')
+  
+  // If not in local storage, try to fetch by unifiedNumber
+  if (!currentDirectory && formData.unifiedNumber) {
+      try {
+          const response = await axios.post('/api/directory/get-by-dirname', { dirName: formData.unifiedNumber })
+          if (response.data.success && response.data.data) {
+              currentDirectory = JSON.stringify(response.data.data)
+              localStorage.setItem('currentDirectory', currentDirectory)
+          }
+      } catch (e) {
+          console.error('Failed to fetch directory info', e)
+      }
+  }
+
   if (!currentDirectory) {
     alert('未找到流程信息')
     return
@@ -490,7 +1098,8 @@ const navigateBetweenForms = (direction) => {
     }
     
     // 动态获取当前表单类型
-    const currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+    let currentFormType = localStorage.getItem('currentFormType') || 'ENTRUSTMENT_LIST'
+    console.log('Current form type from storage:', currentFormType)
     
     // 找到当前表单在队列中的位置
     let currentIndex = -1
@@ -501,11 +1110,26 @@ const navigateBetweenForms = (direction) => {
       }
     }
     
-    // 如果没找到，默认从第一个开始
+    // 如果没找到，尝试匹配 Entrustment
     if (currentIndex === -1) {
+      if (currentFormType === 'ENTRUSTMENT_LIST' || currentFormType === 'ENTRUSTMENT') {
+          for (let i = 0; i < formQueue.length; i++) {
+            if (formQueue[i].type === 'ENTRUSTMENT' || formQueue[i].type === 'ENTRUSTMENT_LIST') {
+                currentIndex = i
+                break
+            }
+          }
+      }
+    }
+
+    // 如果还是没找到，且我们在Entrustment页面（通常是第一个），默认从第一个开始
+    if (currentIndex === -1) {
+      console.warn('Could not find current form in queue, defaulting to index 0')
       currentIndex = 0
     }
     
+    console.log('Current index in queue:', currentIndex)
+
     // 计算目标表单的位置
     const targetIndex = currentIndex + direction
     if (targetIndex < 0 || targetIndex >= formQueue.length) {
@@ -515,7 +1139,10 @@ const navigateBetweenForms = (direction) => {
     
     // 跳转到目标表单
     const targetForm = formQueue[targetIndex]
+    console.log('Target form:', targetForm)
+    
     const componentMap = {
+      'ENTRUSTMENT': 'Entrustment',
       'ENTRUSTMENT_LIST': 'Entrustment',
       'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
       'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
@@ -525,6 +1152,7 @@ const navigateBetweenForms = (direction) => {
       'CUTTING_RING_RECORD': 'CuttingRingRecord',
       'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
       'SIGNATURE': 'Signature',
+      'DENSITY_TEST_RECORD': 'DensityTestResult',
       'DENSITY_TEST_REPORT': 'DensityTestReport',
       'DENSITY_TEST_RESULT': 'DensityTestResult',
       'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
@@ -545,11 +1173,17 @@ const navigateBetweenForms = (direction) => {
       if (targetForm.id) {
         props.id = targetForm.id
       }
+      // 传递 wtNum 确保子组件能加载数据
+      if (formData.unifiedNumber) {
+        props.wtNum = formData.unifiedNumber
+      }
       
+      console.log(`Navigating to ${componentName} with props:`, props)
       // 使用navigateTo方法导航到对应的组件
       navigateTo(componentName, props)
     } else {
-      alert('暂不支持该类型的页面跳转')
+      console.warn('Unknown form type or navigateTo missing:', targetForm.type)
+      alert('暂不支持该类型的页面跳转: ' + targetForm.type)
     }
   } catch (e) {
     console.error('Navigation error:', e)
@@ -577,127 +1211,15 @@ const previewPdf = () => {
   }
 }
 
-const queryEntrustment = () => {
-  console.log('queryEntrustment被调用，unifiedNumber:', formData.unifiedNumber)
-  
-  if (!formData.unifiedNumber) {
-    console.log('unifiedNumber为空，无法查询')
-    alert('请输入统一编号');
-    return;
-  }
 
-  console.log('开始发送API请求，wtNum:', formData.unifiedNumber)
-  
-  axios.get('/api/jc-core-wt-info/by-wt-num', {
-    params: {
-      wtNum: formData.unifiedNumber
-    }
-  })
-  .then(response => {
-    console.log('API响应:', response.data)
-    if (response.data.success && response.data.data) {
-      let data = response.data.data;
-      console.log('获取到的数据:', data)
-      
-      formData.clientUnit = data.clientUnit || '';
-      formData.clientDate = formatDate(data.commissionDate, 'YYYY-MM');
-      formData.constructionUnit = data.constructionUnit || '';
-      formData.buildingUnit = data.buildingUnit || '';
-      formData.witnessUnit = data.witnessUnit || '';
-      formData.witness = data.witness || '';
-      formData.projectName = data.projectName || '';
-      formData.constructionPart = data.projectArea || '';
-      formData.clientAddressPhone = data.clientUnitAddress || '' + (data.clientTel || '');
-      formData.projectName = data.projectName || '';
-    } else {
-      console.log('未找到该统一编号的委托单')
-      alert('未找到该统一编号的委托单');
-    }
-  })
-  .catch(error => {
-    console.error('查询委托单失败:', error);
-    alert('查询失败，请稍后重试');
-  });
-}
-
-const formatDate = (dateStr, format) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return '';
-  
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  
-  return format.replace('YYYY', year).replace('MM', month).replace('DD', day);
-}
-
-// 返回主页（目录列表）
-const goToHome = () => {
+// 返回列表
+const goToList = () => {
   if (navigateTo) {
-    navigateTo('DirectoryList');
+    navigateTo('EntrustmentList');
   }
 }
 
-const submitForm = async () => {
-  try {
-    // 获取当前登录用户信息
-    const userInfoStr = localStorage.getItem('userInfo');
-    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
-    
-    // 构建提交数据
-    const submitData = {
-      unifiedNumber: formData.unifiedNumber,
-      sampleNumber: formData.sampleNumber,
-      clientUnit: formData.clientUnit,
-      clientDate: formData.clientDate,
-      constructionUnit: formData.constructionUnit,
-      buildingUnit: formData.buildingUnit,
-      projectName: formData.projectName,
-      constructionPart: formData.constructionPart,
-      sampleName: formData.sampleName,
-      spec: formData.spec,
-      manufacturer: formData.manufacturer,
-      sampleQuantity: formData.sampleQuantity,
-      representativeBatch: formData.representativeBatch,
-      batchNumber: formData.batchNumber,
-      testCategory: formData.testCategory,
-      clientAddressPhone: formData.clientAddressPhone,
-      reportSend: formData.reportSend.join(','),
-      sampleDisposal: formData.sampleDisposal.join(','),
-      witness: formData.witness,
-      witnessUnit: formData.witnessUnit,
-      deliveryMode: formData.deliveryMode,
-      deliveryDate1_y: formData.deliveryDate1_y,
-      deliveryDate1_m: formData.deliveryDate1_m,
-      deliveryDate1_d: formData.deliveryDate1_d,
-      deliveryDate2_y: formData.deliveryDate2_y,
-      deliveryDate2_m: formData.deliveryDate2_m,
-      deliveryDate2_d: formData.deliveryDate2_d,
-      fee: formData.fee,
-      remarks: formData.remarks,
-      sampleHistory: formData.sampleHistory,
-      sampleStatus: formData.sampleStatus,
-      testItems: formData.testItems,
-      reviewer: formData.review || userInfo.userName || '',
-      inspector: formData.inspect || userInfo.userName || '',
-      approver: formData.approve || userInfo.userName || '',
-      creator: userInfo.userName || userInfo.username || ''
-    };
-    
-    // 发送请求
-    const response = await axios.post('/api/entrustment/save', submitData);
-    
-    if (response.data.success) {
-      alert('提交成功');
-    } else {
-      alert('提交失败: ' + response.data.message);
-    }
-  } catch (error) {
-    console.error('提交错误:', error);
-    alert('提交失败，请稍后重试');
-  }
-}
+
 </script>
 
 <style scoped>

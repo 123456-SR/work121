@@ -79,6 +79,8 @@ public class JzsSignatureController {
             signature.setSignatureId(UUID.randomUUID().toString());
             signature.setUserAccount(userAccount);
             signature.setSignatureBlob(fileBytes);
+            signature.setImageType(contentType);
+            signature.setImageSize(fileSize);
 
             // 保存到数据库
             boolean success = jzsSignatureService.saveSignature(signature);

@@ -1,7 +1,5 @@
 package org.example.work121.controller;
 
-import org.example.work121.entity.Entrustment;
-import org.example.work121.service.EntrustmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +14,7 @@ import java.util.Map;
 public class EntrustmentController {
 
     @Autowired
-    private EntrustmentService entrustmentService;
+    private org.example.work121.service.JcCoreWtInfoService jcCoreWtInfoService;
 
     /**
      * 保存检测委托单
@@ -24,15 +22,16 @@ public class EntrustmentController {
      * @return 响应结果
      */
     @PostMapping("/save")
-    public Map<String, Object> saveEntrustment(@RequestBody Entrustment entrustment) {
+    public Map<String, Object> saveEntrustment(@RequestBody org.example.work121.entity.JcCoreWtInfo entrustment) {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            boolean success = entrustmentService.saveEntrustment(entrustment);
+            boolean success = jcCoreWtInfoService.save(entrustment);
 
             if (success) {
                 result.put("success", true);
                 result.put("message", "保存成功");
+                result.put("id", entrustment.getId());
             } else {
                 result.put("success", false);
                 result.put("message", "保存失败");
@@ -63,7 +62,7 @@ public class EntrustmentController {
                 return result;
             }
 
-            Entrustment record = entrustmentService.getEntrustmentByUnifiedNumber(unifiedNumber);
+            org.example.work121.entity.JcCoreWtInfo record = jcCoreWtInfoService.getByWtNum(unifiedNumber);
 
             if (record != null) {
                 result.put("success", true);
@@ -90,7 +89,7 @@ public class EntrustmentController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            java.util.List<Entrustment> list = entrustmentService.getAllEntrustments();
+            java.util.List<org.example.work121.entity.JcCoreWtInfo> list = jcCoreWtInfoService.debugSelectAll();
             result.put("success", true);
             result.put("data", list);
         } catch (Exception e) {

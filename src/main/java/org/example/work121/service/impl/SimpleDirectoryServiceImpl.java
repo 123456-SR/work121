@@ -5,6 +5,8 @@ import org.example.work121.mapper.*;
 import org.example.work121.service.SimpleDirectoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,11 +17,16 @@ import java.util.UUID;
 @Service
 public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private SimpleDirectoryMapper simpleDirectoryMapper;
 
     @Autowired
-    private EntrustmentMapper entrustmentMapper;
+    private org.example.work121.service.JcCoreWtInfoService jcCoreWtInfoService;
+
+    @Autowired
+    private JcCoreWtInfoMapper jcCoreWtInfoMapper;
 
     @Autowired
     private DensityTestRecordMapper densityTestRecordMapper;
@@ -46,49 +53,73 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     private WaterReplacementMapper waterReplacementMapper;
 
     @Autowired
-    private ReboundMethodRecordMapper reboundMethodRecordMapper;
-
-    @Autowired
-    private LightDynamicPenetrationRecordMapper lightDynamicPenetrationRecordMapper;
-
-    @Autowired
-    private NuclearDensityRecordMapper nuclearDensityRecordMapper;
-
-    @Autowired
-    private SandReplacementRecordMapper sandReplacementRecordMapper;
-
-    @Autowired
-    private WaterReplacementRecordMapper waterReplacementRecordMapper;
-
-    @Autowired
-    private CuttingRingRecordMapper cuttingRingRecordMapper;
-
-    @Autowired
-    private BeckmanBeamRecordMapper beckmanBeamRecordMapper;
-
-    @Autowired
     private DensityTestReportMapper densityTestReportMapper;
 
     @Autowired
-    private DensityTestResultMapper densityTestResultMapper;
-
-    @Autowired
-    private LightDynamicPenetrationReportMapper lightDynamicPenetrationReportMapper;
-
-    @Autowired
-    private LightDynamicPenetrationResultMapper lightDynamicPenetrationResultMapper;
+    private ReboundMethodRecordMapper reboundMethodRecordMapper;
 
     @Autowired
     private ReboundMethodReportMapper reboundMethodReportMapper;
 
     @Autowired
+    private LightDynamicPenetrationRecordMapper lightDynamicPenetrationRecordMapper;
+
+    @Autowired
+    private LightDynamicPenetrationReportMapper lightDynamicPenetrationReportMapper;
+
+    @Autowired
+    private BeckmanBeamRecordMapper beckmanBeamRecordMapper;
+
+    @Autowired
     private BeckmanBeamReportMapper beckmanBeamReportMapper;
+
+    @Autowired
+    private CuttingRingRecordMapper cuttingRingRecordMapper;
+
+    @Autowired
+    private NuclearDensityRecordMapper nuclearDensityRecordMapper;
+
+    @Autowired
+    private WaterReplacementRecordMapper waterReplacementRecordMapper;
+
+    @Autowired
+    private SandReplacementRecordMapper sandReplacementRecordMapper;
+
+    @Autowired
+    private DensityTestResultMapper densityTestResultMapper;
+
+    @Autowired
+    private LightDynamicPenetrationResultMapper lightDynamicPenetrationResultMapper;
 
     @Autowired
     private BeckmanBeamResultMapper beckmanBeamResultMapper;
 
     @Autowired
-    private JzsSignatureMapper jzsSignatureMapper;
+    private ReboundMethodResultMapper reboundMethodResultMapper;
+
+    @Autowired
+    private CuttingRingReportMapper cuttingRingReportMapper;
+
+    @Autowired
+    private CuttingRingResultMapper cuttingRingResultMapper;
+
+    @Autowired
+    private NuclearDensityReportMapper nuclearDensityReportMapper;
+
+    @Autowired
+    private NuclearDensityResultMapper nuclearDensityResultMapper;
+
+    @Autowired
+    private WaterReplacementReportMapper waterReplacementReportMapper;
+
+    @Autowired
+    private WaterReplacementResultMapper waterReplacementResultMapper;
+
+    @Autowired
+    private SandReplacementReportMapper sandReplacementReportMapper;
+
+    @Autowired
+    private SandReplacementResultMapper sandReplacementResultMapper;
 
     @Override
     public boolean saveDirectory(SimpleDirectory directory) {
@@ -100,9 +131,6 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 existingRecord = simpleDirectoryMapper.selectByDirId(directory.getDirId());
             }
 
-            // 为每个表类型创建空表并生成ID
-            createEmptyTables(directory);
-            
             int result;
             if (existingRecord != null) {
                 // 更新现有记录
@@ -137,12 +165,17 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     directory.setStatus(1);
                 }
 
+                // 自动创建关联表记录
+                createAndLinkRecords(directory);
+
                 result = simpleDirectoryMapper.insert(directory);
             }
 
             if (result > 0) {
                 // 同步委托单数据到关联表
                 syncEntrustmentData(directory);
+                // 同步角色信息到所有关联表
+                syncRoles(directory);
                 return true;
             }
             return false;
@@ -153,20 +186,421 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         }
     }
 
+    private void createAndLinkRecords(SimpleDirectory directory) {
+        String dirName = directory.getDirName();
+        String creator = directory.getCreateBy();
+        String category = determineAllTestCategories(directory);
+        
+        // Ensure Master Record exists (for list visibility)
+        ensureMasterRecord(dirName, creator, category, directory);
+        
+        directory.setTable1Id(createRelatedRecord(directory.getTable1Type(), dirName, creator, category, directory));
+        directory.setTable2Id(createRelatedRecord(directory.getTable2Type(), dirName, creator, category, directory));
+        directory.setTable3Id(createRelatedRecord(directory.getTable3Type(), dirName, creator, category, directory));
+        directory.setTable4Id(createRelatedRecord(directory.getTable4Type(), dirName, creator, category, directory));
+        directory.setTable5Id(createRelatedRecord(directory.getTable5Type(), dirName, creator, category, directory));
+        directory.setTable6Id(createRelatedRecord(directory.getTable6Type(), dirName, creator, category, directory));
+        directory.setTable7Id(createRelatedRecord(directory.getTable7Type(), dirName, creator, category, directory));
+        directory.setTable8Id(createRelatedRecord(directory.getTable8Type(), dirName, creator, category, directory));
+        directory.setTable9Id(createRelatedRecord(directory.getTable9Type(), dirName, creator, category, directory));
+        directory.setTable10Id(createRelatedRecord(directory.getTable10Type(), dirName, creator, category, directory));
+    }
+
+    private String determineAllTestCategories(SimpleDirectory directory) {
+        java.util.Set<String> categories = new java.util.LinkedHashSet<>();
+        String[] types = {
+            directory.getTable1Type(), directory.getTable2Type(), directory.getTable3Type(),
+            directory.getTable4Type(), directory.getTable5Type(), directory.getTable6Type(),
+            directory.getTable7Type(), directory.getTable8Type(), directory.getTable9Type(),
+            directory.getTable10Type()
+        };
+        
+        for (String type : types) {
+            if (type == null) continue;
+            String upper = type.toUpperCase();
+            if (upper.contains("NUCLEAR")) categories.add("核子法");
+            else if (upper.contains("SAND")) categories.add("灌砂法");
+            else if (upper.contains("WATER")) categories.add("灌水法");
+            else if (upper.contains("CUTTING")) categories.add("环刀法");
+            else if (upper.contains("REBOUND")) categories.add("回弹法");
+            else if (upper.contains("PENETRATION")) categories.add("轻型动力触探");
+            else if (upper.contains("BECKMAN")) categories.add("贝克曼梁");
+            else if (upper.contains("DENSITY")) categories.add("密度试验");
+        }
+        
+        if (categories.isEmpty()) return "通用检测";
+        return String.join(",", categories);
+    }
+
+    private void ensureMasterRecord(String wtNum, String creator, String category, SimpleDirectory directory) {
+        try {
+            JcCoreWtInfo existing = jcCoreWtInfoService.getByWtNum(wtNum);
+            if (existing == null) {
+                JcCoreWtInfo info = new JcCoreWtInfo();
+                info.setId(UUID.randomUUID().toString());
+                info.setWtNum(wtNum);
+                info.setCreateBy(creator);
+                info.setCreateTime(new java.util.Date());
+                
+                setDefaultValues(info, directory, category);
+                
+                jcCoreWtInfoMapper.insert(info);
+                jcCoreWtInfoMapper.insertExt(info);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String determineTestCategory(SimpleDirectory directory) {
+        return determineAllTestCategories(directory);
+    }
+
+    private void setDefaultValues(BusinessEntity entity, SimpleDirectory directory, String category) {
+        entity.setProjectName("未命名工程");
+        entity.setClientUnit("未填写单位");
+        entity.setConstructionUnit("未填写单位");
+        entity.setBuildingUnit("未填写单位");
+        entity.setWitnessUnit("未填写单位");
+        entity.setSampleName("未填写样品");
+        entity.setTestCategory(category);
+        entity.setCommissionDate(new java.util.Date());
+        entity.setStatus(0); // Default to Draft (0) so it must be Submitted (with signature) to reach Audit (1)
+        
+        // Expanded virtual data
+        entity.setConstructionPart("未填写部位");
+        entity.setDesignUnit("未填写单位");
+        entity.setSupervisionUnit("未填写单位");
+        entity.setTestBasis("未填写依据");
+        entity.setEquipment("未填写设备");
+        entity.setTestMethod("未填写方法");
+        entity.setProjectArea("未填写区域");
+        
+        // Additional virtual data for non-empty fields
+        entity.setClient("未填写");
+        entity.setClientTel("000000");
+        entity.setWitness("未填写");
+        entity.setSurveyUnit("未填写单位");
+        entity.setRemarks("无");
+        
+        if (entity instanceof Entrustment) {
+            Entrustment ent = (Entrustment) entity;
+            ent.setClientUnitAddress("未填写地址");
+            ent.setClientUnitTel("000000");
+            ent.setSpec("未填写");
+            ent.setManufacturer("未填写");
+            ent.setBatchNumber("0");
+            ent.setTestItems("常规检测");
+            ent.setSampleStatus("正常");
+            ent.setProjectRemarks("无");
+            ent.setWitnessIdCard("000000");
+            ent.setSamplingManIdCard("000000");
+            
+            // These fields are in Entrustment and JcCoreWtInfo
+            // We set them on Entrustment, if JcCoreWtInfo overrides them, it should be fine if it uses super or has its own logic.
+            // If JcCoreWtInfo shadows them without linking to super, we might need to set on JcCoreWtInfo specifically.
+            // But let's assume setting on Entrustment is enough or safe default.
+            try {
+                // Try to set buildingUnit2 if the method exists
+                java.lang.reflect.Method m = Entrustment.class.getMethod("setBuildingUnit2", String.class);
+                m.invoke(ent, "未填写单位");
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+        
+        if (entity instanceof JcCoreWtInfo) {
+            JcCoreWtInfo info = (JcCoreWtInfo) entity;
+            info.setSampleQuantity("0");
+            info.setRepresentativeBatch("0");
+            info.setSampleDisposal("留样");
+            info.setFee("0");
+            info.setReportSendMode("自取");
+            info.setDeliveryMode("送样");
+            info.setDeliveryDate(new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+            info.setSampleHistory("无");
+            info.setClientAddressPhone("未填写");
+        }
+        
+        if (directory == null) return;
+        
+        // Map granular roles based on category
+        if ("ENTRUSTMENT_LIST".equals(category) || "检测委托单".equals(category)) {
+             // For Entrustment, use wtUndertaker and wtReviewer
+             // Note: Entrustment entity might use different field names, need to check Entrustment/JcCoreWtInfo
+             if (entity instanceof JcCoreWtInfo) {
+                 JcCoreWtInfo info = (JcCoreWtInfo) entity;
+                 // Assuming JcCoreWtInfo uses tester/reviewer for process flow or specific fields?
+                 // User requirement: "委托单单独使用自己的承接人和审核人"
+                 // Map wtUndertaker -> receiver (YY_MAN)
+                 // Map wtReviewer -> reviewer
+                 if (directory.getWtUndertaker() != null) info.setReceiver(directory.getWtUndertaker()); 
+                 if (directory.getWtReviewer() != null) info.setWtReviewer(directory.getWtReviewer());
+             }
+        } else if (category.contains("RECORD") || category.contains("记录表")) {
+            // For Records: use jcFiller, jcTester, jcReviewer, bgApprover (shared)
+            entity.setFiller(directory.getJcFiller());
+            entity.setRecordTester(directory.getJcTester()); // Use recordTester field
+            entity.setRecordReviewer(directory.getJcReviewer()); // Use recordReviewer field
+            
+            // Map to standard fields for compatibility if needed, OR keep them separate
+            // User said: "记录表单独使用自己的审核人和检验人" -> So we use recordTester/recordReviewer
+            // And "报告表和记录表使用同一个批准人" -> So we use bgApprover for approver
+            if (directory.getJcTester() != null) entity.setTester(directory.getJcTester()); // Map to tester for workflow?
+            if (directory.getJcReviewer() != null) entity.setReviewer(directory.getJcReviewer()); // Map to reviewer for workflow?
+            if (directory.getBgApprover() != null) entity.setApprover(directory.getBgApprover());
+            
+        } else if (category.contains("REPORT") || category.contains("报告") || category.contains("RESULT") || category.contains("结果")) {
+            // For Reports/Results: use bgTester, bgReviewer, bgApprover
+            if (directory.getBgTester() != null) entity.setTester(directory.getBgTester());
+            if (directory.getBgReviewer() != null) entity.setReviewer(directory.getBgReviewer());
+            if (directory.getBgApprover() != null) entity.setApprover(directory.getBgApprover());
+        }
+    }
+
+    private String createRelatedRecord(String type, String dirName, String creator, String category, SimpleDirectory directory) {
+        if (type == null || type.isEmpty()) return null;
+        
+        String id = UUID.randomUUID().toString();
+        java.util.Date now = new java.util.Date();
+        
+        try {
+            if (isTypeMatch(type, "ENTRUSTMENT_LIST", "ENTRUSTMENT", "检测委托单")) {
+                // Check if Master Record already exists (created by ensureMasterRecord)
+                JcCoreWtInfo existing = jcCoreWtInfoService.getByWtNum(dirName);
+                if (existing != null) {
+                    return existing.getId();
+                }
+                
+                // Fallback: Create if not exists (should rarely happen if ensureMasterRecord works)
+                JcCoreWtInfo info = new JcCoreWtInfo();
+                info.setId(id);
+                info.setWtNum(dirName);
+                info.setCreateBy(creator); // Maps to WT_REG_NAME
+                info.setCreateTime(now); // For EXT table
+                
+                setDefaultValues(info, directory, category);
+                
+                jcCoreWtInfoMapper.insert(info);
+                jcCoreWtInfoMapper.insertExt(info);
+
+                return id;
+            } else if (isTypeMatch(type, "REBOUND_METHOD_RECORD", "回弹法检测混凝土抗压强度记录表")) {
+                ReboundMethodRecord entity = new ReboundMethodRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                reboundMethodRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "REBOUND_METHOD_REPORT", "回弹法检测混凝土抗压强度报告")) {
+                ReboundMethodReport entity = new ReboundMethodReport();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                reboundMethodReportMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
+                LightDynamicPenetrationRecord entity = new LightDynamicPenetrationRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                lightDynamicPenetrationRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "LIGHT_DYNAMIC_PENETRATION_REPORT", "轻型动力触探检测报告")) {
+                LightDynamicPenetrationReport entity = new LightDynamicPenetrationReport();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                lightDynamicPenetrationReportMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
+                NuclearDensityRecord entity = new NuclearDensityRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                nuclearDensityRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "SAND_REPLACEMENT_RECORD", "原位密度检测记录表（灌砂法）")) {
+                SandReplacementRecord entity = new SandReplacementRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                sandReplacementRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "WATER_REPLACEMENT_RECORD", "相对密度试验记录表（灌水法）")) {
+                WaterReplacementRecord entity = new WaterReplacementRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                waterReplacementRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "CUTTING_RING_RECORD", "原位密度检测记录表（环刀法）")) {
+                CuttingRingRecord entity = new CuttingRingRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                cuttingRingRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "BECKMAN_BEAM_RECORD", "路基路面回弹弯沉试验检测记录表")) {
+                BeckmanBeamRecord entity = new BeckmanBeamRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                beckmanBeamRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "BECKMAN_BEAM_REPORT", "路基路面回弹弯沉检测报告")) {
+                BeckmanBeamReport entity = new BeckmanBeamReport();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                beckmanBeamReportMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "DENSITY_TEST_RECORD", "原位密度检测记录表")) {
+                DensityTestRecord entity = new DensityTestRecord();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                densityTestRecordMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "DENSITY_TEST_REPORT", "原位密度检测报告")) {
+                DensityTestReport entity = new DensityTestReport();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                densityTestReportMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "DENSITY_TEST_RESULT", "原位密度检测结果")) {
+                DensityTestResult entity = new DensityTestResult();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                densityTestResultMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
+                LightDynamicPenetrationResult entity = new LightDynamicPenetrationResult();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                lightDynamicPenetrationResultMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "BECKMAN_BEAM_RESULT", "路基路面回弹弯沉检测结果")) {
+                BeckmanBeamResult entity = new BeckmanBeamResult();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                beckmanBeamResultMapper.insert(entity);
+                return id;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public SimpleDirectory getDirectoryByDirName(String dirName) {
+        return simpleDirectoryMapper.selectByDirName(dirName);
+    }
+
+    @Override
+    public void syncEntrustmentDataByWtNum(String wtNum) {
+        if (wtNum == null || wtNum.isEmpty()) return;
+        
+        SimpleDirectory directory = simpleDirectoryMapper.selectByDirName(wtNum);
+        if (directory != null) {
+            syncEntrustmentData(directory);
+        }
+    }
+
     private void syncEntrustmentData(SimpleDirectory directory) {
         try {
             // 1. 查找委托单 (Source)
-            Entrustment entrustment = null;
-            if (isEntrustment(directory.getTable1Type())) entrustment = entrustmentMapper.selectById(directory.getTable1Id());
-            else if (isEntrustment(directory.getTable2Type())) entrustment = entrustmentMapper.selectById(directory.getTable2Id());
-            else if (isEntrustment(directory.getTable3Type())) entrustment = entrustmentMapper.selectById(directory.getTable3Id());
-            else if (isEntrustment(directory.getTable4Type())) entrustment = entrustmentMapper.selectById(directory.getTable4Id());
-            else if (isEntrustment(directory.getTable5Type())) entrustment = entrustmentMapper.selectById(directory.getTable5Id());
-            else if (isEntrustment(directory.getTable6Type())) entrustment = entrustmentMapper.selectById(directory.getTable6Id());
-            else if (isEntrustment(directory.getTable7Type())) entrustment = entrustmentMapper.selectById(directory.getTable7Id());
-            else if (isEntrustment(directory.getTable8Type())) entrustment = entrustmentMapper.selectById(directory.getTable8Id());
-            else if (isEntrustment(directory.getTable9Type())) entrustment = entrustmentMapper.selectById(directory.getTable9Id());
-            else if (isEntrustment(directory.getTable10Type())) entrustment = entrustmentMapper.selectById(directory.getTable10Id());
+            JcCoreWtInfo entrustment = null;
+            if (isEntrustment(directory.getTable1Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable1Id());
+            else if (isEntrustment(directory.getTable2Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable2Id());
+            else if (isEntrustment(directory.getTable3Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable3Id());
+            else if (isEntrustment(directory.getTable4Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable4Id());
+            else if (isEntrustment(directory.getTable5Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable5Id());
+            else if (isEntrustment(directory.getTable6Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable6Id());
+            else if (isEntrustment(directory.getTable7Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable7Id());
+            else if (isEntrustment(directory.getTable8Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable8Id());
+            else if (isEntrustment(directory.getTable9Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable9Id());
+            else if (isEntrustment(directory.getTable10Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable10Id());
 
             if (entrustment == null) {
                 return;
@@ -193,67 +627,185 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     private boolean isEntrustment(String type) {
         return type != null && (
                 "ENTRUSTMENT".equalsIgnoreCase(type) ||
-                "T_ENTRUSTMENT".equalsIgnoreCase(type) ||
                 "JZS_ENTRUSTMENT".equalsIgnoreCase(type) ||
+                "ENTRUSTMENT_LIST".equalsIgnoreCase(type) ||
                 "委托单".equals(type)
         );
     }
 
-    private void syncToTable(String type, String id, Entrustment source) {
+    private void syncToTable(String type, String id, JcCoreWtInfo source) {
         if (type == null || id == null || isEntrustment(type)) {
             return;
         }
 
-        if (isTypeMatch(type, "DENSITY_TEST", "T_DENSITY_TEST", "密度试验")) {
+        if (isTypeMatch(type, "DENSITY_TEST_RECORD", "原位密度检测记录表")) {
             DensityTestRecord target = densityTestRecordMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
+                target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
+                populateVirtualData(target);
                 densityTestRecordMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "REBOUND_METHOD", "T_REBOUND_METHOD", "回弹法")) {
-            ReboundMethod target = reboundMethodMapper.selectById(id);
+        } else if (isTypeMatch(type, "DENSITY_TEST_REPORT", "原位密度检测报告")) {
+            DensityTestReport target = densityTestReportMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
+                target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
-                reboundMethodMapper.updateById(target);
+                densityTestReportMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "SAND_REPLACEMENT", "T_SAND_REPLACEMENT", "灌砂法")) {
-            SandReplacement target = sandReplacementMapper.selectById(id);
+        } else if (isTypeMatch(type, "DENSITY_TEST_RESULT", "原位密度检测结果")) {
+            DensityTestResult target = densityTestResultMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
+                target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
-                sandReplacementMapper.update(target);
+                densityTestResultMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "JZS_LIGHT_DYNAMIC_PENETRATION", "轻型动力触探")) {
-            LightDynamicPenetration target = lightDynamicPenetrationMapper.selectById(id);
+        } else if (isTypeMatch(type, "REBOUND_METHOD_RECORD", "回弹法检测混凝土抗压强度记录表")) {
+            ReboundMethodRecord target = reboundMethodRecordMapper.selectById(id);
             if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
-                lightDynamicPenetrationMapper.update(target);
+                populateVirtualData(target);
+                reboundMethodRecordMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "BECKMAN_BEAM", "T_BECKMAN_BEAM", "贝克曼梁")) {
-            BeckmanBeam target = beckmanBeamMapper.selectById(id);
+        } else if (isTypeMatch(type, "REBOUND_METHOD_REPORT", "回弹法检测混凝土抗压强度报告")) {
+            ReboundMethodReport target = reboundMethodReportMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
-                beckmanBeamMapper.updateById(target);
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                reboundMethodReportMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "CUTTING_RING", "T_CUTTING_RING", "环刀法")) {
-            CuttingRing target = cuttingRingMapper.selectById(id);
+        } else if (isTypeMatch(type, "SAND_REPLACEMENT_RECORD", "原位密度检测记录表（灌砂法）")) {
+            SandReplacementRecord target = sandReplacementRecordMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
-                cuttingRingMapper.updateById(target);
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                populateVirtualData(target);
+                sandReplacementRecordMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "NUCLEAR_DENSITY", "T_NUCLEAR_DENSITY", "核子密度仪")) {
-            NuclearDensity target = nuclearDensityMapper.selectById(id);
+        } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
+            LightDynamicPenetrationRecord target = lightDynamicPenetrationRecordMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
-                nuclearDensityMapper.updateById(target);
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                populateVirtualData(target);
+                lightDynamicPenetrationRecordMapper.updateById(target);
             }
-        } else if (isTypeMatch(type, "WATER_REPLACEMENT", "T_WATER_REPLACEMENT", "灌水法")) {
-            WaterReplacement target = waterReplacementMapper.selectById(id);
+        } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "LIGHT_DYNAMIC_PENETRATION_REPORT", "轻型动力触探检测报告")) {
+            LightDynamicPenetrationReport target = lightDynamicPenetrationReportMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getUnifiedNumber());
-                waterReplacementMapper.updateById(target);
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                lightDynamicPenetrationReportMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
+            LightDynamicPenetrationResult target = lightDynamicPenetrationResultMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                lightDynamicPenetrationResultMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "BECKMAN_BEAM_RECORD", "路基路面回弹弯沉试验检测记录表")) {
+            BeckmanBeamRecord target = beckmanBeamRecordMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                populateVirtualData(target);
+                beckmanBeamRecordMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "BECKMAN_BEAM_REPORT", "路基路面回弹弯沉检测报告")) {
+            BeckmanBeamReport target = beckmanBeamReportMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                beckmanBeamReportMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "BECKMAN_BEAM_RESULT", "路基路面回弹弯沉检测结果")) {
+            BeckmanBeamResult target = beckmanBeamResultMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                beckmanBeamResultMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "CUTTING_RING_RECORD", "原位密度检测记录表（环刀法）")) {
+            CuttingRingRecord target = cuttingRingRecordMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                populateVirtualData(target);
+                cuttingRingRecordMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
+            NuclearDensityRecord target = nuclearDensityRecordMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                populateVirtualData(target);
+                nuclearDensityRecordMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "WATER_REPLACEMENT_RECORD", "相对密度试验记录表（灌水法）")) {
+            WaterReplacementRecord target = waterReplacementRecordMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                populateVirtualData(target);
+                waterReplacementRecordMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "SAND_REPLACEMENT_REPORT", "原位密度检测报告（灌砂法）")) {
+            SandReplacementReport target = sandReplacementReportMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                sandReplacementReportMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "SAND_REPLACEMENT_RESULT", "原位密度检测结果（灌砂法）")) {
+            SandReplacementResult target = sandReplacementResultMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                sandReplacementResultMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "CUTTING_RING_REPORT", "原位密度检测报告（环刀法）")) {
+            CuttingRingReport target = cuttingRingReportMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                cuttingRingReportMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "CUTTING_RING_RESULT", "原位密度检测结果（环刀法）")) {
+            CuttingRingResult target = cuttingRingResultMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                cuttingRingResultMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "NUCLEAR_DENSITY_REPORT", "原位密度检测报告（核子法）")) {
+            NuclearDensityReport target = nuclearDensityReportMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                nuclearDensityReportMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RESULT", "原位密度检测结果（核子法）")) {
+            NuclearDensityResult target = nuclearDensityResultMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                nuclearDensityResultMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "WATER_REPLACEMENT_REPORT", "相对密度试验报告（灌水法）")) {
+            WaterReplacementReport target = waterReplacementReportMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                waterReplacementReportMapper.updateById(target);
+            }
+        } else if (isTypeMatch(type, "WATER_REPLACEMENT_RESULT", "相对密度试验结果（灌水法）")) {
+            WaterReplacementResult target = waterReplacementResultMapper.selectById(id);
+            if (target != null) {
+                target.setEntrustmentId(source.getWtNum());
+                copyFields(source, target);
+                waterReplacementResultMapper.updateById(target);
             }
         }
     }
@@ -267,17 +819,145 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         return false;
     }
 
-    private void copyFields(Entrustment source, BusinessEntity target) {
+    private void copyFields(JcCoreWtInfo source, BusinessEntity target) {
         if (source.getProjectName() != null) target.setProjectName(source.getProjectName());
         if (source.getClientUnit() != null) target.setClientUnit(source.getClientUnit());
         if (source.getWtNum() != null) target.setWtNum(source.getWtNum());
-        if (source.getJcDate() != null) target.setCommissionDate(source.getJcDate());
+        if (source.getCommissionDate() != null) target.setCommissionDate(source.getCommissionDate());
         if (source.getConstructionUnit() != null) target.setConstructionUnit(source.getConstructionUnit());
+        if (source.getBuildingUnit() != null) target.setBuildingUnit(source.getBuildingUnit());
         if (source.getSupervisionUnit() != null) target.setSupervisionUnit(source.getSupervisionUnit());
         if (source.getDesignUnit() != null) target.setDesignUnit(source.getDesignUnit());
         if (source.getWitnessUnit() != null) target.setWitnessUnit(source.getWitnessUnit());
         if (source.getWitness() != null) target.setWitness(source.getWitness());
+        if (source.getSampleName() != null) target.setSampleName(source.getSampleName());
+        
+        // Add more fields as needed - expanded auto-fill fields
+        if (source.getConstructionPart() != null) target.setConstructionPart(source.getConstructionPart());
+        if (source.getProjectArea() != null) target.setProjectArea(source.getProjectArea());
+        if (source.getSurveyUnit() != null) target.setSurveyUnit(source.getSurveyUnit());
+        if (source.getClient() != null) target.setClient(source.getClient());
+        if (source.getClientTel() != null) target.setClientTel(source.getClientTel());
+        if (source.getTestCategory() != null) target.setTestCategory(source.getTestCategory());
+        if (source.getRemarks() != null) target.setRemarks(source.getRemarks());
+        
+        // Sync Roles - DISABLED to preserve granular roles set in setDefaultValues
+        // Entrustment roles (WT_*) should not overwrite Record (JC_*) or Report (BG_*) roles
+        // if (source.getTester() != null) target.setTester(source.getTester());
+        // if (source.getReviewer() != null) target.setReviewer(source.getReviewer());
+        // if (source.getApprover() != null) target.setApprover(source.getApprover());
+        
         // Add more fields as needed
+    }
+
+    private void populateVirtualData(BusinessEntity entity) {
+        try {
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            String existingJson = null;
+
+            if (entity instanceof DensityTestRecord) {
+                existingJson = ((DensityTestRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("dryDensity", "2.35");
+                    data.put("moistureContent", "5.2");
+                    data.put("maxDryDensity", "2.40");
+                    data.put("compactionCoefficient", "98");
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    ((DensityTestRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof ReboundMethodRecord) {
+                ReboundMethodRecord record = (ReboundMethodRecord) entity;
+                existingJson = record.getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("structurePart", "墙体");
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("designIndex", "C30");
+                    data.put("testAngle", "0");
+                    data.put("pourDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("sampleStatus", "正常");
+                    data.put("aggregateSize", "20");
+                    data.put("equipment", "回弹仪");
+                    data.put("standard", "JGJ/T 23-2011");
+                    data.put("calibrationBefore", "80");
+                    data.put("calibrationAfter", "80");
+                    data.put("avgStrength", "32.5");
+                    data.put("stdDev", "2.1");
+                    data.put("coefVariation", "0.06");
+                    data.put("compEstimatedStrength", "30.0");
+                    data.put("conclusion", "符合要求");
+                    // Add random rebound values
+                    for (int i = 1; i <= 10; i++) {
+                        for (int j = 1; j <= 16; j++) {
+                            data.put("reboundValue_" + i + "_" + j, String.valueOf(30 + (int)(Math.random() * 20)));
+                        }
+                        data.put("avgRebound_" + i, "40");
+                        data.put("carbonDepth_" + i, "1.0");
+                        data.put("estimatedStrength_" + i, "35.0");
+                        data.put("correctedStrength_" + i, "32.0");
+                    }
+                    record.setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof SandReplacementRecord) {
+                existingJson = ((SandReplacementRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("holeVolume", "1500");
+                    data.put("sandMass", "2000");
+                    data.put("wetDensity", "2.1");
+                    data.put("dryDensity", "1.9");
+                    data.put("compactionCoefficient", "95");
+                    ((SandReplacementRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof WaterReplacementRecord) {
+                existingJson = ((WaterReplacementRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("waterMass", "1500");
+                    data.put("volume", "1500");
+                    data.put("wetDensity", "2.1");
+                    data.put("dryDensity", "1.9");
+                    ((WaterReplacementRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof NuclearDensityRecord) {
+                existingJson = ((NuclearDensityRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("wetDensity", "2.1");
+                    data.put("moisture", "10");
+                    data.put("dryDensity", "1.9");
+                    ((NuclearDensityRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof CuttingRingRecord) {
+                existingJson = ((CuttingRingRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("ringVolume", "200");
+                    data.put("wetMass", "400");
+                    data.put("dryMass", "350");
+                    data.put("dryDensity", "1.75");
+                    ((CuttingRingRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof BeckmanBeamRecord) {
+                existingJson = ((BeckmanBeamRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("deflection", "20");
+                    data.put("temperature", "25");
+                    ((BeckmanBeamRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof LightDynamicPenetrationRecord) {
+                existingJson = ((LightDynamicPenetrationRecord) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("blowCount", "5");
+                    data.put("depth", "30");
+                    data.put("soilProperty", "黏土");
+                    ((LightDynamicPenetrationRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -311,368 +991,240 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteDirectory(String id) {
         try {
+            // 1. Get the directory to find the wtNum (dirName)
+            SimpleDirectory directory = simpleDirectoryMapper.selectById(id);
+            if (directory == null) {
+                return false;
+            }
+            String wtNum = directory.getDirName();
+
+            // 2. Delete from related tables using wtNum (entrustmentId)
+            if (wtNum != null && !wtNum.isEmpty()) {
+                // Entrustment / JcCoreWtInfo
+                jcCoreWtInfoMapper.deleteExtByWtNum(wtNum);
+                jcCoreWtInfoMapper.deleteCoreByWtNum(wtNum);
+
+                // Density Test
+                densityTestRecordMapper.deleteByEntrustmentId(wtNum);
+                densityTestReportMapper.deleteByEntrustmentId(wtNum);
+                densityTestResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Rebound Method
+                reboundMethodRecordMapper.deleteByEntrustmentId(wtNum);
+                reboundMethodReportMapper.deleteByEntrustmentId(wtNum);
+                reboundMethodResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Sand Replacement
+                sandReplacementRecordMapper.deleteByEntrustmentId(wtNum);
+                sandReplacementReportMapper.deleteByEntrustmentId(wtNum);
+                sandReplacementResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Light Dynamic Penetration
+                lightDynamicPenetrationRecordMapper.deleteByEntrustmentId(wtNum);
+                lightDynamicPenetrationReportMapper.deleteByEntrustmentId(wtNum);
+                lightDynamicPenetrationResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Beckman Beam
+                beckmanBeamRecordMapper.deleteByEntrustmentId(wtNum);
+                beckmanBeamReportMapper.deleteByEntrustmentId(wtNum);
+                beckmanBeamResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Cutting Ring
+                cuttingRingRecordMapper.deleteByEntrustmentId(wtNum);
+                cuttingRingReportMapper.deleteByEntrustmentId(wtNum);
+                cuttingRingResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Nuclear Density
+                nuclearDensityRecordMapper.deleteByEntrustmentId(wtNum);
+                nuclearDensityReportMapper.deleteByEntrustmentId(wtNum);
+                nuclearDensityResultMapper.deleteByEntrustmentId(wtNum);
+
+                // Water Replacement
+                waterReplacementRecordMapper.deleteByEntrustmentId(wtNum);
+                waterReplacementReportMapper.deleteByEntrustmentId(wtNum);
+                waterReplacementResultMapper.deleteByEntrustmentId(wtNum);
+            }
+
+            // 3. Delete the directory itself
             int result = simpleDirectoryMapper.deleteById(id);
             return result > 0;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
+            throw new RuntimeException("Failed to delete directory and related records", e);
         }
     }
 
-    private void createEmptyTables(SimpleDirectory directory) {
-        try {
-            System.out.println("开始为流程创建空表，流程名称: " + directory.getDirName());
-            
-            // 为每个表类型创建空表并生成ID
-            for (int i = 1; i <= 10; i++) {
-                String tableType = null;
-                
-                // 获取当前表的类型
-                switch (i) {
-                    case 1:
-                        tableType = directory.getTable1Type();
-                        break;
-                    case 2:
-                        tableType = directory.getTable2Type();
-                        break;
-                    case 3:
-                        tableType = directory.getTable3Type();
-                        break;
-                    case 4:
-                        tableType = directory.getTable4Type();
-                        break;
-                    case 5:
-                        tableType = directory.getTable5Type();
-                        break;
-                    case 6:
-                        tableType = directory.getTable6Type();
-                        break;
-                    case 7:
-                        tableType = directory.getTable7Type();
-                        break;
-                    case 8:
-                        tableType = directory.getTable8Type();
-                        break;
-                    case 9:
-                        tableType = directory.getTable9Type();
-                        break;
-                    case 10:
-                        tableType = directory.getTable10Type();
-                        break;
-                }
-                
-                // 如果表类型不为空，创建空表并生成ID
-                if (tableType != null && !tableType.isEmpty()) {
-                    System.out.println("创建表类型: " + tableType + "，序号: " + i);
-                    String generatedId = createEmptyTable(tableType);
-                    if (generatedId != null) {
-                        System.out.println("成功创建表，生成的ID: " + generatedId);
-                        // 将生成的ID设置到目录对象中
-                        switch (i) {
-                            case 1:
-                                directory.setTable1Id(generatedId);
-                                System.out.println("设置table1Id: " + generatedId);
-                                break;
-                            case 2:
-                                directory.setTable2Id(generatedId);
-                                System.out.println("设置table2Id: " + generatedId);
-                                break;
-                            case 3:
-                                directory.setTable3Id(generatedId);
-                                System.out.println("设置table3Id: " + generatedId);
-                                break;
-                            case 4:
-                                directory.setTable4Id(generatedId);
-                                System.out.println("设置table4Id: " + generatedId);
-                                break;
-                            case 5:
-                                directory.setTable5Id(generatedId);
-                                System.out.println("设置table5Id: " + generatedId);
-                                break;
-                            case 6:
-                                directory.setTable6Id(generatedId);
-                                System.out.println("设置table6Id: " + generatedId);
-                                break;
-                            case 7:
-                                directory.setTable7Id(generatedId);
-                                System.out.println("设置table7Id: " + generatedId);
-                                break;
-                            case 8:
-                                directory.setTable8Id(generatedId);
-                                System.out.println("设置table8Id: " + generatedId);
-                                break;
-                            case 9:
-                                directory.setTable9Id(generatedId);
-                                System.out.println("设置table9Id: " + generatedId);
-                                break;
-                            case 10:
-                                directory.setTable10Id(generatedId);
-                                System.out.println("设置table10Id: " + generatedId);
-                                break;
-                        }
-                    } else {
-                        System.out.println("创建表失败，类型: " + tableType);
-                    }
-                }
-            }
-            
-            System.out.println("空表创建完成，流程信息: ");
-            System.out.println("table1Type: " + directory.getTable1Type() + ", table1Id: " + directory.getTable1Id());
-            System.out.println("table2Type: " + directory.getTable2Type() + ", table2Id: " + directory.getTable2Id());
-            System.out.println("table3Type: " + directory.getTable3Type() + ", table3Id: " + directory.getTable3Id());
-            System.out.println("table4Type: " + directory.getTable4Type() + ", table4Id: " + directory.getTable4Id());
-        } catch (Exception e) {
-            System.out.println("创建空表时发生异常: " + e.getMessage());
-            e.printStackTrace();
-        }
+    private void syncRoles(SimpleDirectory directory) {
+        updateRolesForTable(directory.getTable1Type(), directory.getTable1Id(), directory);
+        updateRolesForTable(directory.getTable2Type(), directory.getTable2Id(), directory);
+        updateRolesForTable(directory.getTable3Type(), directory.getTable3Id(), directory);
+        updateRolesForTable(directory.getTable4Type(), directory.getTable4Id(), directory);
+        updateRolesForTable(directory.getTable5Type(), directory.getTable5Id(), directory);
+        updateRolesForTable(directory.getTable6Type(), directory.getTable6Id(), directory);
+        updateRolesForTable(directory.getTable7Type(), directory.getTable7Id(), directory);
+        updateRolesForTable(directory.getTable8Type(), directory.getTable8Id(), directory);
+        updateRolesForTable(directory.getTable9Type(), directory.getTable9Id(), directory);
+        updateRolesForTable(directory.getTable10Type(), directory.getTable10Id(), directory);
     }
 
-    private String createEmptyTable(String tableType) {
+    private void updateRolesForTable(String type, String id, SimpleDirectory directory) {
+        if (type == null || id == null || id.isEmpty()) return;
+        
         try {
-            String id = UUID.randomUUID().toString();
-            System.out.println("开始创建表，类型: " + tableType + "，生成的ID: " + id);
+            String tester = null;
+            String reviewer = null;
+            String approver = null;
+            String filler = null;
             
-            // 根据表类型创建对应的数据对象并插入
-            switch (tableType) {
-                case "ENTRUSTMENT_LIST":
-                    Entrustment entrustment = new Entrustment();
-                    entrustment.setId(id);
-                    entrustment.setCreateBy("admin");
-                    entrustment.setCreateTime(new java.util.Date());
-                    int insertResult = entrustmentMapper.insert(entrustment);
-                    System.out.println("插入委托单结果: " + insertResult);
-                    if (insertResult > 0) {
-                        System.out.println("成功创建委托单，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建委托单失败");
-                        return null;
-                    }
-                case "REBOUND_METHOD_RECORD":
-                    ReboundMethodRecord reboundRecord = new ReboundMethodRecord();
-                    reboundRecord.setId(id);
-                    reboundRecord.setEntrustmentId(id);
-                    reboundRecord.setDataJson("");
-                    int insertReboundResult = reboundMethodRecordMapper.insert(reboundRecord);
-                    System.out.println("插入回弹法记录结果: " + insertReboundResult);
-                    if (insertReboundResult > 0) {
-                        System.out.println("成功创建回弹法记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建回弹法记录失败");
-                        return null;
-                    }
-                case "LIGHT_DYNAMIC_PENETRATION_RECORD":
-                    LightDynamicPenetrationRecord lightRecord = new LightDynamicPenetrationRecord();
-                    lightRecord.setId(id);
-                    lightRecord.setEntrustmentId(id);
-                    lightRecord.setDataJson("");
-                    int insertLightResult = lightDynamicPenetrationRecordMapper.insert(lightRecord);
-                    System.out.println("插入轻型动力触探记录结果: " + insertLightResult);
-                    if (insertLightResult > 0) {
-                        System.out.println("成功创建轻型动力触探记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建轻型动力触探记录失败");
-                        return null;
-                    }
-                case "NUCLEAR_DENSITY_RECORD":
-                    NuclearDensityRecord nuclearRecord = new NuclearDensityRecord();
-                    nuclearRecord.setId(id);
-                    nuclearRecord.setEntrustmentId(id);
-                    nuclearRecord.setDataJson("");
-                    int insertNuclearResult = nuclearDensityRecordMapper.insert(nuclearRecord);
-                    System.out.println("插入核子密度仪记录结果: " + insertNuclearResult);
-                    if (insertNuclearResult > 0) {
-                        System.out.println("成功创建核子密度仪记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建核子密度仪记录失败");
-                        return null;
-                    }
-                case "SAND_REPLACEMENT_RECORD":
-                    SandReplacementRecord sandRecord = new SandReplacementRecord();
-                    sandRecord.setId(id);
-                    sandRecord.setEntrustmentId(id);
-                    sandRecord.setDataJson("");
-                    int insertSandResult = sandReplacementRecordMapper.insert(sandRecord);
-                    System.out.println("插入灌砂法记录结果: " + insertSandResult);
-                    if (insertSandResult > 0) {
-                        System.out.println("成功创建灌砂法记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建灌砂法记录失败");
-                        return null;
-                    }
-                case "WATER_REPLACEMENT_RECORD":
-                    WaterReplacementRecord waterRecord = new WaterReplacementRecord();
-                    waterRecord.setId(id);
-                    waterRecord.setEntrustmentId(id);
-                    waterRecord.setDataJson("");
-                    int insertWaterResult = waterReplacementRecordMapper.insert(waterRecord);
-                    System.out.println("插入灌水法记录结果: " + insertWaterResult);
-                    if (insertWaterResult > 0) {
-                        System.out.println("成功创建灌水法记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建灌水法记录失败");
-                        return null;
-                    }
-                case "CUTTING_RING_RECORD":
-                    CuttingRingRecord cuttingRecord = new CuttingRingRecord();
-                    cuttingRecord.setId(id);
-                    cuttingRecord.setEntrustmentId(id);
-                    cuttingRecord.setDataJson("");
-                    int insertCuttingResult = cuttingRingRecordMapper.insert(cuttingRecord);
-                    System.out.println("插入环刀法记录结果: " + insertCuttingResult);
-                    if (insertCuttingResult > 0) {
-                        System.out.println("成功创建环刀法记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建环刀法记录失败");
-                        return null;
-                    }
-                case "BECKMAN_BEAM_RECORD":
-                    BeckmanBeamRecord beckmanRecord = new BeckmanBeamRecord();
-                    beckmanRecord.setId(id);
-                    beckmanRecord.setEntrustmentId(id);
-                    beckmanRecord.setDataJson("");
-                    int insertBeckmanResult = beckmanBeamRecordMapper.insert(beckmanRecord);
-                    System.out.println("插入贝克曼梁记录结果: " + insertBeckmanResult);
-                    if (insertBeckmanResult > 0) {
-                        System.out.println("成功创建贝克曼梁记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建贝克曼梁记录失败");
-                        return null;
-                    }
-                case "DENSITY_TEST_REPORT":
-                    DensityTestReport densityReport = new DensityTestReport();
-                    densityReport.setId(id);
-                    densityReport.setEntrustmentId(id);
-                    densityReport.setDataJson("");
-                    int insertDensityReportResult = densityTestReportMapper.insert(densityReport);
-                    System.out.println("插入密度试验报告结果: " + insertDensityReportResult);
-                    if (insertDensityReportResult > 0) {
-                        System.out.println("成功创建密度试验报告，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建密度试验报告失败");
-                        return null;
-                    }
-                case "DENSITY_TEST_RESULT":
-                    DensityTestResult densityResult = new DensityTestResult();
-                    densityResult.setId(id);
-                    densityResult.setEntrustmentId(id);
-                    densityResult.setDataJson("");
-                    int insertDensityResultResult = densityTestResultMapper.insert(densityResult);
-                    System.out.println("插入密度试验检测结果: " + insertDensityResultResult);
-                    if (insertDensityResultResult > 0) {
-                        System.out.println("成功创建密度试验检测结果，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建密度试验检测结果失败");
-                        return null;
-                    }
-                case "LIGHT_DYNAMIC_PENETRATION":
-                    LightDynamicPenetrationReport lightReport = new LightDynamicPenetrationReport();
-                    lightReport.setId(id);
-                    lightReport.setEntrustmentId(id);
-                    lightReport.setDataJson("");
-                    int insertLightReportResult = lightDynamicPenetrationReportMapper.insert(lightReport);
-                    System.out.println("插入轻型动力触探报告结果: " + insertLightReportResult);
-                    if (insertLightReportResult > 0) {
-                        System.out.println("成功创建轻型动力触探报告，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建轻型动力触探报告失败");
-                        return null;
-                    }
-                case "LIGHT_DYNAMIC_PENETRATION_RESULT":
-                    LightDynamicPenetrationResult lightResult = new LightDynamicPenetrationResult();
-                    lightResult.setId(id);
-                    lightResult.setEntrustmentId(id);
-                    lightResult.setDataJson("");
-                    int insertLightResultResult = lightDynamicPenetrationResultMapper.insert(lightResult);
-                    System.out.println("插入轻型动力触探检测结果: " + insertLightResultResult);
-                    if (insertLightResultResult > 0) {
-                        System.out.println("成功创建轻型动力触探检测结果，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建轻型动力触探检测结果失败");
-                        return null;
-                    }
-                case "REBOUND_METHOD_REPORT":
-                    ReboundMethodReport reboundReport = new ReboundMethodReport();
-                    reboundReport.setId(id);
-                    reboundReport.setEntrustmentId(id);
-                    reboundReport.setDataJson("");
-                    int insertReboundReportResult = reboundMethodReportMapper.insert(reboundReport);
-                    System.out.println("插入回弹法报告结果: " + insertReboundReportResult);
-                    if (insertReboundReportResult > 0) {
-                        System.out.println("成功创建回弹法报告，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建回弹法报告失败");
-                        return null;
-                    }
-                case "BECKMAN_BEAM_REPORT":
-                    BeckmanBeamReport beckmanReport = new BeckmanBeamReport();
-                    beckmanReport.setId(id);
-                    beckmanReport.setEntrustmentId(id);
-                    beckmanReport.setDataJson("");
-                    int insertBeckmanReportResult = beckmanBeamReportMapper.insert(beckmanReport);
-                    System.out.println("插入贝克曼梁报告结果: " + insertBeckmanReportResult);
-                    if (insertBeckmanReportResult > 0) {
-                        System.out.println("成功创建贝克曼梁报告，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建贝克曼梁报告失败");
-                        return null;
-                    }
-                case "BECKMAN_BEAM_RESULT":
-                    BeckmanBeamResult beckmanResult = new BeckmanBeamResult();
-                    beckmanResult.setId(id);
-                    beckmanResult.setEntrustmentId(id);
-                    beckmanResult.setDataJson("");
-                    int insertBeckmanResultResult = beckmanBeamResultMapper.insert(beckmanResult);
-                    System.out.println("插入贝克曼梁检测结果: " + insertBeckmanResultResult);
-                    if (insertBeckmanResultResult > 0) {
-                        System.out.println("成功创建贝克曼梁检测结果，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建贝克曼梁检测结果失败");
-                        return null;
-                    }
-                case "SIGNATURE":
-                    JzsSignature signature = new JzsSignature();
-                    signature.setSignatureId(id);
-                    signature.setUserAccount("admin");
-                    signature.setSignatureType("default");
-                    signature.setImageType("png");
-                    signature.setImageSize(0L);
-                    signature.setCreateTime(new java.util.Date());
-                    signature.setRemarks("自动创建的签名记录");
-                    int insertSignatureResult = jzsSignatureMapper.insert(signature);
-                    System.out.println("插入签名记录结果: " + insertSignatureResult);
-                    if (insertSignatureResult > 0) {
-                        System.out.println("成功创建签名记录，ID: " + id);
-                        return id;
-                    } else {
-                        System.out.println("创建签名记录失败");
-                        return null;
-                    }
-                // 可以添加其他表类型的处理
-                default:
-                    System.out.println("未知表类型: " + tableType);
-                    return null;
+            // Record-specific roles
+            String recordTester = null;
+            String recordReviewer = null;
+
+            if (isEntrustment(type)) {
+                tester = directory.getWtUndertaker();
+                reviewer = directory.getWtReviewer();
+                // Entrustment approver?
+            } else if (type.toUpperCase().contains("RECORD")) {
+                // For Record: Use Record-specific roles + Shared Approver
+                recordTester = directory.getJcTester();     // 记录表检验人
+                recordReviewer = directory.getJcReviewer(); // 记录表审核人
+                filler = directory.getJcFiller();           // 记录表填写人
+                approver = directory.getBgApprover();       // Shared Approver
+            } else {
+                // Report/Result: Use Background roles
+                tester = directory.getBgTester();
+                reviewer = directory.getBgReviewer();
+                approver = directory.getBgApprover();
+            }
+
+            if (isEntrustment(type)) {
+                JcCoreWtInfo entity = jcCoreWtInfoMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester);
+                    entity.setReviewer(reviewer);
+                    // entity.setApprover(approver);
+                    jcCoreWtInfoMapper.update(entity);
+                }
+            } else if (isTypeMatch(type, "DENSITY_TEST_RECORD", "原位密度检测记录表")) {
+                DensityTestRecord entity = densityTestRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    densityTestRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "DENSITY_TEST_REPORT", "原位密度检测报告")) {
+                DensityTestReport entity = densityTestReportMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    densityTestReportMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "DENSITY_TEST_RESULT", "原位密度检测结果")) {
+                DensityTestResult entity = densityTestResultMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    densityTestResultMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "REBOUND_METHOD_RECORD", "回弹法检测混凝土抗压强度记录表")) {
+                ReboundMethodRecord entity = reboundMethodRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    reboundMethodRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "REBOUND_METHOD_REPORT", "回弹法检测混凝土抗压强度报告")) {
+                ReboundMethodReport entity = reboundMethodReportMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    reboundMethodReportMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "SAND_REPLACEMENT_RECORD", "原位密度检测记录表（灌砂法）")) {
+                SandReplacementRecord entity = sandReplacementRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    sandReplacementRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
+                LightDynamicPenetrationRecord entity = lightDynamicPenetrationRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    lightDynamicPenetrationRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "轻型动力触探检测报告")) {
+                LightDynamicPenetrationReport entity = lightDynamicPenetrationReportMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    lightDynamicPenetrationReportMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
+                LightDynamicPenetrationResult entity = lightDynamicPenetrationResultMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    lightDynamicPenetrationResultMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "BECKMAN_BEAM_RECORD", "路基路面回弹弯沉试验检测记录表")) {
+                BeckmanBeamRecord entity = beckmanBeamRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    beckmanBeamRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "BECKMAN_BEAM_REPORT", "路基路面回弹弯沉检测报告")) {
+                BeckmanBeamReport entity = beckmanBeamReportMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    beckmanBeamReportMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "BECKMAN_BEAM_RESULT", "路基路面回弹弯沉检测结果")) {
+                BeckmanBeamResult entity = beckmanBeamResultMapper.selectById(id);
+                if (entity != null) {
+                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    beckmanBeamResultMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "CUTTING_RING_RECORD", "原位密度检测记录表（环刀法）")) {
+                CuttingRingRecord entity = cuttingRingRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    cuttingRingRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
+                NuclearDensityRecord entity = nuclearDensityRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    nuclearDensityRecordMapper.updateById(entity);
+                }
+            } else if (isTypeMatch(type, "WATER_REPLACEMENT_RECORD", "相对密度试验记录表（灌水法）")) {
+                WaterReplacementRecord entity = waterReplacementRecordMapper.selectById(id);
+                if (entity != null) {
+                    entity.setFiller(filler);
+                    entity.setRecordTester(recordTester);
+                    entity.setRecordReviewer(recordReviewer);
+                    entity.setApprover(approver);
+                    waterReplacementRecordMapper.updateById(entity);
+                }
             }
         } catch (Exception e) {
-            System.out.println("创建表时发生异常，类型: " + tableType + "，异常信息: " + e.getMessage());
             e.printStackTrace();
-            return null;
         }
     }
 }
