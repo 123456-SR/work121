@@ -238,7 +238,7 @@ const formTypes = [
   { value: 'BECKMAN_BEAM_RECORD', name: '路基路面回弹弯沉试验检测记录表' },
   { value: 'DENSITY_TEST_REPORT', name: '原位密度检测报告' },
   { value: 'DENSITY_TEST_RESULT', name: '原位密度检测结果' },
-  { value: 'LIGHT_DYNAMIC_PENETRATION', name: '轻型动力触探检测报告' },
+  { value: 'LIGHT_DYNAMIC_PENETRATION_REPORT', name: '轻型动力触探检测报告' },
   { value: 'LIGHT_DYNAMIC_PENETRATION_RESULT', name: '轻型动力触探检测结果' },
   { value: 'REBOUND_METHOD_REPORT', name: '回弹法检测混凝土抗压强度报告' },
   { value: 'BECKMAN_BEAM_REPORT', name: '路基路面回弹弯沉检测报告' },

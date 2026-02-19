@@ -641,6 +641,73 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 return;
             }
 
+            String dirName = entrustment.getWtNum() != null ? entrustment.getWtNum() : directory.getDirName();
+            String creator = entrustment.getCreateBy() != null ? entrustment.getCreateBy() : directory.getCreateBy();
+            String category = entrustment.getTestCategory() != null ? entrustment.getTestCategory() : determineAllTestCategories(directory);
+
+            if (directory.getTable1Type() != null && !directory.getTable1Type().isEmpty() && !isEntrustment(directory.getTable1Type())) {
+                if (directory.getTable1Id() == null || directory.getTable1Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable1Type(), dirName, creator, category, directory);
+                    directory.setTable1Id(id);
+                }
+            }
+            if (directory.getTable2Type() != null && !directory.getTable2Type().isEmpty() && !isEntrustment(directory.getTable2Type())) {
+                if (directory.getTable2Id() == null || directory.getTable2Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable2Type(), dirName, creator, category, directory);
+                    directory.setTable2Id(id);
+                }
+            }
+            if (directory.getTable3Type() != null && !directory.getTable3Type().isEmpty() && !isEntrustment(directory.getTable3Type())) {
+                if (directory.getTable3Id() == null || directory.getTable3Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable3Type(), dirName, creator, category, directory);
+                    directory.setTable3Id(id);
+                }
+            }
+            if (directory.getTable4Type() != null && !directory.getTable4Type().isEmpty() && !isEntrustment(directory.getTable4Type())) {
+                if (directory.getTable4Id() == null || directory.getTable4Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable4Type(), dirName, creator, category, directory);
+                    directory.setTable4Id(id);
+                }
+            }
+            if (directory.getTable5Type() != null && !directory.getTable5Type().isEmpty() && !isEntrustment(directory.getTable5Type())) {
+                if (directory.getTable5Id() == null || directory.getTable5Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable5Type(), dirName, creator, category, directory);
+                    directory.setTable5Id(id);
+                }
+            }
+            if (directory.getTable6Type() != null && !directory.getTable6Type().isEmpty() && !isEntrustment(directory.getTable6Type())) {
+                if (directory.getTable6Id() == null || directory.getTable6Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable6Type(), dirName, creator, category, directory);
+                    directory.setTable6Id(id);
+                }
+            }
+            if (directory.getTable7Type() != null && !directory.getTable7Type().isEmpty() && !isEntrustment(directory.getTable7Type())) {
+                if (directory.getTable7Id() == null || directory.getTable7Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable7Type(), dirName, creator, category, directory);
+                    directory.setTable7Id(id);
+                }
+            }
+            if (directory.getTable8Type() != null && !directory.getTable8Type().isEmpty() && !isEntrustment(directory.getTable8Type())) {
+                if (directory.getTable8Id() == null || directory.getTable8Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable8Type(), dirName, creator, category, directory);
+                    directory.setTable8Id(id);
+                }
+            }
+            if (directory.getTable9Type() != null && !directory.getTable9Type().isEmpty() && !isEntrustment(directory.getTable9Type())) {
+                if (directory.getTable9Id() == null || directory.getTable9Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable9Type(), dirName, creator, category, directory);
+                    directory.setTable9Id(id);
+                }
+            }
+            if (directory.getTable10Type() != null && !directory.getTable10Type().isEmpty() && !isEntrustment(directory.getTable10Type())) {
+                if (directory.getTable10Id() == null || directory.getTable10Id().isEmpty()) {
+                    String id = createRelatedRecord(directory.getTable10Type(), dirName, creator, category, directory);
+                    directory.setTable10Id(id);
+                }
+            }
+
+            simpleDirectoryMapper.updateById(directory);
+
             // 2. 同步到其他表 (Target)
             syncToTable(directory.getTable1Type(), directory.getTable1Id(), entrustment);
             syncToTable(directory.getTable2Type(), directory.getTable2Id(), entrustment);
