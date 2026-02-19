@@ -9,7 +9,7 @@ public interface LightDynamicPenetrationRecordMapper {
     @Select("SELECT " +
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
-            "t2.DATA_BLOCKS as dataJson, " +
+            "t2.DATA_JSON as dataJson, " +
             "t2.TESTER as tester, " +
             "t2.REVIEWER as reviewer, " +
             "t2.APPROVER as approver, " +
@@ -45,19 +45,19 @@ public interface LightDynamicPenetrationRecordMapper {
     LightDynamicPenetrationRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO JZS_LIGHT_DYNAMIC_PENETRATION (" +
-            "ID, ENTRUSTMENT_ID, DATA_BLOCKS, TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, " +
+            "ID, ENTRUSTMENT_ID, DATA_JSON, TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{dataJson}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, " +
+            "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, " +
             "#{createBy}, #{createTime}, #{updateBy}, #{updateTime}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
             "#{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto})")
     int insert(LightDynamicPenetrationRecord record);
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_BLOCKS = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
@@ -79,7 +79,7 @@ public interface LightDynamicPenetrationRecordMapper {
     @Select("SELECT " +
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
-            "t2.DATA_BLOCKS as dataJson, " +
+            "t2.DATA_JSON as dataJson, " +
             "t2.TESTER as tester, " +
             "t2.REVIEWER as reviewer, " +
             "t2.APPROVER as approver, " +
@@ -116,7 +116,7 @@ public interface LightDynamicPenetrationRecordMapper {
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_BLOCKS = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +

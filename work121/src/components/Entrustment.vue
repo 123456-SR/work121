@@ -463,6 +463,39 @@ const formatDate = (dateStr, format) => {
   return `${y}-${m}-${d}`
 }
 
+const computeTestCategoryFromDirectory = (directory) => {
+  if (!directory) return ''
+  const types = []
+  for (let i = 1; i <= 10; i++) {
+    const t = directory[`table${i}Type`]
+    if (t) types.push(t)
+  }
+  const categories = []
+  const addCategory = (c) => {
+    if (!categories.includes(c)) categories.push(c)
+  }
+  types.forEach(type => {
+    const upper = String(type || '').toUpperCase()
+    if (upper.includes('NUCLEAR')) addCategory('核子法')
+    else if (upper.includes('SAND')) addCategory('灌砂法')
+    else if (upper.includes('WATER')) addCategory('灌水法')
+    else if (upper.includes('CUTTING')) addCategory('环刀法')
+    else if (upper.includes('REBOUND')) addCategory('回弹法')
+    else if (upper.includes('PENETRATION')) addCategory('轻型动力触探')
+    else if (upper.includes('BECKMAN')) addCategory('贝克曼梁')
+    else if (upper.includes('DENSITY')) addCategory('密度试验')
+  })
+  if (categories.length === 0) return '通用检测'
+  return categories.join(',')
+}
+
+const autoFillTestCategoryFromDirectory = (directory) => {
+  if (!directory) return
+  if (formData.testCategory && formData.testCategory.trim() !== '') return
+  const category = computeTestCategoryFromDirectory(directory)
+  formData.testCategory = category
+}
+
 const mapDataToForm = (data) => {
   console.log('Mapping data keys:', Object.keys(data))
   currentId.value = data.id
@@ -570,6 +603,7 @@ const fetchDirectoryInfo = async (wtNum) => {
         if (response.data.success && response.data.data) {
             console.log('Directory info updated for navigation:', response.data.data)
             localStorage.setItem('currentDirectory', JSON.stringify(response.data.data))
+            autoFillTestCategoryFromDirectory(response.data.data)
         }
     } catch (e) {
         console.error('Failed to fetch directory info', e)
@@ -1014,15 +1048,6 @@ const submitWorkflow = async (action) => {
         if (response.data.success) {
             alert('操作成功')
             await loadData(idToSubmit)
-            
-            // If approved or passed audit, automatically jump to next form (Record Table)
-            if ((action === 'AUDIT_PASS' || action === 'SIGN_APPROVE') && formData.status >= 3) {
-                // Refresh directory info to get the latest IDs (synced by backend)
-                if (formData.unifiedNumber) {
-                    await fetchDirectoryInfo(formData.unifiedNumber)
-                }
-                nextForm()
-            }
         } else {
             alert('操作失败: ' + response.data.message)
         }

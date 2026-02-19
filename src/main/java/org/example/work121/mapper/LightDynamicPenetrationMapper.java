@@ -31,7 +31,7 @@ public interface LightDynamicPenetrationMapper {
             "t1.INSPECT as tester, " +
             "t1.COMPANY_NAME as constructionUnit, " +
             "t1.CONCLUSION as conclusion, " +
-            "t1.DATA_BLOCKS as dataJson, " +
+            "t1.DATA_JSON as dataJson, " +
             "t1.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t1.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t1.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -72,7 +72,7 @@ public interface LightDynamicPenetrationMapper {
             "t1.INSPECT as tester, " +
             "t1.COMPANY_NAME as constructionUnit, " +
             "t1.CONCLUSION as conclusion, " +
-            "t1.DATA_BLOCKS as dataJson, " +
+            "t1.DATA_JSON as dataJson, " +
             "t1.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t1.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t1.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -93,53 +93,53 @@ public interface LightDynamicPenetrationMapper {
             "(ID, ENTRUSTMENT_ID, ENTRUSTING_UNIT, PROJECT_NAME, ENTRUST_DATE, CONSTRUCTION_PART, " +
             "TEST_DATE, SOIL_PROPERTY, REPORT_DATE, WITNESS_UNIT, WITNESS, DESIGN_CAPACITY, " +
             "HAMMER_WEIGHT, DROP_DISTANCE, TEST_CATEGORY, TEST_BASIS, EQUIPMENT, REMARKS, " +
-            "APPROVE, REVIEW, INSPECT, CONCLUSION, DATA_BLOCKS, " +
+            "APPROVE, REVIEW, INSPECT, CONCLUSION, DATA_JSON, " +
             "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES " +
-            "(#{id}, #{entrustmentId}, #{clientUnit}, #{projectName}, #{commissionDate}, #{constructionPart}, " +
-            "#{testDate}, #{soilProperty}, #{reportDate}, #{witnessUnit}, #{witness}, #{designCapacity}, " +
-            "#{hammerWeight}, #{dropDistance}, #{testCategory}, #{testBasis}, #{equipment}, #{remarks}, " +
-            "#{approver}, #{reviewer}, #{tester}, #{conclusion}, #{dataJson}, " +
-            "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
-            "#{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "(#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{clientUnit,jdbcType=VARCHAR}, #{projectName,jdbcType=VARCHAR}, #{commissionDate,jdbcType=TIMESTAMP}, #{constructionPart,jdbcType=VARCHAR}, " +
+            "#{testDate,jdbcType=TIMESTAMP}, #{soilProperty,jdbcType=VARCHAR}, #{reportDate,jdbcType=TIMESTAMP}, #{witnessUnit,jdbcType=VARCHAR}, #{witness,jdbcType=VARCHAR}, #{designCapacity,jdbcType=VARCHAR}, " +
+            "#{hammerWeight,jdbcType=VARCHAR}, #{dropDistance,jdbcType=VARCHAR}, #{testCategory,jdbcType=VARCHAR}, #{testBasis,jdbcType=VARCHAR}, #{equipment,jdbcType=VARCHAR}, #{remarks,jdbcType=VARCHAR}, " +
+            "#{approver,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{conclusion,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, " +
+            "#{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(LightDynamicPenetration entity);
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "ENTRUSTING_UNIT = #{clientUnit}, " +
-            "PROJECT_NAME = #{projectName}, " +
-            "ENTRUST_DATE = #{commissionDate}, " +
-            "CONSTRUCTION_PART = #{constructionPart}, " +
-            "TEST_DATE = #{testDate}, " +
-            "SOIL_PROPERTY = #{soilProperty}, " +
-            "REPORT_DATE = #{reportDate}, " +
-            "WITNESS_UNIT = #{witnessUnit}, " +
-            "WITNESS = #{witness}, " +
-            "DESIGN_CAPACITY = #{designCapacity}, " +
-            "HAMMER_WEIGHT = #{hammerWeight}, " +
-            "DROP_DISTANCE = #{dropDistance}, " +
-            "TEST_CATEGORY = #{testCategory}, " +
-            "TEST_BASIS = #{testBasis}, " +
-            "EQUIPMENT = #{equipment}, " +
-            "REMARKS = #{remarks}, " +
-            "APPROVE = #{approver}, " +
-            "REVIEW = #{reviewer}, " +
-            "INSPECT = #{tester}, " +
-            "COMPANY_NAME = #{constructionUnit}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "CONCLUSION = #{conclusion}, " +
-            "DATA_BLOCKS = #{dataJson}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
-            "WHERE ID = #{id}")
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
+            "ENTRUSTING_UNIT = #{clientUnit,jdbcType=VARCHAR}, " +
+            "PROJECT_NAME = #{projectName,jdbcType=VARCHAR}, " +
+            "ENTRUST_DATE = #{commissionDate,jdbcType=TIMESTAMP}, " +
+            "CONSTRUCTION_PART = #{constructionPart,jdbcType=VARCHAR}, " +
+            "TEST_DATE = #{testDate,jdbcType=TIMESTAMP}, " +
+            "SOIL_PROPERTY = #{soilProperty,jdbcType=VARCHAR}, " +
+            "REPORT_DATE = #{reportDate,jdbcType=TIMESTAMP}, " +
+            "WITNESS_UNIT = #{witnessUnit,jdbcType=VARCHAR}, " +
+            "WITNESS = #{witness,jdbcType=VARCHAR}, " +
+            "DESIGN_CAPACITY = #{designCapacity,jdbcType=VARCHAR}, " +
+            "HAMMER_WEIGHT = #{hammerWeight,jdbcType=VARCHAR}, " +
+            "DROP_DISTANCE = #{dropDistance,jdbcType=VARCHAR}, " +
+            "TEST_CATEGORY = #{testCategory,jdbcType=VARCHAR}, " +
+            "TEST_BASIS = #{testBasis,jdbcType=VARCHAR}, " +
+            "EQUIPMENT = #{equipment,jdbcType=VARCHAR}, " +
+            "REMARKS = #{remarks,jdbcType=VARCHAR}, " +
+            "APPROVE = #{approver,jdbcType=VARCHAR}, " +
+            "REVIEW = #{reviewer,jdbcType=VARCHAR}, " +
+            "INSPECT = #{tester,jdbcType=VARCHAR}, " +
+            "COMPANY_NAME = #{constructionUnit,jdbcType=VARCHAR}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "CONCLUSION = #{conclusion,jdbcType=VARCHAR}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
+            "WHERE ID = #{id,jdbcType=VARCHAR}")
     int update(LightDynamicPenetration entity);
 
     @Select("SELECT COUNT(*) FROM JZS_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}")

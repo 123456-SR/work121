@@ -175,6 +175,20 @@ public class DatabaseInitializer implements CommandLineRunner {
             addColumnSafe(table, "REVIEWER", "VARCHAR2(64)");
             addColumnSafe(table, "APPROVER", "VARCHAR2(64)");
         }
+        addColumnSafe("T_REBOUND_METHOD", "STRUCTURE_PART", "VARCHAR2(255)");
+        addColumnSafe("T_REBOUND_METHOD", "CONCRETE_GRADE", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "MOLDING_DATE", "DATE");
+        addColumnSafe("T_REBOUND_METHOD", "AGE", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "INSTRUMENT_MODEL", "VARCHAR2(128)");
+        addColumnSafe("T_REBOUND_METHOD", "CALIBRATION_NO", "VARCHAR2(128)");
+        addColumnSafe("T_REBOUND_METHOD", "ZONE_COUNT", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "POURING_DIRECTION", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "TEST_ANGLE", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "PUMPING_METHOD", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "PUMPING", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "DESIGN_STRENGTH", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "CARBONATION_DEPTH", "VARCHAR2(64)");
+        addColumnSafe("T_REBOUND_METHOD", "TEST_RESULT", "VARCHAR2(500)");
         addColumnSafe("JC_CORE_WT_INFO", "CLIENT_ADDRESS_PHONE", "VARCHAR2(255)");
         addColumnSafe("JC_CORE_WT_INFO", "GC_BEIZHU", "VARCHAR2(255)");
         addColumnSafe("JC_CORE_WT_INFO", "WT_STATUS", "VARCHAR2(64)");

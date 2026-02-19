@@ -236,7 +236,6 @@ const formTypes = [
   { value: 'WATER_REPLACEMENT_RECORD', name: '相对密度试验记录表（灌水法）' },
   { value: 'CUTTING_RING_RECORD', name: '原位密度检测记录表（环刀法）' },
   { value: 'BECKMAN_BEAM_RECORD', name: '路基路面回弹弯沉试验检测记录表' },
-  { value: 'DENSITY_TEST_RECORD', name: '原位密度检测记录表' },
   { value: 'DENSITY_TEST_REPORT', name: '原位密度检测报告' },
   { value: 'DENSITY_TEST_RESULT', name: '原位密度检测结果' },
   { value: 'LIGHT_DYNAMIC_PENETRATION', name: '轻型动力触探检测报告' },
@@ -409,12 +408,8 @@ const saveProcess = async () => {
     const response = await axios.post('/api/directory/save', formData)
     if (response.data.success) {
       alert('保存成功')
-      const wtNum = formData.dirName // Capture wtNum before reset
       closeModal()
       loadProcesses()
-      
-      // Navigate to Entrustment Detail Page
-      navigateTo('Entrustment', { wtNum: wtNum })
     } else {
       alert('保存失败: ' + response.data.message)
     }
