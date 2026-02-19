@@ -627,22 +627,22 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
+      const currentAccount = user.username
 
-      // Match Tester
-      if (formData.tester === currentName) {
+      // Match Tester by account
+      if (formData.tester === currentAccount) {
         formData.testerSignature = imgSrc
         signed = true
       }
 
-      // Match Reviewer
-      // if (formData.reviewer === currentName) {
+      // Match Reviewer by account
+      // if (formData.reviewer === currentAccount) {
       //   formData.reviewerSignature = imgSrc
       //   signed = true
       // }
 
-      // Match Approver
-      // if (formData.approver === currentName) {
+      // Match Approver by account
+      // if (formData.approver === currentAccount) {
       //   formData.approverSignature = imgSrc
       //   signed = true
       // }
@@ -650,7 +650,7 @@ const handleSign = async () => {
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的试验/审核/批准人员不匹配，无法签名`)
+        alert(`当前用户账号(${currentAccount})与表单中的试验/审核/批准账号不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

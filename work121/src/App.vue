@@ -76,6 +76,8 @@ import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
 import DirectoryList from './components/DirectoryList.vue'
 import Login from './components/Login.vue'
 import GenericTestList from './components/GenericTestList.vue'
+import GenericReportList from './components/GenericReportList.vue'
+import GenericResultList from './components/GenericResultList.vue'
 
 const currentView = ref('')
 const activeMenuId = ref('')
@@ -102,7 +104,9 @@ const components = {
   BeckmanBeamReport,
   BeckmanBeamResult,
   DirectoryList,
-  GenericTestList
+  GenericTestList,
+  GenericReportList,
+  GenericResultList
 }
 
 const menuItems = {
@@ -113,43 +117,43 @@ const menuItems = {
       id: 'LightDynamicPenetrationRecordList', 
       name: '轻型动力触探检测记录表', 
       component: 'GenericTestList', 
-      props: { title: '轻型动力触探检测记录', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationRecord' } 
+      props: { title: '轻型动力触探检测记录', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationRecord', dataType: 'record' } 
     },
     { 
       id: 'NuclearDensityRecordList', 
       name: '原位密度检测记录表（核子法）',
       component: 'GenericTestList', 
-      props: { title: '原位密度检测记录（核子法）', category: '核子法', formComponent: 'NuclearDensityRecord' }
+      props: { title: '原位密度检测记录（核子法）', category: '核子法', formComponent: 'NuclearDensityRecord', dataType: 'record' }
     },
     { 
       id: 'SandReplacementRecordList', 
       name: '原位密度检测记录表（灌砂法）',
       component: 'GenericTestList', 
-      props: { title: '原位密度检测记录（灌砂法）', category: '灌砂法', formComponent: 'SandReplacementRecord' }
+      props: { title: '原位密度检测记录（灌砂法）', category: '灌砂法', formComponent: 'SandReplacementRecord', dataType: 'record' }
     },
     { 
       id: 'WaterReplacementRecordList', 
       name: '相对密度试验记录表（灌水法）',
       component: 'GenericTestList', 
-      props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord' }
+      props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord', dataType: 'record' }
     },
     { 
       id: 'CuttingRingRecordList', 
       name: '原位密度检测记录表（环刀法）',
       component: 'GenericTestList', 
-      props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord' }
+      props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord', dataType: 'record' }
     },
     { 
       id: 'ReboundMethodRecordList', 
       name: '回弹法检测混凝土抗压强度记录表',
       component: 'GenericTestList', 
-      props: { title: '回弹法检测记录', category: '回弹法', formComponent: 'ReboundMethodRecord' }
+      props: { title: '回弹法检测记录', category: '回弹法', formComponent: 'ReboundMethodRecord', dataType: 'record' }
     },
     { 
       id: 'BeckmanBeamRecordList', 
       name: '路基路面回弹弯沉试验检测记录表',
       component: 'GenericTestList', 
-      props: { title: '回弹弯沉试验检测记录', category: '贝克曼梁', formComponent: 'BeckmanBeamRecord' }
+      props: { title: '回弹弯沉试验检测记录', category: '贝克曼梁', formComponent: 'BeckmanBeamRecord', dataType: 'record' }
     },
     { id: 'Signature', name: '电子签名' }
   ],
@@ -157,44 +161,44 @@ const menuItems = {
     { 
       id: 'DensityTestReportList', 
       name: '原位密度检测报告',
-      component: 'GenericTestList', 
-      props: { title: '原位密度检测报告', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestReport' } 
+      component: 'GenericReportList', 
+      props: { title: '原位密度检测报告', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestReport', dataType: 'report' } 
     },
     { 
       id: 'DensityTestResultList', 
       name: '原位密度检测结果',
-      component: 'GenericTestList', 
-      props: { title: '原位密度检测结果', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestResult' }
+      component: 'GenericResultList', 
+      props: { title: '原位密度检测结果', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestResult', dataType: 'result' }
     },
     { 
       id: 'LightDynamicPenetrationReportList', 
       name: '轻型动力触探检测报告',
-      component: 'GenericTestList', 
-      props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetration' }
+      component: 'GenericReportList', 
+      props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetration', dataType: 'report' }
     },
     { 
       id: 'LightDynamicPenetrationResultList', 
       name: '轻型动力触探检测结果',
-      component: 'GenericTestList', 
-      props: { title: '轻型动力触探检测结果', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationResult' }
+      component: 'GenericResultList', 
+      props: { title: '轻型动力触探检测结果', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationResult', dataType: 'result' }
     },
     { 
       id: 'ReboundMethodReportList', 
       name: '回弹法检测混凝土抗压强度报告',
-      component: 'GenericTestList', 
-      props: { title: '回弹法检测报告', category: '回弹法', formComponent: 'ReboundMethodReport' }
+      component: 'GenericReportList', 
+      props: { title: '回弹法检测报告', category: '回弹法', formComponent: 'ReboundMethodReport', dataType: 'report' }
     },
     { 
       id: 'BeckmanBeamReportList', 
       name: '路基路面回弹弯沉检测报告',
-      component: 'GenericTestList', 
-      props: { title: '回弹弯沉检测报告', category: '贝克曼梁', formComponent: 'BeckmanBeamReport' }
+      component: 'GenericReportList', 
+      props: { title: '回弹弯沉检测报告', category: '贝克曼梁', formComponent: 'BeckmanBeamReport', dataType: 'report' }
     },
     { 
       id: 'BeckmanBeamResultList', 
       name: '路基路面回弹弯沉检测结果',
-      component: 'GenericTestList', 
-      props: { title: '回弹弯沉检测结果', category: '贝克曼梁', formComponent: 'BeckmanBeamResult' }
+      component: 'GenericResultList', 
+      props: { title: '回弹弯沉检测结果', category: '贝克曼梁', formComponent: 'BeckmanBeamResult', dataType: 'result' }
     }
   ]
 }
