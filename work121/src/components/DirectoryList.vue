@@ -10,7 +10,7 @@
         <thead>
           <tr>
             <th>序号</th>
-            <th>流程名称</th>
+            <th>统一编号</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
@@ -19,9 +19,12 @@
           <tr v-for="(item, index) in processes" :key="item.id">
             <td>{{ index + 1 }}</td>
             <td>{{ item.dirName }}</td>
-            <td>{{ getStatusText(item.status) }}</td>
             <td>
-              <button @click="viewProcess(item)" class="view-btn">查看详情</button>
+              <span :class="['status-badge', 'status-' + item.status]">
+                {{ getStatusText(item.status) }}
+              </span>
+            </td>
+            <td>
               <button @click="editProcess(item)" class="edit-btn">编辑</button>
               <button @click="deleteProcess(item.id)" class="delete-btn">删除</button>
             </td>
@@ -40,11 +43,11 @@
         <div class="modal-body">
           <form @submit.prevent="saveProcess">
             <div class="form-layout">
-              <!-- 左侧：流程名称和队列显示 -->
+              <!-- 左侧：统一编号和队列显示 -->
               <div class="left-panel">
                 <div class="form-group">
-                  <label>流程名称：</label>
-                  <input type="text" v-model="formData.dirName" required>
+                  <label>统一编号：</label>
+                  <input type="text" v-model="formData.dirName" required placeholder="请输入委托单统一编号">
                 </div>
                 
                 <div class="form-group">
@@ -67,14 +70,97 @@
                 
                 <div class="form-group">
                   <label>状态：</label>
-                  <select v-model="formData.status">
-                    <option value="0">禁用</option>
+                  <select id="status" v-model="formData.status">
                     <option value="1">启用</option>
                     <option value="2">草稿</option>
                     <option value="3">审核中</option>
                     <option value="4">已审核</option>
                     <option value="5">已归档</option>
                   </select>
+                </div>
+
+                <div v-if="needsEntrustmentRoles" class="role-section">
+                  <h4>委托单角色配置</h4>
+                  <div class="form-group">
+                    <label for="wtUndertaker">委托承接人 <span style="color: red">*</span></label>
+                    <select id="wtUndertaker" v-model="formData.wtUndertaker" required>
+                      <option value="">请选择委托承接人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="wtReviewer">委托审核人 <span style="color: red">*</span></label>
+                    <select id="wtReviewer" v-model="formData.wtReviewer" required>
+                      <option value="">请选择委托审核人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div v-if="needsRecordRoles" class="role-section">
+                  <h4>记录表角色配置</h4>
+                  <div class="form-group">
+                    <label for="jcFiller">记录填写人</label>
+                    <select id="jcFiller" v-model="formData.jcFiller">
+                      <option value="">请选择记录填写人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="jcTester">记录检测人 <span style="color: red">*</span></label>
+                    <select id="jcTester" v-model="formData.jcTester" required>
+                      <option value="">请选择记录检测人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="jcReviewer">记录审核人 <span style="color: red">*</span></label>
+                    <select id="jcReviewer" v-model="formData.jcReviewer" required>
+                      <option value="">请选择记录审核人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div v-if="needsReportRoles" class="role-section">
+                  <h4>报告/结果表角色配置</h4>
+                  <div class="form-group">
+                    <label for="bgTester">报告/结果检测人 <span style="color: red">*</span></label>
+                    <select id="bgTester" v-model="formData.bgTester" required>
+                      <option value="">请选择报告/结果检测人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="bgReviewer">报告/结果审核人 <span style="color: red">*</span></label>
+                    <select id="bgReviewer" v-model="formData.bgReviewer" required>
+                      <option value="">请选择报告/结果审核人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="bgApprover">报告/结果批准人 <span style="color: red">*</span></label>
+                    <select id="bgApprover" v-model="formData.bgApprover" required>
+                      <option value="">请选择报告/结果批准人</option>
+                      <option v-for="user in userList" :key="user.id" :value="user.userAccount">
+                        {{ user.userAccount }} ({{ user.userName }})
+                      </option>
+                    </select>
+                  </div>
                 </div>
               </div>
               
@@ -107,7 +193,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, inject } from 'vue'
+import { ref, reactive, onMounted, inject, computed } from 'vue'
 import axios from 'axios'
 
 // 注入导航方法
@@ -116,9 +202,29 @@ const navigateTo = inject('navigateTo')
 const processes = ref([])
 const showModal = ref(false)
 const isEditing = ref(false)
+const userList = ref([])
 
 // 选中的表单队列
 const selectedForms = ref([])
+
+// 计算属性：根据选中的表单类型决定需要显示的角色选择框
+const needsEntrustmentRoles = computed(() => {
+  return selectedForms.value.some(f => f.value === 'ENTRUSTMENT_LIST')
+})
+
+const needsRecordRoles = computed(() => {
+  return selectedForms.value.some(f => f.value.includes('RECORD'))
+})
+
+const needsReportRoles = computed(() => {
+  return selectedForms.value.some(f => 
+    f.value.includes('REPORT') || 
+    f.value.includes('RESULT')
+  )
+})
+
+// needsSharedApprover removed as it is now part of needsReportRoles
+
 
 // 表单类型列表
 const formTypes = [
@@ -130,7 +236,7 @@ const formTypes = [
   { value: 'WATER_REPLACEMENT_RECORD', name: '相对密度试验记录表（灌水法）' },
   { value: 'CUTTING_RING_RECORD', name: '原位密度检测记录表（环刀法）' },
   { value: 'BECKMAN_BEAM_RECORD', name: '路基路面回弹弯沉试验检测记录表' },
-  { value: 'SIGNATURE', name: '电子签名' },
+  { value: 'DENSITY_TEST_RECORD', name: '原位密度检测记录表' },
   { value: 'DENSITY_TEST_REPORT', name: '原位密度检测报告' },
   { value: 'DENSITY_TEST_RESULT', name: '原位密度检测结果' },
   { value: 'LIGHT_DYNAMIC_PENETRATION', name: '轻型动力触探检测报告' },
@@ -154,12 +260,32 @@ const formData = reactive({
   table8Type: '',
   table9Type: '',
   table10Type: '',
-  status: 1
+  status: 1,
+  wtUndertaker: '',
+  wtReviewer: '',
+  jcFiller: '',
+  jcTester: '',
+  jcReviewer: '',
+  bgTester: '',
+  bgReviewer: '',
+  bgApprover: ''
 })
 
 onMounted(() => {
   loadProcesses()
+  loadUsers()
 })
+
+const loadUsers = async () => {
+  try {
+    const response = await axios.get('/api/user/list')
+    if (response.data.success) {
+      userList.value = response.data.data
+    }
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
+  }
+}
 
 const loadProcesses = async () => {
   try {
@@ -187,6 +313,14 @@ const editProcess = (item) => {
   formData.dirId = item.dirId || ''
   formData.dirName = item.dirName || ''
   formData.status = item.status || 1
+  formData.wtUndertaker = item.wtUndertaker || ''
+  formData.wtReviewer = item.wtReviewer || ''
+  formData.jcFiller = item.jcFiller || ''
+  formData.jcTester = item.jcTester || ''
+  formData.jcReviewer = item.jcReviewer || ''
+  formData.bgTester = item.bgTester || ''
+  formData.bgReviewer = item.bgReviewer || ''
+  formData.bgApprover = item.bgApprover || ''
   
   // 从table1Type-table10Type构建队列
   selectedForms.value = []
@@ -224,6 +358,13 @@ const resetForm = () => {
   formData.table9Type = ''
   formData.table10Type = ''
   formData.status = 1
+  formData.wtUndertaker = ''
+  formData.wtReviewer = ''
+  formData.jcTester = ''
+  formData.jcReviewer = ''
+  formData.bgTester = ''
+  formData.bgReviewer = ''
+  formData.bgApprover = ''
   selectedForms.value = []
 }
 
@@ -268,8 +409,12 @@ const saveProcess = async () => {
     const response = await axios.post('/api/directory/save', formData)
     if (response.data.success) {
       alert('保存成功')
+      const wtNum = formData.dirName // Capture wtNum before reset
       closeModal()
       loadProcesses()
+      
+      // Navigate to Entrustment Detail Page
+      navigateTo('Entrustment', { wtNum: wtNum })
     } else {
       alert('保存失败: ' + response.data.message)
     }
@@ -279,60 +424,13 @@ const saveProcess = async () => {
   }
 }
 
-const viewProcess = (item) => {
-  // 保存流程详情到localStorage，用于后续跳转
-  localStorage.setItem('currentDirectory', JSON.stringify(item))
-  
-  // 跳转到表1类型对应的页面
-  if (item.table1Type) {
-    const componentMap = {
-      'ENTRUSTMENT_LIST': 'Entrustment',
-      'REBOUND_METHOD_RECORD': 'ReboundMethodRecord',
-      'LIGHT_DYNAMIC_PENETRATION_RECORD': 'LightDynamicPenetrationRecord',
-      'NUCLEAR_DENSITY_RECORD': 'NuclearDensityRecord',
-      'SAND_REPLACEMENT_RECORD': 'SandReplacementRecord',
-      'WATER_REPLACEMENT_RECORD': 'WaterReplacementRecord',
-      'CUTTING_RING_RECORD': 'CuttingRingRecord',
-      'BECKMAN_BEAM_RECORD': 'BeckmanBeamRecord',
-      'SIGNATURE': 'Signature',
-      'DENSITY_TEST_REPORT': 'DensityTestReport',
-      'DENSITY_TEST_RESULT': 'DensityTestResult',
-      'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetration',
-      'LIGHT_DYNAMIC_PENETRATION_RESULT': 'LightDynamicPenetrationResult',
-      'REBOUND_METHOD_REPORT': 'ReboundMethodReport',
-      'BECKMAN_BEAM_REPORT': 'BeckmanBeamReport',
-      'BECKMAN_BEAM_RESULT': 'BeckmanBeamResult'
-    }
-    
-    const componentName = componentMap[item.table1Type]
-    if (componentName && navigateTo) {
-      // 保存当前表单的状态
-      localStorage.setItem('currentFormType', item.table1Type)
-      localStorage.setItem('currentFormIndex', '0')
-      
-      // 构建参数，传递流程中的ID
-      const props = {}
-      if (item.table1Id) {
-        props.id = item.table1Id
-      }
-      
-      // 使用navigateTo方法导航到对应的组件
-      navigateTo(componentName, props)
-    } else {
-      alert('暂不支持该类型的页面跳转')
-    }
-  } else {
-    alert('该流程未关联任何表单')
-  }
-}
-
 const deleteProcess = async (id) => {
   if (confirm('确定要删除该流程吗？')) {
     try {
       const response = await axios.post('/api/directory/delete', { id })
       if (response.data.success) {
         alert('删除成功')
-        loadDirectories()
+        loadProcesses()
       } else {
         alert('删除失败: ' + response.data.message)
       }
@@ -357,106 +455,159 @@ const getStatusText = (status) => {
 </script>
 
 <style scoped>
-.directory-list-container {
-  font-family: Arial, sans-serif;
-  padding: 20px;
+.process-list-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  background-color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .header h2 {
   margin: 0;
-  color: #333;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .add-btn {
-  background-color: #4CAF50;
+  background-color: #3498db;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
 }
 
 .add-btn:hover {
-  background-color: #45a049;
+  background-color: #2980b9;
 }
 
-.directory-table {
-  overflow-x: auto;
+.process-table {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  overflow: hidden;
 }
 
-.directory-table table {
+table {
   width: 100%;
   border-collapse: collapse;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.directory-table th, .directory-table td {
-  padding: 12px;
+th, td {
+  padding: 16px 24px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #edf2f7;
 }
 
-.directory-table th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+th {
+  background-color: #f8f9fa;
+  color: #5d6d7e;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.directory-table tr:hover {
-  background-color: #f5f5f5;
+tr:last-child td {
+  border-bottom: none;
 }
 
-.view-btn, .edit-btn, .delete-btn {
-  padding: 6px 12px;
+tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-1 { /* 启用 */
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-0 { /* 禁用 */
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-2 { /* 草稿 */
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-3 { /* 审核中 */
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-4 { /* 已审核 */
+  background-color: #e0f2f1;
+  color: #00695c;
+}
+
+.status-5 { /* 已归档 */
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+/* Action Buttons */
+.edit-btn, .delete-btn {
+  padding: 6px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
-  margin-right: 5px;
-}
-
-.view-btn {
-  background-color: #2196F3;
-  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-right: 8px;
 }
 
 .edit-btn {
-  background-color: #ff9800;
-  color: white;
-}
-
-.delete-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-.view-btn:hover {
-  background-color: #0b7dda;
+  background-color: #fff3e0;
+  color: #f57c00;
 }
 
 .edit-btn:hover {
-  background-color: #e68a00;
+  background-color: #ffe0b2;
+}
+
+.delete-btn {
+  background-color: #ffebee;
+  color: #d32f2f;
 }
 
 .delete-btn:hover {
-  background-color: #da190b;
+  background-color: #ffcdd2;
 }
 
-/* 弹窗样式 */
+/* Modal Styles Refined */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -465,24 +616,28 @@ const getStatusText = (status) => {
 
 .modal-content {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 800px;
   max-width: 90%;
-  max-height: 80vh;
+  max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #ddd;
+  padding: 20px 24px;
+  border-bottom: 1px solid #edf2f7;
 }
 
 .modal-header h3 {
   margin: 0;
+  color: #2c3e50;
+  font-size: 18px;
 }
 
 .close-btn {
@@ -490,192 +645,139 @@ const getStatusText = (status) => {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #999;
+  color: #95a5a6;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #34495e;
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
-/* 表单布局 - 左右两栏 */
 .form-layout {
   display: flex;
-  gap: 20px;
+  gap: 32px;
 }
 
 .left-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 20px;
 }
 
 .right-panel {
-  width: 250px;
+  width: 260px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
-}
-
-.form-group {
-  margin-bottom: 0;
+  gap: 16px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #333;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #34495e;
+  font-size: 14px;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
   box-sizing: border-box;
+  font-size: 14px;
+  transition: border-color 0.2s;
 }
 
-/* 队列容器 */
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #3498db;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
 .queue-container {
-  min-height: 200px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 10px;
-  background-color: #f9f9f9;
-}
-
-.empty-queue {
-  text-align: center;
-  color: #999;
-  padding: 40px 20px;
-  font-style: italic;
-}
-
-.queue-items {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  min-height: 240px;
+  border: 1px solid #dfe6e9;
+  border-radius: 6px;
+  padding: 12px;
+  background-color: #f8f9fa;
 }
 
 .queue-item {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  margin-bottom: 8px;
+  transition: transform 0.1s;
 }
 
-.queue-item-index {
-  font-weight: bold;
-  margin-right: 10px;
-  color: #666;
-  min-width: 20px;
-}
-
-.queue-item-name {
-  flex: 1;
-}
-
-.queue-item-remove {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.queue-item-remove:hover {
-  background-color: #da190b;
-}
-
-/* 表单按钮列表 */
-.form-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
-  padding-right: 5px;
+.queue-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .form-button {
-  background-color: #f1f1f1;
-  color: #333;
-  border: 1px solid #ddd;
-  padding: 10px 15px;
-  border-radius: 4px;
+  background-color: white;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  padding: 10px 16px;
+  border-radius: 6px;
   cursor: pointer;
   text-align: left;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 13px;
+  transition: all 0.2s;
 }
 
 .form-button:hover {
-  background-color: #e3f2fd;
-  border-color: #2196F3;
+  background-color: #ebf8ff;
+  border-color: #3498db;
+  color: #2c5282;
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #ddd;
-}
-
-.cancel-btn, .save-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.cancel-btn {
-  background-color: #f1f1f1;
-  color: #333;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #edf2f7;
+  gap: 12px;
 }
 
 .save-btn {
-  background-color: #4CAF50;
+  background-color: #3498db;
   color: white;
-}
-
-.cancel-btn:hover {
-  background-color: #e0e0e0;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  margin-left: 0;
 }
 
 .save-btn:hover {
-  background-color: #45a049;
+  background-color: #2980b9;
 }
 
-/* 滚动条样式 */
-.form-buttons::-webkit-scrollbar {
-  width: 6px;
+.cancel-btn {
+  background-color: white;
+  color: #7f8c8d;
+  border: 1px solid #dfe6e9;
+  padding: 10px 24px;
+  margin-left: 0;
 }
 
-.form-buttons::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.form-buttons::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
-}
-
-.form-buttons::-webkit-scrollbar-thumb:hover {
-  background: #999;
+.cancel-btn:hover {
+  background-color: #f5f6fa;
+  color: #2c3e50;
 }
 </style>

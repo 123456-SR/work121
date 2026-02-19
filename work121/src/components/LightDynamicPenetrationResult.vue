@@ -3,11 +3,40 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button @click="saveData" style="float: right; margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div>
+                <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; align-items: center;">
+                <div v-if="formData.status !== undefined" style="margin-right: 20px; font-weight: bold; color: #666;">
+                    状态: <span :style="{color: getStatusColor(formData.status)}">{{ getStatusText(formData.status) }}</span>
+                </div>
+
+                <!-- Workflow Buttons -->
+                <template v-if="props.id">
+                    <button v-if="formData.status === 0 || formData.status === 2" @click="submitWorkflow('SUBMIT')" style="margin-right: 10px; background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交审核</button>
+                    
+                    <button v-if="formData.status === 1" @click="submitWorkflow('AUDIT_PASS')" style="margin-right: 10px; background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">审核通过</button>
+                    <button v-if="formData.status === 1" @click="submitWorkflow('REJECT')" style="margin-right: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">打回</button>
+                    
+                    <button v-if="formData.status === 3" @click="submitWorkflow('SIGN_REVIEW')" style="margin-right: 10px; background-color: #FF9800; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">复核签字</button>
+                    
+                    <button v-if="formData.status === 4" @click="submitWorkflow('SIGN_APPROVE')" style="margin-right: 10px; background-color: #9C27B0; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">批准签字</button>
+                    <button v-if="formData.status === 4" @click="submitWorkflow('REJECT')" style="margin-right: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">打回</button>
+                </template>
+
+                <button @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
+                <button @click="saveData" style="margin-left: 10px; background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
+                <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
+                <button @click="generatePdf" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
+                <button @click="previewPdf" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+            </div>
+        </div>
+        
+        <div v-if="formData.status === 2 && formData.rejectReason" style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 10px; border: 1px solid #ef9a9a; clear: both;">
+            <strong>打回原因：</strong> {{ formData.rejectReason }}
+        </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -122,9 +151,27 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" v-model="formData.approve"   name="approve" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" v-model="formData.review"   name="review" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检验：<input type="text" v-model="formData.inspect"   name="inspect" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>
+            批准：
+            <div style="display: inline-block; position: relative; width: 100px;">
+                <input type="text" v-model="formData.approve" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.approveSignature ? 0 : 1 }">
+                <img v-if="formData.approveSignature" :src="formData.approveSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+            </div>
+        </span>
+        <span>
+            审核：
+            <div style="display: inline-block; position: relative; width: 100px;">
+                <input type="text" v-model="formData.review" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.reviewSignature ? 0 : 1 }">
+                <img v-if="formData.reviewSignature" :src="formData.reviewSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+            </div>
+        </span>
+        <span>
+            检验：
+            <div style="display: inline-block; position: relative; width: 100px;">
+                <input type="text" v-model="formData.inspect" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.inspectSignature ? 0 : 1 }">
+                <img v-if="formData.inspectSignature" :src="formData.inspectSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+            </div>
+        </span>
     </div>
 
     </form>
@@ -135,8 +182,16 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, defineProps } from 'vue'
+import { reactive, ref, onMounted, defineProps, inject } from 'vue'
 import axios from 'axios'
+
+const navigateTo = inject('navigateTo')
+
+const goToList = () => {
+  if (navigateTo) {
+    navigateTo('LightDynamicPenetrationResultList')
+  }
+}
 
 const props = defineProps({
   id: String
@@ -166,7 +221,125 @@ const formData = reactive({
   review: '',
   inspect: '',
   conclusion: '',
+  approveSignature: '',
+  reviewSignature: '',
+  inspectSignature: '',
+  status: 0,
+  rejectReason: ''
 })
+
+const getStatusText = (status) => {
+    const s = parseInt(status)
+    switch(s) {
+        case 0: return '草稿'
+        case 1: return '待审核'
+        case 2: return '已打回'
+        case 3: return '待签字'
+        case 4: return '待批准'
+        case 5: return '已通过'
+        default: return '未知'
+    }
+}
+
+const getStatusColor = (status) => {
+    const s = parseInt(status)
+    switch(s) {
+        case 0: return '#9E9E9E' // Grey
+        case 1: return '#2196F3' // Blue
+        case 2: return '#F44336' // Red
+        case 3: return '#FF9800' // Orange
+        case 4: return '#9C27B0' // Purple
+        case 5: return '#4CAF50' // Green
+        default: return '#000000'
+    }
+}
+
+const submitWorkflow = async (action) => {
+    if (!props.id) {
+        alert('请先保存记录')
+        return
+    }
+    
+    const user = JSON.parse(localStorage.getItem('userInfo'))
+    if (!user || !user.username) {
+        alert('请先登录')
+        return
+    }
+
+    let signatureData = null
+    
+    if (action === 'SUBMIT') {
+        // Role check: Only tester can submit
+        if (formData.inspect && user.username !== formData.inspect) {
+            alert('您不是该单据的检测人 (' + formData.inspect + ')，无权提交')
+            return
+        }
+
+        if (!formData.inspectSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.inspectSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
+        // Role check: Only reviewer can audit/reject at status 1
+        if (formData.review && user.username !== formData.review) {
+            alert('您不是该单据的复核人 (' + formData.review + ')，无权操作')
+            return
+        }
+    } else if (action === 'SIGN_REVIEW') {
+        // Role check: Only reviewer can sign
+        if (formData.review && user.username !== formData.review) {
+            alert('您不是该单据的复核人 (' + formData.review + ')，无权签字')
+            return
+        }
+        
+        if (!formData.reviewSignature) {
+            alert('请先进行复核人签字')
+            return
+        }
+        signatureData = formData.reviewSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'SIGN_APPROVE') {
+        // Role check: Only approver can sign
+        if (formData.approve && user.username !== formData.approve) {
+            alert('您不是该单据的批准人 (' + formData.approve + ')，无权签字')
+            return
+        }
+        
+        if (!formData.approveSignature) {
+            alert('请先进行批准人签字')
+            return
+        }
+        signatureData = formData.approveSignature.replace(/^data:image\/\w+;base64,/, '')
+    }
+
+    const request = {
+        tableType: 'LIGHT_DYNAMIC_PENETRATION_RESULT', // Assuming this is the type
+        recordId: props.id,
+        action: action,
+        userAccount: user.username,
+        signatureData: signatureData,
+        nextHandler: ''
+    }
+
+    if (action === 'REJECT') {
+        const reason = prompt('请输入打回原因:')
+        if (!reason) return
+        request.rejectReason = reason
+    }
+
+    try {
+        const response = await axios.post('/api/workflow/handle', request)
+        if (response.data.success) {
+            alert('操作成功')
+            loadData()
+        } else {
+            alert('操作失败: ' + response.data.message)
+        }
+    } catch (e) {
+        console.error('Workflow error', e)
+        alert('操作异常')
+    }
+}
 
 const formatDate = (d) => {
     if (!d) return ''
@@ -204,6 +377,12 @@ const loadData = async () => {
             formData.inspect = data.tester || ''
             formData.conclusion = data.conclusion || ''
             
+            formData.approveSignature = data.approveSignaturePhoto || ''
+            formData.reviewSignature = data.reviewSignaturePhoto || ''
+            formData.inspectSignature = data.inspectSignaturePhoto || ''
+            formData.status = data.status || 0
+            formData.rejectReason = data.rejectReason || ''
+            
             if (data.dataJson) {
                 try {
                     const json = JSON.parse(data.dataJson)
@@ -217,6 +396,64 @@ const loadData = async () => {
     } catch (e) {
         console.error('Load error', e)
     }
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentName = user.fullName || user.username
+
+      // Match Approve
+      if (formData.approve === currentName) {
+        formData.approveSignature = imgSrc
+        signed = true
+      }
+
+      // Match Review
+      if (formData.review === currentName) {
+        formData.reviewSignature = imgSrc
+        signed = true
+      }
+      
+      // Match Inspect
+      if (formData.inspect === currentName) {
+        formData.inspectSignature = imgSrc
+        signed = true
+      }
+      
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentName})与表单中的人员不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
 }
 
 const saveData = async () => {
@@ -247,6 +484,9 @@ const saveData = async () => {
             reviewer: formData.review,
             tester: formData.inspect,
             conclusion: formData.conclusion,
+            approveSignaturePhoto: formData.approveSignature,
+            reviewSignaturePhoto: formData.reviewSignature,
+            inspectSignaturePhoto: formData.inspectSignature,
             // reportDate should be handled carefully. If input type=text, it's string.
             // But entity expects Date. If I send string 'yyyy-MM-dd', Spring might parse it if configured.
             // Or I can send timestamp.
@@ -274,6 +514,8 @@ onMounted(() => {
 const printDocument = () => {
   window.print()
 }
+
+
 
 const generatePdf = () => {
   if (pdfForm.value) {

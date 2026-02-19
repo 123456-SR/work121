@@ -1,6 +1,7 @@
 package org.example.work121.service;
 
 import org.example.work121.entity.User;
+import java.util.List;
 
 public interface UserService {
     /**
@@ -9,6 +10,15 @@ public interface UserService {
      * @return 用户信息
      */
     User getUserByAccount(String userAccount);
+
+    List<User> getUserByName(String userName);
+
+    /**
+     * 根据ID查询用户信息
+     * @param id 用户ID
+     * @return 用户信息
+     */
+    User getUserById(String id);
 
     /**
      * 根据用户名查询用户信息 (使用指定数据库连接)
@@ -36,4 +46,9 @@ public interface UserService {
      * @return 是否注册成功
      */
     boolean registerUser(User user);
+    /**
+     * 获取所有用户
+     * @return 用户列表
+     */
+    java.util.List<User> getAllUsers();
 }

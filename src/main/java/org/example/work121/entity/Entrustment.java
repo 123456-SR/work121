@@ -1,13 +1,12 @@
 package org.example.work121.entity;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
  * 委托单实体类
  * 映射数据库委托单表的所有字段
  */
-public class Entrustment extends BusinessEntity implements Serializable {
+public class Entrustment extends BusinessEntity {
     private static final long serialVersionUID = 1L;
 
     // ===================== 基础信息字段 =====================
@@ -588,7 +587,24 @@ public class Entrustment extends BusinessEntity implements Serializable {
     public void setAlreadyMoney(String alreadyMoney) { this.alreadyMoney = alreadyMoney; }
 
     public String getSampleStatus() { return sampleStatus; }
-    public void setSampleStatus(String sampleStatus) { this.sampleStatus = sampleStatus; }
+    public void setSampleStatus(String sampleStatus) { 
+        this.sampleStatus = sampleStatus; 
+        try {
+            if (sampleStatus != null) {
+                super.setStatus(Integer.parseInt(sampleStatus));
+            }
+        } catch (NumberFormatException e) {
+            // ignore
+        }
+    }
+
+    @Override
+    public void setStatus(Integer status) {
+        super.setStatus(status);
+        if (status != null) {
+            this.sampleStatus = status.toString();
+        }
+    }
 
     public String getVirtualMoney() { return virtualMoney; }
     public void setVirtualMoney(String virtualMoney) { this.virtualMoney = virtualMoney; }

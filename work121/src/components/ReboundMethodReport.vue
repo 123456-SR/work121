@@ -3,10 +3,32 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+        <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+        
+        <!-- Status Badge -->
+        <span v-if="formData.status !== undefined" :style="{ backgroundColor: getStatusColor(formData.status), color: 'white', padding: '3px 8px', borderRadius: '3px', marginLeft: '10px', fontSize: '12px' }">
+          {{ getStatusText(formData.status) }}
+        </span>
+
+        <div style="float: right;">
+            <!-- Workflow Buttons -->
+            <button v-if="formData.status === 0 || formData.status === 2" @click="submitForm" style="margin-left: 10px;">保存</button>
+            <button v-if="formData.status === 0 || formData.status === 2" @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
+            <button v-if="formData.status === 0 || formData.status === 2" @click="submitWorkflow('SUBMIT')" style="margin-left: 10px; background-color: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交</button>
+            
+            <button v-if="formData.status === 1" @click="submitWorkflow('AUDIT_PASS')" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">审核通过</button>
+            <button v-if="formData.status === 1" @click="submitWorkflow('REJECT')" style="margin-left: 10px; background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">退回</button>
+            
+            <button v-if="formData.status === 3" @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
+            <button v-if="formData.status === 3" @click="submitWorkflow('SIGN_REVIEW')" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">复核签字</button>
+            
+            <button v-if="formData.status === 4" @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
+            <button v-if="formData.status === 4" @click="submitWorkflow('SIGN_APPROVE')" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">批准签字</button>
+
+            <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
+            <button @click="generatePdf" style="margin-left: 10px;">下载PDF</button>
+            <button @click="previewPdf" style="margin-left: 10px;">预览PDF</button>
+        </div>
     </div>
 
     <h2>回弹法检测混凝土抗压强度报告</h2>
@@ -144,9 +166,24 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" v-model="formData.approver"   name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" v-model="formData.reviewer"   name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检验：<input type="text" v-model="formData.tester"   name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span style="position: relative;">
+            批准：<input type="text" v-model="formData.approver" name="approver" style="width: 100px; border-bottom: 1px solid black;">
+            <div v-if="formData.approverSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.approverSignature" style="width: 80px; height: auto;" />
+            </div>
+        </span>
+        <span style="position: relative;">
+            审核：<input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100px; border-bottom: 1px solid black;">
+            <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.reviewerSignature" style="width: 80px; height: auto;" />
+            </div>
+        </span>
+        <span style="position: relative;">
+            检验：<input type="text" v-model="formData.tester" name="tester" style="width: 100px; border-bottom: 1px solid black;">
+            <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.testerSignature" style="width: 80px; height: auto;" />
+            </div>
+        </span>
     </div>
 
     <div class="disclaimer">
@@ -172,12 +209,23 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import axios from 'axios'
 
-const pdfForm = ref(null)
+const navigateTo = inject('navigateTo')
+
+// 定义props
+const props = defineProps({
+  id: {
+    type: String,
+    default: null
+  }
+})
 
 const formData = reactive({
+  id: '',
   entrustingUnit: '',
+  status: 0,
   unifiedNumber: '',
   sampleNumber: '',
   projectName: '',
@@ -207,17 +255,270 @@ const formData = reactive({
   companyPhone: '',
   conclusion: '',
   remarks: '',
+  approverSignature: '',
+  reviewerSignature: '',
+  testerSignature: ''
 })
 
 onMounted(() => {
 
   // Initialize dynamic fields for loop variable 'i_idx'
   // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
+  for (let i_idx = 0; i_idx < 10; i_idx++) {
     formData['correctedStrength_' + i_idx] = ''
   }
 
+  // Load data if ID is present
+  if (props.id) {
+    loadData(props.id)
+  } else {
+    // Check URL params
+    const urlParams = new URLSearchParams(window.location.search)
+    const id = urlParams.get('id')
+    if (id) {
+      loadData(id)
+    }
+  }
 })
+
+// 加载数据
+const loadData = async (id) => {
+  try {
+    const response = await axios.get(`/api/reboundMethod/report/get-by-entrustment-id`, {
+        params: { entrustmentId: id }
+    })
+    
+    if (response.data.success && response.data.data) {
+      const data = response.data.data
+      
+      // Store the record ID (Primary Key)
+      formData.id = data.id
+
+      // Merge data into formData
+      // First, if dataJson exists, parse it
+      if (data.dataJson) {
+        try {
+            const jsonData = JSON.parse(data.dataJson)
+            Object.assign(formData, jsonData)
+        } catch (e) {
+            console.error('Failed to parse dataJson', e)
+        }
+      }
+
+      formData.status = data.status !== undefined ? data.status : 0
+      
+      // Basic fields mapping (if not covered by dataJson or to ensure entity fields take precedence)
+      // Note: ReboundMethodReport entity fields might be different from formData keys
+      // formData uses 'entrustingUnit', entity uses 'clientUnit'. 
+      // Need to map standard BusinessEntity fields if they are not in dataJson or if we want to sync with entity.
+      // Usually dataJson contains the full formData state.
+      
+      // Signatures
+      if (data.approveSignaturePhoto) formData.approverSignature = data.approveSignaturePhoto
+      if (data.reviewSignaturePhoto) formData.reviewerSignature = data.reviewSignaturePhoto
+      if (data.inspectSignaturePhoto) formData.testerSignature = data.inspectSignaturePhoto
+      
+      // Ensure user names are populated if missing
+      const userInfoStr = localStorage.getItem('userInfo')
+      let userInfo = null
+      if (userInfoStr) {
+          userInfo = JSON.parse(userInfoStr)
+      }
+      if (!formData.approver && userInfo) formData.approver = userInfo.userName
+      if (!formData.reviewer && userInfo) formData.reviewer = userInfo.userName
+      if (!formData.tester && userInfo) formData.tester = userInfo.userName
+      
+    } else {
+        console.log('No report data found, trying to load record data or init defaults')
+        // Optional: Load basic info from entrustment or record if report doesn't exist yet
+    }
+  } catch (error) {
+    console.error('Failed to load data:', error)
+  }
+}
+
+const getStatusText = (status) => {
+  const s = parseInt(status)
+  switch(s) {
+    case 0: return '草稿'
+    case 1: return '待审核'
+    case 2: return '已打回'
+    case 3: return '待签字'
+    case 4: return '待批准'
+    case 5: return '已通过'
+    default: return '未知'
+  }
+}
+
+const getStatusColor = (status) => {
+  const s = parseInt(status)
+  switch(s) {
+    case 0: return '#6c757d' // secondary
+    case 1: return '#007bff' // primary
+    case 2: return '#dc3545' // danger
+    case 3: return '#ffc107' // warning
+    case 4: return '#17a2b8' // info
+    case 5: return '#28a745' // success
+    default: return '#6c757d'
+  }
+}
+
+const submitWorkflow = async (action) => {
+  if (!props.id && !formData.unifiedNumber) {
+    alert('请先保存记录')
+    return
+  }
+
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  let signatureData = null
+
+  if (action === 'SUBMIT') {
+    if (!formData.testerSignature) {
+      alert('请先进行检测人签字')
+      return
+    }
+    signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+  } else if (action === 'SIGN_REVIEW') {
+    if (!formData.reviewerSignature) {
+      alert('请先进行复核人签字')
+      return
+    }
+    signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+  } else if (action === 'SIGN_APPROVE') {
+    if (!formData.approverSignature) {
+      alert('请先进行批准人签字')
+      return
+    }
+    signatureData = formData.approverSignature.replace(/^data:image\/\w+;base64,/, '')
+  }
+
+  const request = {
+    tableType: 'REBOUND_METHOD',
+    recordId: formData.id,
+    action: action,
+    userAccount: user.username,
+    signatureData: signatureData,
+    nextHandler: ''
+  }
+
+  if (action === 'REJECT') {
+    const reason = prompt('请输入打回原因:')
+    if (!reason) return
+    request.rejectReason = reason
+  }
+
+  try {
+    const response = await axios.post('/api/workflow/handle', request)
+    if (response.data.success) {
+      alert('操作成功')
+      loadData(props.id)
+    } else {
+      alert('操作失败: ' + response.data.message)
+    }
+  } catch (e) {
+    console.error('Workflow error', e)
+    alert('操作异常')
+  }
+}
+
+const submitForm = async () => {
+  try {
+    // 构建提交数据
+    const submitData = {
+      entrustmentId: props.id || formData.unifiedNumber, // Use props.id as entrustmentId
+      ...formData, // Include all form data
+      approveSignaturePhoto: formData.approverSignature,
+      reviewSignaturePhoto: formData.reviewerSignature,
+      inspectSignaturePhoto: formData.testerSignature
+    };
+
+    // Serialize to dataJson
+    submitData.dataJson = JSON.stringify(formData);
+
+    // 发送请求
+    const response = await axios.post('/api/reboundMethod/report/save', submitData);
+
+    if (response.data.success) {
+      alert('保存成功');
+    } else {
+      alert('保存失败: ' + response.data.message);
+    }
+  } catch (error) {
+    console.error('保存错误:', error);
+    alert('保存失败，请稍后重试');
+  }
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentName = user.fullName || user.username
+
+      // Match Tester
+      if (formData.tester === currentName) {
+        formData.testerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Reviewer
+      if (formData.reviewer === currentName) {
+        formData.reviewerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Approver
+      if (formData.approver === currentName) {
+        formData.approverSignature = imgSrc
+        signed = true
+      }
+      
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentName})与表单中的检测/审核/批准人员不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
+}
+
+const goToList = () => {
+  if (navigateTo) {
+    navigateTo('ReboundMethodReportList')
+  }
+}
+
+const pdfForm = ref(null)
 
 const printDocument = () => {
   window.print()

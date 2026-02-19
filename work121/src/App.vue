@@ -16,13 +16,13 @@
         <nav class="nav-menu">
           <div class="nav-section">
             <div class="section-title">前置表格</div>
-            <div v-for="item in menuItems.preliminary" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
+            <div v-for="item in menuItems.preliminary" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: activeMenuId === item.id }]">
               <span class="nav-item-text">{{ item.name }}</span>
             </div>
           </div>
           <div class="nav-section">
             <div class="section-title">报告表格</div>
-            <div v-for="item in menuItems.report" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: currentView === item.id }]">
+            <div v-for="item in menuItems.report" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: activeMenuId === item.id }]">
               <span class="nav-item-text">{{ item.name }}</span>
             </div>
           </div>
@@ -75,8 +75,10 @@ import BeckmanBeamReport from './components/BeckmanBeamReport.vue'
 import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
 import DirectoryList from './components/DirectoryList.vue'
 import Login from './components/Login.vue'
+import GenericTestList from './components/GenericTestList.vue'
 
 const currentView = ref('')
+const activeMenuId = ref('')
 const currentProps = ref({})
 const currentPageTitle = ref('欢迎使用表格管理系统')
 const isLoggedIn = ref(false)
@@ -99,30 +101,101 @@ const components = {
   ReboundMethodReport,
   BeckmanBeamReport,
   BeckmanBeamResult,
-  DirectoryList
+  DirectoryList,
+  GenericTestList
 }
 
 const menuItems = {
   preliminary: [
     { id: 'DirectoryList', name: '流程管理' },
     { id: 'EntrustmentList', name: '检测委托单' },
-    { id: 'LightDynamicPenetrationRecord', name: '轻型动力触探检测记录表' },
-    { id: 'NuclearDensityRecord', name: '原位密度检测记录表（核子法）' },
-    { id: 'SandReplacementRecord', name: '原位密度检测记录表（灌砂法）' },
-    { id: 'WaterReplacementRecord', name: '相对密度试验记录表（灌水法）' },
-    { id: 'CuttingRingRecord', name: '原位密度检测记录表（环刀法）' },
-    { id: 'ReboundMethodRecord', name: '回弹法检测混凝土抗压强度记录表' },
-    { id: 'BeckmanBeamRecord', name: '路基路面回弹弯沉试验检测记录表' },
+    { 
+      id: 'LightDynamicPenetrationRecordList', 
+      name: '轻型动力触探检测记录表', 
+      component: 'GenericTestList', 
+      props: { title: '轻型动力触探检测记录', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationRecord' } 
+    },
+    { 
+      id: 'NuclearDensityRecordList', 
+      name: '原位密度检测记录表（核子法）',
+      component: 'GenericTestList', 
+      props: { title: '原位密度检测记录（核子法）', category: '核子法', formComponent: 'NuclearDensityRecord' }
+    },
+    { 
+      id: 'SandReplacementRecordList', 
+      name: '原位密度检测记录表（灌砂法）',
+      component: 'GenericTestList', 
+      props: { title: '原位密度检测记录（灌砂法）', category: '灌砂法', formComponent: 'SandReplacementRecord' }
+    },
+    { 
+      id: 'WaterReplacementRecordList', 
+      name: '相对密度试验记录表（灌水法）',
+      component: 'GenericTestList', 
+      props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord' }
+    },
+    { 
+      id: 'CuttingRingRecordList', 
+      name: '原位密度检测记录表（环刀法）',
+      component: 'GenericTestList', 
+      props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord' }
+    },
+    { 
+      id: 'ReboundMethodRecordList', 
+      name: '回弹法检测混凝土抗压强度记录表',
+      component: 'GenericTestList', 
+      props: { title: '回弹法检测记录', category: '回弹法', formComponent: 'ReboundMethodRecord' }
+    },
+    { 
+      id: 'BeckmanBeamRecordList', 
+      name: '路基路面回弹弯沉试验检测记录表',
+      component: 'GenericTestList', 
+      props: { title: '回弹弯沉试验检测记录', category: '贝克曼梁', formComponent: 'BeckmanBeamRecord' }
+    },
     { id: 'Signature', name: '电子签名' }
   ],
   report: [
-    { id: 'DensityTestReport', name: '原位密度检测报告' },
-    { id: 'DensityTestResult', name: '原位密度检测结果' },
-    { id: 'LightDynamicPenetration', name: '轻型动力触探检测报告' },
-    { id: 'LightDynamicPenetrationResult', name: '轻型动力触探检测结果' },
-    { id: 'ReboundMethodReport', name: '回弹法检测混凝土抗压强度报告' },
-    { id: 'BeckmanBeamReport', name: '路基路面回弹弯沉检测报告' },
-    { id: 'BeckmanBeamResult', name: '路基路面回弹弯沉检测结果' }
+    { 
+      id: 'DensityTestReportList', 
+      name: '原位密度检测报告',
+      component: 'GenericTestList', 
+      props: { title: '原位密度检测报告', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestReport' } 
+    },
+    { 
+      id: 'DensityTestResultList', 
+      name: '原位密度检测结果',
+      component: 'GenericTestList', 
+      props: { title: '原位密度检测结果', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestResult' }
+    },
+    { 
+      id: 'LightDynamicPenetrationReportList', 
+      name: '轻型动力触探检测报告',
+      component: 'GenericTestList', 
+      props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetration' }
+    },
+    { 
+      id: 'LightDynamicPenetrationResultList', 
+      name: '轻型动力触探检测结果',
+      component: 'GenericTestList', 
+      props: { title: '轻型动力触探检测结果', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationResult' }
+    },
+    { 
+      id: 'ReboundMethodReportList', 
+      name: '回弹法检测混凝土抗压强度报告',
+      component: 'GenericTestList', 
+      props: { title: '回弹法检测报告', category: '回弹法', formComponent: 'ReboundMethodReport' }
+    },
+    { 
+      id: 'BeckmanBeamReportList', 
+      name: '路基路面回弹弯沉检测报告',
+      component: 'GenericTestList', 
+      props: { title: '回弹弯沉检测报告', category: '贝克曼梁', formComponent: 'BeckmanBeamReport' }
+    },
+    { 
+      id: 'BeckmanBeamResultList', 
+      name: '路基路面回弹弯沉检测结果',
+      component: 'GenericTestList', 
+      props: { title: '回弹弯沉检测结果', category: '贝克曼梁', formComponent: 'BeckmanBeamResult' }
+    }
   ]
 }
 
@@ -131,53 +204,107 @@ const navigateTo = (target, props = {}) => {
   if (typeof target === 'string') {
     // 查找标题
     let title = ''
-    if (menuItems.preliminary.find(i => i.id === target)) title = menuItems.preliminary.find(i => i.id === target).name
-    else if (menuItems.report.find(i => i.id === target)) title = menuItems.report.find(i => i.id === target).name
-    else if (target === 'Entrustment') title = '检测委托单详情'
+    let menuItem = menuItems.preliminary.find(i => i.id === target) || menuItems.report.find(i => i.id === target)
     
-    currentView.value = target
-    currentPageTitle.value = title
-    currentProps.value = props
+    if (menuItem) {
+        title = menuItem.name
+        activeMenuId.value = target
+        if (menuItem.component) {
+            currentView.value = menuItem.component
+            currentProps.value = menuItem.props || {}
+        } else {
+            currentView.value = target
+            currentProps.value = props
+        }
+    } else if (target === 'Entrustment') {
+        title = '检测委托单详情'
+        // Entrustment不在菜单中，不设置activeMenuId
+        currentView.value = target
+        currentProps.value = props
+    } else {
+        // Fallback
+        currentView.value = target
+        currentProps.value = props
+    }
+    
+    if (title) currentPageTitle.value = title
   } else {
-    currentView.value = target.id
+    // target is object {id, name, ...}
+    activeMenuId.value = target.id
     currentPageTitle.value = target.name
-    currentProps.value = props
+    
+    if (target.component) {
+        currentView.value = target.component
+        currentProps.value = target.props || {}
+    } else {
+        currentView.value = target.id
+        currentProps.value = props
+    }
   }
+
+  // 保存当前状态到 sessionStorage
+  const state = {
+    currentView: currentView.value,
+    currentProps: currentProps.value,
+    currentPageTitle: currentPageTitle.value,
+    activeMenuId: activeMenuId.value
+  }
+  sessionStorage.setItem('appState', JSON.stringify(state))
 }
 
 provide('navigateTo', navigateTo)
 
 const refreshPage = () => {
   // For Vue components, we can just re-mount the component or trigger a refresh
-  const currentComp = currentView.value
-  currentView.value = ''
-  setTimeout(() => {
-    currentView.value = currentComp
-  }, 100)
+  window.location.reload()
 }
 
 const printPage = () => {
   window.print()
 }
 
+// 恢复状态
+const restoreState = () => {
+  try {
+    const savedState = sessionStorage.getItem('appState')
+    if (savedState) {
+      const state = JSON.parse(savedState)
+      currentView.value = state.currentView
+      currentProps.value = state.currentProps
+      currentPageTitle.value = state.currentPageTitle
+      activeMenuId.value = state.activeMenuId
+    }
+  } catch (e) {
+    console.error('恢复状态失败:', e)
+  }
+}
+
 // 检查登录状态
 const checkLoginStatus = () => {
-  const token = localStorage.getItem('token')
   const userInfo = localStorage.getItem('userInfo')
-  isLoggedIn.value = !!token && !!userInfo
+  // 移除 token 检查，因为 Login 组件目前只存储 userInfo
+  isLoggedIn.value = !!userInfo
+  
+  if (isLoggedIn.value) {
+    restoreState()
+  }
 }
+
+// 立即执行检查，确保刷新后状态正确
+checkLoginStatus()
 
 // 处理登录成功
 const handleLoginSuccess = () => {
   isLoggedIn.value = true
   // 登录后默认显示目录列表
-  navigateTo({ id: 'DirectoryList', name: '目录管理' })
+  navigateTo({ id: 'DirectoryList', name: '流程管理' })
 }
 
 // 退出登录
 const logout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('userInfo')
+  sessionStorage.removeItem('appState')
   isLoggedIn.value = false
   currentView.value = ''
   currentPageTitle.value = ''
@@ -200,7 +327,7 @@ const getCurrentUserName = () => {
 
 // 组件挂载时检查登录状态
 onMounted(() => {
-  checkLoginStatus()
+  // checkLoginStatus() // 已在 setup 中立即执行
 })
 </script>
 

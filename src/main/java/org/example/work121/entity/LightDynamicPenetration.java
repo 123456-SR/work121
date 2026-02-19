@@ -20,6 +20,17 @@ public class LightDynamicPenetration extends Entrustment {
     /** 数据JSON */
     private String dataJson;
 
+    /** 委托单ID */
+    private String entrustmentId;
+
+    public String getEntrustmentId() {
+        return entrustmentId;
+    }
+
+    public void setEntrustmentId(String entrustmentId) {
+        this.entrustmentId = entrustmentId;
+    }
+
     public String getSoilProperty() {
         return soilProperty;
     }

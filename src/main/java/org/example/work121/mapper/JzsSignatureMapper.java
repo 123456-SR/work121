@@ -39,17 +39,19 @@ public interface JzsSignatureMapper {
     @Insert("INSERT INTO JZS_SIGNATURE (" +
             "SIGNATURE_ID, USER_ACCOUNT, SIGNATURE_TYPE, SIGNATURE_BLOB, IMAGE_TYPE, IMAGE_SIZE, CREATE_TIME, REMARKS" +
             ") VALUES (" +
-            "#{signatureId}, #{userAccount}, #{signatureType}, #{signatureBlob}, #{imageType}, #{imageSize}, #{createTime}, #{remarks}" +
+            "#{signatureId, jdbcType=VARCHAR}, #{userAccount, jdbcType=VARCHAR}, #{signatureType, jdbcType=VARCHAR}, " +
+            "#{signatureBlob, jdbcType=BLOB}, #{imageType, jdbcType=VARCHAR}, #{imageSize, jdbcType=NUMERIC}, " +
+            "#{createTime, jdbcType=TIMESTAMP}, #{remarks, jdbcType=VARCHAR}" +
             ")")
     int insert(JzsSignature signature);
 
     @Update("UPDATE JZS_SIGNATURE SET " +
-            "SIGNATURE_BLOB = #{signatureBlob}, " +
-            "IMAGE_TYPE = #{imageType}, " +
-            "IMAGE_SIZE = #{imageSize}, " +
-            "UPDATE_TIME = #{updateTime}, " +
-            "REMARKS = #{remarks} " +
-            "WHERE SIGNATURE_ID = #{signatureId}")
+            "SIGNATURE_BLOB = #{signatureBlob, jdbcType=BLOB}, " +
+            "IMAGE_TYPE = #{imageType, jdbcType=VARCHAR}, " +
+            "IMAGE_SIZE = #{imageSize, jdbcType=NUMERIC}, " +
+            "UPDATE_TIME = #{updateTime, jdbcType=TIMESTAMP}, " +
+            "REMARKS = #{remarks, jdbcType=VARCHAR} " +
+            "WHERE SIGNATURE_ID = #{signatureId, jdbcType=VARCHAR}")
     int update(JzsSignature signature);
 
     @Delete("DELETE FROM JZS_SIGNATURE WHERE SIGNATURE_ID = #{signatureId}")

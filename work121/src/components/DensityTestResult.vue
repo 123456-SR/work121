@@ -3,10 +3,21 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px;">预览PDF</button>
+        <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+        <span style="margin-left: 20px;">
+          <button @click="prevRecord" :disabled="currentIndex <= 0">上一页</button>
+          <span style="margin: 0 10px;">记录 {{ currentIndex + 1 }} / {{ totalRecords }}</span>
+          <button @click="nextRecord" :disabled="currentIndex >= totalRecords - 1">下一页</button>
+          <button @click="addRecord" style="margin-left: 10px;">添加记录</button>
+          <button @click="deleteRecord" style="margin-left: 10px; color: red;">删除当前记录</button>
+        </span>
+        <div style="float: right;">
+          <button @click="handleSign" style="margin-left: 10px;">签字</button>
+          <button @click="saveData" style="margin-left: 10px;">保存</button>
+          <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
+          <button @click="generatePdf" style="margin-left: 10px;">下载PDF</button>
+          <button @click="previewPdf" style="margin-left: 10px;">预览PDF</button>
+        </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -62,7 +73,29 @@
         </template>
     </table>
 
-
+    <div class="footer-info">
+        <span style="position: relative;">
+          批准：
+          <input type="text" v-model="formData.approver" style="width: 100px; border-bottom: 1px solid black;">
+          <div v-if="formData.approverSignature" class="signature-overlay" style="left: 40px; top: -20px;">
+            <img :src="formData.approverSignature" alt="批准人签名" />
+          </div>
+        </span>
+        <span style="position: relative;">
+          审核：
+          <input type="text" v-model="formData.reviewer" style="width: 100px; border-bottom: 1px solid black;">
+          <div v-if="formData.reviewerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
+            <img :src="formData.reviewerSignature" alt="审核人签名" />
+          </div>
+        </span>
+        <span style="position: relative;">
+          试验：
+          <input type="text" v-model="formData.tester" style="width: 100px; border-bottom: 1px solid black;">
+          <div v-if="formData.testerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
+            <img :src="formData.testerSignature" alt="试验人签名" />
+          </div>
+        </span>
+    </div>
     </form>
 
 
@@ -71,23 +104,50 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps, computed } from 'vue'
+import axios from 'axios'
+
+const props = defineProps({
+  id: {
+    type: String,
+    required: false
+  }
+})
+
+const navigateTo = inject('navigateTo')
+
+const goToList = () => {
+  if (navigateTo) {
+    navigateTo('DensityTestResultList')
+  }
+}
 
 const pdfForm = ref(null)
 
+// 1:N State
+const records = ref([])
+const currentIndex = ref(0)
+const totalRecords = computed(() => records.value.length)
+
 const formData = reactive({
+  id: '',
+  entrustmentId: '',
   unifiedNumber: '',
   constructionPart: '',
   maxDryDensity: '',
   optimumMoisture: '',
   minDryDensity: '',
+  reviewer: '',
+  tester: '',
+  approver: '',
+  reviewerSignature: '',
+  testerSignature: '',
+  approverSignature: ''
 })
 
-onMounted(() => {
-
-  // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
+// Initialize dynamic fields
+const initDynamicFields = () => {
+  for (let i_idx = 0; i_idx < 20; i_idx++) {
     formData['sampleId_' + i_idx] = ''
     formData['location_' + i_idx] = ''
     formData['compaction_' + i_idx] = ''
@@ -99,8 +159,246 @@ onMounted(() => {
     formData['moisture2_' + i_idx] = ''
     formData['dryDensity_' + i_idx] = ''
   }
+}
 
+onMounted(() => {
+  initDynamicFields()
+  loadData()
 })
+
+const mapRecordToFormData = (record) => {
+  initDynamicFields()
+  
+  formData.id = record.id || ''
+  formData.entrustmentId = record.entrustmentId || props.id
+  formData.reviewerSignature = record.reviewSignaturePhoto || ''
+  formData.testerSignature = record.inspectSignaturePhoto || ''
+  formData.approverSignature = record.approveSignaturePhoto || ''
+  
+  if (record.dataJson) {
+    try {
+      const parsed = JSON.parse(record.dataJson)
+      Object.assign(formData, parsed)
+    } catch (e) {
+      console.error('JSON parse error', e)
+    }
+  }
+  
+  // Explicit fields override JSON
+  if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
+  if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto
+  if (record.approveSignaturePhoto) formData.approverSignature = record.approveSignaturePhoto
+  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
+}
+
+const saveCurrentRecordState = () => {
+  if (records.value.length === 0) return
+  
+  const record = records.value[currentIndex.value]
+  record.id = formData.id
+  record.entrustmentId = formData.entrustmentId
+  record.reviewSignaturePhoto = formData.reviewerSignature
+  record.inspectSignaturePhoto = formData.testerSignature
+  record.approveSignaturePhoto = formData.approverSignature
+  
+  // Serialize all formData to dataJson
+  const dataToSave = { ...formData }
+  record.dataJson = JSON.stringify(dataToSave)
+}
+
+const prevRecord = () => {
+  if (currentIndex.value > 0) {
+    saveCurrentRecordState()
+    currentIndex.value--
+    mapRecordToFormData(records.value[currentIndex.value])
+  }
+}
+
+const nextRecord = () => {
+  if (currentIndex.value < records.value.length - 1) {
+    saveCurrentRecordState()
+    currentIndex.value++
+    mapRecordToFormData(records.value[currentIndex.value])
+  }
+}
+
+const addRecord = () => {
+  saveCurrentRecordState()
+  const newRecord = {
+    id: '',
+    entrustmentId: props.id,
+    dataJson: '{}'
+  }
+  records.value.push(newRecord)
+  currentIndex.value = records.value.length - 1
+  mapRecordToFormData(newRecord)
+}
+
+const deleteRecord = async () => {
+  if (records.value.length <= 1) {
+    alert('至少保留一条记录')
+    return
+  }
+  
+  if (!confirm('确定要删除当前记录吗？')) return
+
+  const currentRecord = records.value[currentIndex.value]
+  
+  if (currentRecord.id) {
+    try {
+      const response = await axios.post('/api/density-test/delete', { id: currentRecord.id })
+      if (!response.data.success) {
+        alert('删除失败: ' + response.data.message)
+        return
+      }
+    } catch (e) {
+      console.error('Delete error', e)
+      alert('删除失败')
+      return
+    }
+  }
+  
+  records.value.splice(currentIndex.value, 1)
+  if (currentIndex.value >= records.value.length) {
+    currentIndex.value = records.value.length - 1
+  }
+  mapRecordToFormData(records.value[currentIndex.value])
+}
+
+const loadData = async () => {
+  if (props.id) {
+    try {
+      // 1. Try to fetch existing result (List)
+      const response = await axios.get('/api/density-test/get-by-entrustment-id', {
+        params: { entrustmentId: props.id }
+      })
+
+      if (response.data.success && response.data.data && response.data.data.length > 0) {
+        records.value = response.data.data
+        currentIndex.value = 0
+        mapRecordToFormData(records.value[0])
+      } else {
+        // 2. If no result, fetch entrustment info
+        const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
+          params: { unifiedNumber: props.id }
+        })
+        
+        const newRecord = {
+          id: '',
+          entrustmentId: props.id,
+          dataJson: '{}'
+        }
+        
+        if (entrustmentResponse.data.success) {
+          const eData = entrustmentResponse.data.data
+          formData.entrustmentId = props.id
+          formData.unifiedNumber = eData.wtNum || ''
+          formData.constructionPart = eData.constructionPart || ''
+          
+          if (eData.tester) formData.tester = eData.tester
+          if (eData.reviewer) formData.reviewer = eData.reviewer
+          if (eData.approver) formData.approver = eData.approver
+          
+          newRecord.dataJson = JSON.stringify(formData)
+        }
+        
+        records.value = [newRecord]
+        currentIndex.value = 0
+        mapRecordToFormData(newRecord)
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    }
+  }
+}
+
+const saveData = async () => {
+  try {
+    const dataToSave = {
+      id: formData.id,
+      entrustmentId: formData.entrustmentId || props.id,
+      dataJson: JSON.stringify(formData),
+      reviewSignaturePhoto: formData.reviewerSignature,
+      inspectSignaturePhoto: formData.testerSignature,
+      approveSignaturePhoto: formData.approverSignature
+    }
+    
+    const response = await axios.post('/api/density-test/save', dataToSave)
+    if (response.data.success) {
+      alert('保存成功')
+      if (response.data.data && response.data.data.id) {
+         formData.id = response.data.data.id
+         // Update current record in list
+         if (records.value[currentIndex.value]) {
+             records.value[currentIndex.value].id = formData.id
+         }
+      }
+    } else {
+      alert('保存失败: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Save error:', error)
+    alert('保存失败')
+  }
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentName = user.fullName || user.username
+
+      // Match Tester
+      if (formData.tester === currentName) {
+        formData.testerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Reviewer
+      if (formData.reviewer === currentName) {
+        formData.reviewerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Approver
+      if (formData.approver === currentName) {
+        formData.approverSignature = imgSrc
+        signed = true
+      }
+      
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentName})与表单中的试验/审核/批准人员不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
+}
 
 const printDocument = () => {
   window.print()
@@ -124,10 +422,21 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
+/* Add signature overlay style */
+.signature-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+.signature-overlay img {
+  width: 80px;
+  height: auto;
+  opacity: 0.8;
+}
 
         .densityTestResult-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 210mm;
+            width: 210mm; /* A4 width */
             margin: 0 auto;
             padding: 20px;
         }
@@ -139,75 +448,54 @@ const previewPdf = () => {
         }
         .header-info {
             display: flex;
-            justify-content: flex-end; /* Align to right as per image top left corner seems to be for binding or just empty, unified number is top left/right? Let's assume standard right or left. Image shows '统一编号' on top left actually? Wait, looking at the image, '统一编号' is on top left. */
+            justify-content: space-between;
             margin-bottom: 5px;
             font-weight: bold;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            border: 2px solid black;
+            margin-bottom: 20px;
+            table-layout: fixed; /* Fixed column width */
         }
-        td {
+        table, th, td {
             border: 1px solid black;
-            padding: 5px;
-            vertical-align: middle;
+        }
+        th, td {
             text-align: center;
+            padding: 2px; /* Reduce padding */
+            font-size: 12px; /* Smaller font */
+            height: 25px; /* Fixed height */
         }
         .label {
             font-weight: bold;
-            white-space: nowrap;
-        }
-        .left-align {
-            text-align: left;
-            padding-left: 10px;
-        }
-        input[type="text"], textarea {
-            width: 98%;
-            border: none;
-            outline: none;
-            font-family: inherit;
-            font-size: inherit;
-            background-color: transparent;
-            text-align: center;
-        }
-        .left-align input[type="text"] {
-            text-align: left;
-        }
-        input[type="text"]:focus, textarea:focus {
-            background-color: #f0f8ff;
-        }
-        textarea {
-            resize: none;
-            overflow: hidden;
-            text-align: left;
         }
         .footer-info {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 16px;
             font-weight: bold;
         }
-        .page-footer {
-            margin-top: 5px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
+        input[type="text"] {
+            border: none;
+            width: 90%;
+            text-align: center;
+            outline: none;
+            font-family: inherit; /* Inherit font */
+            font-size: inherit;
         }
+        .left-align input {
+            text-align: left;
+        }
+        
         @media print {
+            .no-print {
+                display: none;
+            }
             .densityTestResult-container {
                 width: 100%;
                 margin: 0;
                 padding: 0;
             }
-            input[type="text"], textarea {
-                background-color: transparent !important;
-            }
-            .no-print {
-                display: none;
-            }
         }
-    
 </style>

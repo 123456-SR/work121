@@ -1,7 +1,9 @@
 package org.example.work121.service.impl;
 
 import org.example.work121.entity.ReboundMethod;
+import org.example.work121.entity.ReboundMethodReport;
 import org.example.work121.mapper.ReboundMethodMapper;
+import org.example.work121.mapper.ReboundMethodReportMapper;
 import org.example.work121.service.ReboundMethodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,9 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
     @Autowired
     private ReboundMethodMapper mapper;
 
+    @Autowired
+    private ReboundMethodReportMapper reportMapper;
+
     @Override
     @Transactional
     public boolean saveReboundMethod(ReboundMethod reboundMethod) {
@@ -27,11 +32,9 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
                 return false;
             }
 
-            ReboundMethod existing = mapper.selectByEntrustmentId(reboundMethod.getEntrustmentId());
-
-            if (existing != null) {
+            if (reboundMethod.getId() != null && mapper.selectById(reboundMethod.getId()) != null) {
                 // 更新现有记录
-                mapper.update(reboundMethod);
+                mapper.updateById(reboundMethod);
             } else {
                 // 插入新记录
                 if (reboundMethod.getId() == null) {
@@ -47,7 +50,49 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
     }
 
     @Override
-    public ReboundMethod getReboundMethodByUnifiedNumber(String unifiedNumber) {
+    public java.util.List<ReboundMethod> getReboundMethodByUnifiedNumber(String unifiedNumber) {
         return mapper.selectByEntrustmentId(unifiedNumber);
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(String id) {
+        mapper.deleteById(id);
+    }
+
+    @Override
+    public ReboundMethodReport getReportByEntrustmentId(String entrustmentId) {
+        return reportMapper.selectByEntrustmentId(entrustmentId);
+    }
+
+    @Override
+    @Transactional
+    public boolean saveReport(ReboundMethodReport report) {
+        try {
+            ReboundMethodReport existing = reportMapper.selectByEntrustmentId(report.getEntrustmentId());
+            if (existing != null) {
+                reportMapper.update(report);
+            } else {
+                if (report.getId() == null) {
+                    report.setId(UUID.randomUUID().toString());
+                }
+                reportMapper.insert(report);
+            }
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void generateReportAndResult(String entrustmentId) {
+        java.util.List<ReboundMethod> records = mapper.selectByEntrustmentId(entrustmentId);
+        if (records == null || records.isEmpty()) {
+            System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
+        } else {
+            System.out.println("Generated Report and Result for ReboundMethod entrustment: " + entrustmentId);
+        }
     }
 }

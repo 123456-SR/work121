@@ -1,5 +1,6 @@
 package org.example.work121.mapper;
 
+import java.util.List;
 import org.apache.ibatis.annotations.*;
 import org.example.work121.entity.BeckmanBeam;
 
@@ -15,6 +16,16 @@ public interface BeckmanBeamMapper {
             "t2.TIRE_PRESSURE as tirePressure, " +
             "t2.TEST_LENGTH as testLength, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "t2.STATUS as status, " +
+            "t2.REJECT_REASON as rejectReason, " +
+            "t2.NEXT_HANDLER as nextHandler, " +
+            "t2.CREATE_BY as createBy, " +
+            "t2.CREATE_TIME as createTime, " +
+            "t2.UPDATE_BY as updateBy, " +
+            "t2.UPDATE_TIME as updateTime, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
             "t1.CLIENT_DATE as commissionDate, " +
@@ -39,7 +50,15 @@ public interface BeckmanBeamMapper {
             "AXLE_WEIGHT = #{axleWeight}, " +
             "TIRE_PRESSURE = #{tirePressure}, " +
             "TEST_LENGTH = #{testLength}, " +
-            "DATA_JSON = #{dataJson} " +
+            "DATA_JSON = #{dataJson}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
+            "STATUS = #{status}, " +
+            "REJECT_REASON = #{rejectReason}, " +
+            "NEXT_HANDLER = #{nextHandler}, " +
+            "UPDATE_BY = #{updateBy}, " +
+            "UPDATE_TIME = #{updateTime} " +
             "WHERE ID = #{id}")
     int updateById(BeckmanBeam beckmanBeam);
 
@@ -52,6 +71,16 @@ public interface BeckmanBeamMapper {
             "t2.TIRE_PRESSURE as tirePressure, " +
             "t2.TEST_LENGTH as testLength, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "t2.STATUS as status, " +
+            "t2.REJECT_REASON as rejectReason, " +
+            "t2.NEXT_HANDLER as nextHandler, " +
+            "t2.CREATE_BY as createBy, " +
+            "t2.CREATE_TIME as createTime, " +
+            "t2.UPDATE_BY as updateBy, " +
+            "t2.UPDATE_TIME as updateTime, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
             "t1.CLIENT_DATE as commissionDate, " +
@@ -67,14 +96,22 @@ public interface BeckmanBeamMapper {
             "FROM T_BECKMAN_BEAM t2 " +
             "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
-    BeckmanBeam selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
+    List<BeckmanBeam> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO T_BECKMAN_BEAM (" +
             "ID, ENTRUSTMENT_ID, SUBGRADE_TYPE, DEFLECTOMETER_TYPE, AXLE_WEIGHT, " +
-            "TIRE_PRESSURE, TEST_LENGTH, DATA_JSON) " +
+            "TIRE_PRESSURE, TEST_LENGTH, DATA_JSON, " +
+            "TESTER, REVIEWER, APPROVER, " +
+            "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "STATUS, REJECT_REASON, NEXT_HANDLER, " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id}, #{entrustmentId}, #{subgradeType}, #{deflectometerType}, #{axleWeight}, " +
-            "#{tirePressure}, #{testLength}, #{dataJson})")
+            "#{tirePressure}, #{testLength}, #{dataJson}, " +
+            "#{tester}, #{reviewer}, #{approver}, " +
+            "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
+            "#{status}, #{rejectReason}, #{nextHandler}, " +
+            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(BeckmanBeam beckmanBeam);
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
@@ -83,7 +120,18 @@ public interface BeckmanBeamMapper {
             "AXLE_WEIGHT = #{axleWeight}, " +
             "TIRE_PRESSURE = #{tirePressure}, " +
             "TEST_LENGTH = #{testLength}, " +
-            "DATA_JSON = #{dataJson} " +
+            "DATA_JSON = #{dataJson}, " +
+            "TESTER = #{tester}, " +
+            "REVIEWER = #{reviewer}, " +
+            "APPROVER = #{approver}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
+            "UPDATE_BY = #{updateBy}, " +
+            "UPDATE_TIME = #{updateTime} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(BeckmanBeam beckmanBeam);
+
+    @Delete("DELETE FROM T_BECKMAN_BEAM WHERE ID = #{id}")
+    int deleteById(@Param("id") String id);
 }

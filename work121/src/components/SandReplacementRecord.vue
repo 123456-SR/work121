@@ -2,11 +2,37 @@
   <div class="sandReplacementRecord-container">
 
 
-    <div class="no-print" style="margin-bottom: 20px;">
-        <button @click="goToHome" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回主页</button>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+    <div class="no-print" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+            <span v-if="!draftMode" style="margin-left: 20px;">
+                <button @click="prevRecord" :disabled="currentIndex <= 0">上一页</button>
+                <span style="margin: 0 10px;">记录 {{ currentIndex + 1 }} / {{ totalRecords }}</span>
+                <button @click="nextRecord" :disabled="currentIndex >= totalRecords - 1">下一页</button>
+                <button @click="addRecord" style="margin-left: 10px;">添加记录</button>
+                <button @click="deleteRecord" style="margin-left: 10px; color: red;">删除当前记录</button>
+            </span>
+        </div>
+        
+        <div style="display: flex; align-items: center;">
+            <div v-if="formData.status !== undefined" style="margin-right: 20px; font-weight: bold; color: #666;">
+                状态: <span :style="{color: getStatusColor(formData.status)}">{{ getStatusText(formData.status) }}</span>
+            </div>
+
+            <!-- Workflow Buttons -->
+            <template v-if="formData.id && !draftMode">
+                <button v-if="formData.status === 0 || formData.status === 2" @click="submitWorkflow('SUBMIT')" style="margin-right: 10px; background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">提交审核</button>
+                
+                <button v-if="formData.status === 1" @click="submitWorkflow('AUDIT_PASS')" style="margin-right: 10px; background-color: #2196F3; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">审核通过</button>
+                <button v-if="formData.status === 1" @click="submitWorkflow('REJECT')" style="margin-right: 10px; background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">打回</button>
+            </template>
+
+            <button v-if="!draftMode" @click="handleSign" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">签字</button>
+            <button v-if="!draftMode" @click="printDocument" style="margin-left: 10px;">打印此单</button>
+            <button v-if="!draftMode" @click="generatePdf" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
+            <button v-if="!draftMode" @click="previewPdf" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+            <button @click="submitForm" style="margin-left: 10px; background-color: #ffc107; color: #212529; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">保存</button>
+        </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -157,9 +183,16 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" v-model="formData.approver"   name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" v-model="formData.reviewer"   name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>试验：<input type="text" v-model="formData.tester"   name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
+
+        <span style="position: relative;">
+            审核：<input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100px; border-bottom: 1px solid black;" readonly>
+        </span>
+        <span style="position: relative;">
+            试验：<input type="text" v-model="formData.tester" name="tester" style="width: 100px; border-bottom: 1px solid black;">
+            <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.testerSignature" style="width: 80px; height: auto;" />
+            </div>
+        </span>
     </div>
 
     </form>
@@ -170,14 +203,39 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject } from 'vue'
+import { reactive, ref, onMounted, inject, computed } from 'vue'
+import axios from 'axios'
 
 // 注入导航方法
 const navigateTo = inject('navigateTo')
 
+const props = defineProps({
+  id: {
+    type: String,
+    default: null
+  },
+  wtNum: {
+    type: String,
+    default: null
+  },
+  draftMode: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const draftMode = computed(() => props.draftMode)
+
 const pdfForm = ref(null)
 
+// Multi-record support
+const records = ref([])
+const currentIndex = ref(0)
+const totalRecords = computed(() => records.value.length)
+
 const formData = reactive({
+  id: '',
+  entrustmentId: '',
   projectName: '',
   testDate: '',
   unifiedNumber: '',
@@ -189,46 +247,435 @@ const formData = reactive({
   equipment: '',
   testCategory: '',
   designCompaction: '',
-  remarks: '',
-  approver: '',
   reviewer: '',
   tester: '',
+  remarks: '',
+  reviewerSignature: '',
+  testerSignature: '',
+  status: 0
 })
+
+// Status Text Helper
+const getStatusText = (status) => {
+    switch(status) {
+        case 0: return '草稿'
+        case 1: return '待审核'
+        case 2: return '已打回'
+        case 3: return '待签字'
+        case 4: return '待批准'
+        case 5: return '已通过'
+        default: return '未知'
+    }
+}
+
+const getStatusColor = (status) => {
+    switch(status) {
+        case 0: return '#9E9E9E' // Grey
+        case 1: return '#2196F3' // Blue
+        case 2: return '#F44336' // Red
+        case 3: return '#FF9800' // Orange
+        case 4: return '#9C27B0' // Purple
+        case 5: return '#4CAF50' // Green
+        default: return '#000000'
+    }
+}
+
+// Workflow Action Handler
+const submitWorkflow = async (action) => {
+    if (!formData.id) {
+        alert('请先保存记录')
+        return
+    }
+    
+    // Get current user
+    const user = JSON.parse(localStorage.getItem('userInfo'))
+    if (!user || !user.username) {
+        alert('请先登录')
+        return
+    }
+
+    let signatureData = null
+    
+    // Prepare signature based on action
+    if (action === 'SUBMIT') {
+        if (!formData.testerSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.testerSignature
+    }
+
+
+    const request = {
+        tableType: 'SAND_REPLACEMENT',
+        recordId: formData.id,
+        action: action,
+        userAccount: user.username,
+        signatureData: signatureData,
+        nextHandler: ''
+    }
+
+    if (action === 'REJECT') {
+        const reason = prompt('请输入打回原因:')
+        if (!reason) return
+        request.rejectReason = reason
+    }
+
+    try {
+        const response = await axios.post('/api/workflow/handle', request)
+        if (response.data.success) {
+            alert('操作成功')
+            // Reload data to reflect status change
+            loadData(formData.entrustmentId || props.id)
+        } else {
+            alert('操作失败: ' + response.data.message)
+        }
+    } catch (e) {
+        console.error('Workflow error', e)
+        alert('操作异常')
+    }
+}
+
+// Initialize dynamic fields
+const initDynamicFields = () => {
+  for (let i = 0; i < 16; i++) {
+    formData[`totalSandMass_${i}`] = ''
+    formData[`location_${i}`] = ''
+    formData[`boxMass_${i}`] = ''
+    formData[`avgDryDensity_${i}`] = ''
+    formData[`pitVolume_${i}`] = ''
+    formData[`compaction_${i}`] = ''
+    formData[`moistureContent_${i}`] = ''
+    formData[`boxNo_${i}`] = ''
+    formData[`pitSandMass_${i}`] = ''
+    formData[`wetDensity_${i}`] = ''
+    formData[`avgMoisture_${i}`] = ''
+    formData[`dryDensity_${i}`] = ''
+    formData[`coneSandMass_${i}`] = ''
+    formData[`boxWetMass_${i}`] = ''
+    formData[`remainingSandMass_${i}`] = ''
+    formData[`boxDryMass_${i}`] = ''
+    formData[`sampleMass_${i}`] = ''
+  }
+}
+initDynamicFields()
+
+const mapRecordToFormData = (record) => {
+  // Clear dynamic fields first
+  initDynamicFields()
+
+  formData.id = record.id || ''
+  formData.entrustmentId = record.entrustmentId || props.id
+  
+  // Signatures
+  formData.reviewerSignature = record.reviewSignaturePhoto || ''
+  formData.testerSignature = record.inspectSignaturePhoto || ''
+  
+  // Names
+  formData.reviewer = record.reviewer || ''
+  formData.tester = record.tester || ''
+
+  // Map fields from BusinessEntity/Entrustment (Always map these first as defaults)
+  if (record.projectName) formData.projectName = record.projectName
+  if (record.wtNum) formData.unifiedNumber = record.wtNum
+  if (record.commissionDate) formData.testDate = record.commissionDate
+  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
+  if (record.clientUnit) formData.entrustingUnit = record.clientUnit
+  if (record.constructionPart) formData.constructionPart = record.constructionPart
+  if (record.testCategory) formData.testCategory = record.testCategory
+  if (record.equipment) formData.equipment = record.equipment
+  if (record.testBasis) formData.standard = record.testBasis
+
+  if (record.dataJson) {
+    try {
+      const parsed = JSON.parse(record.dataJson)
+      Object.keys(parsed).forEach(key => {
+        formData[key] = parsed[key]
+      })
+      // Specific fields mapping if needed
+      if (parsed.projectName) formData.projectName = parsed.projectName
+      if (parsed.unifiedNumber) formData.unifiedNumber = parsed.unifiedNumber
+      if (parsed.testDate) formData.testDate = parsed.testDate
+      if (parsed.standard) formData.standard = parsed.standard
+      if (parsed.equipment) formData.equipment = parsed.equipment
+      if (parsed.testCategory) formData.testCategory = parsed.testCategory
+    } catch (e) {
+      console.error('JSON parse error', e)
+    }
+  }
+  
+  if (record.status !== undefined) {
+      formData.status = record.status
+  } else {
+      formData.status = 0
+  }
+}
+
+const saveCurrentRecordState = () => {
+    if (records.value.length > 0 && currentIndex.value >= 0 && currentIndex.value < records.value.length) {
+        const current = records.value[currentIndex.value]
+        current.dataJson = JSON.stringify(formData)
+        current.reviewer = formData.reviewer
+        current.tester = formData.tester
+        current.reviewSignaturePhoto = formData.reviewerSignature
+        current.inspectSignaturePhoto = formData.testerSignature
+    }
+}
+
+const prevRecord = () => {
+    if (currentIndex.value > 0) {
+        saveCurrentRecordState()
+        currentIndex.value--
+        mapRecordToFormData(records.value[currentIndex.value])
+    }
+}
+
+const nextRecord = () => {
+    if (currentIndex.value < records.value.length - 1) {
+        saveCurrentRecordState()
+        currentIndex.value++
+        mapRecordToFormData(records.value[currentIndex.value])
+    }
+}
+
+const addRecord = async () => {
+    saveCurrentRecordState()
+    
+    // Fetch Entrustment Info if available
+    let entrustmentData = {}
+    const wtNum = formData.unifiedNumber || props.wtNum
+    if (wtNum) {
+        try {
+            const res = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(wtNum)}`)
+            if (res.data.success && res.data.data) {
+                entrustmentData = res.data.data
+            }
+        } catch (e) {
+            console.error('Failed to fetch entrustment info', e)
+        }
+    }
+
+    let newRecord = {
+        id: null,
+        entrustmentId: wtNum,
+        projectName: entrustmentData.projectName || '',
+        unifiedNumber: wtNum || '',
+        testDate: '',
+        standard: '',
+        equipment: '',
+        testCategory: entrustmentData.testCategory || '',
+        tester: '',
+        reviewer: '',
+    }
+    
+    // If we have previous records, copy some fields
+    if (records.value.length > 0) {
+        const last = records.value[records.value.length - 1]
+        let lastData = {}
+        try { lastData = JSON.parse(last.dataJson || '{}') } catch(e){}
+        
+        newRecord.projectName = lastData.projectName || last.projectName || newRecord.projectName
+        newRecord.unifiedNumber = lastData.unifiedNumber || last.wtNum || newRecord.unifiedNumber
+        newRecord.testDate = lastData.testDate || ''
+        newRecord.standard = lastData.standard || ''
+        newRecord.equipment = lastData.equipment || ''
+        newRecord.testCategory = lastData.testCategory || last.testCategory || newRecord.testCategory
+        
+        newRecord.tester = last.tester || ''
+        newRecord.reviewer = last.reviewer || ''
+    }
+
+    records.value.push(newRecord)
+    currentIndex.value = records.value.length - 1
+    mapRecordToFormData(newRecord)
+}
+
+const deleteRecord = async () => {
+    if (records.value.length <= 1) {
+        alert('至少保留一条记录')
+        return
+    }
+    if (!confirm('确定要删除当前记录吗？')) return
+
+    const current = records.value[currentIndex.value]
+    if (current.id) {
+        try {
+            const res = await axios.post('/api/sand-replacement/delete', { id: current.id })
+            if (!res.data.success) {
+                alert('删除失败: ' + res.data.message)
+                return
+            }
+        } catch (e) {
+            console.error('Delete error', e)
+            alert('删除出错')
+            return
+        }
+    }
+    
+    records.value.splice(currentIndex.value, 1)
+    if (records.value.length === 0) {
+        await addRecord()
+    } else {
+        if (currentIndex.value >= records.value.length) {
+            currentIndex.value = records.value.length - 1
+        }
+        mapRecordToFormData(records.value[currentIndex.value])
+    }
+}
 
 onMounted(() => {
-
-  // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
-    formData['totalSandMass_' + i_idx] = ''
-    formData['location_' + i_idx] = ''
-    formData['boxMass_' + i_idx] = ''
-    formData['avgDryDensity_' + i_idx] = ''
-    formData['pitVolume_' + i_idx] = ''
-    formData['compaction_' + i_idx] = ''
-    formData['moistureContent_' + i_idx] = ''
-    formData['boxNo_' + i_idx] = ''
-    formData['pitSandMass_' + i_idx] = ''
-    formData['wetDensity_' + i_idx] = ''
-    formData['avgMoisture_' + i_idx] = ''
-    formData['dryDensity_' + i_idx] = ''
-    formData['coneSandMass_' + i_idx] = ''
-    formData['boxWetMass_' + i_idx] = ''
-    formData['remainingSandMass_' + i_idx] = ''
-    formData['boxDryMass_' + i_idx] = ''
-    formData['sampleMass_' + i_idx] = ''
+  // initDynamicFields is called inside mapRecordToFormData, but we can call it here too if needed
+  // initDynamicFields()
+  
+  // Get entrustment ID (wtNum) from props or URL
+  let wtNum = props.wtNum
+  if (!wtNum) {
+      const urlParams = new URLSearchParams(window.location.search)
+      wtNum = urlParams.get('wtNum') || urlParams.get('id') // Fallback to id if wtNum missing
   }
 
+  if (wtNum) {
+      formData.entrustmentId = wtNum
+      formData.unifiedNumber = wtNum
+      loadData(wtNum)
+  } else if (props.id) {
+      // If only id is provided (legacy or direct link), try using it as wtNum
+      formData.entrustmentId = props.id
+      formData.unifiedNumber = props.id
+      loadData(props.id)
+  }
 })
+
+// 加载数据
+const loadData = async (entrustmentId) => {
+  try {
+    const response = await axios.get(`/api/sand-replacement/get-by-entrustment-id`, {
+        params: { entrustmentId: entrustmentId }
+    })
+    
+    if (response.data.success) {
+        if (response.data.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+            records.value = response.data.data
+            
+             // Find record by ID if props.id is provided and it's not the entrustmentId
+             let foundIndex = 0
+             if (props.id && props.id !== entrustmentId) {
+                   const idx = records.value.findIndex(r => r.id === props.id)
+                   if (idx !== -1) foundIndex = idx
+             }
+             currentIndex.value = foundIndex
+            mapRecordToFormData(records.value[foundIndex])
+        } else {
+            // Check if it returned a single object (legacy support or API behavior check)
+            if (response.data.data && !Array.isArray(response.data.data) && response.data.data.id) {
+                 records.value = [response.data.data]
+                 currentIndex.value = 0
+                 mapRecordToFormData(records.value[0])
+            } else {
+                // No records
+                records.value = []
+                await addRecord()
+            }
+        }
+    } else {
+        records.value = []
+        await addRecord()
+    }
+  } catch (error) {
+    console.error('Load error', error)
+    records.value = []
+    await addRecord()
+  }
+}
+
+const submitForm = async () => {
+    try {
+        const dataToSave = {
+            id: formData.id,
+            entrustmentId: formData.entrustmentId || props.id,
+            dataJson: JSON.stringify(formData),
+            approveSignaturePhoto: formData.approverSignature,
+            reviewSignaturePhoto: formData.reviewerSignature,
+            inspectSignaturePhoto: formData.testerSignature,
+            tester: formData.tester,
+            reviewer: formData.reviewer,
+            approver: formData.approver,
+            
+            // Map entity fields
+            soilType: formData.soilType, // ensure this exists in formData if used
+            // other fields...
+        }
+        
+        const response = await axios.post('/api/sand-replacement/save', dataToSave)
+        if (response.data.success) {
+            alert('保存成功')
+            if (response.data.data) {
+                const saved = response.data.data
+                records.value[currentIndex.value] = saved
+                mapRecordToFormData(saved)
+            }
+        } else {
+            alert('保存失败: ' + response.data.message)
+        }
+    } catch (e) {
+        console.error('Save error', e)
+        alert('保存失败')
+    }
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentName = user.fullName || user.username
+
+      if (formData.tester === currentName) {
+        formData.testerSignature = imgSrc
+        signed = true
+      }
+
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
+}
 
 const printDocument = () => {
   window.print()
 }
 
-// 返回主页（目录列表）
-const goToHome = () => {
+// 返回列表
+const goToList = () => {
   if (navigateTo) {
-    navigateTo('DirectoryList');
+    navigateTo('SandReplacementRecordList')
   }
 }
 

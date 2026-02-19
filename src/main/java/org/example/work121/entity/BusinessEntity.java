@@ -92,8 +92,94 @@ public class BusinessEntity extends BaseEntity {
     /** 计算人 */
     private String calculator;
 
+    /** 填写人/记录人 */
+    private String filler;
+
+    /** 记录表检验人 */
+    private String recordTester;
+
+    /** 记录表审核人 */
+    private String recordReviewer;
+
+    /** 记录表审核人签名 */
+    private String recordReviewSign;
+
+    /** 承接人签名 (For Entrustment) */
+    private String wtManSign;
+
+    /** 委托单审核人 */
+    private String wtReviewer;
+
+    /** 委托单审核人签名 */
+    private String wtReviewSign;
+
     /** 检测方法 */
     private String testMethod;
+
+    /** 
+     * 流程状态 
+     * 0: 草稿/未提交
+     * 1: 待审核
+     * 2: 已退回
+     * 3: 审核通过/待签字
+     * 4: 已签字/待批准
+     * 5: 已批准/完成
+     */
+    private Integer status;
+
+    /** 打回原因 */
+    private String rejectReason;
+
+    /** 下一步处理人（填表人/签字人/审核人/批准人） */
+    private String nextHandler;
+
+    /** 检测人/填表人签名照片 */
+    private String inspectSignaturePhoto;
+
+    /** 复核人/审核人签名照片 */
+    private String reviewSignaturePhoto;
+
+    /** 批准人签名照片 */
+    private String approveSignaturePhoto;
+
+    // ================== 人员真实姓名显示字段 ==================
+    /** 检测人姓名 */
+    private String testerName;
+    /** 复核人姓名 */
+    private String reviewerName;
+    /** 批准人姓名 */
+    private String approverName;
+    /** 创建人姓名 */
+    private String createByName;
+    /** 更新人姓名 */
+    private String updateByName;
+    /** 登记人真实姓名 (用于前端显示) */
+    private String clientRegRealName;
+
+
+    public String getInspectSignaturePhoto() {
+        return inspectSignaturePhoto;
+    }
+
+    public void setInspectSignaturePhoto(String inspectSignaturePhoto) {
+        this.inspectSignaturePhoto = inspectSignaturePhoto;
+    }
+
+    public String getReviewSignaturePhoto() {
+        return reviewSignaturePhoto;
+    }
+
+    public void setReviewSignaturePhoto(String reviewSignaturePhoto) {
+        this.reviewSignaturePhoto = reviewSignaturePhoto;
+    }
+
+    public String getApproveSignaturePhoto() {
+        return approveSignaturePhoto;
+    }
+
+    public void setApproveSignaturePhoto(String approveSignaturePhoto) {
+        this.approveSignaturePhoto = approveSignaturePhoto;
+    }
 
     public String getWtNum() {
         return wtNum;
@@ -223,6 +309,30 @@ public class BusinessEntity extends BaseEntity {
         this.projectArea = projectArea;
     }
 
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
+    }
+
+    public String getNextHandler() {
+        return nextHandler;
+    }
+
+    public void setNextHandler(String nextHandler) {
+        this.nextHandler = nextHandler;
+    }
+
     public String getWitnessUnit() {
         return witnessUnit;
     }
@@ -319,6 +429,62 @@ public class BusinessEntity extends BaseEntity {
         this.calculator = calculator;
     }
 
+    public String getFiller() {
+        return filler;
+    }
+
+    public void setFiller(String filler) {
+        this.filler = filler;
+    }
+
+    public String getRecordTester() {
+        return recordTester;
+    }
+
+    public void setRecordTester(String recordTester) {
+        this.recordTester = recordTester;
+    }
+
+    public String getRecordReviewer() {
+        return recordReviewer;
+    }
+
+    public void setRecordReviewer(String recordReviewer) {
+        this.recordReviewer = recordReviewer;
+    }
+
+    public String getRecordReviewSign() {
+        return recordReviewSign;
+    }
+
+    public void setRecordReviewSign(String recordReviewSign) {
+        this.recordReviewSign = recordReviewSign;
+    }
+
+    public String getWtManSign() {
+        return wtManSign;
+    }
+
+    public void setWtManSign(String wtManSign) {
+        this.wtManSign = wtManSign;
+    }
+
+    public String getWtReviewer() {
+        return wtReviewer;
+    }
+
+    public void setWtReviewer(String wtReviewer) {
+        this.wtReviewer = wtReviewer;
+    }
+
+    public String getWtReviewSign() {
+        return wtReviewSign;
+    }
+
+    public void setWtReviewSign(String wtReviewSign) {
+        this.wtReviewSign = wtReviewSign;
+    }
+
     public String getTestMethod() {
         return testMethod;
     }
@@ -326,4 +492,23 @@ public class BusinessEntity extends BaseEntity {
     public void setTestMethod(String testMethod) {
         this.testMethod = testMethod;
     }
+
+    // ================== 人员真实姓名 getter/setter ==================
+    public String getTesterName() { return testerName; }
+    public void setTesterName(String testerName) { this.testerName = testerName; }
+
+    public String getReviewerName() { return reviewerName; }
+    public void setReviewerName(String reviewerName) { this.reviewerName = reviewerName; }
+
+    public String getApproverName() { return approverName; }
+    public void setApproverName(String approverName) { this.approverName = approverName; }
+
+    public String getCreateByName() { return createByName; }
+    public void setCreateByName(String createByName) { this.createByName = createByName; }
+
+    public String getUpdateByName() { return updateByName; }
+    public void setUpdateByName(String updateByName) { this.updateByName = updateByName; }
+
+    public String getClientRegRealName() { return clientRegRealName; }
+    public void setClientRegRealName(String clientRegRealName) { this.clientRegRealName = clientRegRealName; }
 }

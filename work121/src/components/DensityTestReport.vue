@@ -3,10 +3,32 @@
 
 
     <div class="no-print" style="margin-bottom: 20px;">
-        <a href="/" style="text-decoration: none; color: blue;">&lt; 返回主页</a>
-        <button @click="printDocument" style="float: right; margin-left: 10px;">打印此单</button>
-        <button @click="generatePdf" style="float: right; margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
-        <button @click="previewPdf" style="float: right; margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        <button @click="goToList" style="text-decoration: none; color: blue; background: none; border: none; cursor: pointer; padding: 0;">&lt; 返回列表</button>
+        
+        <!-- Status Badge -->
+        <span v-if="formData.status !== undefined" :style="{ backgroundColor: getStatusColor(formData.status), color: 'white', padding: '3px 8px', borderRadius: '3px', marginLeft: '10px', fontSize: '12px' }">
+          {{ getStatusText(formData.status) }}
+        </span>
+
+        <div style="float: right;">
+          <!-- Workflow Buttons -->
+          <button v-if="formData.status === 0 || formData.status === 2" @click="saveData" style="margin-left: 10px;">保存</button>
+          <button v-if="formData.status === 0 || formData.status === 2" @click="handleSign" style="margin-left: 10px;">签字</button>
+          <button v-if="formData.status === 0 || formData.status === 2" @click="submitWorkflow('SUBMIT')" style="margin-left: 10px; background-color: #ffc107; color: black;">提交</button>
+          
+          <button v-if="formData.status === 1" @click="submitWorkflow('AUDIT_PASS')" style="margin-left: 10px; background-color: #17a2b8; color: white;">审核通过</button>
+          <button v-if="formData.status === 1" @click="submitWorkflow('REJECT')" style="margin-left: 10px; background-color: #dc3545; color: white;">退回</button>
+          
+          <button v-if="formData.status === 3" @click="handleSign" style="margin-left: 10px;">签字</button>
+          <button v-if="formData.status === 3" @click="submitWorkflow('SIGN_REVIEW')" style="margin-left: 10px; background-color: #28a745; color: white;">复核签字</button>
+          
+          <button v-if="formData.status === 4" @click="handleSign" style="margin-left: 10px;">签字</button>
+          <button v-if="formData.status === 4" @click="submitWorkflow('SIGN_APPROVE')" style="margin-left: 10px; background-color: #28a745; color: white;">批准签字</button>
+
+          <button @click="printDocument" style="margin-left: 10px;">打印此单</button>
+          <button @click="generatePdf" style="margin-left: 10px; background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">下载PDF</button>
+          <button @click="previewPdf" style="margin-left: 10px; background-color: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">预览PDF</button>
+        </div>
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
@@ -105,9 +127,27 @@
     </table>
 
     <div class="footer-info">
-        <span>批准：<input type="text" v-model="formData.approver"   name="approver" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>审核：<input type="text" v-model="formData.reviewer"   name="reviewer" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>检测：<input type="text" v-model="formData.tester"   name="tester" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span style="position: relative;">
+          批准：
+          <input type="text" v-model="formData.approver" style="width: 100px; border-bottom: 1px solid black;">
+          <div v-if="formData.approverSignature" class="signature-overlay" style="left: 40px; top: -20px;">
+            <img :src="formData.approverSignature" alt="批准人签名" />
+          </div>
+        </span>
+        <span style="position: relative;">
+          审核：
+          <input type="text" v-model="formData.reviewer" style="width: 100px; border-bottom: 1px solid black;">
+          <div v-if="formData.reviewerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
+            <img :src="formData.reviewerSignature" alt="审核人签名" />
+          </div>
+        </span>
+        <span style="position: relative;">
+          检测：
+          <input type="text" v-model="formData.tester" style="width: 100px; border-bottom: 1px solid black;">
+          <div v-if="formData.testerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
+            <img :src="formData.testerSignature" alt="检测人签名" />
+          </div>
+        </span>
     </div>
 
     <div class="statement">
@@ -132,11 +172,30 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import axios from 'axios'
+
+const props = defineProps({
+  id: {
+    type: String,
+    required: false
+  }
+})
+
+const navigateTo = inject('navigateTo')
+
+const goToList = () => {
+  if (navigateTo) {
+    navigateTo('DensityTestReportList')
+  }
+}
 
 const pdfForm = ref(null)
 
 const formData = reactive({
+  id: '',
+  entrustmentId: '',
+  status: 0,
   client: '',
   unifiedNumber: '',
   projectName: '',
@@ -161,13 +220,104 @@ const formData = reactive({
   companyAddress: '',
   companyPhone: '',
   remarks: '附原位密度检测结果。\n见证人：\n见证单位：',
+  reviewerSignature: '',
+  testerSignature: '',
+  approverSignature: ''
 })
 
-onMounted(() => {
+const getStatusText = (status) => {
+  const s = parseInt(status)
+  switch(s) {
+    case 0: return '草稿'
+    case 1: return '待审核'
+    case 2: return '已打回'
+    case 3: return '待签字'
+    case 4: return '待批准'
+    case 5: return '已通过'
+    default: return '未知'
+  }
+}
 
+const getStatusColor = (status) => {
+  const s = parseInt(status)
+  switch(s) {
+    case 0: return '#6c757d' // secondary
+    case 1: return '#007bff' // primary
+    case 2: return '#dc3545' // danger
+    case 3: return '#ffc107' // warning
+    case 4: return '#17a2b8' // info
+    case 5: return '#28a745' // success
+    default: return '#6c757d'
+  }
+}
+
+const submitWorkflow = async (action) => {
+  if (!formData.id) {
+    alert('请先保存记录')
+    return
+  }
+
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  let signatureData = null
+
+  if (action === 'SUBMIT') {
+    if (!formData.testerSignature) {
+      alert('请先进行检测人签字')
+      return
+    }
+    signatureData = formData.testerSignature
+  } else if (action === 'SIGN_REVIEW') {
+    if (!formData.reviewerSignature) {
+      alert('请先进行复核人签字')
+      return
+    }
+    signatureData = formData.reviewerSignature
+  } else if (action === 'SIGN_APPROVE') {
+    if (!formData.approverSignature) {
+      alert('请先进行批准人签字')
+      return
+    }
+    signatureData = formData.approverSignature
+  }
+
+  const request = {
+    tableType: 'DENSITY_TEST', // Maps to handleDensityTest
+    recordId: formData.id, // Assuming DensityTestReport ID matches DensityTest ID or is handled
+    action: action,
+    userAccount: user.username,
+    signatureData: signatureData,
+    nextHandler: '' // Optional
+  }
+
+  if (action === 'REJECT') {
+    const reason = prompt('请输入打回原因:')
+    if (!reason) return
+    request.rejectReason = reason
+  }
+
+  try {
+    const response = await axios.post('/api/workflow/handle', request)
+    if (response.data.success) {
+      alert('操作成功')
+      loadData()
+    } else {
+      alert('操作失败: ' + response.data.message)
+    }
+  } catch (e) {
+    console.error('Workflow error', e)
+    alert('操作异常')
+  }
+}
+
+onMounted(() => {
   // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
+    // Please verify the loop count match the template
+    for (let i_idx = 0; i_idx < 8; i_idx++) {
     formData['sampleId_' + i_idx] = ''
     formData['location_' + i_idx] = ''
     formData['compaction_' + i_idx] = ''
@@ -180,7 +330,175 @@ onMounted(() => {
     formData['dryDensity_' + i_idx] = ''
   }
 
+  loadData()
 })
+
+const loadData = async () => {
+  if (props.id) {
+    try {
+      const response = await axios.get('/api/density-test/report/get-by-entrustment-id', {
+        params: { entrustmentId: props.id }
+      })
+
+      if (response.data.success && response.data.data) {
+        const data = response.data.data
+        if (data.dataJson) {
+          const parsed = JSON.parse(data.dataJson)
+          Object.assign(formData, parsed)
+        }
+        formData.id = data.id
+        formData.status = data.status !== undefined ? data.status : 0
+        formData.entrustmentId = data.entrustmentId
+        formData.reviewerSignature = data.reviewSignaturePhoto || ''
+        formData.testerSignature = data.inspectSignaturePhoto || ''
+        formData.approverSignature = data.approveSignaturePhoto || ''
+      } else {
+        const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
+          params: { unifiedNumber: props.id }
+        })
+        if (entrustmentResponse.data.success) {
+          const eData = entrustmentResponse.data.data
+          formData.entrustmentId = props.id
+          formData.unifiedNumber = eData.wtNum || ''
+          formData.projectName = eData.projectName || ''
+          formData.client = eData.clientUnit || ''
+          formData.commissionDate = eData.commissionDate || ''
+          formData.constructionPart = eData.constructionPart || ''
+          formData.testDate = new Date().toISOString().split('T')[0]
+          if (eData.tester) formData.tester = eData.tester
+          if (eData.reviewer) formData.reviewer = eData.reviewer
+          if (eData.approver) formData.approver = eData.approver
+
+          try {
+            const resultResponse = await axios.get('/api/density-test/get-by-entrustment-id', {
+              params: { entrustmentId: props.id }
+            })
+            if (resultResponse.data.success && resultResponse.data.data && resultResponse.data.data.length > 0) {
+              const record = resultResponse.data.data[0]
+              if (record.dataJson) {
+                try {
+                  const parsed = JSON.parse(record.dataJson)
+                  const summaryKeys = ['maxDryDensity', 'optimumMoisture', 'minDryDensity', 'designIndex', 'testResult']
+                  summaryKeys.forEach(k => {
+                    if (parsed[k] !== undefined) formData[k] = parsed[k]
+                  })
+                  for (let i = 0; i < 8; i++) {
+                    const prefixes = [
+                      'sampleId_',
+                      'location_',
+                      'date_',
+                      'wetDensity_',
+                      'dryDensity_',
+                      'moisture_',
+                      'compaction_',
+                      'wetDensity2_',
+                      'dryDensity2_',
+                      'moisture2_'
+                    ]
+                    prefixes.forEach(prefix => {
+                      const key = prefix + i
+                      if (parsed[key] !== undefined) formData[key] = parsed[key]
+                    })
+                  }
+                } catch (e) {
+                  console.error('density report auto-fill parse error', e)
+                }
+              }
+            }
+          } catch (e) {
+            console.error('density report auto-fill error', e)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    }
+  }
+}
+
+const saveData = async () => {
+  try {
+    const dataToSave = {
+      id: formData.id,
+      entrustmentId: formData.entrustmentId || props.id,
+      dataJson: JSON.stringify(formData),
+      reviewSignaturePhoto: formData.reviewerSignature,
+      inspectSignaturePhoto: formData.testerSignature,
+      approveSignaturePhoto: formData.approverSignature
+    }
+    
+    const response = await axios.post('/api/density-test/report/save', dataToSave)
+    if (response.data.success) {
+      alert('保存成功')
+      if (!formData.id && response.data.data && response.data.data.id) {
+           formData.id = response.data.data.id
+      }
+    } else {
+      alert('保存失败: ' + response.data.message)
+    }
+  } catch (error) {
+    console.error('Save error:', error)
+    alert('保存失败')
+  }
+}
+
+const handleSign = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const response = await axios.post('/api/signature/get', {
+      userAccount: user.username
+    })
+
+    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+      const signatureBlob = response.data.data.signatureBlob
+      let imgSrc = ''
+      
+      if (typeof signatureBlob === 'string') {
+        imgSrc = `data:image/png;base64,${signatureBlob}`
+      } else {
+        alert('签名数据格式不支持')
+        return
+      }
+
+      let signed = false
+      const currentName = user.fullName || user.username
+
+      // Match Tester
+      if (formData.tester === currentName) {
+        formData.testerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Reviewer
+      if (formData.reviewer === currentName) {
+        formData.reviewerSignature = imgSrc
+        signed = true
+      }
+
+      // Match Approver
+      if (formData.approver === currentName) {
+        formData.approverSignature = imgSrc
+        signed = true
+      }
+      
+      if (signed) {
+        alert('签名成功')
+      } else {
+        alert(`当前用户(${currentName})与表单中的检测/审核/批准人员不匹配，无法签名`)
+      }
+    } else {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+    }
+  } catch (error) {
+    console.error('Sign error:', error)
+    alert('签名失败')
+  }
+}
 
 const printDocument = () => {
   window.print()
@@ -204,6 +522,17 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
+/* Add signature overlay style */
+.signature-overlay {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+.signature-overlay img {
+  width: 80px;
+  height: auto;
+  opacity: 0.8;
+}
 
         .densityTestReport-container {
             font-family: 'SimSun', 'Songti SC', serif;

@@ -41,4 +41,17 @@ public interface SimpleDirectoryService {
      * @return 是否删除成功
      */
     boolean deleteDirectory(String id);
+
+    /**
+     * 根据目录名称（统一编号）获取目录
+     * @param dirName 目录名称
+     * @return 目录实体
+     */
+    SimpleDirectory getDirectoryByDirName(String dirName);
+
+    /**
+     * 根据统一编号同步委托单数据到其他表单
+     * @param wtNum 统一编号
+     */
+    void syncEntrustmentDataByWtNum(String wtNum);
 }

@@ -122,4 +122,111 @@ public class JcCoreWtInfo extends Entrustment {
     public void setYwdepartment(String ywdepartment) {
         setTestCategory(ywdepartment);
     }
+
+    /** 报告发送方式 (1,2,3) */
+    private String reportSendMode;
+
+    /** 交付方式 (1,2,3) */
+    private String deliveryMode;
+
+    /** 交付日期 (YYYY-MM-DD) */
+    private String deliveryDate;
+
+    /** 委托单位地址及电话 */
+    private String clientAddressPhone;
+
+    /** 样品历史及概况 */
+    private String sampleHistory;
+
+    /** 样品数量 */
+    private String sampleQuantity;
+
+    /** 代表批量 */
+    private String representativeBatch;
+
+    /** 样品处置方式 (1,2) */
+    private String sampleDisposal;
+
+    /** 检测费用 */
+    private String fee;
+
+    public String getReportSendMode() {
+        return reportSendMode;
+    }
+
+    public void setReportSendMode(String reportSendMode) {
+        this.reportSendMode = reportSendMode;
+    }
+
+    public String getDeliveryMode() {
+        return deliveryMode;
+    }
+
+    public void setDeliveryMode(String deliveryMode) {
+        this.deliveryMode = deliveryMode;
+    }
+
+    public String getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(String deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
+
+    public String getClientAddressPhone() {
+        return clientAddressPhone;
+    }
+
+    public void setClientAddressPhone(String clientAddressPhone) {
+        this.clientAddressPhone = clientAddressPhone;
+    }
+
+    public String getSampleHistory() {
+        return sampleHistory;
+    }
+
+    public void setSampleHistory(String sampleHistory) {
+        this.sampleHistory = sampleHistory;
+    }
+
+    public String getSampleQuantity() {
+        return sampleQuantity;
+    }
+
+    public void setSampleQuantity(String sampleQuantity) {
+        this.sampleQuantity = sampleQuantity;
+    }
+
+    public String getRepresentativeBatch() {
+        return representativeBatch;
+    }
+
+    public void setRepresentativeBatch(String representativeBatch) {
+        this.representativeBatch = representativeBatch;
+    }
+
+    public String getSampleDisposal() {
+        return sampleDisposal;
+    }
+
+    public void setSampleDisposal(String sampleDisposal) {
+        this.sampleDisposal = sampleDisposal;
+    }
+
+    public String getFee() {
+        return fee;
+    }
+
+    public void setFee(String fee) {
+        this.fee = fee;
+    }
+
+    public String getRejectReason() {
+        return getSendBackReason();
+    }
+
+    public void setRejectReason(String rejectReason) {
+        setSendBackReason(rejectReason);
+    }
 }

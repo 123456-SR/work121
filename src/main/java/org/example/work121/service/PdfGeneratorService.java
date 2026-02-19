@@ -419,32 +419,36 @@ public class PdfGeneratorService {
             title.setSpacingAfter(10);
             document.add(title);
 
-            PdfPTable headerTable = new PdfPTable(2);
-            headerTable.setWidthPercentage(100);
-            headerTable.setSpacingBefore(5);
-            headerTable.setSpacingAfter(5);
-            headerTable.setWidths(new float[]{1, 1});
-
-            String entrustingUnit = request.getParameter("entrustingUnit") != null ? request.getParameter("entrustingUnit") : "";
-            String unifiedNumber = request.getParameter("unifiedNumber") != null ? request.getParameter("unifiedNumber") : "";
-
-            PdfPCell cell1 = new PdfPCell(new Paragraph("委托单位：" + entrustingUnit, valueFont));
-            cell1.setBorder(Rectangle.NO_BORDER);
-            cell1.setHorizontalAlignment(Element.ALIGN_LEFT);
-            headerTable.addCell(cell1);
-
-            PdfPCell cell2 = new PdfPCell(new Paragraph("统一编号：" + unifiedNumber, valueFont));
-            cell2.setBorder(Rectangle.NO_BORDER);
-            cell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            headerTable.addCell(cell2);
-
-            document.add(headerTable);
-
             PdfPTable mainTable = new PdfPTable(10);
             mainTable.setWidthPercentage(100);
             mainTable.setSpacingBefore(5);
             mainTable.setSpacingAfter(5);
             mainTable.setWidths(new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+
+            // Add Header Info (Unified Number etc.) into mainTable to allow repetition
+            PdfPTable topHeader = new PdfPTable(2);
+            topHeader.setWidthPercentage(100);
+            topHeader.setWidths(new float[]{1, 1});
+            
+            String entrustingUnit = request.getParameter("entrustingUnit") != null ? request.getParameter("entrustingUnit") : "";
+            String unifiedNumber = request.getParameter("unifiedNumber") != null ? request.getParameter("unifiedNumber") : "";
+
+            PdfPCell topCell1 = new PdfPCell(new Paragraph("委托单位：" + entrustingUnit, valueFont));
+            topCell1.setBorder(Rectangle.NO_BORDER);
+            topCell1.setHorizontalAlignment(Element.ALIGN_LEFT);
+            topHeader.addCell(topCell1);
+
+            PdfPCell topCell2 = new PdfPCell(new Paragraph("统一编号：" + unifiedNumber, valueFont));
+            topCell2.setBorder(Rectangle.NO_BORDER);
+            topCell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            topHeader.addCell(topCell2);
+
+            PdfPCell topRowCell = new PdfPCell(topHeader);
+            topRowCell.setColspan(10);
+            topRowCell.setBorder(Rectangle.NO_BORDER);
+            topRowCell.setPadding(0);
+            topRowCell.setPaddingBottom(5);
+            mainTable.addCell(topRowCell);
 
             String projectName = request.getParameter("projectName") != null ? request.getParameter("projectName") : "";
             String entrustDate = request.getParameter("entrustDate") != null ? request.getParameter("entrustDate") : "";
@@ -499,6 +503,9 @@ public class PdfGeneratorService {
             addCell(mainTable, "1.8m\n锤击数", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "2.1m\n锤击数", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "2.4m\n锤击数", labelFont, Element.ALIGN_CENTER, 1);
+
+            // Set header rows to repeat on new pages (1 top header + 5 info rows + 1 data header = 7 rows)
+            mainTable.setHeaderRows(7);
 
             // Add data rows
             int rowCount = Integer.parseInt(request.getParameter("rowCount") != null ? request.getParameter("rowCount") : "0");

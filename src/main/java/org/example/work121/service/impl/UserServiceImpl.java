@@ -1,6 +1,7 @@
 package org.example.work121.service.impl;
 
 import org.example.work121.entity.User;
+import org.example.work121.mapper.UserMapper;
 import org.example.work121.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.stereotype.Service;
 
@@ -26,31 +26,30 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private UserMapper userMapper;
+
+    @Override
+    public List<User> getAllUsers() {
+        return userMapper.selectAll();
+    }
+
     @Override
     public User getUserByAccount(String userAccount) {
         logger.info("根据用户名查询用户: {}", userAccount);
-        
-        String sql = "SELECT * FROM JZS_USERS WHERE USER_ACCOUNT = ?";
-        
-        try {
-            List<User> users = jdbcTemplate.query(
-                sql,
-                new Object[]{userAccount},
-                new BeanPropertyRowMapper<>(User.class)
-            );
-            
-            if (!users.isEmpty()) {
-                User user = users.get(0);
-                logger.info("查询到用户: {}", user.getUserId());
-                return user;
-            } else {
-                logger.warn("未找到用户: {}", userAccount);
-                return null;
-            }
-        } catch (Exception e) {
-            logger.warn("查询用户出错: {}", userAccount, e);
-            return null;
-        }
+        return userMapper.selectByAccount(userAccount);
+    }
+
+    @Override
+    public List<User> getUserByName(String userName) {
+        logger.info("根据姓名查询用户: {}", userName);
+        return userMapper.selectByName(userName);
+    }
+
+    @Override
+    public User getUserById(String id) {
+        logger.info("根据ID查询用户: {}", id);
+        return userMapper.selectById(id);
     }
 
     @Override
@@ -65,7 +64,18 @@ public class UserServiceImpl implements UserService {
         
         JdbcTemplate tempJdbcTemplate = new JdbcTemplate(dataSource);
         
-        String sql = "SELECT * FROM JZS_USERS WHERE USER_ACCOUNT = ?";
+        // 使用具体的列名以确保映射正确，并模拟userStatus
+        String sql = "SELECT " +
+                "ID as id, " +
+                "USER_ACCOUNT as userAccount, " +
+                "USER_PASS as userPass, " +
+                "USER_NAME as userName, " +
+                "USER_TEL as userTel, " +
+                "USER_EMAIL as userEmail, " +
+                "ORGNIZATION_NAME as orgnizationName, " +
+                "SH_TYPE as shType, " +
+                "'1' as userStatus " +
+                "FROM JZS_USERS WHERE USER_ACCOUNT = ?";
         
         try {
             List<User> users = tempJdbcTemplate.query(
@@ -110,14 +120,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean registerUserInternal(User user, JdbcTemplate template) {
-        String sql = "INSERT INTO JZS_USERS (USER_ID, USER_ACCOUNT, USER_PASS, USER_NAME, USER_STATUS) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO JZS_USERS (ID, USER_ACCOUNT, USER_PASS, USER_NAME, USER_TEL, USER_EMAIL, ORGNIZATION_NAME, SH_TYPE) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         
         try {
             // 如果ID为空，生成一个UUID
             if (user.getUserId() == null || user.getUserId().isEmpty()) {
                 user.setUserId(UUID.randomUUID().toString().replace("-", ""));
             }
-            // 默认状态为1 (启用)
+            // userStatus不再保存到数据库，但保留对象中的逻辑如果需要
             if (user.getUserStatus() == null || user.getUserStatus().isEmpty()) {
                 user.setUserStatus("1");
             }
@@ -127,7 +137,10 @@ public class UserServiceImpl implements UserService {
                 user.getUserAccount(),
                 user.getUserPass(),
                 user.getUserName(),
-                user.getUserStatus()
+                user.getUserTel(),
+                user.getUserEmail(),
+                user.getOrgnizationName(),
+                user.getShType()
             );
             
             return rows > 0;

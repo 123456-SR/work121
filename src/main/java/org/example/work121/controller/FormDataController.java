@@ -13,7 +13,7 @@ import java.util.Map;
 public class FormDataController {
 
     @Autowired
-    private EntrustmentMapper entrustmentMapper;
+    private JcCoreWtInfoMapper jcCoreWtInfoMapper;
 
     @Autowired
     private ReboundMethodRecordMapper reboundMethodRecordMapper;
@@ -55,7 +55,8 @@ public class FormDataController {
             // 根据表单类型查询对应的数据表
             switch (formType) {
                 case "ENTRUSTMENT_LIST":
-                    data = entrustmentMapper.selectById(id);
+                    // Only search in JC_CORE_WT_INFO_EXT (which joins JC_CORE_WT_INFO)
+                    data = jcCoreWtInfoMapper.selectById(id);
                     break;
                 case "REBOUND_METHOD_RECORD":
                     data = reboundMethodRecordMapper.selectById(id);

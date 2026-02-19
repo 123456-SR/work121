@@ -11,6 +11,15 @@ public class BeckmanBeamResult extends BusinessEntity {
     /** 数据JSON */
     private String dataJson;
 
+    /** 复核人签名照片 */
+    private String reviewSignaturePhoto;
+
+    /** 检测人签名照片 */
+    private String inspectSignaturePhoto;
+
+    /** 批准人签名照片 */
+    private String approveSignaturePhoto;
+
     public String getEntrustmentId() {
         return entrustmentId;
     }
@@ -25,5 +34,29 @@ public class BeckmanBeamResult extends BusinessEntity {
 
     public void setDataJson(String dataJson) {
         this.dataJson = dataJson;
+    }
+
+    public String getReviewSignaturePhoto() {
+        return reviewSignaturePhoto;
+    }
+
+    public void setReviewSignaturePhoto(String reviewSignaturePhoto) {
+        this.reviewSignaturePhoto = reviewSignaturePhoto;
+    }
+
+    public String getInspectSignaturePhoto() {
+        return inspectSignaturePhoto;
+    }
+
+    public void setInspectSignaturePhoto(String inspectSignaturePhoto) {
+        this.inspectSignaturePhoto = inspectSignaturePhoto;
+    }
+
+    public String getApproveSignaturePhoto() {
+        return approveSignaturePhoto;
+    }
+
+    public void setApproveSignaturePhoto(String approveSignaturePhoto) {
+        this.approveSignaturePhoto = approveSignaturePhoto;
     }
 }

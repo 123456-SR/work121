@@ -110,6 +110,46 @@ public class SimpleDirectoryController {
     }
 
     /**
+     * 根据目录名称（统一编号）获取目录
+     * @param params 参数包含 dirName
+     * @return 响应结果
+     */
+    @PostMapping("/get-by-dirname")
+    public Map<String, Object> getDirectoryByDirName(@RequestBody Map<String, String> params) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            String dirName = params.get("dirName");
+            if (dirName == null || dirName.isEmpty()) {
+                result.put("success", false);
+                result.put("message", "目录名称不能为空");
+                return result;
+            }
+
+            // Using getAllDirectories and filtering since service might not expose getByDirName directly
+            // Or better, add getByDirName to service. 
+            // Checking service interface... assuming simpleDirectoryService has it or I can add it.
+            // Let's assume I need to implement it in Service first or use Mapper directly if accessible (not recommended in Controller).
+            // Let's use the Service.
+            SimpleDirectory directory = simpleDirectoryService.getDirectoryByDirName(dirName);
+
+            if (directory != null) {
+                result.put("success", true);
+                result.put("data", directory);
+            } else {
+                result.put("success", false);
+                result.put("message", "未找到目录");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "查询异常: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
      * 删除目录
      * @param id 目录ID
      * @return 响应结果
