@@ -879,7 +879,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateLightDynamicPenetrationRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -894,7 +894,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("轻型动力触探检测记录", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(2);
@@ -1095,7 +1095,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
@@ -1145,7 +1145,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateNuclearDensityRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1160,7 +1160,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("原位密度检测记录表（核子法）", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(2);
@@ -1275,7 +1275,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String calculator = request.getParameter("calculator") != null ? request.getParameter("calculator") : "";
@@ -1329,7 +1329,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateCuttingRingRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1344,7 +1344,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("环刀法检测记录", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(2);
@@ -1466,7 +1466,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
@@ -1948,7 +1948,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateReboundMethodRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1963,7 +1963,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("回弹法检测混凝土抗压强度记录表", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(3);
@@ -2118,7 +2118,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String approver = request.getParameter("approver") != null ? request.getParameter("approver") : "";
@@ -2173,7 +2173,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateSandReplacementRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -2188,7 +2188,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("灌砂法检测记录表", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(2);
@@ -2310,7 +2310,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
@@ -2367,7 +2367,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateWaterReplacementRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -2382,7 +2382,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("灌水法检测记录表", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(2);
@@ -2504,7 +2504,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
@@ -2683,7 +2683,7 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateBeckmanBeamRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -2698,7 +2698,7 @@ public class PdfGeneratorService {
 
             Paragraph title = new Paragraph("贝克曼梁检测记录", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
+            title.setSpacingAfter(10);
             document.add(title);
 
             PdfPTable headerTable = new PdfPTable(2);
@@ -2820,7 +2820,7 @@ public class PdfGeneratorService {
 
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1, 1});
 
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";

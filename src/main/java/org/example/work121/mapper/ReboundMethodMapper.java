@@ -94,7 +94,7 @@ public interface ReboundMethodMapper {
             "t1.REMARKS as remarks " +
             "FROM T_REBOUND_METHOD t2 " +
             "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
-            "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
+            "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
     List<ReboundMethod> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Delete("DELETE FROM T_REBOUND_METHOD WHERE ID = #{id}")
@@ -108,69 +108,69 @@ public interface ReboundMethodMapper {
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{structurePart}, #{concreteGrade}, #{moldingDate}, #{age}, " +
-            "#{instrumentModel}, #{calibrationNo}, #{zoneCount}, #{pouringDirection}, " +
-            "#{testAngle}, #{pumpingMethod}, #{pumping}, #{designStrength}, #{carbonationDepth}, " +
-            "#{testResult}, #{tester}, #{reviewer}, #{approver}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
-            "#{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{structurePart,jdbcType=VARCHAR}, #{concreteGrade,jdbcType=VARCHAR}, #{moldingDate,jdbcType=TIMESTAMP}, #{age,jdbcType=VARCHAR}, " +
+            "#{instrumentModel,jdbcType=VARCHAR}, #{calibrationNo,jdbcType=VARCHAR}, #{zoneCount,jdbcType=VARCHAR}, #{pouringDirection,jdbcType=VARCHAR}, " +
+            "#{testAngle,jdbcType=VARCHAR}, #{pumpingMethod,jdbcType=VARCHAR}, #{pumping,jdbcType=VARCHAR}, #{designStrength,jdbcType=VARCHAR}, #{carbonationDepth,jdbcType=VARCHAR}, " +
+            "#{testResult,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(ReboundMethod reboundMethod);
 
     @Update("UPDATE T_REBOUND_METHOD SET " +
-            "STRUCTURE_PART = #{structurePart}, " +
-            "CONCRETE_GRADE = #{concreteGrade}, " +
-            "MOLDING_DATE = #{moldingDate}, " +
-            "AGE = #{age}, " +
-            "INSTRUMENT_MODEL = #{instrumentModel}, " +
-            "CALIBRATION_NO = #{calibrationNo}, " +
-            "ZONE_COUNT = #{zoneCount}, " +
-            "POURING_DIRECTION = #{pouringDirection}, " +
-            "TEST_ANGLE = #{testAngle}, " +
-            "PUMPING_METHOD = #{pumpingMethod}, " +
-            "PUMPING = #{pumping}, " +
-            "DESIGN_STRENGTH = #{designStrength}, " +
-            "CARBONATION_DEPTH = #{carbonationDepth}, " +
-            "TEST_RESULT = #{testResult}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
-            "APPROVER = #{approver}, " +
-            "DATA_JSON = #{dataJson}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "STRUCTURE_PART = #{structurePart,jdbcType=VARCHAR}, " +
+            "CONCRETE_GRADE = #{concreteGrade,jdbcType=VARCHAR}, " +
+            "MOLDING_DATE = #{moldingDate,jdbcType=TIMESTAMP}, " +
+            "AGE = #{age,jdbcType=VARCHAR}, " +
+            "INSTRUMENT_MODEL = #{instrumentModel,jdbcType=VARCHAR}, " +
+            "CALIBRATION_NO = #{calibrationNo,jdbcType=VARCHAR}, " +
+            "ZONE_COUNT = #{zoneCount,jdbcType=VARCHAR}, " +
+            "POURING_DIRECTION = #{pouringDirection,jdbcType=VARCHAR}, " +
+            "TEST_ANGLE = #{testAngle,jdbcType=VARCHAR}, " +
+            "PUMPING_METHOD = #{pumpingMethod,jdbcType=VARCHAR}, " +
+            "PUMPING = #{pumping,jdbcType=VARCHAR}, " +
+            "DESIGN_STRENGTH = #{designStrength,jdbcType=VARCHAR}, " +
+            "CARBONATION_DEPTH = #{carbonationDepth,jdbcType=VARCHAR}, " +
+            "TEST_RESULT = #{testResult,jdbcType=VARCHAR}, " +
+            "TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
     int update(ReboundMethod reboundMethod);
 
     @Update("UPDATE T_REBOUND_METHOD SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "STRUCTURE_PART = #{structurePart}, " +
-            "CONCRETE_GRADE = #{concreteGrade}, " +
-            "MOLDING_DATE = #{moldingDate}, " +
-            "AGE = #{age}, " +
-            "INSTRUMENT_MODEL = #{instrumentModel}, " +
-            "CALIBRATION_NO = #{calibrationNo}, " +
-            "ZONE_COUNT = #{zoneCount}, " +
-            "POURING_DIRECTION = #{pouringDirection}, " +
-            "TEST_ANGLE = #{testAngle}, " +
-            "PUMPING_METHOD = #{pumpingMethod}, " +
-            "PUMPING = #{pumping}, " +
-            "DESIGN_STRENGTH = #{designStrength}, " +
-            "CARBONATION_DEPTH = #{carbonationDepth}, " +
-            "TEST_RESULT = #{testResult}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime}, " +
-            "DATA_JSON = #{dataJson} " +
-            "WHERE ID = #{id}")
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
+            "STRUCTURE_PART = #{structurePart,jdbcType=VARCHAR}, " +
+            "CONCRETE_GRADE = #{concreteGrade,jdbcType=VARCHAR}, " +
+            "MOLDING_DATE = #{moldingDate,jdbcType=TIMESTAMP}, " +
+            "AGE = #{age,jdbcType=VARCHAR}, " +
+            "INSTRUMENT_MODEL = #{instrumentModel,jdbcType=VARCHAR}, " +
+            "CALIBRATION_NO = #{calibrationNo,jdbcType=VARCHAR}, " +
+            "ZONE_COUNT = #{zoneCount,jdbcType=VARCHAR}, " +
+            "POURING_DIRECTION = #{pouringDirection,jdbcType=VARCHAR}, " +
+            "TEST_ANGLE = #{testAngle,jdbcType=VARCHAR}, " +
+            "PUMPING_METHOD = #{pumpingMethod,jdbcType=VARCHAR}, " +
+            "PUMPING = #{pumping,jdbcType=VARCHAR}, " +
+            "DESIGN_STRENGTH = #{designStrength,jdbcType=VARCHAR}, " +
+            "CARBONATION_DEPTH = #{carbonationDepth,jdbcType=VARCHAR}, " +
+            "TEST_RESULT = #{testResult,jdbcType=VARCHAR}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB} " +
+            "WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateById(ReboundMethod reboundMethod);
 }

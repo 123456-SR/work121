@@ -459,6 +459,31 @@ onMounted(() => {
       formData.entrustmentId = props.id
       formData.unifiedNumber = props.id
       loadData(props.id)
+  } else {
+      // No entrustment context (e.g. from list "新建灌水法"): create a new empty record
+      const userInfoStr = localStorage.getItem('userInfo')
+      if (userInfoStr) {
+          try {
+              const userInfo = JSON.parse(userInfoStr)
+              const name = userInfo.userName || userInfo.username || ''
+              formData.reviewer = name
+              formData.tester = name
+          } catch (e) {
+              console.error('Failed to parse userInfo', e)
+          }
+      }
+      
+      const newRecord = {
+          id: '',
+          entrustmentId: '',
+          dataJson: JSON.stringify(formData),
+          reviewSignaturePhoto: '',
+          inspectSignaturePhoto: ''
+      }
+      
+      records.value = [newRecord]
+      currentIndex.value = 0
+      mapRecordToFormData(newRecord)
   }
 })
 

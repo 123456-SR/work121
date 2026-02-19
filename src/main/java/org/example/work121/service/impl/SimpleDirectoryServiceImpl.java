@@ -244,8 +244,21 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 
                 setDefaultValues(info, directory, category);
                 
-                jcCoreWtInfoMapper.insert(info);
-                jcCoreWtInfoMapper.insertExt(info);
+                boolean saved = false;
+                try {
+                    jcCoreWtInfoService.save(info);
+                    saved = true;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+                
+                if (!saved) {
+                    try {
+                        jcCoreWtInfoMapper.insertExt(info);
+                    } catch (Exception ex2) {
+                        ex2.printStackTrace();
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

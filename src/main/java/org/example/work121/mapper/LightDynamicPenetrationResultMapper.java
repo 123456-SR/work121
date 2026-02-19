@@ -31,12 +31,11 @@ public interface LightDynamicPenetrationResultMapper {
     LightDynamicPenetrationResult selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO JZS_LIGHT_DYNAMIC_PENETRATION (ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{status}, #{rejectReason}, #{nextHandler}, #{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})"
-    )
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{status}, #{rejectReason}, #{nextHandler}, #{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(LightDynamicPenetrationResult result);
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_JSON = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
@@ -48,8 +47,7 @@ public interface LightDynamicPenetrationResultMapper {
             "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +
-            "WHERE ID = #{id}"
-    )
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(LightDynamicPenetrationResult result);
 
     @Select("SELECT " +
@@ -75,7 +73,7 @@ public interface LightDynamicPenetrationResultMapper {
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
@@ -87,7 +85,6 @@ public interface LightDynamicPenetrationResultMapper {
             "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +
-            "WHERE ID = #{id}"
-    )
+            "WHERE ID = #{id}")
     int updateById(LightDynamicPenetrationResult result);
 }

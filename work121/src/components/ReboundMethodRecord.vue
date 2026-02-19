@@ -239,17 +239,14 @@
     <div class="footer-info">
 
         <span style="position: relative;">
-            记录审核：<input type="text" v-model="formData.recordReviewer" name="recordReviewer" style="width: 100px; border-bottom: 1px solid black;" readonly>
+            审核：<input type="text" v-model="formData.recordReviewer" name="recordReviewer" style="width: 100px; border-bottom: 1px solid black;" readonly>
             <div v-if="formData.recordReviewSign" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
                 <img :src="formData.recordReviewSign" style="width: 80px; height: auto;" />
             </div>
         </span>
         <span style="position: relative;">
-            记录检测：<input type="text" v-model="formData.recordTester" name="recordTester" style="width: 100px; border-bottom: 1px solid black;">
+            检测：<input type="text" v-model="formData.recordTester" name="recordTester" style="width: 100px; border-bottom: 1px solid black;">
             <!-- Record Tester Signature if needed -->
-        </span>
-        <span style="position: relative;">
-            填写：<input type="text" v-model="formData.filler" name="filler" style="width: 100px; border-bottom: 1px solid black;">
         </span>
     </div>
 

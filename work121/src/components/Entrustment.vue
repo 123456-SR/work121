@@ -463,6 +463,39 @@ const formatDate = (dateStr, format) => {
   return `${y}-${m}-${d}`
 }
 
+const computeTestCategoryFromDirectory = (directory) => {
+  if (!directory) return ''
+  const types = []
+  for (let i = 1; i <= 10; i++) {
+    const t = directory[`table${i}Type`]
+    if (t) types.push(t)
+  }
+  const categories = []
+  const addCategory = (c) => {
+    if (!categories.includes(c)) categories.push(c)
+  }
+  types.forEach(type => {
+    const upper = String(type || '').toUpperCase()
+    if (upper.includes('NUCLEAR')) addCategory('核子法')
+    else if (upper.includes('SAND')) addCategory('灌砂法')
+    else if (upper.includes('WATER')) addCategory('灌水法')
+    else if (upper.includes('CUTTING')) addCategory('环刀法')
+    else if (upper.includes('REBOUND')) addCategory('回弹法')
+    else if (upper.includes('PENETRATION')) addCategory('轻型动力触探')
+    else if (upper.includes('BECKMAN')) addCategory('贝克曼梁')
+    else if (upper.includes('DENSITY')) addCategory('密度试验')
+  })
+  if (categories.length === 0) return '通用检测'
+  return categories.join(',')
+}
+
+const autoFillTestCategoryFromDirectory = (directory) => {
+  if (!directory) return
+  if (formData.testCategory && formData.testCategory.trim() !== '') return
+  const category = computeTestCategoryFromDirectory(directory)
+  formData.testCategory = category
+}
+
 const mapDataToForm = (data) => {
   console.log('Mapping data keys:', Object.keys(data))
   currentId.value = data.id
@@ -570,6 +603,7 @@ const fetchDirectoryInfo = async (wtNum) => {
         if (response.data.success && response.data.data) {
             console.log('Directory info updated for navigation:', response.data.data)
             localStorage.setItem('currentDirectory', JSON.stringify(response.data.data))
+            autoFillTestCategoryFromDirectory(response.data.data)
         }
     } catch (e) {
         console.error('Failed to fetch directory info', e)
@@ -1014,44 +1048,6 @@ const submitWorkflow = async (action) => {
         if (response.data.success) {
             alert('操作成功')
             await loadData(idToSubmit)
-            
-            // If approved or passed audit, check if current user is the record tester before jumping
-            if ((action === 'AUDIT_PASS' || action === 'SIGN_APPROVE') && formData.status >= 3) {
-                // Refresh directory info to get the latest IDs (synced by backend)
-                if (formData.unifiedNumber) {
-                    await fetchDirectoryInfo(formData.unifiedNumber)
-                }
-                
-                // Check if current user matches the record tester in the process
-                let currentDirectory = localStorage.getItem('currentDirectory')
-                if (!currentDirectory && formData.unifiedNumber) {
-                    try {
-                        const dirResponse = await axios.post('/api/directory/get-by-dirname', { dirName: formData.unifiedNumber })
-                        if (dirResponse.data.success && dirResponse.data.data) {
-                            currentDirectory = JSON.stringify(dirResponse.data.data)
-                            localStorage.setItem('currentDirectory', currentDirectory)
-                        }
-                    } catch (e) {
-                        console.error('Failed to fetch directory info', e)
-                    }
-                }
-                
-                if (currentDirectory) {
-                    try {
-                        const directory = JSON.parse(currentDirectory)
-                        // Check if current user matches the record tester (jcTester)
-                        if (directory.jcTester && user.username !== directory.jcTester) {
-                            alert('您不是该流程的记录检测人，无法继续填写记录表')
-                            navigateTo('EntrustmentList')
-                            return
-                        }
-                    } catch (e) {
-                        console.error('Failed to parse directory info', e)
-                    }
-                }
-                
-                // nextForm() // Commented out to prevent auto-navigation after approval
-            }
         } else {
             alert('操作失败: ' + response.data.message)
         }

@@ -50,15 +50,14 @@ public interface LightDynamicPenetrationRecordMapper {
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{dataJson}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, " +
+            "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, " +
             "#{createBy}, #{createTime}, #{updateBy}, #{updateTime}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto})"
-    )
+            "#{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto})")
     int insert(LightDynamicPenetrationRecord record);
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_JSON = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
@@ -74,8 +73,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto} " +
-            "WHERE ID = #{id}"
-    )
+            "WHERE ID = #{id}")
     int update(LightDynamicPenetrationRecord record);
 
     @Select("SELECT " +
@@ -118,7 +116,7 @@ public interface LightDynamicPenetrationRecordMapper {
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
@@ -134,8 +132,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto} " +
-            "WHERE ID = #{id}"
-    )
+            "WHERE ID = #{id}")
     int updateById(LightDynamicPenetrationRecord record);
 
     @Delete("DELETE FROM JZS_LIGHT_DYNAMIC_PENETRATION WHERE ENTRUSTMENT_ID = #{entrustmentId}")

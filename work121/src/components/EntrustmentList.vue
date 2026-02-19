@@ -201,23 +201,40 @@ const handleDblClick = (item) => {
 // 加载数据
 const loadData = async () => {
   const user = getCurrentUser()
-  if (!user || !user.username) { // Changed userName to username to match Login.vue
+  if (!user || !user.username) {
     alert('未找到用户信息，请重新登录')
     return
   }
 
   try {
     loading.value = true
-    // 使用用户真实姓名查询
-    // 注意：Login.vue存储的是 username 和 fullName
-    // JcCoreWtInfoMapper 使用 regName 匹配 (WT_REG_NAME, TESTER, etc.)
-    // 这里传入 username
     const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(user.username)}&wtNum=${encodeURIComponent(searchWtNum.value)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
-    if (response.data.success) {
-      list.value = response.data.data.list
-      total.value = response.data.data.total
+    if (response.data.success && response.data.data) {
+      const pageData = response.data.data
+      const hasData = Array.isArray(pageData.list) && pageData.list.length > 0
+
+      if (hasData) {
+        list.value = pageData.list
+        total.value = pageData.total
+      } else {
+        try {
+          const fallback = await axios.get('/api/entrustment/getAll')
+          if (fallback.data && fallback.data.success) {
+            const fallbackList = Array.isArray(fallback.data.data) ? fallback.data.data : []
+            list.value = fallbackList
+            total.value = fallbackList.length
+          } else {
+            list.value = []
+            total.value = 0
+          }
+        } catch (fallbackError) {
+          console.error('Fallback load data error:', fallbackError)
+          list.value = []
+          total.value = 0
+        }
+      }
     } else {
-      console.error('Failed to load data:', response.data.message)
+      console.error('Failed to load data:', response.data && response.data.message)
     }
   } catch (error) {
     console.error('Error loading data:', error)
