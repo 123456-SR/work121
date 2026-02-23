@@ -748,14 +748,21 @@ const validateForm = () => {
 
 const handleSign = async () => {
   const user = JSON.parse(localStorage.getItem('userInfo'))
-  if (!user || !user.username) {
+  if (!user) {
     alert('请先登录')
+    return
+  }
+
+  // 获取用户账号，支持多种字段名
+  const currentAccount = user.username || user.userAccount || user.userName
+  if (!currentAccount) {
+    alert('无法获取用户账号信息')
     return
   }
 
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: currentAccount
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -774,8 +781,7 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentAccount = user.username
-      const currentRealName = user.fullName || user.username
+      const currentRealName = user.fullName || currentAccount
 
       // Match Tester
       // 允许匹配账号或真实姓名，或者检测人为空 (Allow matching account, real name, or empty)

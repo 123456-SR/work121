@@ -130,6 +130,9 @@
 
         <span style="position: relative;">
           审核：<input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100px; border-bottom: 1px solid black;" readonly>
+          <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+            <img :src="formData.reviewerSignature" style="width: 80px; height: auto;" />
+          </div>
         </span>
         <span style="position: relative;">
           检测：<input type="text" v-model="formData.tester" name="tester" style="width: 100px; border-bottom: 1px solid black;">
@@ -343,8 +346,8 @@ const mapRecordToFormData = (record) => {
   formData.testerSignature = record.inspectSignaturePhoto || ''
   
   // Person names
-  formData.reviewer = record.reviewer || ''
-  formData.tester = record.tester || ''
+  formData.reviewer = record.reviewer || record.REVIEWER || record.recordReviewer || record.RECORD_REVIEWER || ''
+  formData.tester = record.tester || record.TESTER || record.recordTester || record.RECORD_TESTER || ''
 
   // Map fields from BusinessEntity/Entrustment (Always map these first as defaults)
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
@@ -560,6 +563,41 @@ const loadData = async (entrustmentId) => {
       await addRecord()
     }
   }
+  
+  // Try to get process information to fill tester and reviewer
+  try {
+    const wtNum = formData.entrustmentId || props.wtNum
+    if (wtNum) {
+      console.log('正在获取流程信息，wtNum:', wtNum)
+      const processResponse = await axios.post('/api/directory/get-by-dirname', {
+        dirName: wtNum
+      })
+      console.log('流程信息响应:', processResponse.data)
+      if (processResponse.data.success && processResponse.data.data) {
+        const processData = processResponse.data.data
+        console.log('流程数据:', processData)
+        console.log('流程中的jcTester:', processData.jcTester)
+        console.log('流程中的jcReviewer:', processData.jcReviewer)
+        console.log('当前的formData.tester:', formData.tester)
+        console.log('当前的formData.reviewer:', formData.reviewer)
+        
+        // Fill tester and reviewer from process
+        if (processData.jcTester && !formData.tester) {
+          formData.tester = processData.jcTester
+          console.log('设置formData.tester为:', processData.jcTester)
+        }
+        if (processData.jcReviewer && !formData.reviewer) {
+          formData.reviewer = processData.jcReviewer
+          console.log('设置formData.reviewer为:', processData.jcReviewer)
+        }
+        
+        console.log('最终formData.tester:', formData.tester)
+        console.log('最终formData.reviewer:', formData.reviewer)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load process information:', error)
+  }
 }
 
 onMounted(() => {
@@ -594,8 +632,8 @@ const saveData = async () => {
       dataJson: JSON.stringify(formData),
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature,
-      tester: formData.tester,
-      reviewer: formData.reviewer,
+      TESTER: formData.tester || formData.TESTER,
+      REVIEWER: formData.reviewer || formData.REVIEWER,
       
       // Map other fields required by entity
       nuclearModel: formData.equipment,
@@ -622,14 +660,21 @@ const saveData = async () => {
 
 const handleSign = async () => {
   const user = JSON.parse(localStorage.getItem('userInfo'))
-  if (!user || !user.username) {
+  if (!user) {
     alert('请先登录')
+    return
+  }
+
+  // 获取用户账号，支持多种字段名
+  const currentAccount = user.username || user.userAccount || user.userName
+  if (!currentAccount) {
+    alert('无法获取用户账号信息')
     return
   }
 
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: currentAccount
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -644,19 +689,22 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentAccount = user.username
 
       // Match Tester by account
-      if (formData.tester === currentAccount) {
+      if (formData.tester === currentAccount || formData.TESTER === currentAccount || formData.recordTester === currentAccount || formData.RECORD_TESTER === currentAccount) {
         formData.testerSignature = imgSrc
         signed = true
       }
 
-      // Match Reviewer by account
-      // if (formData.reviewer === currentAccount) {
-      //   formData.reviewerSignature = imgSrc
-      //   signed = true
-      // }
+      // Match Reviewer by account - only if tester has signed
+      if (formData.reviewer === currentAccount || formData.REVIEWER === currentAccount || formData.recordReviewer === currentAccount || formData.RECORD_REVIEWER === currentAccount) {
+        if (!formData.testerSignature) {
+          alert('检测人尚未签字，审核人无法签字')
+          return
+        }
+        formData.reviewerSignature = imgSrc
+        signed = true
+      }
 
       // Match Approver by account
       // if (formData.approver === currentAccount) {
@@ -667,7 +715,9 @@ const handleSign = async () => {
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户账号(${currentAccount})与表单中的试验/审核/批准账号不匹配，无法签名`)
+        const currentRealName = user.fullName || currentAccount
+        const formPerson = formData.tester || formData.TESTER || formData.reviewer || formData.REVIEWER || formData.recordTester || formData.recordReviewer || formData.RECORD_TESTER || formData.RECORD_REVIEWER || ''
+        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的人员(${formPerson})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')
