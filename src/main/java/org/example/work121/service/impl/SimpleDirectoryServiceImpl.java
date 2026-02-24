@@ -162,7 +162,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     directory.setCreateTime(new java.util.Date());
                 }
                 if (directory.getStatus() == null) {
-                    directory.setStatus(1);
+                    directory.setStatus("1");
                 }
 
                 // 自动创建关联表记录
@@ -278,7 +278,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         entity.setSampleName("未填写样品");
         entity.setTestCategory(category);
         entity.setCommissionDate(new java.util.Date());
-        entity.setStatus(0); // Default to Draft (0) so it must be Submitted (with signature) to reach Audit (1)
+        entity.setStatus("0"); // Default to Draft (0) so it must be Submitted (with signature) to reach Audit (1)
         
         // Expanded virtual data
         entity.setConstructionPart("未填写部位");
@@ -706,7 +706,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 }
             }
 
-            simpleDirectoryMapper.updateById(directory);
+            simpleDirectoryMapper.update(directory);
 
             // 2. 同步到其他表 (Target)
             syncToTable(directory.getTable1Type(), directory.getTable1Id(), entrustment);

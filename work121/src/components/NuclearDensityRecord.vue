@@ -234,12 +234,19 @@ const getStatusColor = (status) => {
 }
 
 const submitWorkflow = async (action) => {
+    console.log('submitWorkflow called with action:', action)
+    console.log('formData.id:', formData.id)
+    console.log('formData.tester:', formData.tester)
+    console.log('formData.reviewer:', formData.reviewer)
+    console.log('formData.status:', formData.status)
+    
     if (!formData.id) {
         alert('请先保存记录')
         return
     }
     
     const user = JSON.parse(localStorage.getItem('userInfo'))
+    console.log('Current user:', user)
     if (!user || !user.username) {
         alert('请先登录')
         return

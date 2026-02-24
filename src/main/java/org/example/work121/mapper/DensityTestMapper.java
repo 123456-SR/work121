@@ -37,7 +37,7 @@ public interface DensityTestMapper {
             "t2.UPDATE_TIME as updateTime, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -46,9 +46,9 @@ public interface DensityTestMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM T_DENSITY_TEST t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     java.util.List<DensityTest> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 

@@ -31,22 +31,22 @@ public interface LightDynamicPenetrationResultMapper {
     LightDynamicPenetrationResult selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO JZS_LIGHT_DYNAMIC_PENETRATION (ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{status}, #{rejectReason}, #{nextHandler}, #{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(LightDynamicPenetrationResult result);
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
-            "APPROVER = #{approver}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(LightDynamicPenetrationResult result);
 

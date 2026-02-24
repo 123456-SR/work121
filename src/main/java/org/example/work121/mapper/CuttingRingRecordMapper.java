@@ -26,7 +26,7 @@ public interface CuttingRingRecordMapper {
             "t2.UPDATE_TIME as updateTime, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -35,30 +35,30 @@ public interface CuttingRingRecordMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM T_CUTTING_RING t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     CuttingRingRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO T_CUTTING_RING (ID, ENTRUSTMENT_ID, DATA_JSON, TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, #{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{recordReviewSign,jdbcType=VARCHAR}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(CuttingRingRecord record);
 
     @Update("UPDATE T_CUTTING_RING SET " +
-            "DATA_JSON = #{dataJson}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
-            "APPROVER = #{approver}, " +
-            "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "FILLER = #{filler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=VARCHAR}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(CuttingRingRecord record);
 
@@ -82,7 +82,7 @@ public interface CuttingRingRecordMapper {
             "t2.UPDATE_TIME as updateTime, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -91,27 +91,27 @@ public interface CuttingRingRecordMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM T_CUTTING_RING t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ID = #{id}")
     CuttingRingRecord selectById(@Param("id") String id);
 
     @Update("UPDATE T_CUTTING_RING SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
-            "APPROVER = #{approver}, " +
-            "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "FILLER = #{filler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=VARCHAR}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
             "WHERE ID = #{id}")
     int updateById(CuttingRingRecord record);
 

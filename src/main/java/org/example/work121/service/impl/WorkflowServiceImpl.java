@@ -44,12 +44,12 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Autowired private ReboundMethodService reboundMethodService;
 
     // 状态常量
-    private static final int STATUS_DRAFT = 0;
-    private static final int STATUS_PENDING_AUDIT = 1;
-    private static final int STATUS_RETURNED = 2;
-    private static final int STATUS_PENDING_SIGN = 3;
-    private static final int STATUS_PENDING_APPROVAL = 4;
-    private static final int STATUS_APPROVED = 5;
+    private static final String STATUS_DRAFT = "0";
+    private static final String STATUS_PENDING_AUDIT = "1";
+    private static final String STATUS_RETURNED = "2";
+    private static final String STATUS_PENDING_SIGN = "3";
+    private static final String STATUS_PENDING_APPROVAL = "4";
+    private static final String STATUS_APPROVED = "5";
 
     @Override
     @Transactional

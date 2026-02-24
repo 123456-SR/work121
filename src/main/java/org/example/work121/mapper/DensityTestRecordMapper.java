@@ -22,7 +22,7 @@ public interface DensityTestRecordMapper {
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -31,9 +31,9 @@ public interface DensityTestRecordMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM T_DENSITY_TEST t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     DensityTestRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
@@ -53,7 +53,7 @@ public interface DensityTestRecordMapper {
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -62,9 +62,9 @@ public interface DensityTestRecordMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM T_DENSITY_TEST t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ID = #{id}")
     DensityTestRecord selectById(@Param("id") String id);
 

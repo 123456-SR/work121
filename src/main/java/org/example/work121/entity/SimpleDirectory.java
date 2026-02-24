@@ -72,7 +72,7 @@ public class SimpleDirectory extends BaseEntity {
     private String table10Id;
 
     /** 状态：6个数字状态（0-5） */
-    private Integer status;
+    private String status;
 
     /** 检测人 (Deprecated) */
     private String tester;
@@ -380,11 +380,11 @@ public class SimpleDirectory extends BaseEntity {
         this.table10Id = table10Id;
     }
 
-    public Integer getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Integer status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 }

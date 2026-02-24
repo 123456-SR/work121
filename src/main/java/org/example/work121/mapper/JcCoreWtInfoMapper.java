@@ -153,7 +153,7 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_ID " +
             "<where>" +
             "<if test='wtNum != null and wtNum != \"\"'>" +
-            "t2.WT_NUM LIKE '%' || #{wtNum} || '%' " +
+            "t2.WT_NUM = #{wtNum} " +
             "</if>" +
             "<if test='names != null'>" +
             " AND (" +
@@ -343,7 +343,7 @@ public interface JcCoreWtInfoMapper {
             ")" +
             "</if>" +
             "<if test='wtNum != null and wtNum != \"\"'>" +
-            " AND t2.WT_NUM LIKE '%' || #{wtNum} || '%' " +
+            " AND t2.WT_NUM = #{wtNum} " +
             "</if>" +
             "<if test='names != null'>" +
             " AND (" +
@@ -536,7 +536,7 @@ public interface JcCoreWtInfoMapper {
             ")" +
             "</if>" +
             "<if test='wtNum != null and wtNum != \"\"'>" +
-            " AND t2.WT_NUM LIKE '%' || #{wtNum} || '%' " +
+            " AND t2.WT_NUM = #{wtNum} " +
             "</if>" +
             "<if test='names != null'>" +
             " AND (" +
@@ -790,8 +790,8 @@ public interface JcCoreWtInfoMapper {
             "FEE = #{fee, jdbcType=VARCHAR}, " +
             "SAMPLE_HISTORY = #{sampleHistory, jdbcType=VARCHAR}, " +
             "CLIENT_ADDRESS_PHONE = #{clientAddressPhone, jdbcType=VARCHAR}, " +
-            "CUSTOMER_ID = #{customerId, jdbcType=VARCHAR}, " +
-            "DATACID = #{dataCid, jdbcType=VARCHAR}, " +
+            "CUSTOMER_ID = NVL(#{customerId, jdbcType=VARCHAR}, CUSTOMER_ID), " +
+            "DATACID = NVL(#{dataCid, jdbcType=VARCHAR}, DATACID), " +
             "GC_BEIZHU = #{projectRemarks, jdbcType=VARCHAR} " +
             "WHERE WT_ID = #{id, jdbcType=VARCHAR}")
     int update(JcCoreWtInfo info);

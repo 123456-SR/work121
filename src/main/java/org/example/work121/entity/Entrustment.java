@@ -591,7 +591,7 @@ public class Entrustment extends BusinessEntity {
         this.sampleStatus = sampleStatus; 
         try {
             if (sampleStatus != null) {
-                super.setStatus(Integer.parseInt(sampleStatus));
+                super.setStatus(sampleStatus);
             }
         } catch (NumberFormatException e) {
             // ignore
@@ -599,10 +599,10 @@ public class Entrustment extends BusinessEntity {
     }
 
     @Override
-    public void setStatus(Integer status) {
+    public void setStatus(String status) {
         super.setStatus(status);
         if (status != null) {
-            this.sampleStatus = status.toString();
+            this.sampleStatus = status;
         }
     }
 

@@ -29,7 +29,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -38,9 +38,9 @@ public interface LightDynamicPenetrationRecordMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM JZS_LIGHT_DYNAMIC_PENETRATION t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     LightDynamicPenetrationRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
@@ -50,29 +50,29 @@ public interface LightDynamicPenetrationRecordMapper {
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, " +
-            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime}, " +
-            "#{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto})")
+            "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{recordReviewSign,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
+            "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{inspectSignaturePhoto,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(LightDynamicPenetrationRecord record);
 
     @Update("UPDATE JZS_LIGHT_DYNAMIC_PENETRATION SET " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
-            "APPROVER = #{approver}, " +
-            "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto} " +
+            "TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "FILLER = #{filler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ID = #{id}")
     int update(LightDynamicPenetrationRecord record);
 
@@ -99,7 +99,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
             "t1.CLIENT_UNIT as clientUnit, " +
-            "t1.CLIENT_DATE as commissionDate, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
             "t1.PROJECT_NAME as projectName, " +
             "t1.CONSTRUCTION_PART as constructionPart, " +
             "t1.CONSTRUCTION_UNIT as constructionUnit, " +
@@ -108,9 +108,9 @@ public interface LightDynamicPenetrationRecordMapper {
             "t1.TEST_CATEGORY as testCategory, " +
             "t1.WITNESS_UNIT as witnessUnit, " +
             "t1.WITNESS as witness, " +
-            "t1.REMARKS as remarks " +
+            "t1.BEIZHU as remarks " +
             "FROM JZS_LIGHT_DYNAMIC_PENETRATION t2 " +
-            "LEFT JOIN JZS_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.UNIFIED_NUMBER " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
             "WHERE t2.ID = #{id}")
     LightDynamicPenetrationRecord selectById(@Param("id") String id);
 

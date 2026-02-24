@@ -125,7 +125,7 @@ public class BusinessEntity extends BaseEntity {
      * 4: 已签字/待批准
      * 5: 已批准/完成
      */
-    private Integer status;
+    private String status;
 
     /** 打回原因 */
     private String rejectReason;
@@ -309,11 +309,11 @@ public class BusinessEntity extends BaseEntity {
         this.projectArea = projectArea;
     }
 
-    public Integer getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Integer status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 

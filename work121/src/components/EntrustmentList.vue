@@ -125,49 +125,41 @@ const handleDblClick = (item) => {
 }
 
 // 加载数据
-const loadData = async () => {
-  const user = getCurrentUser()
-  if (!user || !user.username) {
-    alert('未找到用户信息，请重新登录')
-    return
-  }
+  const loadData = async () => {
+    const user = getCurrentUser()
+    if (!user || !user.username) {
+      alert('未找到用户信息，请重新登录')
+      return
+    }
 
-  try {
-    loading.value = true
-    const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(user.username)}&wtNum=${encodeURIComponent(searchWtNum.value)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
-    if (response.data.success && response.data.data) {
-      const pageData = response.data.data
-      const hasData = Array.isArray(pageData.list) && pageData.list.length > 0
+    try {
+      loading.value = true
+      const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(user.username)}&wtNum=${encodeURIComponent(searchWtNum.value)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
+      if (response.data.success && response.data.data) {
+        const pageData = response.data.data
+        const hasData = Array.isArray(pageData.list) && pageData.list.length > 0
 
-      if (hasData) {
-        list.value = pageData.list
-        total.value = pageData.total
-      } else {
-        try {
-          const fallback = await axios.get('/api/entrustment/getAll')
-          if (fallback.data && fallback.data.success) {
-            const fallbackList = Array.isArray(fallback.data.data) ? fallback.data.data : []
-            list.value = fallbackList
-            total.value = fallbackList.length
-          } else {
-            list.value = []
-            total.value = 0
-          }
-        } catch (fallbackError) {
-          console.error('Fallback load data error:', fallbackError)
+        if (hasData) {
+          list.value = pageData.list
+          total.value = pageData.total
+        } else {
+          // 当搜索无结果时，显示空数据，不加载所有委托单
           list.value = []
           total.value = 0
         }
+      } else {
+        console.error('Failed to load data:', response.data && response.data.message)
+        list.value = []
+        total.value = 0
       }
-    } else {
-      console.error('Failed to load data:', response.data && response.data.message)
+    } catch (error) {
+      console.error('Error loading data:', error)
+      list.value = []
+      total.value = 0
+    } finally {
+      loading.value = false
     }
-  } catch (error) {
-    console.error('Error loading data:', error)
-  } finally {
-    loading.value = false
   }
-}
 
 // 翻页
 const changePage = (newPage) => {
