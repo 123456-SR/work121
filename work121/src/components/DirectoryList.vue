@@ -182,8 +182,16 @@
             </div>
             
             <div class="form-actions">
-              <button type="button" @click="closeModal" class="cancel-btn">取消</button>
-              <button type="submit" class="save-btn">保存</button>
+              <button type="button" @click="closeModal" class="cancel-btn" :disabled="saving">
+                取消
+              </button>
+              <button
+                type="submit"
+                class="save-btn"
+                :disabled="saving"
+              >
+                {{ saving ? '保存中...' : '保存' }}
+              </button>
             </div>
           </form>
         </div>
@@ -203,6 +211,7 @@ const processes = ref([])
 const showModal = ref(false)
 const isEditing = ref(false)
 const userList = ref([])
+const saving = ref(false) // 防止重复点击保存
 
 // 选中的表单队列
 const selectedForms = ref([])
@@ -385,14 +394,17 @@ const removeFromQueue = (index) => {
 }
 
 const saveProcess = async () => {
+  // 避免用户连续点击导致重复提交
+  if (saving.value) return
+  saving.value = true
   try {
     console.log('开始保存流程')
-    
+
     // 将队列中的表单类型映射到table1Type-table10Type
     for (let i = 1; i <= 10; i++) {
       formData[`table${i}Type`] = selectedForms.value[i - 1]?.value || ''
     }
-    
+
     // 获取当前登录用户信息
     try {
       const userInfoStr = localStorage.getItem('userInfo')
@@ -406,24 +418,13 @@ const saveProcess = async () => {
       console.error('获取用户信息失败:', error)
       formData.createBy = 'admin'
     }
-    
+
     console.log('发送保存请求，表单数据:', formData)
-    console.log('axios实例:', axios)
-    console.log('请求URL:', '/api/directory/save')
-    
-    // 测试axios是否能发送简单请求
-    try {
-      console.log('开始发送测试请求')
-      const testResponse = await axios.get('https://jsonplaceholder.typicode.com/todos/1')
-      console.log('测试请求成功:', testResponse.data)
-    } catch (testError) {
-      console.error('测试请求失败:', testError)
-    }
-    
+
     const response = await axios.post('/api/directory/save', formData)
-    
+
     console.log('保存请求响应:', response.data)
-    
+
     if (response.data.success) {
       // 保存成功后，显示返回的流程对象，检查table1Id-table10Id是否已生成
       if (response.data.data) {
@@ -433,7 +434,7 @@ const saveProcess = async () => {
         console.log('table3Id:', response.data.data.table3Id)
         console.log('table4Id:', response.data.data.table4Id)
       }
-      
+
       alert('保存成功')
       closeModal()
       loadProcesses()
@@ -453,6 +454,8 @@ const saveProcess = async () => {
       console.error('请求配置:', error.request)
     }
     alert('保存失败，请稍后重试')
+  } finally {
+    saving.value = false
   }
 }
 

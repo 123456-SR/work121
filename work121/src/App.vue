@@ -215,7 +215,8 @@ const navigateTo = (target, props = {}) => {
         activeMenuId.value = target
         if (menuItem.component) {
             currentView.value = menuItem.component
-            currentProps.value = menuItem.props || {}
+            // 合并菜单预设的 props 与调用方传入的 props，后者优先（例如 id、wtNum）
+            currentProps.value = { ...(menuItem.props || {}), ...props }
         } else {
             currentView.value = target
             currentProps.value = props

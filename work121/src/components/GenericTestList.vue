@@ -53,8 +53,8 @@
             <td>{{ item.testerName }}</td>
             <td>{{ item.reviewerName }}</td>
             <td>
-              <span :class="['status-badge', getStatusClass(item.status)]">
-                {{ getStatusText(item.status) }}
+              <span :class="['status-badge', getStatusClass(getEffectiveStatus(item))]">
+                {{ getStatusText(getEffectiveStatus(item)) }}
               </span>
             </td>
           </tr>
@@ -118,6 +118,17 @@ const apiEndpoint = computed(() => {
       return '/api/jc-core-wt-info'
   }
 })
+
+// 计算当前行应显示的状态：
+// - 所有“记录表”列表：优先使用后端返回的 recordStatus（各记录表自己的 STATUS）
+// - 其他列表（委托单 / 报告等）：保持原有行为，使用 status（委托状态）
+const getEffectiveStatus = (item) => {
+  // 只对“记录”类列表启用 recordStatus
+  if (props.dataType === 'record' && item && item.recordStatus !== undefined && item.recordStatus !== null) {
+    return item.recordStatus
+  }
+  return item?.status
+}
 
 // 获取当前登录用户
 const getCurrentUser = () => {

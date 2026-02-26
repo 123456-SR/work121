@@ -55,8 +55,8 @@
             <td>{{ item.reviewerName }}</td>
             <td>{{ item.approverName }}</td>
             <td>
-              <span :class="['status-badge', getStatusClass(item.status)]">
-                {{ getStatusText(item.status) }}
+              <span :class="['status-badge', getStatusClass(getEffectiveStatus(item))]">
+                {{ getStatusText(getEffectiveStatus(item)) }}
               </span>
             </td>
           </tr>
@@ -162,6 +162,14 @@ const handleSearch = () => {
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString()
+}
+
+// 结果列表状态：优先使用 recordStatus（结果表自身的 STATUS），否则退回 status（委托状态）
+const getEffectiveStatus = (item) => {
+  if (item && item.recordStatus !== undefined && item.recordStatus !== null) {
+    return item.recordStatus
+  }
+  return item?.status
 }
 
 const getStatusText = (status) => {

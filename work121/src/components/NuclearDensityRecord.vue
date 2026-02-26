@@ -20,7 +20,8 @@
           <span :style="{color: getStatusColor(formData.status)}" class="status-label">{{ getStatusText(formData.status) }}</span>
         </div>
 
-        <template v-if="formData.id && !draftMode">
+        <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
+        <template v-if="!draftMode">
           <button
             v-if="formData.status === 0 || formData.status === 2"
             @click="submitWorkflow('SUBMIT')"
@@ -30,10 +31,10 @@
           </button>
           <button
             v-if="formData.status === 1"
-            @click="submitWorkflow('AUDIT_PASS')"
+            @click="submitWorkflow('SIGN_REVIEW')"
             class="btn btn-primary btn-small"
           >
-            升级为已审核
+            审核通过
           </button>
           <button
             v-if="formData.status === 1"
@@ -255,7 +256,7 @@ const submitWorkflow = async (action) => {
     let signatureData = null
     
     if (action === 'SUBMIT') {
-        // Role check: Only tester can submit
+        // 仅检测人可提交，并且必须已签字
         if (formData.tester && user.username !== formData.tester) {
             alert('您不是该单据的检测人 (' + formData.tester + ')，无权提交')
             return
@@ -266,27 +267,25 @@ const submitWorkflow = async (action) => {
             return
         }
         signatureData = formData.testerSignature
-    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
-        // Role check: Only reviewer can audit/reject at status 1
+    } else if (action === 'SIGN_REVIEW') {
+        // 仅复核人可“审核通过”，并且必须已签字（双签）
+        if (formData.reviewer && user.username !== formData.reviewer) {
+            alert('您不是该单据的复核人 (' + formData.reviewer + ')，无权签字')
+            return
+        }
+
+        if (!formData.reviewerSignature) {
+            alert('请先进行复核人签字')
+            return
+        }
+        signatureData = formData.reviewerSignature
+    } else if (action === 'REJECT' && formData.status === 1) {
+        // 状态为待审核时，只有复核人可以打回
         if (formData.reviewer && user.username !== formData.reviewer) {
             alert('您不是该单据的复核人 (' + formData.reviewer + ')，无权操作')
             return
         }
     }
-    // else if (action === 'SIGN_REVIEW') {
-    //    // Role check: Only reviewer can sign
-    //    if (formData.reviewer && user.username !== formData.reviewer) {
-    //        alert('您不是该单据的复核人 (' + formData.reviewer + ')，无权签字')
-    //        return
-    //    }
-    //
-    //    if (!formData.reviewerSignature) {
-    //        alert('请先进行复核人签字')
-    //        return
-    //    }
-    //    signatureData = formData.reviewerSignature
-    //
-    //}
 
     const request = {
         tableType: 'NUCLEAR_DENSITY',
@@ -307,7 +306,11 @@ const submitWorkflow = async (action) => {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            loadData()
+            // 重新按委托号加载一次，刷新最新的 STATUS（例如从 0 -> 1）
+            const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
+            if (reloadId) {
+              loadData(reloadId)
+            }
         } else {
             alert('操作失败: ' + response.data.message)
         }
@@ -346,7 +349,8 @@ const mapRecordToFormData = (record) => {
   // Basic fields
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || props.id
-  formData.status = record.status !== undefined ? record.status : 0
+  // 状态统一转成数字，避免后端返回字符串导致严格等于判断失效（影响按钮显示）
+  formData.status = record.status !== undefined ? Number(record.status) : 0
   
   // Signature photos
   formData.reviewerSignature = record.reviewSignaturePhoto || ''
@@ -373,10 +377,12 @@ const mapRecordToFormData = (record) => {
     try {
       const parsed = JSON.parse(record.dataJson)
       // Merge parsed data into formData
-      // Explicitly handle dynamic fields to ensure they update
+      // 注意：永远不要让 JSON 里的 status 覆盖数据库里的 status
       Object.keys(parsed).forEach(key => {
+        if (key === 'status') return
         formData[key] = parsed[key]
       })
+
       // Ensure specific fields are set if they exist in parsed
       if (parsed.entrustingUnit) formData.entrustingUnit = parsed.entrustingUnit
       if (parsed.unifiedNumber) formData.unifiedNumber = parsed.unifiedNumber

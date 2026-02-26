@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.function.Function;
 
 @Service
 public class TableGenerationServiceImpl implements TableGenerationService {
@@ -182,14 +183,71 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     private void generateDensityTestReportAndResult(String entrustmentId) {
         try {
-            List<DensityTest> records = densityTestMapper.selectByEntrustmentId(entrustmentId);
-            if (records == null || records.isEmpty()) {
-                System.err.println("Warning: Record not found for entrustmentId " + entrustmentId);
+            // 这里的 entrustmentId 实际上传进来的是“统一编号”（例如 XT-2024-54301），
+            // 各密度记录表的 ENTRUSTMENT_ID 也是存的统一编号，所以直接当 wtNum 用。
+            String wtNum = entrustmentId;
+
+            // 条件一：对应统一编号的委托单必须已通过（STATUS=5）
+            JcCoreWtInfo core = null;
+            try {
+                java.util.List<JcCoreWtInfo> wtList = jcCoreWtInfoMapper.selectByWtNum(wtNum);
+                if (wtList != null && !wtList.isEmpty()) {
+                    core = wtList.get(0);
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading JcCoreWtInfo by wtNum " + wtNum + ": " + e.getMessage());
+            }
+
+            if (core == null || core.getStatus() == null || !"5".equals(core.getStatus().toString())) {
+                System.out.println("Skip DensityTest report/result generation: entrustment not APPROVED for wtNum " + wtNum + ", status=" + (core != null ? core.getStatus() : "null"));
                 return;
             }
 
-            DensityTest record = records.get(0);
-            Map<String, Object> recordData = prepareDensityTestData(record);
+            // 条件二：该统一编号下所有“密度类记录表”（核子法、灌砂法、灌水法、环刀法）状态全部为 5，
+            // 且至少存在一条密度类记录（避免仅有回弹法之类时生成报告）
+            if (!areAllDensityRecordsApproved(entrustmentId, wtNum)) {
+                System.out.println("Skip DensityTest report/result generation: not all density records approved for wtNum " + wtNum);
+                return;
+            }
+
+            // 到这里说明：
+            // - 对应统一编号的委托表已通过
+            // - 该统一编号下所有“密度类记录表”中已有记录的状态全部=5，且至少存在一条密度记录
+            // 按你的设计，此时就应当“根据委托表 + 各种密度记录表”自动生成原位密度检测报告/结果。
+
+            Map<String, Object> recordData = new HashMap<>();
+
+            // 1）先塞委托表的数据
+            Map<String, Object> entrustmentData = getEntrustmentData(wtNum);
+            if (entrustmentData != null) {
+                recordData.putAll(entrustmentData);
+            }
+
+            // 2）再把四种密度记录表的 DATA_JSON 合并进来（有就合并，没有就跳过）
+            mergeDensityRecordJson(
+                    nuclearDensityMapper.selectByEntrustmentId(entrustmentId),
+                    recordData,
+                    NuclearDensity::getDataJson,
+                    "NuclearDensity"
+            );
+            mergeDensityRecordJson(
+                    sandReplacementMapper.selectByEntrustmentId(entrustmentId),
+                    recordData,
+                    SandReplacement::getDataJson,
+                    "SandReplacement"
+            );
+            mergeDensityRecordJson(
+                    waterReplacementMapper.selectByEntrustmentId(entrustmentId),
+                    recordData,
+                    WaterReplacement::getDataJson,
+                    "WaterReplacement"
+            );
+            mergeDensityRecordJson(
+                    cuttingRingMapper.selectByEntrustmentId(entrustmentId),
+                    recordData,
+                    CuttingRing::getDataJson,
+                    "CuttingRing"
+            );
 
             DensityTestReport report = densityTestReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -216,6 +274,117 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             e.printStackTrace();
             throw new RuntimeException("Error generating DensityTest report/result: " + e.getMessage());
         }
+    }
+
+    /**
+     * 将某一类密度记录表中所有记录的 DATA_JSON 合并到 recordData 里。
+     * 如果 JSON 字段重复，后出现的会覆盖先前的，同一大类一般字段含义一致，可以接受。
+     */
+    private <T> void mergeDensityRecordJson(List<T> records,
+                                            Map<String, Object> recordData,
+                                            Function<T, String> dataJsonGetter,
+                                            String debugLabel) {
+        if (records == null || records.isEmpty()) {
+            return;
+        }
+        for (T be : records) {
+            String json = dataJsonGetter.apply(be);
+            if (json != null && !json.isEmpty()) {
+                try {
+                    Map<String, Object> m = objectMapper.readValue(json, Map.class);
+                    if (m != null) {
+                        recordData.putAll(m);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error parsing " + debugLabel + " record JSON: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * 校验某个委托（统一编号）下所有“密度类记录表”的状态：
+     * - 至少存在一条密度类记录（核子法 / 灌砂法 / 灌水法 / 环刀法中的任意一种）
+     * - 只要存在的密度类记录，其 STATUS 必须全部为 "5"
+     * - 如果完全没有密度类记录，返回 false（不生成报告）
+     */
+    private boolean areAllDensityRecordsApproved(String entrustmentId, String wtNum) {
+        boolean hasAnyDensityRecord = false;
+
+        // 核子法
+        try {
+            List<NuclearDensity> nuclearList = nuclearDensityMapper.selectByEntrustmentId(entrustmentId);
+            if (nuclearList != null && !nuclearList.isEmpty()) {
+                hasAnyDensityRecord = true;
+                for (NuclearDensity n : nuclearList) {
+                    if (n.getStatus() == null || !"5".equals(n.getStatus().toString())) {
+                        System.out.println("Skip DensityTest report/result generation: NuclearDensity not all APPROVED for wtNum " + wtNum);
+                        return false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking NuclearDensity status for wtNum " + wtNum + ": " + e.getMessage());
+            return false;
+        }
+
+        // 灌砂法
+        try {
+            List<SandReplacement> sandList = sandReplacementMapper.selectByEntrustmentId(entrustmentId);
+            if (sandList != null && !sandList.isEmpty()) {
+                hasAnyDensityRecord = true;
+                for (SandReplacement s : sandList) {
+                    if (s.getStatus() == null || !"5".equals(s.getStatus().toString())) {
+                        System.out.println("Skip DensityTest report/result generation: SandReplacement not all APPROVED for wtNum " + wtNum);
+                        return false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking SandReplacement status for wtNum " + wtNum + ": " + e.getMessage());
+            return false;
+        }
+
+        // 灌水法
+        try {
+            List<WaterReplacement> waterList = waterReplacementMapper.selectByEntrustmentId(entrustmentId);
+            if (waterList != null && !waterList.isEmpty()) {
+                hasAnyDensityRecord = true;
+                for (WaterReplacement w : waterList) {
+                    if (w.getStatus() == null || !"5".equals(w.getStatus().toString())) {
+                        System.out.println("Skip DensityTest report/result generation: WaterReplacement not all APPROVED for wtNum " + wtNum);
+                        return false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking WaterReplacement status for wtNum " + wtNum + ": " + e.getMessage());
+            return false;
+        }
+
+        // 环刀法
+        try {
+            List<CuttingRing> cuttingList = cuttingRingMapper.selectByEntrustmentId(entrustmentId);
+            if (cuttingList != null && !cuttingList.isEmpty()) {
+                hasAnyDensityRecord = true;
+                for (CuttingRing c : cuttingList) {
+                    if (c.getStatus() == null || !"5".equals(c.getStatus().toString())) {
+                        System.out.println("Skip DensityTest report/result generation: CuttingRing not all APPROVED for wtNum " + wtNum);
+                        return false;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking CuttingRing status for wtNum " + wtNum + ": " + e.getMessage());
+            return false;
+        }
+
+        if (!hasAnyDensityRecord) {
+            System.out.println("Skip DensityTest report/result generation: no density records for wtNum " + wtNum);
+            return false;
+        }
+
+        return true;
     }
 
     private void generateReboundMethodReportAndResult(String entrustmentId) {
@@ -496,13 +665,42 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
             }
         }
-        recordData.put("projectName", record.getProjectName());
-        recordData.put("commissionDate", record.getCommissionDate());
-        recordData.put("constructionPart", record.getConstructionPart());
-        recordData.put("testCategory", record.getTestCategory());
-        recordData.put("tester", record.getTester());
-        recordData.put("reviewer", record.getReviewer());
-        recordData.put("approver", record.getApprover());
+        // 来自委托表/基础信息（DensityTest 继承自 Entrustment，已通过 Mapper JOIN 填充）
+        if (record.getWtNum() != null) recordData.put("wtNum", record.getWtNum());
+        if (record.getProjectName() != null) recordData.put("projectName", record.getProjectName());
+        if (record.getCommissionDate() != null) recordData.put("commissionDate", record.getCommissionDate());
+        if (record.getClientUnit() != null) recordData.put("clientUnit", record.getClientUnit());
+        if (record.getConstructionUnit() != null) recordData.put("constructionUnit", record.getConstructionUnit());
+        if (record.getBuildingUnit() != null) recordData.put("buildingUnit", record.getBuildingUnit());
+        if (record.getWitnessUnit() != null) recordData.put("witnessUnit", record.getWitnessUnit());
+        if (record.getWitness() != null) recordData.put("witness", record.getWitness());
+        if (record.getSampleName() != null) recordData.put("sampleName", record.getSampleName());
+        if (record.getConstructionPart() != null) recordData.put("constructionPart", record.getConstructionPart());
+        if (record.getTestCategory() != null) recordData.put("testCategory", record.getTestCategory());
+        if (record.getRemarks() != null) recordData.put("remarks", record.getRemarks());
+
+        // 来自密度记录本身的专业字段
+        if (record.getSoilType() != null) recordData.put("soilType", record.getSoilType());
+        if (record.getRingVolume() != null) recordData.put("ringVolume", record.getRingVolume());
+        if (record.getWetWeight() != null) recordData.put("wetWeight", record.getWetWeight());
+        if (record.getDryWeight() != null) recordData.put("dryWeight", record.getDryWeight());
+        if (record.getWaterContent() != null) recordData.put("waterContent", record.getWaterContent());
+        if (record.getWetDensity() != null) recordData.put("wetDensity", record.getWetDensity());
+        if (record.getDryDensity() != null) recordData.put("dryDensity", record.getDryDensity());
+        if (record.getMaxDryDensity() != null) recordData.put("maxDryDensity", record.getMaxDryDensity());
+        if (record.getMinDryDensity() != null) recordData.put("minDryDensity", record.getMinDryDensity());
+        if (record.getOptimumMoisture() != null) recordData.put("optimumMoisture", record.getOptimumMoisture());
+        if (record.getCompactionCoefficient() != null) recordData.put("compactionCoefficient", record.getCompactionCoefficient());
+        if (record.getQualifiedRate() != null) recordData.put("qualifiedRate", record.getQualifiedRate());
+        if (record.getSampleNameStatus() != null) recordData.put("sampleNameStatus", record.getSampleNameStatus());
+        if (record.getDesignIndex() != null) recordData.put("designIndex", record.getDesignIndex());
+        if (record.getTestResult() != null) recordData.put("testResult", record.getTestResult());
+
+        // 人员信息（检测/审核/批准）
+        if (record.getTester() != null) recordData.put("tester", record.getTester());
+        if (record.getReviewer() != null) recordData.put("reviewer", record.getReviewer());
+        if (record.getApprover() != null) recordData.put("approver", record.getApprover());
+
         return recordData;
     }
 

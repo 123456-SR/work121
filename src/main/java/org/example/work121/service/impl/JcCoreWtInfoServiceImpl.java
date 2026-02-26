@@ -63,6 +63,17 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
         logger.info("正在根据检测类别和记录表角色查询检测记录列表，CATEGORIES: {}, NAMES: {}, WT_NUM: {}, pageNum: {}, pageSize: {}", categories, names, wtNum, pageNum, pageSize);
         com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
         java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectRecordsByCategory(categories, names, wtNum);
+        if (list != null && !list.isEmpty()) {
+            JcCoreWtInfo first = list.get(0);
+            logger.info("DEBUG getRecordsByCategory -> first record: wtNum={}, id={}, status={}, sampleStatus={}, wtStatus={}",
+                    first.getWtNum(),
+                    first.getId(),
+                    first.getStatus(),
+                    first.getSampleStatus(),
+                    first.getWtStatus());
+        } else {
+            logger.info("DEBUG getRecordsByCategory -> no records returned for wtNum={}", wtNum);
+        }
         return new com.github.pagehelper.PageInfo<>(list);
     }
 

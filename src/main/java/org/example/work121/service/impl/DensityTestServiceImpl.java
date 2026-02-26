@@ -5,6 +5,7 @@ import org.example.work121.entity.DensityTestReport;
 import org.example.work121.mapper.DensityTestMapper;
 import org.example.work121.mapper.DensityTestReportMapper;
 import org.example.work121.service.DensityTestService;
+import org.example.work121.service.TableGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,9 @@ public class DensityTestServiceImpl implements DensityTestService {
 
     @Autowired
     private DensityTestReportMapper reportMapper;
+
+    @Autowired
+    private TableGenerationService tableGenerationService;
 
     @Override
     public java.util.List<DensityTest> getByEntrustmentId(String entrustmentId) {
@@ -66,11 +70,8 @@ public class DensityTestServiceImpl implements DensityTestService {
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
-        java.util.List<DensityTest> records = mapper.selectByEntrustmentId(entrustmentId);
-        if (records == null || records.isEmpty()) {
-            System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
-        } else {
-            System.out.println("Generated Report and Result for DensityTest entrustment: " + entrustmentId);
-        }
+        // 委托 + 记录都“已通过”且属于密度类时，才真正生成报告/结果
+        // 具体条件和数据填充逻辑集中在 TableGenerationServiceImpl.generateDensityTestReportAndResult 中处理
+        tableGenerationService.generateReportAndResult("DENSITY_TEST", entrustmentId);
     }
 }

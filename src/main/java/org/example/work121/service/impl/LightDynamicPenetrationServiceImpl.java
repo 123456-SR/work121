@@ -68,7 +68,9 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
 
     @Override
     public List<LightDynamicPenetration> getByEntrustmentId(String entrustmentId) {
-        return mapper.selectByEntrustmentId(entrustmentId);
+        // 兼容前端传 WT_NUM 或 WT_ID：若传入的是 WT_NUM，则先解析出 WT_ID
+        String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
+        return mapper.selectByEntrustmentId(resolvedId);
     }
 
     @Override
@@ -138,7 +140,8 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
 
     @Override
     public org.example.work121.entity.LightDynamicPenetrationReport getReportByEntrustmentId(String entrustmentId) {
-        return reportMapper.selectByEntrustmentId(entrustmentId);
+        String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
+        return reportMapper.selectByEntrustmentId(resolvedId);
     }
 
     @Override
@@ -157,7 +160,8 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
 
     @Override
     public LightDynamicPenetrationResult getResultByEntrustmentId(String entrustmentId) {
-        return resultMapper.selectByEntrustmentId(entrustmentId);
+        String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
+        return resultMapper.selectByEntrustmentId(resolvedId);
     }
 
     @Override
@@ -177,7 +181,8 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
-        List<LightDynamicPenetration> records = mapper.selectByEntrustmentId(entrustmentId);
+        String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
+        List<LightDynamicPenetration> records = mapper.selectByEntrustmentId(resolvedId);
         if (records == null || records.isEmpty()) {
             System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
             return;
@@ -217,7 +222,7 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
             String mergedJson = objectMapper.writeValueAsString(recordData);
 
             // Update Report
-            LightDynamicPenetrationReport report = reportMapper.selectByEntrustmentId(entrustmentId);
+            LightDynamicPenetrationReport report = reportMapper.selectByEntrustmentId(resolvedId);
             if (report != null) {
                 report.setDataJson(mergedJson);
                 // Copy standard fields
@@ -230,7 +235,7 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
             }
 
             // Update Result
-            LightDynamicPenetrationResult result = resultMapper.selectByEntrustmentId(entrustmentId);
+            LightDynamicPenetrationResult result = resultMapper.selectByEntrustmentId(resolvedId);
             if (result != null) {
                 result.setDataJson(mergedJson);
                 if (record.getProjectName() != null) result.setProjectName(record.getProjectName());
@@ -247,5 +252,25 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
             e.printStackTrace();
             throw new RuntimeException("Error generating report/result: " + e.getMessage());
         }
+    }
+
+    /**
+     * 解析“委托ID”入参：兼容传 WT_NUM 或 WT_ID，最终返回 WT_ID
+     */
+    private String resolveEntrustmentIdToWtId(String entrustmentIdOrWtNum) {
+        if (entrustmentIdOrWtNum == null || entrustmentIdOrWtNum.trim().isEmpty()) {
+            return entrustmentIdOrWtNum;
+        }
+        String key = entrustmentIdOrWtNum.trim();
+        try {
+            // 若传入的是 WT_NUM，则可通过 selectByWtNum 得到 WT_ID
+            List<org.example.work121.entity.JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByWtNum(key);
+            if (list != null && !list.isEmpty() && list.get(0) != null && list.get(0).getId() != null && !list.get(0).getId().trim().isEmpty()) {
+                return list.get(0).getId();
+            }
+        } catch (Exception e) {
+            // ignore, fallback to original
+        }
+        return key;
     }
 }

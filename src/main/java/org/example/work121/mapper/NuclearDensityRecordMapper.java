@@ -41,8 +41,20 @@ public interface NuclearDensityRecordMapper {
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     NuclearDensityRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_NUCLEAR_DENSITY (ID, ENTRUSTMENT_ID, DATA_JSON, TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{recordReviewSign,jdbcType=VARCHAR}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
+    @Insert("INSERT INTO T_NUCLEAR_DENSITY (" +
+            "ID, ENTRUSTMENT_ID, DATA_JSON, " +
+            "TESTER, REVIEWER, APPROVER, " +
+            "FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, " +
+            "INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "STATUS, " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME" +
+            ") VALUES (" +
+            "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, " +
+            "#{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, " +
+            "#{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{recordReviewSign,jdbcType=VARCHAR}, " +
+            "#{inspectSignaturePhoto,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "TO_CHAR(#{status,jdbcType=INTEGER}), " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(NuclearDensityRecord record);
 
     @Update("UPDATE T_NUCLEAR_DENSITY SET " +

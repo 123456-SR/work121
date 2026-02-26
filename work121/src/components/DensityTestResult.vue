@@ -162,6 +162,10 @@ const props = defineProps({
   id: {
     type: String,
     required: false
+  },
+  wtNum: {
+    type: String,
+    required: false
   }
 })
 
@@ -317,11 +321,12 @@ const deleteRecord = async () => {
 }
 
 const loadData = async () => {
-  if (props.id) {
+  const key = props.wtNum || props.id
+  if (key) {
     try {
       // 1. Try to fetch existing result (List)
       const response = await axios.get('/api/density-test/get-by-entrustment-id', {
-        params: { entrustmentId: props.id }
+        params: { entrustmentId: key }
       })
 
       if (response.data.success && response.data.data && response.data.data.length > 0) {
@@ -331,19 +336,19 @@ const loadData = async () => {
       } else {
         // 2. If no result, fetch entrustment info
         const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
-          params: { unifiedNumber: props.id }
+          params: { unifiedNumber: key }
         })
         
         const newRecord = {
           id: '',
-          entrustmentId: props.id,
+          entrustmentId: key,
           dataJson: '{}'
         }
         
         if (entrustmentResponse.data.success) {
           const eData = entrustmentResponse.data.data
-          formData.entrustmentId = props.id
-          formData.unifiedNumber = eData.wtNum || ''
+          formData.entrustmentId = key
+          formData.unifiedNumber = eData.wtNum || key || ''
           formData.constructionPart = eData.constructionPart || ''
           
           if (eData.tester) formData.tester = eData.tester
@@ -367,7 +372,7 @@ const saveData = async () => {
   try {
     const dataToSave = {
       id: formData.id,
-      entrustmentId: formData.entrustmentId || props.id,
+      entrustmentId: formData.entrustmentId || props.wtNum || props.id,
       dataJson: JSON.stringify(formData),
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature,
@@ -607,6 +612,7 @@ const previewPdf = () => {
             outline: none;
             font-family: inherit; /* Inherit font */
             font-size: inherit;
+            background-color: transparent; /* 与周围背景保持一致 */
         }
         .left-align input {
             text-align: left;

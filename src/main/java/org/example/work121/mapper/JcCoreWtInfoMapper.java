@@ -80,6 +80,18 @@ public interface JcCoreWtInfoMapper {
             "WHERE UPPER(TRIM(t2.WT_NUM)) = UPPER(TRIM(#{wtNum})) AND ROWNUM <= 1")
     List<JcCoreWtInfo> selectByWtNum(@Param("wtNum") String wtNum);
 
+    /**
+     * 根据 WT_ID（委托主键）查询一条委托信息，用于通过记录表里的 ENTRUSTMENT_ID 反查统一编号等。
+     */
+    @Select("SELECT " +
+            "t2.WT_ID as id, " +
+            "t2.WT_NUM as wtNum, " +
+            "COALESCE(TO_CHAR(t1.STATUS), '0') as status " +
+            "FROM JC_CORE_WT_INFO t2 " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
+            "WHERE t2.WT_ID = #{wtId} AND ROWNUM <= 1")
+    JcCoreWtInfo selectByWtId(@Param("wtId") String wtId);
+
     @Select("SELECT t1.ID, t1.WT_NUM, t1.PROJECT_NAME, t1.CREATE_BY, t1.TESTER, t1.REVIEWER, t1.APPROVER FROM T_ENTRUSTMENT t1 WHERE ROWNUM <= 10")
     List<JcCoreWtInfo> debugSelectAll();
 
@@ -453,6 +465,30 @@ public interface JcCoreWtInfoMapper {
             "TO_CHAR(t1.CREATE_BY) as createBy, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as createByName, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegRealName, " +
+            // recordStatus：优先取各“记录表”自身的 STATUS，不受本查询 JOIN/人员过滤影响；
+            // 实现方式：分别对各记录表按 WT_NUM/WT_ID 取最大 STATUS，然后按顺序 COALESCE，最后默认 '0'
+            "NVL( " +
+            "  COALESCE( " +
+            "    (SELECT MAX(TO_CHAR(d.STATUS)) FROM T_DENSITY_TEST d " +
+            "      WHERE d.ENTRUSTMENT_ID = t2.WT_NUM OR d.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(n.STATUS)) FROM T_NUCLEAR_DENSITY n " +
+            "      WHERE n.ENTRUSTMENT_ID = t2.WT_NUM OR n.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(s.STATUS)) FROM T_SAND_REPLACEMENT s " +
+            "      WHERE s.ENTRUSTMENT_ID = t2.WT_NUM OR s.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(w.STATUS)) FROM T_WATER_REPLACEMENT w " +
+            "      WHERE w.ENTRUSTMENT_ID = t2.WT_NUM OR w.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(c.STATUS)) FROM T_CUTTING_RING c " +
+            "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(r.STATUS)) FROM T_REBOUND_METHOD r " +
+            "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(l.STATUS)) FROM JZS_LIGHT_DYNAMIC_PENETRATION l " +
+            "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(b.STATUS)) FROM T_BECKMAN_BEAM b " +
+            "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID) " +
+            "  ), " +
+            "  '0' " +
+            ") as recordStatus, " +
+            // status：保持原有委托状态，供兼容使用
             "COALESCE(TO_CHAR(t1.STATUS), TO_CHAR(t2.WT_STATUS), '0') as status, " +
             "t1.SAMPLE_STATUS as sampleStatus, " +
             "TO_CHAR(COALESCE(" +
@@ -520,12 +556,14 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN JZS_USERS u_update ON u_update.USER_ACCOUNT = TO_CHAR(t1.UPDATE_BY) " +
             "LEFT JOIN T_SIMPLE_DIRECTORY t3 ON t3.DIR_NAME = t2.WT_NUM " +
             "LEFT JOIN T_DENSITY_TEST t_density ON t_density.ENTRUSTMENT_ID = t2.WT_NUM " +
-            "LEFT JOIN T_NUCLEAR_DENSITY t_nuclear ON t_nuclear.ENTRUSTMENT_ID = t2.WT_NUM " +
+            // 核子法历史数据有两种关联方式：ENTRUSTMENT_ID 可能是 WT_NUM 或 WT_ID，这里同时兼容
+            "LEFT JOIN T_NUCLEAR_DENSITY t_nuclear ON (t_nuclear.ENTRUSTMENT_ID = t2.WT_NUM OR t_nuclear.ENTRUSTMENT_ID = t2.WT_ID) " +
             "LEFT JOIN T_SAND_REPLACEMENT t_sand ON t_sand.ENTRUSTMENT_ID = t2.WT_NUM " +
             "LEFT JOIN T_WATER_REPLACEMENT t_water ON t_water.ENTRUSTMENT_ID = t2.WT_NUM " +
             "LEFT JOIN T_CUTTING_RING t_cutting ON t_cutting.ENTRUSTMENT_ID = t2.WT_NUM " +
             "LEFT JOIN T_REBOUND_METHOD t_rebound ON t_rebound.ENTRUSTMENT_ID = t2.WT_NUM " +
-            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_NUM " +
+            // 轻型动力触探表 JZS_LIGHT_DYNAMIC_PENETRATION 的 ENTRUSTMENT_ID 关联的是 JC_CORE_WT_INFO.WT_ID
+            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_NUM " +
             "<where>" +
             "<if test='categories != null'>" +

@@ -190,7 +190,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         String dirName = directory.getDirName();
         String creator = directory.getCreateBy();
         String category = determineAllTestCategories(directory);
-        
+
         // Ensure Master Record exists (for list visibility)
         ensureMasterRecord(dirName, creator, category, directory);
         
@@ -241,9 +241,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 info.setWtNum(wtNum);
                 info.setCreateBy(creator);
                 info.setCreateTime(new java.util.Date());
-                
+
                 setDefaultValues(info, directory, category);
-                
+
                 boolean saved = false;
                 try {
                     jcCoreWtInfoService.save(info);
@@ -251,7 +251,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-                
+
                 if (!saved) {
                     try {
                         jcCoreWtInfoMapper.insertExt(info);
@@ -384,16 +384,16 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 if (existing != null) {
                     return existing.getId();
                 }
-                
+
                 // Fallback: Create if not exists (should rarely happen if ensureMasterRecord works)
                 JcCoreWtInfo info = new JcCoreWtInfo();
                 info.setId(id);
                 info.setWtNum(dirName);
                 info.setCreateBy(creator); // Maps to WT_REG_NAME
                 info.setCreateTime(now); // For EXT table
-                
+
                 setDefaultValues(info, directory, category);
-                
+
                 jcCoreWtInfoMapper.insert(info);
                 jcCoreWtInfoMapper.insertExt(info);
 
@@ -477,6 +477,30 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 entity.setEntrustmentId(dirName);
                 
                 setDefaultValues(entity, directory, category);
+                
+                // 尝试从委托单获取数据并填充到实体对象和 DATA_JSON
+                try {
+                    java.util.List<JcCoreWtInfo> entrustmentList = jcCoreWtInfoMapper.selectByWtNum(dirName);
+                    if (entrustmentList != null && !entrustmentList.isEmpty()) {
+                        JcCoreWtInfo entrustment = entrustmentList.get(0);
+                        // 填充实体对象属性
+                        copyFields(entrustment, entity);
+                        // 设置默认虚拟数据
+                        populateVirtualData(entity);
+                        // 合并委托单数据到 JSON
+                        mergeEntrustmentDataToJson(entity, entrustment);
+                        System.out.println("创建核子法记录时已填充委托单数据");
+                    } else {
+                        // 如果没有找到委托单，只设置默认虚拟数据
+                        populateVirtualData(entity);
+                        System.out.println("创建核子法记录时未找到委托单数据，只设置默认值");
+                    }
+                } catch (Exception e) {
+                    System.err.println("创建核子法记录时填充委托单数据失败: " + e.getMessage());
+                    e.printStackTrace();
+                    // 即使失败，也要设置默认虚拟数据
+                    populateVirtualData(entity);
+                }
                 
                 nuclearDensityRecordMapper.insert(entity);
                 return id;
@@ -625,23 +649,41 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     private void syncEntrustmentData(SimpleDirectory directory) {
         try {
             // 1. 查找委托单 (Source)
+            // 优先使用 getByWtNum 获取完整数据（包含 JOIN T_ENTRUSTMENT 的完整查询）
             JcCoreWtInfo entrustment = null;
-            if (isEntrustment(directory.getTable1Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable1Id());
-            else if (isEntrustment(directory.getTable2Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable2Id());
-            else if (isEntrustment(directory.getTable3Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable3Id());
-            else if (isEntrustment(directory.getTable4Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable4Id());
-            else if (isEntrustment(directory.getTable5Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable5Id());
-            else if (isEntrustment(directory.getTable6Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable6Id());
-            else if (isEntrustment(directory.getTable7Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable7Id());
-            else if (isEntrustment(directory.getTable8Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable8Id());
-            else if (isEntrustment(directory.getTable9Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable9Id());
-            else if (isEntrustment(directory.getTable10Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable10Id());
+            String dirName = directory.getDirName();
+            
+            // 先尝试通过 dirName (wtNum) 获取完整数据
+            if (dirName != null && !dirName.isEmpty()) {
+                java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByWtNum(dirName);
+                if (list != null && !list.isEmpty()) {
+                    entrustment = list.get(0);
+                    System.out.println("通过 wtNum 获取委托单数据: " + dirName);
+                }
+            }
+            
+            // 如果通过 wtNum 没找到，再尝试通过 ID 查找
+            if (entrustment == null) {
+                if (isEntrustment(directory.getTable1Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable1Id());
+                else if (isEntrustment(directory.getTable2Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable2Id());
+                else if (isEntrustment(directory.getTable3Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable3Id());
+                else if (isEntrustment(directory.getTable4Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable4Id());
+                else if (isEntrustment(directory.getTable5Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable5Id());
+                else if (isEntrustment(directory.getTable6Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable6Id());
+                else if (isEntrustment(directory.getTable7Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable7Id());
+                else if (isEntrustment(directory.getTable8Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable8Id());
+                else if (isEntrustment(directory.getTable9Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable9Id());
+                else if (isEntrustment(directory.getTable10Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable10Id());
+                System.out.println("通过 ID 获取委托单数据");
+            }
 
             if (entrustment == null) {
+                System.err.println("未找到委托单数据，dirName: " + dirName);
                 return;
             }
 
-            String dirName = entrustment.getWtNum() != null ? entrustment.getWtNum() : directory.getDirName();
+            dirName = entrustment.getWtNum() != null ? entrustment.getWtNum() : directory.getDirName();
+            System.out.println("委托单数据 - WtNum: " + entrustment.getWtNum() + ", ClientUnit: " + entrustment.getClientUnit() + ", ProjectName: " + entrustment.getProjectName());
             String creator = entrustment.getCreateBy() != null ? entrustment.getCreateBy() : directory.getCreateBy();
             String category = entrustment.getTestCategory() != null ? entrustment.getTestCategory() : determineAllTestCategories(directory);
 
@@ -746,6 +788,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 densityTestRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "DENSITY_TEST_REPORT", "原位密度检测报告")) {
@@ -768,6 +811,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 reboundMethodRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "REBOUND_METHOD_REPORT", "回弹法检测混凝土抗压强度报告")) {
@@ -783,27 +827,32 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 sandReplacementRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
             LightDynamicPenetrationRecord target = lightDynamicPenetrationRecordMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getWtNum());
+                // 轻型动力触探表使用 ENTRUSTMENT_ID 关联 JC_CORE_WT_INFO.WT_ID
+                target.setEntrustmentId(source.getId());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 lightDynamicPenetrationRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "LIGHT_DYNAMIC_PENETRATION_REPORT", "轻型动力触探检测报告")) {
             LightDynamicPenetrationReport target = lightDynamicPenetrationReportMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getWtNum());
+                // 轻型动力触探表使用 ENTRUSTMENT_ID 关联 JC_CORE_WT_INFO.WT_ID
+                target.setEntrustmentId(source.getId());
                 copyFields(source, target);
                 lightDynamicPenetrationReportMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
             LightDynamicPenetrationResult target = lightDynamicPenetrationResultMapper.selectById(id);
             if (target != null) {
-                target.setEntrustmentId(source.getWtNum());
+                // 轻型动力触探表使用 ENTRUSTMENT_ID 关联 JC_CORE_WT_INFO.WT_ID
+                target.setEntrustmentId(source.getId());
                 copyFields(source, target);
                 lightDynamicPenetrationResultMapper.updateById(target);
             }
@@ -813,6 +862,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 beckmanBeamRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "BECKMAN_BEAM_REPORT", "路基路面回弹弯沉检测报告")) {
@@ -835,6 +885,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 cuttingRingRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
@@ -843,6 +894,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                // 将从委托单同步的业务字段写入 DATA_JSON，确保前端能读取到
+                mergeEntrustmentDataToJson(target, source);
                 nuclearDensityRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "WATER_REPLACEMENT_RECORD", "相对密度试验记录表（灌水法）")) {
@@ -851,6 +904,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 target.setEntrustmentId(source.getWtNum());
                 copyFields(source, target);
                 populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 waterReplacementRecordMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "SAND_REPLACEMENT_REPORT", "原位密度检测报告（灌砂法）")) {
@@ -950,6 +1004,229 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         // if (source.getApprover() != null) target.setApprover(source.getApprover());
         
         // Add more fields as needed
+    }
+
+    /**
+     * 将委托单的业务字段合并到记录表的 DATA_JSON 中
+     * 确保前端能够从 DATA_JSON 中读取到从委托单同步的业务字段
+     */
+    private void mergeEntrustmentDataToJson(BusinessEntity target, JcCoreWtInfo source) {
+        try {
+            System.out.println("=== mergeEntrustmentDataToJson 开始 ===");
+            System.out.println("Source WtNum: " + source.getWtNum());
+            System.out.println("Source ClientUnit: " + source.getClientUnit());
+            System.out.println("Source ProjectName: " + source.getProjectName());
+            
+            // 读取现有的 DATA_JSON
+            String existingJson = null;
+            if (target instanceof NuclearDensityRecord) {
+                existingJson = ((NuclearDensityRecord) target).getDataJson();
+            } else if (target instanceof SandReplacementRecord) {
+                existingJson = ((SandReplacementRecord) target).getDataJson();
+            } else if (target instanceof WaterReplacementRecord) {
+                existingJson = ((WaterReplacementRecord) target).getDataJson();
+            } else if (target instanceof CuttingRingRecord) {
+                existingJson = ((CuttingRingRecord) target).getDataJson();
+            } else if (target instanceof BeckmanBeamRecord) {
+                existingJson = ((BeckmanBeamRecord) target).getDataJson();
+            } else if (target instanceof LightDynamicPenetrationRecord) {
+                existingJson = ((LightDynamicPenetrationRecord) target).getDataJson();
+            } else if (target instanceof ReboundMethodRecord) {
+                existingJson = ((ReboundMethodRecord) target).getDataJson();
+            } else if (target instanceof DensityTestRecord) {
+                existingJson = ((DensityTestRecord) target).getDataJson();
+            }
+            
+            System.out.println("Existing JSON: " + existingJson);
+            
+            // 解析现有 JSON 或创建新 Map
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            if (existingJson != null && !existingJson.isEmpty()) {
+                try {
+                    data = objectMapper.readValue(existingJson, java.util.Map.class);
+                    System.out.println("Parsed existing JSON, size: " + data.size());
+                } catch (Exception e) {
+                    System.err.println("Failed to parse existing JSON: " + e.getMessage());
+                    // 如果解析失败，使用空 Map
+                    data = new java.util.HashMap<>();
+                }
+            }
+            
+            // 将从委托单同步的业务字段添加到 JSON 中（使用前端期望的字段名）
+            // 注意：即使字段为 null，也要尝试从实体对象的属性中获取（因为 copyFields 已经设置了）
+            int fieldsAdded = 0;
+            
+            // 优先使用 source 的字段，如果为 null，则使用 target 实体对象的属性
+            String projectName = source.getProjectName();
+            if (projectName == null || projectName.isEmpty()) projectName = target.getProjectName();
+            if (projectName != null && !projectName.isEmpty()) {
+                data.put("projectName", projectName);
+                fieldsAdded++;
+            }
+            
+            String clientUnit = source.getClientUnit();
+            if (clientUnit == null || clientUnit.isEmpty()) clientUnit = target.getClientUnit();
+            if (clientUnit != null && !clientUnit.isEmpty()) {
+                data.put("entrustingUnit", clientUnit);
+                fieldsAdded++;
+            }
+            
+            String wtNum = source.getWtNum();
+            if (wtNum == null || wtNum.isEmpty()) wtNum = target.getWtNum();
+            if (wtNum != null && !wtNum.isEmpty()) {
+                data.put("unifiedNumber", wtNum);
+                fieldsAdded++;
+            }
+            
+            if (source.getCommissionDate() != null) {
+                data.put("commissionDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(source.getCommissionDate()));
+                fieldsAdded++;
+            } else if (target.getCommissionDate() != null) {
+                data.put("commissionDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(target.getCommissionDate()));
+                fieldsAdded++;
+            }
+            
+            String constructionUnit = source.getConstructionUnit();
+            if (constructionUnit == null || constructionUnit.isEmpty()) constructionUnit = target.getConstructionUnit();
+            if (constructionUnit != null && !constructionUnit.isEmpty()) {
+                data.put("constructionUnit", constructionUnit);
+                fieldsAdded++;
+            }
+            
+            String buildingUnit = source.getBuildingUnit();
+            if (buildingUnit == null || buildingUnit.isEmpty()) buildingUnit = target.getBuildingUnit();
+            if (buildingUnit != null && !buildingUnit.isEmpty()) {
+                data.put("buildingUnit", buildingUnit);
+                fieldsAdded++;
+            }
+            
+            String supervisionUnit = source.getSupervisionUnit();
+            if (supervisionUnit == null || supervisionUnit.isEmpty()) supervisionUnit = target.getSupervisionUnit();
+            if (supervisionUnit != null && !supervisionUnit.isEmpty()) {
+                data.put("supervisionUnit", supervisionUnit);
+                fieldsAdded++;
+            }
+            
+            String designUnit = source.getDesignUnit();
+            if (designUnit == null || designUnit.isEmpty()) designUnit = target.getDesignUnit();
+            if (designUnit != null && !designUnit.isEmpty()) {
+                data.put("designUnit", designUnit);
+                fieldsAdded++;
+            }
+            
+            String witnessUnit = source.getWitnessUnit();
+            if (witnessUnit == null || witnessUnit.isEmpty()) witnessUnit = target.getWitnessUnit();
+            if (witnessUnit != null && !witnessUnit.isEmpty()) {
+                data.put("witnessUnit", witnessUnit);
+                fieldsAdded++;
+            }
+            
+            String witness = source.getWitness();
+            if (witness == null || witness.isEmpty()) witness = target.getWitness();
+            if (witness != null && !witness.isEmpty()) {
+                data.put("witness", witness);
+                fieldsAdded++;
+            }
+            
+            String sampleName = source.getSampleName();
+            if (sampleName == null || sampleName.isEmpty()) sampleName = target.getSampleName();
+            if (sampleName != null && !sampleName.isEmpty()) {
+                data.put("sampleNameStatus", sampleName);
+                fieldsAdded++;
+            }
+            
+            String constructionPart = source.getConstructionPart();
+            if (constructionPart == null || constructionPart.isEmpty()) constructionPart = target.getConstructionPart();
+            if (constructionPart != null && !constructionPart.isEmpty()) {
+                data.put("constructionPart", constructionPart);
+                fieldsAdded++;
+            }
+            
+            String projectArea = source.getProjectArea();
+            if (projectArea == null || projectArea.isEmpty()) projectArea = target.getProjectArea();
+            if (projectArea != null && !projectArea.isEmpty()) {
+                data.put("projectArea", projectArea);
+                fieldsAdded++;
+            }
+            
+            String surveyUnit = source.getSurveyUnit();
+            if (surveyUnit == null || surveyUnit.isEmpty()) surveyUnit = target.getSurveyUnit();
+            if (surveyUnit != null && !surveyUnit.isEmpty()) {
+                data.put("surveyUnit", surveyUnit);
+                fieldsAdded++;
+            }
+            
+            String client = source.getClient();
+            if (client == null || client.isEmpty()) client = target.getClient();
+            if (client != null && !client.isEmpty()) {
+                data.put("client", client);
+                fieldsAdded++;
+            }
+            
+            String clientTel = source.getClientTel();
+            if (clientTel == null || clientTel.isEmpty()) clientTel = target.getClientTel();
+            if (clientTel != null && !clientTel.isEmpty()) {
+                data.put("clientTel", clientTel);
+                fieldsAdded++;
+            }
+            
+            String testCategory = source.getTestCategory();
+            if (testCategory == null || testCategory.isEmpty()) testCategory = target.getTestCategory();
+            if (testCategory != null && !testCategory.isEmpty()) {
+                data.put("testCategory", testCategory);
+                fieldsAdded++;
+            }
+            
+            String testBasis = source.getTestBasis();
+            if (testBasis == null || testBasis.isEmpty()) testBasis = target.getTestBasis();
+            if (testBasis != null && !testBasis.isEmpty()) {
+                data.put("standard", testBasis);
+                fieldsAdded++;
+            }
+            
+            String equipment = source.getEquipment();
+            if (equipment == null || equipment.isEmpty()) equipment = target.getEquipment();
+            if (equipment != null && !equipment.isEmpty()) {
+                data.put("equipment", equipment);
+                fieldsAdded++;
+            }
+            
+            String remarks = source.getRemarks();
+            if (remarks == null || remarks.isEmpty()) remarks = target.getRemarks();
+            if (remarks != null && !remarks.isEmpty()) {
+                data.put("remarks", remarks);
+                fieldsAdded++;
+            }
+            
+            System.out.println("合并了 " + fieldsAdded + " 个字段到 JSON");
+            
+            // 写回 DATA_JSON
+            String mergedJson = objectMapper.writeValueAsString(data);
+            System.out.println("Merged JSON: " + mergedJson);
+            
+            if (target instanceof NuclearDensityRecord) {
+                ((NuclearDensityRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof SandReplacementRecord) {
+                ((SandReplacementRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof WaterReplacementRecord) {
+                ((WaterReplacementRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof CuttingRingRecord) {
+                ((CuttingRingRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof BeckmanBeamRecord) {
+                ((BeckmanBeamRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof LightDynamicPenetrationRecord) {
+                ((LightDynamicPenetrationRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof ReboundMethodRecord) {
+                ((ReboundMethodRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof DensityTestRecord) {
+                ((DensityTestRecord) target).setDataJson(mergedJson);
+            }
+            
+            System.out.println("=== mergeEntrustmentDataToJson 完成 ===");
+        } catch (Exception e) {
+            System.err.println("Error merging entrustment data to JSON: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void populateVirtualData(BusinessEntity entity) {

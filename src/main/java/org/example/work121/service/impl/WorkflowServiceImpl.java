@@ -109,7 +109,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         // jcCoreWtInfoMapper.update(entity); // Optional: if you want to sync changes to old table
         
         // Sync data to other tables if Entrustment is approved or passes audit (Pending Sign)
-        if (entity.getStatus() != null && (entity.getStatus() == STATUS_APPROVED || entity.getStatus() == STATUS_PENDING_SIGN)) {
+        if (entity.getStatus() != null && (STATUS_APPROVED.equals(entity.getStatus()) || STATUS_PENDING_SIGN.equals(entity.getStatus()))) {
             simpleDirectoryService.syncEntrustmentDataByWtNum(entity.getWtNum());
         }
 
@@ -123,7 +123,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = densityTestMapper.updateById(entity) > 0;
 
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             densityTestService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
@@ -136,7 +136,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = reboundMethodMapper.updateById(entity) > 0;
 
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             reboundMethodService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
@@ -148,8 +148,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = sandReplacementMapper.update(entity) > 0;
 
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             sandReplacementService.generateReportAndResult(entity.getEntrustmentId());
+            // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
+            densityTestService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
     }
@@ -161,8 +163,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = waterReplacementMapper.updateById(entity) > 0;
         
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             waterReplacementService.generateReportAndResult(entity.getEntrustmentId());
+            // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
+            densityTestService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
     }
@@ -173,8 +177,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = nuclearDensityMapper.updateById(entity) > 0;
 
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             nuclearDensityService.generateReportAndResult(entity.getEntrustmentId());
+            // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
+            densityTestService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
     }
@@ -185,8 +191,10 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = cuttingRingMapper.updateById(entity) > 0;
 
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             cuttingRingService.generateReportAndResult(entity.getEntrustmentId());
+            // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
+            densityTestService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
     }
@@ -198,7 +206,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         boolean success = beckmanBeamMapper.updateById(entity) > 0;
         
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             beckmanBeamService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;

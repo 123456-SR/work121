@@ -10,16 +10,6 @@ public interface CuttingRingMapper {
     @Select("SELECT " +
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
-            "t2.SOIL_TYPE as soilType, " +
-            "t2.RING_VOLUME as ringVolume, " +
-            "t2.WET_WEIGHT as wetWeight, " +
-            "t2.DRY_WEIGHT as dryWeight, " +
-            "t2.WATER_CONTENT as waterContent, " +
-            "t2.WET_DENSITY as wetDensity, " +
-            "t2.DRY_DENSITY as dryDensity, " +
-            "t2.MAX_DRY_DENSITY as maxDryDensity, " +
-            "t2.COMPACTION_COEFFICIENT as compactionCoefficient, " +
-            "t2.QUALIFIED_RATE as qualifiedRate, " +
             "t2.DATA_JSON as dataJson, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
@@ -50,16 +40,6 @@ public interface CuttingRingMapper {
 
     @Update("UPDATE T_CUTTING_RING SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "SOIL_TYPE = #{soilType}, " +
-            "RING_VOLUME = #{ringVolume}, " +
-            "WET_WEIGHT = #{wetWeight}, " +
-            "DRY_WEIGHT = #{dryWeight}, " +
-            "WATER_CONTENT = #{waterContent}, " +
-            "WET_DENSITY = #{wetDensity}, " +
-            "DRY_DENSITY = #{dryDensity}, " +
-            "MAX_DRY_DENSITY = #{maxDryDensity}, " +
-            "COMPACTION_COEFFICIENT = #{compactionCoefficient}, " +
-            "QUALIFIED_RATE = #{qualifiedRate}, " +
             "DATA_JSON = #{dataJson}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
@@ -75,16 +55,6 @@ public interface CuttingRingMapper {
     @Select("SELECT " +
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
-            "t2.SOIL_TYPE as soilType, " +
-            "t2.RING_VOLUME as ringVolume, " +
-            "t2.WET_WEIGHT as wetWeight, " +
-            "t2.DRY_WEIGHT as dryWeight, " +
-            "t2.WATER_CONTENT as waterContent, " +
-            "t2.WET_DENSITY as wetDensity, " +
-            "t2.DRY_DENSITY as dryDensity, " +
-            "t2.MAX_DRY_DENSITY as maxDryDensity, " +
-            "t2.COMPACTION_COEFFICIENT as compactionCoefficient, " +
-            "t2.QUALIFIED_RATE as qualifiedRate, " +
             "t2.DATA_JSON as dataJson, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
@@ -114,17 +84,13 @@ public interface CuttingRingMapper {
     List<CuttingRing> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO T_CUTTING_RING (" +
-            "ID, ENTRUSTMENT_ID, SOIL_TYPE, RING_VOLUME, WET_WEIGHT, DRY_WEIGHT, " +
-            "WATER_CONTENT, WET_DENSITY, DRY_DENSITY, MAX_DRY_DENSITY, " +
-            "COMPACTION_COEFFICIENT, QUALIFIED_RATE, DATA_JSON, " +
+            "ID, ENTRUSTMENT_ID, DATA_JSON, " +
             "TESTER, REVIEWER, APPROVER, " +
             "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{soilType}, #{ringVolume}, #{wetWeight}, #{dryWeight}, " +
-            "#{waterContent}, #{wetDensity}, #{dryDensity}, #{maxDryDensity}, " +
-            "#{compactionCoefficient}, #{qualifiedRate}, #{dataJson}, " +
+            "#{id}, #{entrustmentId}, #{dataJson}, " +
             "#{tester}, #{reviewer}, #{approver}, " +
             "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
@@ -132,16 +98,6 @@ public interface CuttingRingMapper {
     int insert(CuttingRing cuttingRing);
 
     @Update("UPDATE T_CUTTING_RING SET " +
-            "SOIL_TYPE = #{soilType}, " +
-            "RING_VOLUME = #{ringVolume}, " +
-            "WET_WEIGHT = #{wetWeight}, " +
-            "DRY_WEIGHT = #{dryWeight}, " +
-            "WATER_CONTENT = #{waterContent}, " +
-            "WET_DENSITY = #{wetDensity}, " +
-            "DRY_DENSITY = #{dryDensity}, " +
-            "MAX_DRY_DENSITY = #{maxDryDensity}, " +
-            "COMPACTION_COEFFICIENT = #{compactionCoefficient}, " +
-            "QUALIFIED_RATE = #{qualifiedRate}, " +
             "DATA_JSON = #{dataJson}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +

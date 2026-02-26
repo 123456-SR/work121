@@ -229,4 +229,15 @@ public class JcCoreWtInfo extends Entrustment {
     public void setRejectReason(String rejectReason) {
         setSendBackReason(rejectReason);
     }
+
+    // 记录表专用状态（例如核子法记录的 STATUS），与委托状态解耦，用于前端列表展示
+    private String recordStatus;
+
+    public String getRecordStatus() {
+        return recordStatus;
+    }
+
+    public void setRecordStatus(String recordStatus) {
+        this.recordStatus = recordStatus;
+    }
 }

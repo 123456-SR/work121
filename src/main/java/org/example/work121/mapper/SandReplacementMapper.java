@@ -13,17 +13,7 @@ public interface SandReplacementMapper {
     @Select("SELECT " +
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
-            "t2.SOIL_TYPE as soilType, " +
-            "t2.PIT_VOLUME as pitVolume, " +
-            "t2.WET_WEIGHT as wetWeight, " +
-            "t2.DRY_WEIGHT as dryWeight, " +
-            "t2.WATER_CONTENT as waterContent, " +
-            "t2.WET_DENSITY as wetDensity, " +
-            "t2.DRY_DENSITY as dryDensity, " +
-            "t2.MAX_DRY_DENSITY as maxDryDensity, " +
-            "t2.MIN_DRY_DENSITY as minDryDensity, " +
-            "t2.COMPACTION_COEFFICIENT as compactionCoefficient, " +
-            "t2.QUALIFIED_RATE as qualifiedRate, " +
+            // 业务字段统一放到 DATA_JSON 里，这里只取 DATA_JSON 及通用字段
             "t2.DATA_JSON as dataJson, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
@@ -56,17 +46,6 @@ public interface SandReplacementMapper {
     @Select("SELECT " +
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
-            "t2.SOIL_TYPE as soilType, " +
-            "t2.PIT_VOLUME as pitVolume, " +
-            "t2.WET_WEIGHT as wetWeight, " +
-            "t2.DRY_WEIGHT as dryWeight, " +
-            "t2.WATER_CONTENT as waterContent, " +
-            "t2.WET_DENSITY as wetDensity, " +
-            "t2.DRY_DENSITY as dryDensity, " +
-            "t2.MAX_DRY_DENSITY as maxDryDensity, " +
-            "t2.MIN_DRY_DENSITY as minDryDensity, " +
-            "t2.COMPACTION_COEFFICIENT as compactionCoefficient, " +
-            "t2.QUALIFIED_RATE as qualifiedRate, " +
             "t2.DATA_JSON as dataJson, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
@@ -94,17 +73,13 @@ public interface SandReplacementMapper {
     SandReplacement selectById(@Param("id") String id);
 
     @Insert("INSERT INTO T_SAND_REPLACEMENT " +
-            "(ID, ENTRUSTMENT_ID, SOIL_TYPE, PIT_VOLUME, WET_WEIGHT, DRY_WEIGHT, " +
-            "WATER_CONTENT, WET_DENSITY, DRY_DENSITY, MAX_DRY_DENSITY, MIN_DRY_DENSITY, " +
-            "COMPACTION_COEFFICIENT, QUALIFIED_RATE, DATA_JSON, " +
+            "(ID, ENTRUSTMENT_ID, DATA_JSON, " +
             "TESTER, REVIEWER, APPROVER, " +
             "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES " +
-            "(#{id}, #{entrustmentId}, #{soilType}, #{pitVolume}, #{wetWeight}, #{dryWeight}, " +
-            "#{waterContent}, #{wetDensity}, #{dryDensity}, #{maxDryDensity}, #{minDryDensity}, " +
-            "#{compactionCoefficient}, #{qualifiedRate}, #{dataJson}, " +
+            "(#{id}, #{entrustmentId}, #{dataJson}, " +
             "#{tester}, #{reviewer}, #{approver}, " +
             "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
@@ -113,17 +88,6 @@ public interface SandReplacementMapper {
 
     @Update("UPDATE T_SAND_REPLACEMENT SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "SOIL_TYPE = #{soilType}, " +
-            "PIT_VOLUME = #{pitVolume}, " +
-            "WET_WEIGHT = #{wetWeight}, " +
-            "DRY_WEIGHT = #{dryWeight}, " +
-            "WATER_CONTENT = #{waterContent}, " +
-            "WET_DENSITY = #{wetDensity}, " +
-            "DRY_DENSITY = #{dryDensity}, " +
-            "MAX_DRY_DENSITY = #{maxDryDensity}, " +
-            "MIN_DRY_DENSITY = #{minDryDensity}, " +
-            "COMPACTION_COEFFICIENT = #{compactionCoefficient}, " +
-            "QUALIFIED_RATE = #{qualifiedRate}, " +
             "DATA_JSON = #{dataJson}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +

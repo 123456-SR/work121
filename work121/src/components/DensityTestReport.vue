@@ -250,6 +250,10 @@ const props = defineProps({
   id: {
     type: String,
     required: false
+  },
+  wtNum: {
+    type: String,
+    required: false
   }
 })
 
@@ -268,6 +272,7 @@ const formData = reactive({
   entrustmentId: '',
   status: 0,
   client: '',
+  clientUnit: '',
   unifiedNumber: '',
   projectName: '',
   commissionDate: '',
@@ -405,10 +410,13 @@ onMounted(() => {
 })
 
 const loadData = async () => {
-  if (props.id) {
+  // 这里的 id 来自列表的 item.id（委托 WT_ID），wtNum 是统一编号 XT-2024-54301
+  // 原位密度报告/结果的 ENTRUSTMENT_ID 我们现在统一用“统一编号”存，所以优先用 wtNum 作为 key
+  const key = props.wtNum || props.id
+  if (key) {
     try {
       const response = await axios.get('/api/density-test/report/get-by-entrustment-id', {
-        params: { entrustmentId: props.id }
+        params: { entrustmentId: key }
       })
 
       if (response.data.success && response.data.data) {
@@ -416,6 +424,10 @@ const loadData = async () => {
         if (data.dataJson) {
           const parsed = JSON.parse(data.dataJson)
           Object.assign(formData, parsed)
+          // 如果只存了 clientUnit，没有 client，则用单位名称回填到“委托单位”输入框
+          if (!formData.client && formData.clientUnit) {
+            formData.client = formData.clientUnit
+          }
         }
         formData.id = data.id
         formData.status = data.status !== undefined ? data.status : 0
@@ -425,13 +437,15 @@ const loadData = async () => {
         formData.approverSignature = data.approveSignaturePhoto || ''
       } else {
         const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
-          params: { unifiedNumber: props.id }
+          params: { unifiedNumber: key }
         })
         if (entrustmentResponse.data.success) {
           const eData = entrustmentResponse.data.data
-          formData.entrustmentId = props.id
-          formData.unifiedNumber = eData.wtNum || ''
+          formData.entrustmentId = key
+          formData.unifiedNumber = eData.wtNum || key || ''
           formData.projectName = eData.projectName || ''
+          // 委托单位：后端字段叫 clientUnit，这里既保存在 clientUnit，又映射到页面使用的 client
+          formData.clientUnit = eData.clientUnit || ''
           formData.client = eData.clientUnit || ''
           formData.commissionDate = eData.commissionDate || ''
           formData.constructionPart = eData.constructionPart || ''
@@ -442,7 +456,7 @@ const loadData = async () => {
 
           try {
             const resultResponse = await axios.get('/api/density-test/get-by-entrustment-id', {
-              params: { entrustmentId: props.id }
+              params: { entrustmentId: key }
             })
             if (resultResponse.data.success && resultResponse.data.data && resultResponse.data.data.length > 0) {
               const record = resultResponse.data.data[0]
@@ -491,7 +505,8 @@ const saveData = async () => {
   try {
     const dataToSave = {
       id: formData.id,
-      entrustmentId: formData.entrustmentId || props.id,
+      // 报告表里的 ENTRUSTMENT_ID 统一使用“统一编号”存储，优先用 wtNum
+      entrustmentId: formData.entrustmentId || props.wtNum || props.id,
       dataJson: JSON.stringify(formData),
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature,

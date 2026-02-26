@@ -10,7 +10,7 @@ public interface DensityTestMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.SOIL_TYPE as soilType, " +
-            "t2.RING_VOLUME as ringVolume, " +
+            "t2.PIT_VOLUME as ringVolume, " + // 表结构里是 PIT_VOLUME，这里别名成 ringVolume
             "t2.WET_WEIGHT as wetWeight, " +
             "t2.DRY_WEIGHT as dryWeight, " +
             "t2.WATER_CONTENT as waterContent, " +
@@ -18,12 +18,10 @@ public interface DensityTestMapper {
             "t2.DRY_DENSITY as dryDensity, " +
             "t2.MAX_DRY_DENSITY as maxDryDensity, " +
             "t2.MIN_DRY_DENSITY as minDryDensity, " +
-            "t2.OPTIMUM_MOISTURE as optimumMoisture, " +
             "t2.COMPACTION_COEFFICIENT as compactionCoefficient, " +
             "t2.QUALIFIED_RATE as qualifiedRate, " +
-            "t2.SAMPLE_NAME_STATUS as sampleNameStatus, " +
-            "t2.DESIGN_INDEX as designIndex, " +
-            "t2.TEST_RESULT as testResult, " +
+            // 下面这些业务字段（optimumMoisture / sampleNameStatus / designIndex / testResult 等）
+            // 统一放在 DATA_JSON 里，不再单独建物理列
             "t2.DATA_JSON as dataJson, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
@@ -61,7 +59,7 @@ public interface DensityTestMapper {
     @Update("UPDATE T_DENSITY_TEST SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "SOIL_TYPE = #{soilType}, " +
-            "RING_VOLUME = #{ringVolume}, " +
+            "PIT_VOLUME = #{ringVolume}, " +
             "WET_WEIGHT = #{wetWeight}, " +
             "DRY_WEIGHT = #{dryWeight}, " +
             "WATER_CONTENT = #{waterContent}, " +
@@ -69,12 +67,8 @@ public interface DensityTestMapper {
             "DRY_DENSITY = #{dryDensity}, " +
             "MAX_DRY_DENSITY = #{maxDryDensity}, " +
             "MIN_DRY_DENSITY = #{minDryDensity}, " +
-            "OPTIMUM_MOISTURE = #{optimumMoisture}, " +
             "COMPACTION_COEFFICIENT = #{compactionCoefficient}, " +
             "QUALIFIED_RATE = #{qualifiedRate}, " +
-            "SAMPLE_NAME_STATUS = #{sampleNameStatus}, " +
-            "DESIGN_INDEX = #{designIndex}, " +
-            "TEST_RESULT = #{testResult}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
@@ -91,18 +85,18 @@ public interface DensityTestMapper {
     int updateById(DensityTest densityTest);
 
     @Insert("INSERT INTO T_DENSITY_TEST (" +
-            "ID, ENTRUSTMENT_ID, SOIL_TYPE, RING_VOLUME, WET_WEIGHT, DRY_WEIGHT, " +
+            "ID, ENTRUSTMENT_ID, SOIL_TYPE, PIT_VOLUME, WET_WEIGHT, DRY_WEIGHT, " +
             "WATER_CONTENT, WET_DENSITY, DRY_DENSITY, MAX_DRY_DENSITY, MIN_DRY_DENSITY, " +
-            "OPTIMUM_MOISTURE, COMPACTION_COEFFICIENT, QUALIFIED_RATE, " +
-            "SAMPLE_NAME_STATUS, DESIGN_INDEX, TEST_RESULT, TESTER, REVIEWER, APPROVER, DATA_JSON, " +
+            "COMPACTION_COEFFICIENT, QUALIFIED_RATE, " +
+            "TESTER, REVIEWER, APPROVER, DATA_JSON, " +
             "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id}, #{entrustmentId}, #{soilType}, #{ringVolume}, #{wetWeight}, #{dryWeight}, " +
             "#{waterContent}, #{wetDensity}, #{dryDensity}, #{maxDryDensity}, #{minDryDensity}, " +
-            "#{optimumMoisture}, #{compactionCoefficient}, #{qualifiedRate}, " +
-            "#{sampleNameStatus}, #{designIndex}, #{testResult}, #{tester}, #{reviewer}, #{approver}, #{dataJson}, " +
+            "#{compactionCoefficient}, #{qualifiedRate}, " +
+            "#{tester}, #{reviewer}, #{approver}, #{dataJson}, " +
             "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
             "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
@@ -110,7 +104,7 @@ public interface DensityTestMapper {
 
     @Update("UPDATE T_DENSITY_TEST SET " +
             "SOIL_TYPE = #{soilType}, " +
-            "RING_VOLUME = #{ringVolume}, " +
+            "PIT_VOLUME = #{ringVolume}, " +
             "WET_WEIGHT = #{wetWeight}, " +
             "DRY_WEIGHT = #{dryWeight}, " +
             "WATER_CONTENT = #{waterContent}, " +
@@ -118,12 +112,8 @@ public interface DensityTestMapper {
             "DRY_DENSITY = #{dryDensity}, " +
             "MAX_DRY_DENSITY = #{maxDryDensity}, " +
             "MIN_DRY_DENSITY = #{minDryDensity}, " +
-            "OPTIMUM_MOISTURE = #{optimumMoisture}, " +
             "COMPACTION_COEFFICIENT = #{compactionCoefficient}, " +
             "QUALIFIED_RATE = #{qualifiedRate}, " +
-            "SAMPLE_NAME_STATUS = #{sampleNameStatus}, " +
-            "DESIGN_INDEX = #{designIndex}, " +
-            "TEST_RESULT = #{testResult}, " +
             "TESTER = #{tester}, " +
             "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +

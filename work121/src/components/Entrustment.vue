@@ -534,8 +534,10 @@ const mapDataToForm = (data) => {
   // Tester (Undertaker) - Priority: data.receiver -> data.tester -> directory.wtUndertaker
   formData.tester = data.receiver || data.tester || directory.wtUndertaker || ''
   
-  // Reviewer - Priority: data.wtReviewer -> data.reviewer -> directory.wtReviewer
-  formData.reviewer = data.wtReviewer || data.reviewer || directory.wtReviewer || ''
+  // Reviewer（流程配置的审核人）
+  // 只使用 WT_REVIEWER 或流程表中的 WT_REVIEWER，不再被运行时的 REVIEWER 覆盖
+  // 这样工作流在审核通过时写入的 REVIEWER（实际审核人）不会反向改掉配置好的审核人
+  formData.reviewer = data.wtReviewer || directory.wtReviewer || ''
   
   formData.approver = data.approver || ''
   formData.clientRegName = data.clientRegName || ''
@@ -572,7 +574,7 @@ const loadDataByWtNum = async (wtNum) => {
     const response = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(wtNum)}`)
     console.log('API Response:', response.data)
     
-    // Fill wtNum regardless of API success (it's the key we are looking for)
+    // 始终填写统一编号，作为关键主键
     formData.unifiedNumber = wtNum
     formData.sampleNumber = wtNum
 
@@ -580,20 +582,15 @@ const loadDataByWtNum = async (wtNum) => {
        console.log('Mapping data to form:', response.data.data)
        mapDataToForm(response.data.data)
        
-       // Also fetch and update directory info to ensure navigation works
+       // 同步更新目录信息，保证导航正常
        fetchDirectoryInfo(wtNum)
     } else {
-       console.warn('Backend data not found for wtNum:', wtNum, 'Using virtual data instead.')
-       // If data not found, we still keep the wtNum we set above
+       console.warn('Backend data not found for wtNum:', wtNum)
+       // 后端没有数据时，只保留编号，其余字段保持为空，交由用户手工填写
     }
   } catch (error) {
     console.error('Error loading data by wtNum:', error)
-  } finally {
-    // Always populate virtual data for required fields if they are empty
-    // This satisfies the requirement: "insert virtual data into non-empty fields" (mandatory fields)
-    // Moving to finally block to ensure it runs even if API fails or returns error
-    console.log('Populating virtual data...')
-    populateVirtualData()
+    // 出错同样不再填充任何“测试*”类虚拟数据
   }
 }
 
@@ -610,47 +607,10 @@ const fetchDirectoryInfo = async (wtNum) => {
     }
 }
 
-// Populate virtual data for testing/demo purposes
+// 之前用于演示/测试的虚拟数据已废弃，为避免自动写入“测试*”等占位内容，
+// 保留一个空实现占位，未来如需按配置开启，可在此处按需补充。
 const populateVirtualData = () => {
-  const virtualData = {
-    clientUnit: '测试委托单位',
-    constructionUnit: '测试施工单位',
-    buildingUnit: '测试建设单位',
-    projectName: '测试工程项目',
-    sampleName: '测试样品',
-    client: '张三',
-    constructionPart: '测试部位',
-    witnessUnit: '测试见证单位',
-    witness: '李四',
-    spec: '测试规格',
-    manufacturer: '测试厂家',
-    clientAddressPhone: '测试地址 13800138000',
-    sampleQuantity: '1组',
-    representativeBatch: '100',
-    batchNumber: 'P-001',
-    sampleHistory: '无',
-    testItems: '常规检测',
-    fee: '100'
-  }
-
-  for (const [key, value] of Object.entries(virtualData)) {
-    if (!formData[key] || formData[key].trim() === '') {
-      formData[key] = value
-    }
-  }
-  
-  // Handle dates if empty
-  if (!formData.clientDate) {
-      formData.clientDate = formatDate(new Date(), 'YYYY-MM-DD')
-  }
-  
-  // Handle arrays if empty
-  if (!formData.reportSend || formData.reportSend.length === 0) {
-      formData.reportSend = ['自取']
-  }
-  if (!formData.sampleDisposal || formData.sampleDisposal.length === 0) {
-      formData.sampleDisposal = ['留样']
-  }
+  // intentionally left blank
 }
 
 // 加载数据
@@ -1168,7 +1128,8 @@ const goToFirstRecordForm = async () => {
       if (formData.unifiedNumber) {
         props.wtNum = formData.unifiedNumber
       }
-      props.draftMode = true
+      // 允许从委托单直接对记录表进行正式操作（签字、提交、审核），不再强制使用只读的 draftMode
+      // props.draftMode = true
 
       navigateTo(componentName, props)
     } else {
