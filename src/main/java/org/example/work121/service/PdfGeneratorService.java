@@ -453,6 +453,7 @@ public class PdfGeneratorService {
             String projectName = request.getParameter("projectName") != null ? request.getParameter("projectName") : "";
             String entrustDate = request.getParameter("entrustDate") != null ? request.getParameter("entrustDate") : "";
             String constructionPart = request.getParameter("constructionPart") != null ? request.getParameter("constructionPart") : "";
+            String testMethod = request.getParameter("testMethod") != null ? request.getParameter("testMethod") : "";
             String testDate = request.getParameter("testDate") != null ? request.getParameter("testDate") : "";
             String soilProperty = request.getParameter("soilProperty") != null ? request.getParameter("soilProperty") : "";
             String reportDate = request.getParameter("reportDate") != null ? request.getParameter("reportDate") : "";
@@ -631,7 +632,11 @@ public class PdfGeneratorService {
             headerTable.setSpacingAfter(5);
             headerTable.setWidths(new float[]{1, 1});
 
-            String entrustingUnit = request.getParameter("entrustingUnit") != null ? request.getParameter("entrustingUnit") : "";
+            // 与前端表单对齐：委托单位字段名为 clientUnit（兼容旧的 entrustingUnit）
+            String entrustingUnitParam = request.getParameter("clientUnit") != null
+                    ? request.getParameter("clientUnit")
+                    : request.getParameter("entrustingUnit");
+            String entrustingUnit = entrustingUnitParam != null ? entrustingUnitParam : "";
             String unifiedNumber = request.getParameter("unifiedNumber") != null ? request.getParameter("unifiedNumber") : "";
 
             PdfPCell cell1 = new PdfPCell(new Paragraph("委托单位：" + entrustingUnit, valueFont));
@@ -1563,7 +1568,8 @@ public class PdfGeneratorService {
             mainTable.setWidthPercentage(100);
             mainTable.setSpacingBefore(5);
             mainTable.setSpacingAfter(5);
-            mainTable.setWidths(new float[]{1, 2.5f, 1, 1, 1, 1, 1, 1, 1, 1, 1});
+            // 与前端 HTML 一致：11 列等宽，让“1 列 label + 6 列值 + 1 列 label + 3 列值”整体对齐
+            mainTable.setWidths(new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
             String projectName = request.getParameter("projectName") != null ? request.getParameter("projectName") : "";
             String commissionDate = request.getParameter("commissionDate") != null ? request.getParameter("commissionDate") : "";
@@ -1578,39 +1584,48 @@ public class PdfGeneratorService {
             String maxDryDensity = request.getParameter("maxDryDensity") != null ? request.getParameter("maxDryDensity") : "";
             String optimumMoisture = request.getParameter("optimumMoisture") != null ? request.getParameter("optimumMoisture") : "";
             String minDryDensity = request.getParameter("minDryDensity") != null ? request.getParameter("minDryDensity") : "";
+
+            boolean isNuclearMethod = testMethod != null && testMethod.contains("核子");
             String designIndex = request.getParameter("designIndex") != null ? request.getParameter("designIndex") : "";
             String testResult = request.getParameter("testResult") != null ? request.getParameter("testResult") : "";
 
-            addCell(mainTable, "工程名称", labelFont, Element.ALIGN_CENTER, 6);
+            // 每一行的 colspan 总和控制为 11，严格按前端表格结构排版
+            // 工程名称 + 委托日期：1 + 6 + 1 + 3 = 11
+            addCell(mainTable, "工程名称", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, projectName, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "委托日期", labelFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "委托日期", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, commissionDate, valueFont, Element.ALIGN_CENTER, 3);
 
-            addCell(mainTable, "施工部位", labelFont, Element.ALIGN_CENTER, 6);
+            // 施工部位 + 检测日期：1 + 6 + 1 + 3 = 11
+            addCell(mainTable, "施工部位", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, constructionPart, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "检测日期", labelFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "检测日期", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, testDate, valueFont, Element.ALIGN_CENTER, 3);
 
-            addCell(mainTable, "样品名称及状态", labelFont, Element.ALIGN_CENTER, 6);
+            // 样品名称及状态 + 报告日期：1 + 6 + 1 + 3 = 11
+            addCell(mainTable, "样品名称及状态", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, sampleNameStatus, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "报告日期", labelFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "报告日期", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, reportDate, valueFont, Element.ALIGN_CENTER, 3);
 
-            addCell(mainTable, "仪器设备", labelFont, Element.ALIGN_CENTER, 6);
+            // 仪器设备 + 检测方法：1 + 6 + 1 + 3 = 11
+            addCell(mainTable, "仪器设备", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, equipment, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "检测方法", labelFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "检测方法", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, testMethod, valueFont, Element.ALIGN_CENTER, 3);
 
-            addCell(mainTable, "检测依据", labelFont, Element.ALIGN_CENTER, 6);
+            // 检测依据 + 检测类别：1 + 6 + 1 + 3 = 11
+            addCell(mainTable, "检测依据", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, testBasis, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "检测类别", labelFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "检测类别", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, testCategory, valueFont, Element.ALIGN_CENTER, 3);
 
-            addCell(mainTable, "最大干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 3);
+            // 最大/最小干密度 & 最优含水率：1+3+1+3+1+2 = 11
+            addCell(mainTable, "最大干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, maxDryDensity, valueFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, "最优含水率 %", labelFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "最优含水率 %", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, optimumMoisture, valueFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, "最小干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "最小干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, minDryDensity, valueFont, Element.ALIGN_CENTER, 2);
 
             addCell(mainTable, "设计指标", labelFont, Element.ALIGN_CENTER, 1);
@@ -1627,60 +1642,101 @@ public class PdfGeneratorService {
             addCell(mainTable, "含水率%", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "压实度%", labelFont, Element.ALIGN_CENTER, 2);
 
-            for (int i = 1; i <= 8; i++) {
-                String sampleId = request.getParameter("sampleId_" + i) != null ? request.getParameter("sampleId_" + i) : "";
-                String location = request.getParameter("location_" + i) != null ? request.getParameter("location_" + i) : "";
-                String date = request.getParameter("date_" + i) != null ? request.getParameter("date_" + i) : "";
-                String wetDensity = request.getParameter("wetDensity_" + i) != null ? request.getParameter("wetDensity_" + i) : "";
-                String dryDensity = request.getParameter("dryDensity_" + i) != null ? request.getParameter("dryDensity_" + i) : "";
-                String moisture = request.getParameter("moisture_" + i) != null ? request.getParameter("moisture_" + i) : "";
-                String wetDensity2 = request.getParameter("wetDensity2_" + i) != null ? request.getParameter("wetDensity2_" + i) : "";
-                String dryDensity2 = request.getParameter("dryDensity2_" + i) != null ? request.getParameter("dryDensity2_" + i) : "";
-                String moisture2 = request.getParameter("moisture2_" + i) != null ? request.getParameter("moisture2_" + i) : "";
-                String compaction = request.getParameter("compaction_" + i) != null ? request.getParameter("compaction_" + i) : "";
+            // 与前端保持一致：表单字段索引为 0..7
+            for (int i = 0; i < 8; i++) {
+                String idx = String.valueOf(i);
+                String sampleId = request.getParameter("sampleId_" + idx) != null ? request.getParameter("sampleId_" + idx) : "";
+                String location = request.getParameter("location_" + idx) != null ? request.getParameter("location_" + idx) : "";
+                String date = request.getParameter("date_" + idx) != null ? request.getParameter("date_" + idx) : "";
+                String wetDensity = request.getParameter("wetDensity_" + idx) != null ? request.getParameter("wetDensity_" + idx) : "";
+                String dryDensity = request.getParameter("dryDensity_" + idx) != null ? request.getParameter("dryDensity_" + idx) : "";
+                String moisture = request.getParameter("moisture_" + idx) != null ? request.getParameter("moisture_" + idx) : "";
+                String wetDensity2 = request.getParameter("wetDensity2_" + idx) != null ? request.getParameter("wetDensity2_" + idx) : "";
+                String dryDensity2 = request.getParameter("dryDensity2_" + idx) != null ? request.getParameter("dryDensity2_" + idx) : "";
+                String moisture2 = request.getParameter("moisture2_" + idx) != null ? request.getParameter("moisture2_" + idx) : "";
+                String compaction = request.getParameter("compaction_" + idx) != null ? request.getParameter("compaction_" + idx) : "";
 
-                PdfPCell sampleIdCell = new PdfPCell(new Paragraph(sampleId, valueFont));
-                sampleIdCell.setBorder(Rectangle.BOX);
-                sampleIdCell.setPadding(4);
-                sampleIdCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                sampleIdCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sampleIdCell.setRowspan(2);
-                mainTable.addCell(sampleIdCell);
+                if (isNuclearMethod) {
+                    // 核子法：一行结构（不需要第二行）
+                    PdfPCell sampleIdCell = new PdfPCell(new Paragraph(sampleId, valueFont));
+                    sampleIdCell.setBorder(Rectangle.BOX);
+                    sampleIdCell.setPadding(4);
+                    sampleIdCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    sampleIdCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    mainTable.addCell(sampleIdCell);
 
-                PdfPCell locationCell = new PdfPCell(new Paragraph(location, valueFont));
-                locationCell.setBorder(Rectangle.BOX);
-                locationCell.setPadding(4);
-                locationCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                locationCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                locationCell.setRowspan(2);
-                locationCell.setColspan(3);
-                mainTable.addCell(locationCell);
+                    PdfPCell locationCell = new PdfPCell(new Paragraph(location, valueFont));
+                    locationCell.setBorder(Rectangle.BOX);
+                    locationCell.setPadding(4);
+                    locationCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    locationCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    locationCell.setColspan(3);
+                    mainTable.addCell(locationCell);
 
-                PdfPCell dateCell = new PdfPCell(new Paragraph(date, valueFont));
-                dateCell.setBorder(Rectangle.BOX);
-                dateCell.setPadding(4);
-                dateCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                dateCell.setRowspan(2);
-                dateCell.setColspan(2);
-                mainTable.addCell(dateCell);
+                    PdfPCell dateCell = new PdfPCell(new Paragraph(date, valueFont));
+                    dateCell.setBorder(Rectangle.BOX);
+                    dateCell.setPadding(4);
+                    dateCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    dateCell.setColspan(2);
+                    mainTable.addCell(dateCell);
 
-                addCell(mainTable, wetDensity, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, dryDensity, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, moisture, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, wetDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, dryDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, moisture, valueFont, Element.ALIGN_CENTER, 1);
 
-                PdfPCell compactionCell = new PdfPCell(new Paragraph(compaction, valueFont));
-                compactionCell.setBorder(Rectangle.BOX);
-                compactionCell.setPadding(4);
-                compactionCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                compactionCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                compactionCell.setRowspan(2);
-                compactionCell.setColspan(2);
-                mainTable.addCell(compactionCell);
+                    PdfPCell compactionCell = new PdfPCell(new Paragraph(compaction, valueFont));
+                    compactionCell.setBorder(Rectangle.BOX);
+                    compactionCell.setPadding(4);
+                    compactionCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    compactionCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    compactionCell.setColspan(2);
+                    mainTable.addCell(compactionCell);
+                } else {
+                    // 非核子法：两行结构，与页面一致
+                    PdfPCell sampleIdCell = new PdfPCell(new Paragraph(sampleId, valueFont));
+                    sampleIdCell.setBorder(Rectangle.BOX);
+                    sampleIdCell.setPadding(4);
+                    sampleIdCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    sampleIdCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    sampleIdCell.setRowspan(2);
+                    mainTable.addCell(sampleIdCell);
 
-                addCell(mainTable, wetDensity2, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, dryDensity2, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, moisture2, valueFont, Element.ALIGN_CENTER, 1);
+                    PdfPCell locationCell = new PdfPCell(new Paragraph(location, valueFont));
+                    locationCell.setBorder(Rectangle.BOX);
+                    locationCell.setPadding(4);
+                    locationCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    locationCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    locationCell.setRowspan(2);
+                    locationCell.setColspan(3);
+                    mainTable.addCell(locationCell);
+
+                    PdfPCell dateCell = new PdfPCell(new Paragraph(date, valueFont));
+                    dateCell.setBorder(Rectangle.BOX);
+                    dateCell.setPadding(4);
+                    dateCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    dateCell.setRowspan(2);
+                    dateCell.setColspan(2);
+                    mainTable.addCell(dateCell);
+
+                    addCell(mainTable, wetDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, dryDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, moisture, valueFont, Element.ALIGN_CENTER, 1);
+
+                    PdfPCell compactionCell = new PdfPCell(new Paragraph(compaction, valueFont));
+                    compactionCell.setBorder(Rectangle.BOX);
+                    compactionCell.setPadding(4);
+                    compactionCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    compactionCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    compactionCell.setRowspan(2);
+                    compactionCell.setColspan(2);
+                    mainTable.addCell(compactionCell);
+
+                    addCell(mainTable, wetDensity2, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, dryDensity2, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, moisture2, valueFont, Element.ALIGN_CENTER, 1);
+                }
             }
 
             String remarks = request.getParameter("remarks") != null ? request.getParameter("remarks") : "";
@@ -1704,85 +1760,116 @@ public class PdfGeneratorService {
 
             document.add(mainTable);
 
+            // 底部签字区：三列，文字居中，避免乱跑
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
             footerTable.setSpacingBefore(20);
             footerTable.setWidths(new float[]{1, 1, 1});
 
-            String approval = request.getParameter("approval") != null ? request.getParameter("approval") : "";
+            // 与前端字段名对齐：使用 approver/reviewer/tester
+            String approvalParam = request.getParameter("approver") != null
+                    ? request.getParameter("approver")
+                    : request.getParameter("approval");
+            String approval = approvalParam != null ? approvalParam : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approval, valueFont));
+            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：        " + approval, valueFont));
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：        " + reviewer, valueFont));
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：        " + tester, valueFont));
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
 
-            PdfPTable companyTable = new PdfPTable(1);
-            companyTable.setWidthPercentage(100);
-            companyTable.setSpacingBefore(20);
-            companyTable.setSpacingAfter(10);
-
+            // 声明 + 公司信息区，使用带边框的表格，结构与页面相似，避免杂乱
             String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
             String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
             String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
-            String footerDate = request.getParameter("footerDate") != null ? request.getParameter("footerDate") : "";
 
-            PdfPCell companyCell1 = new PdfPCell(new Paragraph("声明：1. 对本检测报告的复印件未加盖公司检验检测专用章无效。 2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。", smallFont));
-            companyCell1.setBorder(Rectangle.NO_BORDER);
-            companyCell1.setHorizontalAlignment(Element.ALIGN_LEFT);
-            companyTable.addCell(companyCell1);
+            // 顶部粗横线（在“声明”之上）
+            PdfPTable topLineTable = new PdfPTable(1);
+            topLineTable.setWidthPercentage(100);
+            topLineTable.setSpacingBefore(10);
+            PdfPCell topLineCell = new PdfPCell(new Paragraph(" ", valueFont));
+            topLineCell.setBorder(Rectangle.BOTTOM);
+            topLineCell.setBorderWidthBottom(1.2f); // 略粗的横线
+            topLineCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            topLineTable.addCell(topLineCell);
+            document.add(topLineTable);
 
-            PdfPTable companyInfoTable = new PdfPTable(2);
-            companyInfoTable.setWidthPercentage(100);
-            companyInfoTable.setSpacingBefore(10);
-            companyInfoTable.setWidths(new float[]{1, 1});
+            // 声明行（无边框）
+            PdfPTable statementTable = new PdfPTable(1);
+            statementTable.setWidthPercentage(100);
+            statementTable.setSpacingBefore(5);
 
-            PdfPCell companyInfoCell1 = new PdfPCell(new Paragraph("公司名称：" + companyName, valueFont));
-            companyInfoCell1.setBorder(Rectangle.NO_BORDER);
-            companyInfoCell1.setHorizontalAlignment(Element.ALIGN_LEFT);
-            companyInfoTable.addCell(companyInfoCell1);
+            PdfPCell statementCell = new PdfPCell(new Paragraph("声明：1. 对本检测报告的复印件未加盖公司检验检测专用章无效。 2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。", smallFont));
+            statementCell.setBorder(Rectangle.NO_BORDER);
+            statementCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            statementTable.addCell(statementCell);
 
-            PdfPCell companyInfoCell2 = new PdfPCell(new Paragraph("电话：" + companyPhone, valueFont));
-            companyInfoCell2.setBorder(Rectangle.NO_BORDER);
-            companyInfoCell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            companyInfoTable.addCell(companyInfoCell2);
+            document.add(statementTable);
 
-            companyTable.addCell(companyInfoTable);
+            // 公司名称 / 电话、公司地址、页码，使用 4 列表格，只保留下划线效果（BOTTOM 边），视觉上是“横线”而不是方框
+            PdfPTable companyTable = new PdfPTable(4);
+            companyTable.setWidthPercentage(100);
+            companyTable.setSpacingBefore(5);
+            companyTable.setWidths(new float[]{1.2f, 3.8f, 0.8f, 2.2f});
 
-            PdfPCell companyCell2 = new PdfPCell(new Paragraph("公司地址：" + companyAddress, valueFont));
-            companyCell2.setBorder(Rectangle.NO_BORDER);
-            companyCell2.setHorizontalAlignment(Element.ALIGN_LEFT);
-            companyTable.addCell(companyCell2);
+            PdfPCell nameLabelCell = new PdfPCell(new Paragraph("公司名称：", valueFont));
+            nameLabelCell.setBorder(Rectangle.NO_BORDER);
+            nameLabelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            companyTable.addCell(nameLabelCell);
 
-            PdfPTable dateTable = new PdfPTable(2);
-            dateTable.setWidthPercentage(100);
-            dateTable.setSpacingBefore(10);
-            dateTable.setWidths(new float[]{1, 1});
+            PdfPCell nameValueCell = new PdfPCell(new Paragraph(companyName, valueFont));
+            nameValueCell.setBorder(Rectangle.NO_BORDER);
+            nameValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            companyTable.addCell(nameValueCell);
 
-            PdfPCell dateCell1 = new PdfPCell(new Paragraph(footerDate, valueFont));
-            dateCell1.setBorder(Rectangle.NO_BORDER);
-            dateCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
-            dateTable.addCell(dateCell1);
+            PdfPCell phoneLabelCell = new PdfPCell(new Paragraph("电话：", valueFont));
+            phoneLabelCell.setBorder(Rectangle.NO_BORDER);
+            phoneLabelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            companyTable.addCell(phoneLabelCell);
 
-            PdfPCell dateCell2 = new PdfPCell(new Paragraph("第 1 页，共 1 页", valueFont));
-            dateCell2.setBorder(Rectangle.NO_BORDER);
-            dateCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
-            dateTable.addCell(dateCell2);
+            PdfPCell phoneValueCell = new PdfPCell(new Paragraph(companyPhone, valueFont));
+            phoneValueCell.setBorder(Rectangle.NO_BORDER);
+            phoneValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            companyTable.addCell(phoneValueCell);
 
-            companyTable.addCell(dateTable);
+            PdfPCell addrLabelCell = new PdfPCell(new Paragraph("公司地址：", valueFont));
+            addrLabelCell.setBorder(Rectangle.NO_BORDER);
+            addrLabelCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            addrLabelCell.setColspan(1);
+            companyTable.addCell(addrLabelCell);
+
+            PdfPCell addrValueCell = new PdfPCell(new Paragraph(companyAddress, valueFont));
+            addrValueCell.setBorder(Rectangle.NO_BORDER);
+            addrValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            addrValueCell.setColspan(3);
+            companyTable.addCell(addrValueCell);
+
+            // 公司地址下方粗横线
+            PdfPCell bottomLineCell = new PdfPCell(new Paragraph(" ", valueFont));
+            bottomLineCell.setBorder(Rectangle.BOTTOM);
+            bottomLineCell.setBorderWidthBottom(1.2f);
+            bottomLineCell.setColspan(4);
+            bottomLineCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            companyTable.addCell(bottomLineCell);
+
+            PdfPCell pageCell = new PdfPCell(new Paragraph("第 1 页，共 1 页", valueFont));
+            pageCell.setBorder(Rectangle.NO_BORDER);
+            pageCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            pageCell.setColspan(4);
+            companyTable.addCell(pageCell);
 
             document.add(companyTable);
 
@@ -1832,23 +1919,30 @@ public class PdfGeneratorService {
             mainTable.setWidthPercentage(100);
             mainTable.setSpacingBefore(5);
             mainTable.setSpacingAfter(5);
-            mainTable.setWidths(new float[]{1, 2.5f, 1, 1, 1, 1, 1, 1, 1, 1});
+            // 10 列等宽，使列线与前端 HTML 对齐
+            mainTable.setWidths(new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
             String constructionPart = request.getParameter("constructionPart") != null ? request.getParameter("constructionPart") : "";
             String maxDryDensity = request.getParameter("maxDryDensity") != null ? request.getParameter("maxDryDensity") : "";
             String optimumMoisture = request.getParameter("optimumMoisture") != null ? request.getParameter("optimumMoisture") : "";
             String minDryDensity = request.getParameter("minDryDensity") != null ? request.getParameter("minDryDensity") : "";
+            String testMethod = request.getParameter("testMethod") != null ? request.getParameter("testMethod") : "";
+            boolean isNuclearMethod = testMethod != null && testMethod.contains("核子");
 
+            // 施工部位行：1 + 9 = 10
             addCell(mainTable, "施工部位", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, constructionPart, valueFont, Element.ALIGN_LEFT, 9);
 
-            addCell(mainTable, "最大干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 2);
+            // 最大/最小干密度 & 最优含水率：
+            // 与前端表格结构保持一致：1(最大干密度label) + 2(值) + 1(最优含水率label) + 2(值) + 1(最小干密度label) + 3(值) = 10
+            addCell(mainTable, "最大干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, maxDryDensity, valueFont, Element.ALIGN_CENTER, 2);
-            addCell(mainTable, "最优含水率 %", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "最优含水率 %", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, optimumMoisture, valueFont, Element.ALIGN_CENTER, 2);
-            addCell(mainTable, "最小干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 2);
-            addCell(mainTable, minDryDensity, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "最小干密度(g/cm³)", labelFont, Element.ALIGN_CENTER, 1);
+            addCell(mainTable, minDryDensity, valueFont, Element.ALIGN_CENTER, 3);
 
+            // 表头：1 + 2 + 2 + 1 + 1 + 1 + 2 = 10
             addCell(mainTable, "样品编号", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "检测部位(桩号、高程)", labelFont, Element.ALIGN_CENTER, 2);
             addCell(mainTable, "检测日期", labelFont, Element.ALIGN_CENTER, 2);
@@ -1857,60 +1951,102 @@ public class PdfGeneratorService {
             addCell(mainTable, "含水率%", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "压实度%", labelFont, Element.ALIGN_CENTER, 2);
 
-            for (int i = 1; i <= 20; i++) {
-                String sampleId = request.getParameter("sampleId_" + i) != null ? request.getParameter("sampleId_" + i) : "";
-                String location = request.getParameter("location_" + i) != null ? request.getParameter("location_" + i) : "";
-                String date = request.getParameter("date_" + i) != null ? request.getParameter("date_" + i) : "";
-                String wetDensity = request.getParameter("wetDensity_" + i) != null ? request.getParameter("wetDensity_" + i) : "";
-                String dryDensity = request.getParameter("dryDensity_" + i) != null ? request.getParameter("dryDensity_" + i) : "";
-                String moisture = request.getParameter("moisture_" + i) != null ? request.getParameter("moisture_" + i) : "";
-                String wetDensity2 = request.getParameter("wetDensity2_" + i) != null ? request.getParameter("wetDensity2_" + i) : "";
-                String dryDensity2 = request.getParameter("dryDensity2_" + i) != null ? request.getParameter("dryDensity2_" + i) : "";
-                String moisture2 = request.getParameter("moisture2_" + i) != null ? request.getParameter("moisture2_" + i) : "";
-                String compaction = request.getParameter("compaction_" + i) != null ? request.getParameter("compaction_" + i) : "";
+            // 与前端保持一致：索引 0..19，对应 20 组；
+            // 核子法：一行结构；其他方法：两行一组
+            for (int i = 0; i < 20; i++) {
+                String idx = String.valueOf(i);
+                String sampleId = request.getParameter("sampleId_" + idx) != null ? request.getParameter("sampleId_" + idx) : "";
+                String location = request.getParameter("location_" + idx) != null ? request.getParameter("location_" + idx) : "";
+                String date = request.getParameter("date_" + idx) != null ? request.getParameter("date_" + idx) : "";
+                String wetDensity = request.getParameter("wetDensity_" + idx) != null ? request.getParameter("wetDensity_" + idx) : "";
+                String dryDensity = request.getParameter("dryDensity_" + idx) != null ? request.getParameter("dryDensity_" + idx) : "";
+                String moisture = request.getParameter("moisture_" + idx) != null ? request.getParameter("moisture_" + idx) : "";
+                String wetDensity2 = request.getParameter("wetDensity2_" + idx) != null ? request.getParameter("wetDensity2_" + idx) : "";
+                String dryDensity2 = request.getParameter("dryDensity2_" + idx) != null ? request.getParameter("dryDensity2_" + idx) : "";
+                String moisture2 = request.getParameter("moisture2_" + idx) != null ? request.getParameter("moisture2_" + idx) : "";
+                String compaction = request.getParameter("compaction_" + idx) != null ? request.getParameter("compaction_" + idx) : "";
 
-                PdfPCell sampleIdCell = new PdfPCell(new Paragraph(sampleId, valueFont));
-                sampleIdCell.setBorder(Rectangle.BOX);
-                sampleIdCell.setPadding(4);
-                sampleIdCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                sampleIdCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                sampleIdCell.setRowspan(2);
-                mainTable.addCell(sampleIdCell);
+                if (isNuclearMethod) {
+                    // 核子法：一行结构
+                    PdfPCell sampleIdCell = new PdfPCell(new Paragraph(sampleId, valueFont));
+                    sampleIdCell.setBorder(Rectangle.BOX);
+                    sampleIdCell.setPadding(4);
+                    sampleIdCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    sampleIdCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    mainTable.addCell(sampleIdCell);
 
-                PdfPCell locationCell = new PdfPCell(new Paragraph(location, valueFont));
-                locationCell.setBorder(Rectangle.BOX);
-                locationCell.setPadding(4);
-                locationCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                locationCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                locationCell.setRowspan(2);
-                locationCell.setColspan(2);
-                mainTable.addCell(locationCell);
+                    PdfPCell locationCell = new PdfPCell(new Paragraph(location, valueFont));
+                    locationCell.setBorder(Rectangle.BOX);
+                    locationCell.setPadding(4);
+                    locationCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    locationCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    locationCell.setColspan(2);
+                    mainTable.addCell(locationCell);
 
-                PdfPCell dateCell = new PdfPCell(new Paragraph(date, valueFont));
-                dateCell.setBorder(Rectangle.BOX);
-                dateCell.setPadding(4);
-                dateCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                dateCell.setRowspan(2);
-                dateCell.setColspan(2);
-                mainTable.addCell(dateCell);
+                    PdfPCell dateCell = new PdfPCell(new Paragraph(date, valueFont));
+                    dateCell.setBorder(Rectangle.BOX);
+                    dateCell.setPadding(4);
+                    dateCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    dateCell.setColspan(2);
+                    mainTable.addCell(dateCell);
 
-                addCell(mainTable, wetDensity, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, dryDensity, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, moisture, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, wetDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, dryDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, moisture, valueFont, Element.ALIGN_CENTER, 1);
 
-                PdfPCell compactionCell = new PdfPCell(new Paragraph(compaction, valueFont));
-                compactionCell.setBorder(Rectangle.BOX);
-                compactionCell.setPadding(4);
-                compactionCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                compactionCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                compactionCell.setRowspan(2);
-                compactionCell.setColspan(2);
-                mainTable.addCell(compactionCell);
+                    PdfPCell compactionCell = new PdfPCell(new Paragraph(compaction, valueFont));
+                    compactionCell.setBorder(Rectangle.BOX);
+                    compactionCell.setPadding(4);
+                    compactionCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    compactionCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    compactionCell.setColspan(2);
+                    mainTable.addCell(compactionCell);
+                } else {
+                    // 其他方法：两行结构
+                    PdfPCell sampleIdCell = new PdfPCell(new Paragraph(sampleId, valueFont));
+                    sampleIdCell.setBorder(Rectangle.BOX);
+                    sampleIdCell.setPadding(4);
+                    sampleIdCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    sampleIdCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    sampleIdCell.setRowspan(2);
+                    mainTable.addCell(sampleIdCell);
 
-                addCell(mainTable, wetDensity2, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, dryDensity2, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, moisture2, valueFont, Element.ALIGN_CENTER, 1);
+                    PdfPCell locationCell = new PdfPCell(new Paragraph(location, valueFont));
+                    locationCell.setBorder(Rectangle.BOX);
+                    locationCell.setPadding(4);
+                    locationCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    locationCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    locationCell.setRowspan(2);
+                    locationCell.setColspan(2);
+                    mainTable.addCell(locationCell);
+
+                    PdfPCell dateCell = new PdfPCell(new Paragraph(date, valueFont));
+                    dateCell.setBorder(Rectangle.BOX);
+                    dateCell.setPadding(4);
+                    dateCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    dateCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    dateCell.setRowspan(2);
+                    dateCell.setColspan(2);
+                    mainTable.addCell(dateCell);
+
+                    addCell(mainTable, wetDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, dryDensity, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, moisture, valueFont, Element.ALIGN_CENTER, 1);
+
+                    PdfPCell compactionCell = new PdfPCell(new Paragraph(compaction, valueFont));
+                    compactionCell.setBorder(Rectangle.BOX);
+                    compactionCell.setPadding(4);
+                    compactionCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    compactionCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    compactionCell.setRowspan(2);
+                    compactionCell.setColspan(2);
+                    mainTable.addCell(compactionCell);
+
+                    addCell(mainTable, wetDensity2, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, dryDensity2, valueFont, Element.ALIGN_CENTER, 1);
+                    addCell(mainTable, moisture2, valueFont, Element.ALIGN_CENTER, 1);
+                }
             }
 
             document.add(mainTable);

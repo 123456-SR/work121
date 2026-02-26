@@ -109,6 +109,8 @@
         <!-- 委托单位应对应委托单里的单位(clientUnit)，而不是委托人(client) -->
         <span>委托单位：<input type="text" v-model="formData.clientUnit"   name="clientUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <!-- 兼容后端 PDF 旧字段名：把当前委托单位再同步一份到 entrustingUnit，确保 PDF 一定有值 -->
+        <input type="hidden" name="entrustingUnit" :value="formData.clientUnit" />
     </div>
 
     <table>
@@ -217,21 +219,21 @@
     <div class="footer-info">
         <span style="position: relative;">
           批准：
-          <input type="text" v-model="formData.approver" style="width: 100px; border-bottom: 1px solid black;">
+          <input type="text" v-model="formData.approver" name="approver" style="width: 100px; border-bottom: 1px solid black;">
           <div v-if="formData.approverSignature" class="signature-overlay" style="left: 40px; top: -20px;">
             <img :src="formData.approverSignature" alt="批准人签名" />
           </div>
         </span>
         <span style="position: relative;">
           审核：
-          <input type="text" v-model="formData.reviewer" style="width: 100px; border-bottom: 1px solid black;">
+          <input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100px; border-bottom: 1px solid black;">
           <div v-if="formData.reviewerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
             <img :src="formData.reviewerSignature" alt="审核人签名" />
           </div>
         </span>
         <span style="position: relative;">
           检测：
-          <input type="text" v-model="formData.tester" style="width: 100px; border-bottom: 1px solid black;">
+          <input type="text" v-model="formData.tester" name="tester" style="width: 100px; border-bottom: 1px solid black;">
           <div v-if="formData.testerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
             <img :src="formData.testerSignature" alt="检测人签名" />
           </div>

@@ -105,22 +105,38 @@
             <td class="label" style="width: 12.5%;" colspan="2">压实度%</td>
         </tr>
 
-        <!-- Data Rows (20 rows to fill the page) -->
+        <!-- Data Rows (20 组)：
+             - 核子法：一行样品编号对应一行湿密度/干密度/含水率（不需要第二行）
+             - 其他方法：保持原来的两行结构 -->
         <template v-for="(n, i_idx) in 20" :key="i_idx">
-        <tr>
-            <td rowspan="2"><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
-            <td rowspan="2" colspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
-            <td rowspan="2" colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
+          <!-- 非核子法：两行一组 -->
+          <template v-if="!isNuclearMethod">
+            <tr>
+              <td rowspan="2"><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
+              <td rowspan="2" colspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
+              <td rowspan="2" colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
+              <td><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
+              <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
+              <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
+              <td rowspan="2" colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+            </tr>
+            <tr>
+              <td><input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]"></td>
+              <td><input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]"></td>
+              <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
+            </tr>
+          </template>
+
+          <!-- 核子法：一行样品编号对应一行检测数据 -->
+          <tr v-else>
+            <td><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
             <td><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
             <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
             <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
-            <td rowspan="2" colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
-        </tr>
-        <tr>
-            <td><input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]"></td>
-            <td><input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]"></td>
-            <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
-        </tr>
+            <td colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+          </tr>
         </template>
     </table>
 
@@ -147,6 +163,9 @@
           </div>
         </span>
     </div>
+
+    <!-- 隐藏字段：将检测方法/类别同步给后端 PDF，用于判断核子法版式 -->
+    <input type="hidden" name="testMethod" :value="formData.testMethod || formData.testCategory" />
     </form>
 
 
@@ -188,6 +207,8 @@ const formData = reactive({
   id: '',
   entrustmentId: '',
   unifiedNumber: '',
+  testMethod: '',
+  testCategory: '',
   constructionPart: '',
   maxDryDensity: '',
   optimumMoisture: '',
@@ -198,6 +219,12 @@ const formData = reactive({
   reviewerSignature: '',
   testerSignature: '',
   approverSignature: ''
+})
+
+// 根据检测方法/类别自动判断是否为“核子法”
+const isNuclearMethod = computed(() => {
+  const method = (formData.testMethod || formData.testCategory || '').toString()
+  return method.includes('核子')
 })
 
 // Initialize dynamic fields
