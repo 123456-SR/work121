@@ -25,6 +25,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Autowired private JcCoreWtInfoMapper jcCoreWtInfoMapper;
     @Autowired private SimpleDirectoryService simpleDirectoryService;
+    @Autowired private SimpleDirectoryMapper simpleDirectoryMapper;
     @Autowired private DensityTestMapper densityTestMapper;
     @Autowired private ReboundMethodMapper reboundMethodMapper;
     @Autowired private SandReplacementMapper sandReplacementMapper;
@@ -90,30 +91,84 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleEntrustment(String id, WorkflowRequest request) {
         JcCoreWtInfo entity = jcCoreWtInfoMapper.selectById(id);
         if (entity == null) return false;
-        
+
+        // ==== 权限校验：根据目录里配置的委托承接人 / 委托审核人限制操作人 ====
+        validateEntrustmentPermission(entity, request);
+
         applyChanges(entity, request);
         // Update both tables to ensure status consistency
         int extResult = jcCoreWtInfoMapper.updateExt(entity);
-        
+
         // Map status to sampleStatus for legacy support if needed
         if (entity.getStatus() != null) {
-            // Check if we need to map integer status to string WT_STATUS?
-            // Assuming direct mapping for now as both seem to use int/string codes
-            // In JcCoreWtInfoMapper.xml/annotations, WT_STATUS is mapped to sampleStatus
-            // But applyChanges sets 'status' field.
-            // We should sync them.
-             // entity.setSampleStatus(String.valueOf(entity.getStatus())); // If types differ
+            // 目前 sampleStatus 未参与工作流，暂不强制同步
+            // entity.setSampleStatus(String.valueOf(entity.getStatus()));
         }
-        
-        // Also update the core table (JC_CORE_WT_INFO)
-        // jcCoreWtInfoMapper.update(entity); // Optional: if you want to sync changes to old table
-        
+
         // Sync data to other tables if Entrustment is approved or passes audit (Pending Sign)
-        if (entity.getStatus() != null && (STATUS_APPROVED.equals(entity.getStatus()) || STATUS_PENDING_SIGN.equals(entity.getStatus()))) {
+        if (entity.getStatus() != null
+                && (STATUS_APPROVED.equals(entity.getStatus()) || STATUS_PENDING_SIGN.equals(entity.getStatus()))) {
             simpleDirectoryService.syncEntrustmentDataByWtNum(entity.getWtNum());
         }
 
         return extResult > 0;
+    }
+
+    /**
+     * 校验委托单工作流操作人是否符合目录中的角色配置：
+     * - SUBMIT 只能由“委托承接人”(wtUndertaker) 执行
+     * - AUDIT_PASS / SIGN_REVIEW / SIGN_APPROVE / APPROVE / SIGN / REJECT
+     *   只能由“委托审核人”(wtReviewer) 执行
+     * 如果目录或角色未配置，则不做限制以保持兼容。
+     */
+    private void validateEntrustmentPermission(JcCoreWtInfo entity, WorkflowRequest request) {
+        String wtNum = entity.getWtNum();
+        if (wtNum == null || wtNum.trim().isEmpty()) {
+            return; // 无统一编号则不做限制
+        }
+
+        SimpleDirectory directory = null;
+        try {
+            directory = simpleDirectoryMapper.selectByDirName(wtNum);
+        } catch (Exception e) {
+            // 查询目录失败时不阻塞流程，但记录日志方便排查
+            System.err.println("Failed to load SimpleDirectory for wtNum " + wtNum + ": " + e.getMessage());
+        }
+
+        if (directory == null) {
+            // 没有目录配置（例如老数据），保持原有行为，不做权限限制
+            return;
+        }
+
+        String action = request.getAction();
+        String currentUser = request.getUserAccount();
+        if (currentUser == null || currentUser.trim().isEmpty()) {
+            // 理论上前端已做登录校验，这里如果拿不到账号，直接拒绝
+            throw new RuntimeException("当前用户未登录或账号为空，无法操作委托单");
+        }
+
+        String requiredUser = null;
+        if ("SUBMIT".equals(action)) {
+            requiredUser = directory.getWtUndertaker();
+        } else if ("AUDIT_PASS".equals(action)
+                || "SIGN_REVIEW".equals(action)
+                || "SIGN_APPROVE".equals(action)
+                || "APPROVE".equals(action)
+                || "SIGN".equals(action)
+                || "REJECT".equals(action)) {
+            requiredUser = directory.getWtReviewer();
+        }
+
+        // 未配置对应角色时，默认不做限制，兼容老流程
+        if (requiredUser == null || requiredUser.trim().isEmpty()) {
+            return;
+        }
+
+        if (!requiredUser.equals(currentUser)) {
+            // 明确提示哪个账号才有权限
+            throw new RuntimeException(
+                    "当前账号(" + currentUser + ")无权执行该委托单操作，应由配置的账号(" + requiredUser + ")处理");
+        }
     }
 
     private boolean handleDensityTest(String id, WorkflowRequest request) {
@@ -234,6 +289,32 @@ public class WorkflowServiceImpl implements WorkflowService {
         entity.setUpdateBy(user);
         entity.setUpdateTime(new Date());
 
+        // 对于委托单（JcCoreWtInfo），审核相关操作必须使用配置的 wtReviewer
+        // 因为权限校验已经限制了只有配置的审核人才能执行审核操作
+        String reviewerToUse = user; // 默认使用当前操作人（用于记录表）
+        if (entity instanceof JcCoreWtInfo) {
+            JcCoreWtInfo entrustment = (JcCoreWtInfo) entity;
+            String wtNum = entrustment.getWtNum();
+            // 审核相关操作必须使用配置的 wtReviewer
+            if (("AUDIT_PASS".equals(action) || "SIGN_REVIEW".equals(action) || "SIGN".equals(action))
+                    && wtNum != null && !wtNum.trim().isEmpty()) {
+                try {
+                    SimpleDirectory directory = simpleDirectoryMapper.selectByDirName(wtNum);
+                    if (directory == null || directory.getWtReviewer() == null || directory.getWtReviewer().trim().isEmpty()) {
+                        // 如果查询不到配置，说明流程配置有问题，应该抛出异常
+                        throw new RuntimeException("委托单(" + wtNum + ")未配置审核人(wtReviewer)，无法执行审核操作");
+                    }
+                    // 始终使用配置的 wtReviewer
+                    reviewerToUse = directory.getWtReviewer();
+                } catch (RuntimeException e) {
+                    throw e; // 重新抛出运行时异常
+                } catch (Exception e) {
+                    // 查询失败时抛出异常
+                    throw new RuntimeException("查询委托单(" + wtNum + ")的审核人配置失败: " + e.getMessage(), e);
+                }
+            }
+        }
+
         // Special handling for Entrustment (JcCoreWtInfo):
         // SUBMIT action from Undertaker should go to AUDIT.
         // The default switch case handles this correctly now (SUBMIT -> PENDING_AUDIT)
@@ -270,9 +351,9 @@ public class WorkflowServiceImpl implements WorkflowService {
             
             case "AUDIT_PASS": // 审核通过 -> 完成 (复核人审核通过，无签字)
                 entity.setStatus(STATUS_APPROVED);
-                entity.setReviewer(user); // Capture Reviewer Name
+                entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
-                    entity.setRecordReviewer(user);
+                    entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
                 entity.setNextHandler(null);
                 break;
@@ -281,10 +362,10 @@ public class WorkflowServiceImpl implements WorkflowService {
                 entity.setStatus(STATUS_APPROVED);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
-                    entity.setReviewer(user);
+                    entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 }
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
-                    entity.setRecordReviewer(user);
+                    entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
                 entity.setNextHandler(null);
                 break;
@@ -309,10 +390,10 @@ public class WorkflowServiceImpl implements WorkflowService {
                 entity.setStatus(STATUS_PENDING_APPROVAL);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
-                    entity.setReviewer(user);
+                    entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 }
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
-                    entity.setRecordReviewer(user);
+                    entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
                 entity.setNextHandler(nextHandler);
                 break;

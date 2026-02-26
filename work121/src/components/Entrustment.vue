@@ -535,9 +535,10 @@ const mapDataToForm = (data) => {
   formData.tester = data.receiver || data.tester || directory.wtUndertaker || ''
   
   // Reviewer（流程配置的审核人）
-  // 只使用 WT_REVIEWER 或流程表中的 WT_REVIEWER，不再被运行时的 REVIEWER 覆盖
-  // 这样工作流在审核通过时写入的 REVIEWER（实际审核人）不会反向改掉配置好的审核人
-  formData.reviewer = data.wtReviewer || directory.wtReviewer || ''
+  // 以流程目录 SimpleDirectory 中配置的 wtReviewer 为最高优先级，
+  // 只有在目录未配置时才退回到表里已有的 wtReviewer。
+  // 这样当你在“新建流程”里修改审核人后，详情页会跟着目录走，而不是被旧值覆盖。
+  formData.reviewer = directory.wtReviewer || data.wtReviewer || ''
   
   formData.approver = data.approver || ''
   formData.clientRegName = data.clientRegName || ''

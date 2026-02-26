@@ -468,9 +468,12 @@ const handleSign = async () => {
     return
   }
 
+  const currentAccount = user.username || user.userAccount || user.userName
+  const currentRealName = user.fullName || user.userName || currentAccount
+
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: currentAccount
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -485,22 +488,21 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
 
-      // Match Approve
-      if (formData.approve === currentName) {
+      // Match Approve by account (兼容姓名)
+      if (formData.approve === currentAccount || formData.approve === currentRealName) {
         formData.approveSignature = imgSrc
         signed = true
       }
 
-      // Match Review
-      if (formData.review === currentName) {
+      // Match Review by account (兼容姓名)
+      if (formData.review === currentAccount || formData.review === currentRealName) {
         formData.reviewSignature = imgSrc
         signed = true
       }
       
-      // Match Inspect
-      if (formData.inspect === currentName) {
+      // Match Inspect by account (兼容姓名)
+      if (formData.inspect === currentAccount || formData.inspect === currentRealName) {
         formData.inspectSignature = imgSrc
         signed = true
       }
@@ -508,7 +510,8 @@ const handleSign = async () => {
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的人员不匹配，无法签名`)
+        const formPerson = formData.approve || formData.review || formData.inspect || ''
+        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的人员(${formPerson})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

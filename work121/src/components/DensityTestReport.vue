@@ -106,7 +106,8 @@
     <h2>原位密度检测报告</h2>
 
     <div class="header-info">
-        <span>委托单位：<input type="text" v-model="formData.client"   name="client" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
+        <!-- 委托单位应对应委托单里的单位(clientUnit)，而不是委托人(client) -->
+        <span>委托单位：<input type="text" v-model="formData.clientUnit"   name="clientUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
 
@@ -170,22 +171,38 @@
             <td class="label" style="width: 14%;" colspan="2">压实度%</td>
         </tr>
 
-        <!-- Data Rows (8 rows as per visual estimation) -->
+        <!-- Data Rows (8 rows)：
+             - 核子法：一行样品编号对应一行湿密度/干密度/含水率（不需要第二行）
+             - 其他方法：保持原来的两行结构 -->
         <template v-for="(n, i_idx) in 8" :key="i_idx">
-        <tr>
-            <td rowspan="2"><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
-            <td rowspan="2" colspan="3"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
-            <td rowspan="2" colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
+          <!-- 非核子法：两行一组 -->
+          <template v-if="!isNuclearMethod">
+            <tr>
+              <td rowspan="2"><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
+              <td rowspan="2" colspan="3"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
+              <td rowspan="2" colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
+              <td><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
+              <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
+              <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
+              <td rowspan="2" colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+            </tr>
+            <tr>
+              <td><input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]"></td>
+              <td><input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]"></td>
+              <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
+            </tr>
+          </template>
+
+          <!-- 核子法：一行样品编号对应一行检测数据 -->
+          <tr v-else>
+            <td><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
+            <td colspan="3"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
             <td><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
             <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
             <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
-            <td rowspan="2" colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
-        </tr>
-        <tr>
-            <td><input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]"></td>
-            <td><input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]"></td>
-            <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
-        </tr>
+            <td colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+          </tr>
         </template>
 
         <!-- Remarks Section -->
@@ -243,7 +260,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps, computed } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -299,6 +316,13 @@ const formData = reactive({
   reviewerSignature: '',
   testerSignature: '',
   approverSignature: ''
+})
+
+// 根据检测方法自动判断是否为“核子法”
+const isNuclearMethod = computed(() => {
+  const method = (formData.testMethod || '').toString()
+  // 只要检测方法里包含“核子”两个字，就按核子法版式渲染
+  return method.includes('核子')
 })
 
 const getStatusText = (status) => {
@@ -424,9 +448,63 @@ const loadData = async () => {
         if (data.dataJson) {
           const parsed = JSON.parse(data.dataJson)
           Object.assign(formData, parsed)
-          // 如果只存了 clientUnit，没有 client，则用单位名称回填到“委托单位”输入框
-          if (!formData.client && formData.clientUnit) {
-            formData.client = formData.clientUnit
+          // 兼容旧数据：如果 JSON 里只有 entrustingUnit 或 clientUnit，就统一回填到 clientUnit，用于“委托单位”显示
+          if (!formData.clientUnit && parsed.entrustingUnit) {
+            formData.clientUnit = parsed.entrustingUnit
+          }
+          if (!formData.clientUnit && parsed.clientUnit) {
+            formData.clientUnit = parsed.clientUnit
+          }
+
+          // 兼容灌砂法等记录表的字段差异：
+          // 1）最优含水率：记录表使用 optMoisture，这里需要填到 optimumMoisture
+          if (!formData.optimumMoisture && parsed.optMoisture !== undefined) {
+            formData.optimumMoisture = parsed.optMoisture
+          }
+          // 2）干密度和湿密度：如果 DATA_JSON 里是原始结构（有 avgDryDensity_i 但没有 dryDensity2_i），需要重排
+          const hasAvgDry = Object.keys(parsed).some(k => k.startsWith('avgDryDensity_'))
+          const hasDry2 = Object.keys(parsed).some(k => k.startsWith('dryDensity2_'))
+          if (hasAvgDry && !hasDry2) {
+            // 先清除 Object.assign 可能已经复制过来的所有干密度和湿密度值（避免重复显示）
+            // 清除范围：dryDensity_0..7, dryDensity2_0..7, wetDensity_0..7, wetDensity2_0..7
+            for (let i = 0; i < 8; i++) {
+              delete formData['dryDensity_' + i]
+              delete formData['dryDensity2_' + i]
+              delete formData['wetDensity_' + i]
+              delete formData['wetDensity2_' + i]
+            }
+            // 收集记录表里的纵向 dryDensity_0..7
+            const sandDry = []
+            for (let i = 0; i < 8; i++) {
+              const v = parsed['dryDensity_' + i]
+              if (v !== undefined && v !== null && v !== '') {
+                sandDry.push(v)
+              }
+            }
+            // 每两个值一组，映射到同一个检测部位的两行干密度
+            // 记录表：dryDensity_0="干1", dryDensity_1="干2", dryDensity_2="干3", dryDensity_3="干4"
+            // 报告：测试部位1 → dryDensity_0="干1", dryDensity2_0="干2"
+            //      测试部位2 → dryDensity_1="干3", dryDensity2_1="干4"
+            for (let row = 0; row < 4; row++) {
+              const v1 = sandDry[row * 2]      // 第一行
+              const v2 = sandDry[row * 2 + 1] // 第二行
+              if (v1 !== undefined) formData['dryDensity_' + row] = v1
+              if (v2 !== undefined) formData['dryDensity2_' + row] = v2
+            }
+            // 湿密度也需要同样的重排
+            const sandWet = []
+            for (let i = 0; i < 8; i++) {
+              const v = parsed['wetDensity_' + i]
+              if (v !== undefined && v !== null && v !== '') {
+                sandWet.push(v)
+              }
+            }
+            for (let row = 0; row < 4; row++) {
+              const v1 = sandWet[row * 2]      // 第一行
+              const v2 = sandWet[row * 2 + 1] // 第二行
+              if (v1 !== undefined) formData['wetDensity_' + row] = v1
+              if (v2 !== undefined) formData['wetDensity2_' + row] = v2
+            }
           }
         }
         formData.id = data.id
@@ -463,27 +541,86 @@ const loadData = async () => {
               if (record.dataJson) {
                 try {
                   const parsed = JSON.parse(record.dataJson)
+
+                  // 1）汇总区字段：优先用标准键名，如果不存在则做兼容映射
                   const summaryKeys = ['maxDryDensity', 'optimumMoisture', 'minDryDensity', 'designIndex', 'testResult']
                   summaryKeys.forEach(k => {
                     if (parsed[k] !== undefined) formData[k] = parsed[k]
                   })
+                  // 兼容灌砂法里使用的 optMoisture 字段名
+                  if (!formData.optimumMoisture && parsed.optMoisture !== undefined) {
+                    formData.optimumMoisture = parsed.optMoisture
+                  }
+
+                  // 2）判断是否是灌砂法记录
+                  const isSandReplacement = parsed.testCategory === '灌砂法' || formData.testCategory === '灌砂法'
+                  
+                  // 3）明细行通用字段：sampleId/location/date/含水率/压实度等，直接复制
+                  //    如果是灌砂法，跳过 wetDensity_（后面会专门重排）
                   for (let i = 0; i < 8; i++) {
                     const prefixes = [
                       'sampleId_',
                       'location_',
                       'date_',
-                      'wetDensity_',
-                      'dryDensity_',
                       'moisture_',
                       'compaction_',
-                      'wetDensity2_',
-                      'dryDensity2_',
                       'moisture2_'
                     ]
+                    // 核子法等已有 wetDensity2 结构的，直接复制
+                    if (!isSandReplacement) {
+                      prefixes.push('wetDensity_', 'wetDensity2_')
+                    }
                     prefixes.forEach(prefix => {
                       const key = prefix + i
                       if (parsed[key] !== undefined) formData[key] = parsed[key]
                     })
+                  }
+
+                  // 4）灌砂法专用：根据 dryDensity_0..7 和 wetDensity_0..7 重排为“每个检测部位两行”
+                  //    约定：dryDensity_0=\"干1\", dryDensity_1=\"干2\", dryDensity_2=\"干3\", dryDensity_3=\"干4\" ...
+                  //         报告：测试部位1 → dryDensity_0, dryDensity2_0；测试部位2 → dryDensity_1, dryDensity2_1
+                  if (isSandReplacement) {
+                    // 先清除可能存在的多余字段（避免重复显示）
+                    for (let i = 4; i < 8; i++) {
+                      delete formData['dryDensity_' + i]
+                      delete formData['dryDensity2_' + i]
+                      delete formData['wetDensity_' + i]
+                      delete formData['wetDensity2_' + i]
+                    }
+                    // 重排干密度：每两个值一组，映射到同一个检测部位的两行
+                    for (let row = 0; row < 4; row++) {
+                      const idx1 = row * 2
+                      const idx2 = row * 2 + 1
+                      const v1 = parsed['dryDensity_' + idx1]
+                      const v2 = parsed['dryDensity_' + idx2]
+                      if (v1 !== undefined && v1 !== null && v1 !== '') {
+                        formData['dryDensity_' + row] = v1
+                      }
+                      if (v2 !== undefined && v2 !== null && v2 !== '') {
+                        formData['dryDensity2_' + row] = v2
+                      }
+                    }
+                    // 重排湿密度：每两个值一组，映射到同一个检测部位的两行
+                    for (let row = 0; row < 4; row++) {
+                      const idx1 = row * 2
+                      const idx2 = row * 2 + 1
+                      const v1 = parsed['wetDensity_' + idx1]
+                      const v2 = parsed['wetDensity_' + idx2]
+                      if (v1 !== undefined && v1 !== null && v1 !== '') {
+                        formData['wetDensity_' + row] = v1
+                      }
+                      if (v2 !== undefined && v2 !== null && v2 !== '') {
+                        formData['wetDensity2_' + row] = v2
+                      }
+                    }
+                  } else {
+                    // 其他检测方法（如核子法）：直接复制 dryDensity_/dryDensity2_
+                    for (let i = 0; i < 8; i++) {
+                      const d1 = parsed['dryDensity_' + i]
+                      const d2 = parsed['dryDensity2_' + i]
+                      if (d1 !== undefined) formData['dryDensity_' + i] = d1
+                      if (d2 !== undefined) formData['dryDensity2_' + i] = d2
+                    }
                   }
                 } catch (e) {
                   console.error('density report auto-fill parse error', e)

@@ -329,7 +329,8 @@ const formData = reactive({
 
 // Status Text Helper
 const getStatusText = (status) => {
-    switch(status) {
+    const s = parseInt(status)
+    switch(s) {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
@@ -341,7 +342,8 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
-    switch(status) {
+    const s = parseInt(status)
+    switch(s) {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
@@ -443,9 +445,9 @@ const mapRecordToFormData = (record) => {
   formData.reviewerSignature = record.reviewSignaturePhoto || ''
   formData.testerSignature = record.inspectSignaturePhoto || ''
   
-  // Names
-  formData.reviewer = record.reviewer || ''
-  formData.tester = record.tester || ''
+  // 人员账号 / 名称（兼容多种字段，与核子法逻辑保持一致）
+  formData.reviewer = record.reviewer || record.REVIEWER || record.recordReviewer || record.RECORD_REVIEWER || ''
+  formData.tester = record.tester || record.TESTER || record.recordTester || record.RECORD_TESTER || ''
 
   // Map fields from BusinessEntity/Entrustment (Always map these first as defaults)
   if (record.projectName) formData.projectName = record.projectName
@@ -462,6 +464,8 @@ const mapRecordToFormData = (record) => {
     try {
       const parsed = JSON.parse(record.dataJson)
       Object.keys(parsed).forEach(key => {
+        // 不允许 JSON 里的旧 status 覆盖当前数据库状态
+        if (key === 'status') return
         formData[key] = parsed[key]
       })
       // Specific fields mapping if needed
@@ -477,7 +481,7 @@ const mapRecordToFormData = (record) => {
   }
   
   if (record.status !== undefined) {
-      formData.status = record.status
+      formData.status = Number(record.status)
   } else {
       formData.status = 0
   }
@@ -618,6 +622,41 @@ onMounted(() => {
   }
 })
 
+// 从目录流程中获取记录表角色配置（记录检测人/记录审核人），并打印调试信息
+const loadProcessRoles = async (wtNum) => {
+  try {
+    if (!wtNum) return
+    console.log('正在获取流程信息，wtNum:', wtNum)
+    const processResponse = await axios.post('/api/directory/get-by-dirname', {
+      dirName: wtNum
+    })
+    console.log('流程信息响应:', processResponse.data)
+    if (processResponse.data.success && processResponse.data.data) {
+      const processData = processResponse.data.data
+      console.log('流程数据:', processData)
+      console.log('流程中的jcTester:', processData.jcTester)
+      console.log('流程中的jcReviewer:', processData.jcReviewer)
+      console.log('当前的formData.tester:', formData.tester)
+      console.log('当前的formData.reviewer:', formData.reviewer)
+
+      // 如果表单里还没带人，就用流程里配置的记录检测人/记录审核人补上
+      if (processData.jcTester && !formData.tester) {
+        formData.tester = processData.jcTester
+        console.log('设置formData.tester为:', processData.jcTester)
+      }
+      if (processData.jcReviewer && !formData.reviewer) {
+        formData.reviewer = processData.jcReviewer
+        console.log('设置formData.reviewer为:', processData.jcReviewer)
+      }
+
+      console.log('最终formData.tester:', formData.tester)
+      console.log('最终formData.reviewer:', formData.reviewer)
+    }
+  } catch (error) {
+    console.error('Failed to load process information:', error)
+  }
+}
+
 // 加载数据
 const loadData = async (entrustmentId) => {
   try {
@@ -637,26 +676,31 @@ const loadData = async (entrustmentId) => {
              }
              currentIndex.value = foundIndex
             mapRecordToFormData(records.value[foundIndex])
+            await loadProcessRoles(entrustmentId)
         } else {
             // Check if it returned a single object (legacy support or API behavior check)
             if (response.data.data && !Array.isArray(response.data.data) && response.data.data.id) {
                  records.value = [response.data.data]
                  currentIndex.value = 0
                  mapRecordToFormData(records.value[0])
+                 await loadProcessRoles(entrustmentId)
             } else {
                 // No records
                 records.value = []
                 await addRecord()
+                await loadProcessRoles(entrustmentId)
             }
         }
     } else {
         records.value = []
         await addRecord()
+        await loadProcessRoles(entrustmentId)
     }
   } catch (error) {
     console.error('Load error', error)
     records.value = []
     await addRecord()
+    await loadProcessRoles(entrustmentId)
   }
 }
 
@@ -697,14 +741,21 @@ const submitForm = async () => {
 
 const handleSign = async () => {
   const user = JSON.parse(localStorage.getItem('userInfo'))
-  if (!user || !user.username) {
+  if (!user) {
     alert('请先登录')
+    return
+  }
+
+  // 和核子法保持一致：优先按账号匹配
+  const currentAccount = user.username || user.userAccount || user.userName
+  if (!currentAccount) {
+    alert('无法获取用户账号信息')
     return
   }
 
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: currentAccount
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -719,17 +770,48 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
 
-      if (formData.tester === currentName) {
+      // 记录表检测人：支持多种字段（账号），与核子法逻辑保持一致
+      if (
+        formData.tester === currentAccount ||
+        formData.TESTER === currentAccount ||
+        formData.recordTester === currentAccount ||
+        formData.RECORD_TESTER === currentAccount
+      ) {
         formData.testerSignature = imgSrc
         signed = true
       }
 
+      // 记录表审核人签字：要求检测人已签
+      if (
+        formData.reviewer === currentAccount ||
+        formData.REVIEWER === currentAccount ||
+        formData.recordReviewer === currentAccount ||
+        formData.RECORD_REVIEWER === currentAccount
+      ) {
+        if (!formData.testerSignature) {
+          alert('检测人尚未签字，审核人无法签字')
+          return
+        }
+        formData.reviewerSignature = imgSrc
+        signed = true
+      }
+      
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+        const currentRealName = user.fullName || currentAccount
+        const formPerson =
+          formData.tester ||
+          formData.TESTER ||
+          formData.reviewer ||
+          formData.REVIEWER ||
+          formData.recordTester ||
+          formData.recordReviewer ||
+          formData.RECORD_TESTER ||
+          formData.RECORD_REVIEWER ||
+          ''
+        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的人员(${formPerson})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

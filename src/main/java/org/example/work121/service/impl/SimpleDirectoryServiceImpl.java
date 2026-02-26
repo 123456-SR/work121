@@ -190,7 +190,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         String dirName = directory.getDirName();
         String creator = directory.getCreateBy();
         String category = determineAllTestCategories(directory);
-
+        
         // Ensure Master Record exists (for list visibility)
         ensureMasterRecord(dirName, creator, category, directory);
         
@@ -241,9 +241,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 info.setWtNum(wtNum);
                 info.setCreateBy(creator);
                 info.setCreateTime(new java.util.Date());
-
+                
                 setDefaultValues(info, directory, category);
-
+                
                 boolean saved = false;
                 try {
                     jcCoreWtInfoService.save(info);
@@ -251,7 +251,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-
+                
                 if (!saved) {
                     try {
                         jcCoreWtInfoMapper.insertExt(info);
@@ -384,16 +384,16 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 if (existing != null) {
                     return existing.getId();
                 }
-
+                
                 // Fallback: Create if not exists (should rarely happen if ensureMasterRecord works)
                 JcCoreWtInfo info = new JcCoreWtInfo();
                 info.setId(id);
                 info.setWtNum(dirName);
                 info.setCreateBy(creator); // Maps to WT_REG_NAME
                 info.setCreateTime(now); // For EXT table
-
+                
                 setDefaultValues(info, directory, category);
-
+                
                 jcCoreWtInfoMapper.insert(info);
                 jcCoreWtInfoMapper.insertExt(info);
 
@@ -664,16 +664,16 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
             
             // 如果通过 wtNum 没找到，再尝试通过 ID 查找
             if (entrustment == null) {
-                if (isEntrustment(directory.getTable1Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable1Id());
-                else if (isEntrustment(directory.getTable2Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable2Id());
-                else if (isEntrustment(directory.getTable3Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable3Id());
-                else if (isEntrustment(directory.getTable4Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable4Id());
-                else if (isEntrustment(directory.getTable5Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable5Id());
-                else if (isEntrustment(directory.getTable6Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable6Id());
-                else if (isEntrustment(directory.getTable7Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable7Id());
-                else if (isEntrustment(directory.getTable8Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable8Id());
-                else if (isEntrustment(directory.getTable9Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable9Id());
-                else if (isEntrustment(directory.getTable10Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable10Id());
+            if (isEntrustment(directory.getTable1Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable1Id());
+            else if (isEntrustment(directory.getTable2Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable2Id());
+            else if (isEntrustment(directory.getTable3Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable3Id());
+            else if (isEntrustment(directory.getTable4Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable4Id());
+            else if (isEntrustment(directory.getTable5Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable5Id());
+            else if (isEntrustment(directory.getTable6Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable6Id());
+            else if (isEntrustment(directory.getTable7Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable7Id());
+            else if (isEntrustment(directory.getTable8Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable8Id());
+            else if (isEntrustment(directory.getTable9Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable9Id());
+            else if (isEntrustment(directory.getTable10Type())) entrustment = jcCoreWtInfoMapper.selectById(directory.getTable10Id());
                 System.out.println("通过 ID 获取委托单数据");
             }
 

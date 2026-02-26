@@ -337,7 +337,8 @@ const formData = reactive({
 
 // Status Text Helper
 const getStatusText = (status) => {
-    switch(status) {
+    const s = parseInt(status)
+    switch(s) {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
@@ -349,7 +350,8 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
-    switch(status) {
+    const s = parseInt(status)
+    switch(s) {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
@@ -484,6 +486,8 @@ const mapRecordToFormData = (record) => {
     try {
       const parsed = JSON.parse(record.dataJson)
       Object.keys(parsed).forEach(key => {
+        // 不允许旧 JSON 里的 status 覆盖当前状态，避免状态显示异常
+        if (key === 'status') return
         formData[key] = parsed[key]
       })
     } catch (e) {
@@ -507,8 +511,8 @@ const mapRecordToFormData = (record) => {
   if (record.testBasis) formData.standard = record.testBasis
   if (record.commissionDate && !formData.testDate) formData.testDate = record.commissionDate // Fallback if testDate empty
   
-  if (record.status !== undefined) {
-      formData.status = record.status
+  if (record.status !== undefined && record.status !== null) {
+      formData.status = Number(record.status)
   } else {
       formData.status = 0 // Default to Draft if not present
   }
@@ -673,9 +677,13 @@ const handleSign = async () => {
     return
   }
 
+  // 支持按账号匹配（优先）并兼容姓名匹配，和核子法/灌砂法保持一致
+  const currentAccount = user.username || user.userAccount || user.userName
+  const currentRealName = user.fullName || user.userName || currentAccount
+
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: currentAccount
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -690,9 +698,15 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
 
-      if (formData.tester === currentName) {
+      // 试验人匹配：支持账号字段和姓名字段
+      if (
+        formData.tester === currentAccount ||
+        formData.tester === currentRealName ||
+        formData.TESTER === currentAccount ||
+        formData.recordTester === currentAccount ||
+        formData.RECORD_TESTER === currentAccount
+      ) {
         formData.testerSignature = imgSrc
         signed = true
       }
@@ -700,7 +714,13 @@ const handleSign = async () => {
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+        const formPerson =
+          formData.tester ||
+          formData.TESTER ||
+          formData.recordTester ||
+          formData.RECORD_TESTER ||
+          ''
+        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的试验人员(${formPerson})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')
