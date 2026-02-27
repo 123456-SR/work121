@@ -574,6 +574,8 @@ const mapRecordToFormData = (record) => {
   if (record.equipment) formData.equipment = record.equipment
   if (record.testBasis) formData.standard = record.testBasis
   if (record.commissionDate && !formData.testDate) formData.testDate = record.commissionDate // Fallback if testDate empty
+  if (record.tester) formData.tester = record.tester
+  if (record.reviewer) formData.reviewer = record.reviewer
   
   if (record.status !== undefined) {
       formData.status = record.status

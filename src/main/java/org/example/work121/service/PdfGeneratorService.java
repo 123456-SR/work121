@@ -223,16 +223,16 @@ public class PdfGeneratorService {
         cell12.setBorder(Rectangle.BOX);
         cell12.setPadding(4);
         cell12.setHorizontalAlignment(Element.ALIGN_LEFT);
-
+        
         String mode = request.getParameter("deliveryMode") != null ? request.getParameter("deliveryMode") : "3";
-
+        
         String check1 = "1".equals(mode) ? "☑" : "□";
         String check2 = "2".equals(mode) ? "☑" : "□";
         String check3 = "3".equals(mode) ? "☑" : "□";
-
+        
         Paragraph pDates = new Paragraph();
-        pDates.setLeading(14f);
-
+        pDates.setLeading(14f); 
+        
         // Option 1
         pDates.add(new Chunk(check1 + " 可以为：    ", valueFont));
         String y1 = request.getParameter("deliveryDate1_y") != null ? request.getParameter("deliveryDate1_y") : "";
@@ -241,7 +241,7 @@ public class PdfGeneratorService {
         pDates.add(new Chunk((y1.isEmpty() ? "    " : y1) + "  年  ", valueFont));
         pDates.add(new Chunk((m1.isEmpty() ? "  " : m1) + "  月  ", valueFont));
         pDates.add(new Chunk((d1.isEmpty() ? "  " : d1) + "  日\n", valueFont));
-
+        
         // Option 2
         pDates.add(new Chunk(check2 + " 严格限定为：", valueFont));
         String y2 = request.getParameter("deliveryDate2_y") != null ? request.getParameter("deliveryDate2_y") : "";
@@ -250,10 +250,10 @@ public class PdfGeneratorService {
         pDates.add(new Chunk((y2.isEmpty() ? "    " : y2) + "  年  ", valueFont));
         pDates.add(new Chunk((m2.isEmpty() ? "  " : m2) + "  月  ", valueFont));
         pDates.add(new Chunk((d2.isEmpty() ? "  " : d2) + "  日\n", valueFont));
-
+        
         // Option 3
         pDates.add(new Chunk(check3 + " 不要求", valueFont));
-
+        
         cell12.addElement(pDates);
         mainTable.addCell(cell12);
 
@@ -402,7 +402,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -424,7 +424,7 @@ public class PdfGeneratorService {
             PdfPTable topHeader = new PdfPTable(2);
             topHeader.setWidthPercentage(100);
             topHeader.setWidths(new float[]{1, 1});
-
+            
             String entrustingUnit = request.getParameter("entrustingUnit") != null ? request.getParameter("entrustingUnit") : "";
             String unifiedNumber = request.getParameter("unifiedNumber") != null ? request.getParameter("unifiedNumber") : "";
 
@@ -596,10 +596,43 @@ public class PdfGeneratorService {
                 }
             }
 
-            // 直接在 mainTable 末尾追加“检测结论 / 备注”两行，保持与上表格连成一个整体
+            // 直接在 mainTable 末尾追加"检测依据 / 仪器设备 / 检测结论 / 备注"四行，保持与上表格连成一个整体
+            String testBasis = request.getParameter("testBasis") != null ? request.getParameter("testBasis") : "";
+            String equipment = request.getParameter("equipment") != null ? request.getParameter("equipment") : "";
             String conclusion = request.getParameter("conclusion") != null ? request.getParameter("conclusion") : "";
             String remarksBottom = request.getParameter("remarks") != null ? request.getParameter("remarks") : "";
 
+            // 检测依据
+            PdfPCell testBasisLabelCell = new PdfPCell(new Paragraph("检测依据", labelFont));
+            testBasisLabelCell.setBorder(Rectangle.BOX);
+            testBasisLabelCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            testBasisLabelCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            testBasisLabelCell.setColspan(1);
+            mainTable.addCell(testBasisLabelCell);
+
+            PdfPCell testBasisValueCell = new PdfPCell(new Paragraph(testBasis, valueFont));
+            testBasisValueCell.setBorder(Rectangle.BOX);
+            testBasisValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            testBasisValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            testBasisValueCell.setColspan(9);
+            mainTable.addCell(testBasisValueCell);
+
+            // 仪器设备
+            PdfPCell equipmentLabelCell = new PdfPCell(new Paragraph("仪器设备", labelFont));
+            equipmentLabelCell.setBorder(Rectangle.BOX);
+            equipmentLabelCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            equipmentLabelCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            equipmentLabelCell.setColspan(1);
+            mainTable.addCell(equipmentLabelCell);
+
+            PdfPCell equipmentValueCell = new PdfPCell(new Paragraph(equipment, valueFont));
+            equipmentValueCell.setBorder(Rectangle.BOX);
+            equipmentValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            equipmentValueCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            equipmentValueCell.setColspan(9);
+            mainTable.addCell(equipmentValueCell);
+
+            // 检测结论
             PdfPCell conclusionLabelCell = new PdfPCell(new Paragraph("检测结论", labelFont));
             conclusionLabelCell.setBorder(Rectangle.BOX);
             conclusionLabelCell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -760,7 +793,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -941,36 +974,10 @@ public class PdfGeneratorService {
                 mainTable.completeRow();
             }
 
-            String testBasis = request.getParameter("testBasis") != null ? request.getParameter("testBasis") : "";
             String equipment = request.getParameter("equipment") != null ? request.getParameter("equipment") : "";
-            String conclusion = request.getParameter("conclusion") != null ? request.getParameter("conclusion") : "";
-            String remarks = request.getParameter("remarks") != null ? request.getParameter("remarks") : "";
-
-            addCell(mainTable, "检测依据", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, testBasis, valueFont, Element.ALIGN_LEFT, 9);
 
             addCell(mainTable, "仪器设备", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, equipment, valueFont, Element.ALIGN_LEFT, 9);
-
-            PdfPCell conclusionCell1 = new PdfPCell(new Paragraph("检测结论", labelFont));
-            conclusionCell1.setBorder(Rectangle.BOX);
-            conclusionCell1.setPadding(4);
-            conclusionCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
-            conclusionCell1.setVerticalAlignment(Element.ALIGN_TOP);
-            conclusionCell1.setRowspan(3);
-            mainTable.addCell(conclusionCell1);
-
-            PdfPCell conclusionCell2 = new PdfPCell(new Paragraph(conclusion, valueFont));
-            conclusionCell2.setBorder(Rectangle.BOX);
-            conclusionCell2.setPadding(4);
-            conclusionCell2.setHorizontalAlignment(Element.ALIGN_LEFT);
-            conclusionCell2.setVerticalAlignment(Element.ALIGN_TOP);
-            conclusionCell2.setRowspan(3);
-            conclusionCell2.setColspan(9);
-            mainTable.addCell(conclusionCell2);
-
-            addCell(mainTable, "备注", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, remarks, valueFont, Element.ALIGN_LEFT, 9);
 
             document.add(mainTable);
 
@@ -1046,7 +1053,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -1304,7 +1311,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -1488,7 +1495,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -1679,7 +1686,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -2037,7 +2044,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -2299,7 +2306,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -2411,17 +2418,17 @@ public class PdfGeneratorService {
             for (int i = 1; i <= 10; i++) {
                 String zone = request.getParameter("zone_" + i) != null ? request.getParameter("zone_" + i) : "";
                 addCell(mainTable, zone, valueFont, Element.ALIGN_CENTER, 1);
-
+                
                 for (int j = 1; j <= 16; j++) {
                     String value = request.getParameter("value_" + i + "_" + j) != null ? request.getParameter("value_" + i + "_" + j) : "";
                     addCell(mainTable, value, smallFont, Element.ALIGN_CENTER, 1);
                 }
-
+                
                 String average = request.getParameter("average_" + i) != null ? request.getParameter("average_" + i) : "";
                 String carbonationDepth = request.getParameter("carbonationDepth_" + i) != null ? request.getParameter("carbonationDepth_" + i) : "";
                 String conversionStrength = request.getParameter("conversionStrength_" + i) != null ? request.getParameter("conversionStrength_" + i) : "";
                 String correctedStrength = request.getParameter("correctedStrength_" + i) != null ? request.getParameter("correctedStrength_" + i) : "";
-
+                
                 addCell(mainTable, average, valueFont, Element.ALIGN_CENTER, 1);
                 addCell(mainTable, carbonationDepth, valueFont, Element.ALIGN_CENTER, 1);
                 addCell(mainTable, conversionStrength, valueFont, Element.ALIGN_CENTER, 1);
@@ -2524,7 +2531,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -2718,7 +2725,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -2912,7 +2919,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -3034,7 +3041,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -3221,7 +3228,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -3492,7 +3499,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font labelFont = new Font(chineseFont, 10, Font.BOLD);
@@ -3504,11 +3511,12 @@ public class PdfGeneratorService {
             title.setSpacingAfter(20);
             document.add(title);
 
-            PdfPTable headerTable = new PdfPTable(2);
-            headerTable.setWidthPercentage(100);
-            headerTable.setSpacingBefore(5);
-            headerTable.setSpacingAfter(5);
-            headerTable.setWidths(new float[]{1, 1});
+            // 头部信息：委托单位、统一编号（第一行）
+            PdfPTable headerTable1 = new PdfPTable(2);
+            headerTable1.setWidthPercentage(100);
+            headerTable1.setSpacingBefore(5);
+            headerTable1.setSpacingAfter(5);
+            headerTable1.setWidths(new float[]{1, 1});
 
             String entrustingUnit = request.getParameter("entrustingUnit") != null ? request.getParameter("entrustingUnit") : "";
             String unifiedNumber = request.getParameter("unifiedNumber") != null ? request.getParameter("unifiedNumber") : "";
@@ -3516,132 +3524,196 @@ public class PdfGeneratorService {
             PdfPCell cell1 = new PdfPCell(new Paragraph("委托单位：" + entrustingUnit, valueFont));
             cell1.setBorder(Rectangle.NO_BORDER);
             cell1.setHorizontalAlignment(Element.ALIGN_LEFT);
-            headerTable.addCell(cell1);
+            headerTable1.addCell(cell1);
 
             PdfPCell cell2 = new PdfPCell(new Paragraph("统一编号：" + unifiedNumber, valueFont));
             cell2.setBorder(Rectangle.NO_BORDER);
             cell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            headerTable.addCell(cell2);
+            headerTable1.addCell(cell2);
 
-            document.add(headerTable);
+            document.add(headerTable1);
 
-            PdfPTable mainTable = new PdfPTable(10);
+            // 头部信息：样品编号（第二行）
+            PdfPTable headerTable2 = new PdfPTable(1);
+            headerTable2.setWidthPercentage(100);
+            headerTable2.setSpacingBefore(0);
+            headerTable2.setSpacingAfter(5);
+
+            String sampleNumber = request.getParameter("sampleNumber") != null ? request.getParameter("sampleNumber") : "";
+            PdfPCell cell3 = new PdfPCell(new Paragraph("样品编号：" + sampleNumber, valueFont));
+            cell3.setBorder(Rectangle.NO_BORDER);
+            cell3.setHorizontalAlignment(Element.ALIGN_LEFT);
+            headerTable2.addCell(cell3);
+
+            document.add(headerTable2);
+
+            // 主表格：12列，与前端页面一致
+            PdfPTable mainTable = new PdfPTable(12);
             mainTable.setWidthPercentage(100);
             mainTable.setSpacingBefore(5);
             mainTable.setSpacingAfter(5);
-            mainTable.setWidths(new float[]{1, 2, 1, 1, 1, 1, 1, 1, 1, 1});
+            // 12列等宽
+            mainTable.setWidths(new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1});
 
+            // 获取参数
             String projectName = request.getParameter("projectName") != null ? request.getParameter("projectName") : "";
             String commissionDate = request.getParameter("commissionDate") != null ? request.getParameter("commissionDate") : "";
-            String constructionPart = request.getParameter("constructionPart") != null ? request.getParameter("constructionPart") : "";
+            String structurePart = request.getParameter("structurePart") != null ? request.getParameter("structurePart") : "";
             String testDate = request.getParameter("testDate") != null ? request.getParameter("testDate") : "";
-            String sampleNameStatus = request.getParameter("sampleNameStatus") != null ? request.getParameter("sampleNameStatus") : "";
+            String sampleStatus = request.getParameter("sampleStatus") != null ? request.getParameter("sampleStatus") : "";
+            String testAngle = request.getParameter("testAngle") != null ? request.getParameter("testAngle") : "";
             String reportDate = request.getParameter("reportDate") != null ? request.getParameter("reportDate") : "";
-            String equipment = request.getParameter("equipment") != null ? request.getParameter("equipment") : "";
-            String testMethod = request.getParameter("testMethod") != null ? request.getParameter("testMethod") : "";
-            String testBasis = request.getParameter("testBasis") != null ? request.getParameter("testBasis") : "";
+            String witnessUnit = request.getParameter("witnessUnit") != null ? request.getParameter("witnessUnit") : "";
+            String witnessPerson = request.getParameter("witnessPerson") != null ? request.getParameter("witnessPerson") : "";
+            String designIndex = request.getParameter("designIndex") != null ? request.getParameter("designIndex") : "";
             String testCategory = request.getParameter("testCategory") != null ? request.getParameter("testCategory") : "";
-            String designStrength = request.getParameter("designStrength") != null ? request.getParameter("designStrength") : "";
-            String carbonationDepth = request.getParameter("carbonationDepth") != null ? request.getParameter("carbonationDepth") : "";
-            String pumping = request.getParameter("pumping") != null ? request.getParameter("pumping") : "";
-            String testResult = request.getParameter("testResult") != null ? request.getParameter("testResult") : "";
+            String pourDate = request.getParameter("pourDate") != null ? request.getParameter("pourDate") : "";
+            String carbonDepth = request.getParameter("carbonDepth") != null ? request.getParameter("carbonDepth") : "";
+            String aggregateSize = request.getParameter("aggregateSize") != null ? request.getParameter("aggregateSize") : "";
+            String compEstimatedStrength = request.getParameter("compEstimatedStrength") != null ? request.getParameter("compEstimatedStrength") : "";
+            String stdDev = request.getParameter("stdDev") != null ? request.getParameter("stdDev") : "";
+            String coefVariation = request.getParameter("coefVariation") != null ? request.getParameter("coefVariation") : "";
+            String equipment = request.getParameter("equipment") != null ? request.getParameter("equipment") : "";
+            String standard = request.getParameter("standard") != null ? request.getParameter("standard") : "";
+            String conclusion = request.getParameter("conclusion") != null ? request.getParameter("conclusion") : "";
+            String remarks = request.getParameter("remarks") != null ? request.getParameter("remarks") : "";
 
-            addCell(mainTable, "工程名称", labelFont, Element.ALIGN_CENTER, 6);
+            // Row 1: 工程名称(2) + 值(6) + 委托日期(2) + 值(2) = 12
+            addCell(mainTable, "工程名称", labelFont, Element.ALIGN_CENTER, 2);
             addCell(mainTable, projectName, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "委托日期", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, commissionDate, valueFont, Element.ALIGN_CENTER, 3);
+            addCell(mainTable, "委托日期", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, commissionDate, valueFont, Element.ALIGN_CENTER, 2);
 
-            addCell(mainTable, "施工部位", labelFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, constructionPart, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "检测日期", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, testDate, valueFont, Element.ALIGN_CENTER, 3);
-
-            addCell(mainTable, "样品名称及状态", labelFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, sampleNameStatus, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "报告日期", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, reportDate, valueFont, Element.ALIGN_CENTER, 3);
-
-            addCell(mainTable, "仪器设备", labelFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, equipment, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "检测方法", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, testMethod, valueFont, Element.ALIGN_CENTER, 3);
-
-            addCell(mainTable, "检测依据", labelFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, testBasis, valueFont, Element.ALIGN_CENTER, 6);
-            addCell(mainTable, "检测类别", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, testCategory, valueFont, Element.ALIGN_CENTER, 3);
-
-            addCell(mainTable, "设计强度等级", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, designStrength, valueFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, "碳化深度(mm)", labelFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, carbonationDepth, valueFont, Element.ALIGN_CENTER, 3);
-            addCell(mainTable, "泵送情况", labelFont, Element.ALIGN_CENTER, 2);
-            addCell(mainTable, pumping, valueFont, Element.ALIGN_CENTER, 2);
-
-            addCell(mainTable, "检测结果", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, testResult, valueFont, Element.ALIGN_LEFT, 9);
-
-            addCell(mainTable, "构件名称", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, "构件部位", labelFont, Element.ALIGN_CENTER, 2);
+            // Row 2: 结构部位(2) + 值(6) + 检测日期(2) + 值(2) = 12
+            addCell(mainTable, "结构部位", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, structurePart, valueFont, Element.ALIGN_CENTER, 6);
             addCell(mainTable, "检测日期", labelFont, Element.ALIGN_CENTER, 2);
-            addCell(mainTable, "回弹值平均值", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, "强度换算值(MPa)", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, "强度推定值(MPa)", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, "备注", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, testDate, valueFont, Element.ALIGN_CENTER, 2);
 
-            for (int i = 1; i <= 12; i++) {
-                String componentName = request.getParameter("componentName_" + i) != null ? request.getParameter("componentName_" + i) : "";
-                String componentPart = request.getParameter("componentPart_" + i) != null ? request.getParameter("componentPart_" + i) : "";
-                String date = request.getParameter("date_" + i) != null ? request.getParameter("date_" + i) : "";
-                String reboundAvg = request.getParameter("reboundAvg_" + i) != null ? request.getParameter("reboundAvg_" + i) : "";
-                String strengthConversion = request.getParameter("strengthConversion_" + i) != null ? request.getParameter("strengthConversion_" + i) : "";
-                String strengthEstimation = request.getParameter("strengthEstimation_" + i) != null ? request.getParameter("strengthEstimation_" + i) : "";
-                String remarks = request.getParameter("remarks_" + i) != null ? request.getParameter("remarks_" + i) : "";
+            // Row 3: 样品状态(2) + 值(2) + 测试角度(2) + 值(2) + 报告日期(2) + 值(2) = 12
+            addCell(mainTable, "样品状态", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, sampleStatus, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "测试角度", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, testAngle, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "报告日期", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, reportDate, valueFont, Element.ALIGN_CENTER, 2);
 
-                addCell(mainTable, componentName, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, componentPart, valueFont, Element.ALIGN_CENTER, 2);
-                addCell(mainTable, date, valueFont, Element.ALIGN_CENTER, 2);
-                addCell(mainTable, reboundAvg, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, strengthConversion, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, strengthEstimation, valueFont, Element.ALIGN_CENTER, 1);
-                addCell(mainTable, remarks, valueFont, Element.ALIGN_CENTER, 2);
+            // Row 4: 见证单位(2) + 值(6) + 见证人(2) + 值(2) = 12
+            addCell(mainTable, "见证单位", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, witnessUnit, valueFont, Element.ALIGN_CENTER, 6);
+            addCell(mainTable, "见证人", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, witnessPerson, valueFont, Element.ALIGN_CENTER, 2);
+
+            // Row 5: 设计指标(2) + 值(2) + 检测类别(2) + 值(2) + 浇筑日期(2) + 值(2) = 12
+            addCell(mainTable, "设计指标", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, designIndex, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "检测类别", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, testCategory, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "浇筑日期", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, pourDate, valueFont, Element.ALIGN_CENTER, 2);
+
+            // Row 6: 碳化深度 mm(2) + 值(2) + 构件厚度或骨料最大粒径(4) + 值(4) = 12
+            addCell(mainTable, "碳化深度 mm", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, carbonDepth, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "构件厚度或骨料最大粒径", labelFont, Element.ALIGN_CENTER, 4);
+            addCell(mainTable, aggregateSize, valueFont, Element.ALIGN_CENTER, 4);
+
+            // Row 7: 测区号(2) + 10个测区号(1 each) = 12
+            addCell(mainTable, "测区号", labelFont, Element.ALIGN_CENTER, 2);
+            for (int i = 1; i <= 10; i++) {
+                addCell(mainTable, String.valueOf(i), labelFont, Element.ALIGN_CENTER, 1);
             }
 
-            String conclusion = request.getParameter("conclusion") != null ? request.getParameter("conclusion") : "";
-            String overallRemarks = request.getParameter("remarks") != null ? request.getParameter("remarks") : "";
+            // Row 8: 碳化修正强度 MPa(2) + 10个输入框(1 each) = 12
+            PdfPCell correctedStrengthLabel = new PdfPCell(new Paragraph("碳化修正强度\nMPa", labelFont));
+            correctedStrengthLabel.setBorder(Rectangle.BOX);
+            correctedStrengthLabel.setPadding(4);
+            correctedStrengthLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
+            correctedStrengthLabel.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            correctedStrengthLabel.setColspan(2);
+            mainTable.addCell(correctedStrengthLabel);
+            for (int i = 1; i <= 10; i++) {
+                String correctedStrength = request.getParameter("correctedStrength_" + i) != null ? request.getParameter("correctedStrength_" + i) : "";
+                addCell(mainTable, correctedStrength, valueFont, Element.ALIGN_CENTER, 1);
+            }
 
-            PdfPCell conclusionCell1 = new PdfPCell(new Paragraph("检测结论", labelFont));
-            conclusionCell1.setBorder(Rectangle.BOX);
-            conclusionCell1.setPadding(4);
-            conclusionCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
-            conclusionCell1.setVerticalAlignment(Element.ALIGN_TOP);
-            conclusionCell1.setRowspan(2);
-            mainTable.addCell(conclusionCell1);
+            // Row 9: 构件强度推定值 MPa(2) + 值(2) + 标准差 MPa(2) + 值(2) + 变异系数%(2) + 值(2) = 12
+            PdfPCell estimatedStrengthLabel = new PdfPCell(new Paragraph("构件强度推定\n值 MPa", labelFont));
+            estimatedStrengthLabel.setBorder(Rectangle.BOX);
+            estimatedStrengthLabel.setPadding(4);
+            estimatedStrengthLabel.setHorizontalAlignment(Element.ALIGN_CENTER);
+            estimatedStrengthLabel.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            estimatedStrengthLabel.setColspan(2);
+            mainTable.addCell(estimatedStrengthLabel);
+            addCell(mainTable, compEstimatedStrength, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "标准差 MPa", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, stdDev, valueFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, "变异系数%", labelFont, Element.ALIGN_CENTER, 2);
+            addCell(mainTable, coefVariation, valueFont, Element.ALIGN_CENTER, 2);
 
-            PdfPCell conclusionCell2 = new PdfPCell(new Paragraph(conclusion, valueFont));
-            conclusionCell2.setBorder(Rectangle.BOX);
-            conclusionCell2.setPadding(4);
-            conclusionCell2.setHorizontalAlignment(Element.ALIGN_LEFT);
-            conclusionCell2.setVerticalAlignment(Element.ALIGN_TOP);
-            conclusionCell2.setRowspan(2);
-            conclusionCell2.setColspan(9);
-            mainTable.addCell(conclusionCell2);
+            // Row 10: 仪器设备(2) + 值(10) = 12
+            addCell(mainTable, "仪器设备", labelFont, Element.ALIGN_CENTER, 2);
+            PdfPCell equipmentCell = new PdfPCell(new Paragraph(equipment, valueFont));
+            equipmentCell.setBorder(Rectangle.BOX);
+            equipmentCell.setPadding(4);
+            equipmentCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            equipmentCell.setColspan(10);
+            mainTable.addCell(equipmentCell);
 
-            addCell(mainTable, "备 注", labelFont, Element.ALIGN_CENTER, 1);
-            addCell(mainTable, overallRemarks, valueFont, Element.ALIGN_LEFT, 9);
+            // Row 11: 依据标准(2) + 值(10) = 12
+            addCell(mainTable, "依据标准", labelFont, Element.ALIGN_CENTER, 2);
+            PdfPCell standardCell = new PdfPCell(new Paragraph(standard, valueFont));
+            standardCell.setBorder(Rectangle.BOX);
+            standardCell.setPadding(4);
+            standardCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            standardCell.setColspan(10);
+            mainTable.addCell(standardCell);
+
+            // Row 12: 结论(2) + 值(10) = 12
+            addCell(mainTable, "结论", labelFont, Element.ALIGN_CENTER, 2);
+            PdfPCell conclusionCell = new PdfPCell(new Paragraph(conclusion, valueFont));
+            conclusionCell.setBorder(Rectangle.BOX);
+            conclusionCell.setPadding(4);
+            conclusionCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            conclusionCell.setVerticalAlignment(Element.ALIGN_TOP);
+            conclusionCell.setColspan(10);
+            conclusionCell.setMinimumHeight(60f);
+            mainTable.addCell(conclusionCell);
+
+            // Row 13: 测区示意图(12) = 12
+            PdfPCell diagramCell = new PdfPCell(new Paragraph("测区示意图：", labelFont));
+            diagramCell.setBorder(Rectangle.BOX);
+            diagramCell.setPadding(4);
+            diagramCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            diagramCell.setVerticalAlignment(Element.ALIGN_TOP);
+            diagramCell.setColspan(12);
+            diagramCell.setMinimumHeight(150f);
+            mainTable.addCell(diagramCell);
+
+            // Row 14: 备注(1) + 值(11) = 12
+            addCell(mainTable, "备注：", labelFont, Element.ALIGN_CENTER, 1);
+            PdfPCell remarksCell = new PdfPCell(new Paragraph(remarks, valueFont));
+            remarksCell.setBorder(Rectangle.BOX);
+            remarksCell.setPadding(4);
+            remarksCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            remarksCell.setVerticalAlignment(Element.ALIGN_TOP);
+            remarksCell.setColspan(11);
+            remarksCell.setMinimumHeight(40f);
+            mainTable.addCell(remarksCell);
 
             document.add(mainTable);
 
+            // 页脚签名区：批准、审核、检验
             PdfPTable footerTable = new PdfPTable(3);
             footerTable.setWidthPercentage(100);
             footerTable.setSpacingBefore(20);
             footerTable.setWidths(new float[]{1, 1, 1});
 
-            String approval = request.getParameter("approval") != null ? request.getParameter("approval") : "";
+            String approver = request.getParameter("approver") != null ? request.getParameter("approver") : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approval, valueFont));
+            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approver, valueFont));
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell1);
@@ -3651,73 +3723,45 @@ public class PdfGeneratorService {
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检验：" + tester, valueFont));
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
 
-            Paragraph statement = new Paragraph("声明：\n1. 对本检测报告的复印件未加盖公司检验检测专用章无效。 2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。", smallFont);
+            // 声明
+            Paragraph statement = new Paragraph("声明：\n1. 对本检验报告的复印件未加盖公司检验检测专用章无效。 2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。", smallFont);
             statement.setAlignment(Element.ALIGN_LEFT);
-            statement.setSpacingBefore(15);
-            statement.setSpacingAfter(15);
+            statement.setSpacingBefore(10);
+            statement.setSpacingAfter(10);
             document.add(statement);
 
-            PdfPTable companyTable = new PdfPTable(2);
-            companyTable.setWidthPercentage(100);
-            companyTable.setSpacingBefore(5);
-            companyTable.setSpacingAfter(5);
-            companyTable.setWidths(new float[]{1, 1});
-
+            // 公司信息
             String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
-            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
             String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
+            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
 
-            PdfPCell companyCell1 = new PdfPCell(new Paragraph("公司名称：" + companyName, valueFont));
-            companyCell1.setBorder(Rectangle.NO_BORDER);
-            companyCell1.setHorizontalAlignment(Element.ALIGN_LEFT);
-            companyTable.addCell(companyCell1);
+            Paragraph companyNamePara = new Paragraph("公司名称：" + companyName, valueFont);
+            companyNamePara.setSpacingBefore(5);
+            document.add(companyNamePara);
 
-            PdfPCell companyCell2 = new PdfPCell(new Paragraph("电话：" + companyPhone, valueFont));
-            companyCell2.setBorder(Rectangle.NO_BORDER);
-            companyCell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            companyTable.addCell(companyCell2);
-
-            document.add(companyTable);
-
-            PdfPTable addressTable = new PdfPTable(1);
-            addressTable.setWidthPercentage(100);
-            addressTable.setSpacingBefore(5);
-            addressTable.setSpacingAfter(5);
+            PdfPTable companyInfoTable = new PdfPTable(2);
+            companyInfoTable.setWidthPercentage(100);
+            companyInfoTable.setSpacingBefore(5);
+            companyInfoTable.setWidths(new float[]{1, 1});
 
             PdfPCell addressCell = new PdfPCell(new Paragraph("公司地址：" + companyAddress, valueFont));
             addressCell.setBorder(Rectangle.NO_BORDER);
             addressCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            addressTable.addCell(addressCell);
+            companyInfoTable.addCell(addressCell);
 
-            document.add(addressTable);
+            PdfPCell phoneCell = new PdfPCell(new Paragraph("电话：" + companyPhone, valueFont));
+            phoneCell.setBorder(Rectangle.NO_BORDER);
+            phoneCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+            companyInfoTable.addCell(phoneCell);
 
-            PdfPTable dateTable = new PdfPTable(2);
-            dateTable.setWidthPercentage(100);
-            dateTable.setSpacingBefore(15);
-            dateTable.setWidths(new float[]{1, 1});
-
-            String footerDate = request.getParameter("footerDate") != null ? request.getParameter("footerDate") : "";
-            String page = request.getParameter("page") != null ? request.getParameter("page") : "1";
-            String totalPages = request.getParameter("totalPages") != null ? request.getParameter("totalPages") : "1";
-
-            PdfPCell dateCell1 = new PdfPCell(new Paragraph(footerDate, valueFont));
-            dateCell1.setBorder(Rectangle.NO_BORDER);
-            dateCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
-            dateTable.addCell(dateCell1);
-
-            PdfPCell dateCell2 = new PdfPCell(new Paragraph("第 " + page + " 页，共 " + totalPages + " 页", valueFont));
-            dateCell2.setBorder(Rectangle.NO_BORDER);
-            dateCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
-            dateTable.addCell(dateCell2);
-
-            document.add(dateTable);
+            document.add(companyInfoTable);
 
             document.close();
 
@@ -3735,7 +3779,7 @@ public class PdfGeneratorService {
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
-
+            
             BaseFont chineseFont = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
             Font titleFont = new Font(chineseFont, 18, Font.BOLD);
             Font valueFont = new Font(chineseFont, 10, Font.NORMAL);
