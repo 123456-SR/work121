@@ -117,31 +117,32 @@
     <table>
         <!-- Row 1 -->
         <tr>
-            <td class="label" style="width: 15%;">工程名称</td>
-            <td colspan="4"><input type="text" v-model="formData.projectName"   name="projectName"></td>
-            <td class="label" style="width: 15%;">委托日期</td>
-            <td colspan="4"><input type="text" v-model="formData.entrustDate"   name="entrustDate"></td>
+            <td class="label" style="width: 10%;">工程名称</td>
+            <!-- 左侧内容占 6 列，右侧标签占 1 列，右侧内容占 3 列：1+6+1+2=10 -->
+            <td colspan="6"><input type="text" v-model="formData.projectName"   name="projectName"></td>
+            <td class="label" style="width: 10%;">委托日期</td>
+            <td colspan="2"><input type="text" v-model="formData.entrustDate"   name="entrustDate"></td>
         </tr>
         <!-- Row 2 -->
         <tr>
             <td class="label">施工部位</td>
-            <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
+            <td colspan="6"><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
             <td class="label">检测日期</td>
-            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate"></td>
+            <td colspan="2"><input type="text" v-model="formData.testDate"   name="testDate"></td>
         </tr>
         <!-- Row 3 -->
         <tr>
             <td class="label">岩土性状</td>
-            <td colspan="4"><input type="text" v-model="formData.soilProperty"   name="soilProperty"></td>
+            <td colspan="6"><input type="text" v-model="formData.soilProperty"   name="soilProperty"></td>
             <td class="label">报告日期</td>
-            <td colspan="4"><input type="text" v-model="formData.reportDate"   name="reportDate"></td>
+            <td colspan="2"><input type="text" v-model="formData.reportDate"   name="reportDate"></td>
         </tr>
         <!-- Row 4 -->
         <tr>
             <td class="label">见证单位</td>
-            <td colspan="4"><input type="text" v-model="formData.witnessUnit"   name="witnessUnit"></td>
+            <td colspan="6"><input type="text" v-model="formData.witnessUnit"   name="witnessUnit"></td>
             <td class="label">见证人</td>
-            <td colspan="4"><input type="text" v-model="formData.witness"   name="witness"></td>
+            <td colspan="2"><input type="text" v-model="formData.witness"   name="witness"></td>
         </tr>
         <!-- Row 5 -->
         <tr>
@@ -172,29 +173,43 @@
         <template v-for="(block, blockIndex) in formData.dataBlocks" :key="blockIndex">
             <template v-for="(depth, subIndex) in block.depths" :key="`${blockIndex}-${subIndex}`">
                 <tr>
-                    <!-- 左栏 -->
-                    <td v-if="subIndex === 0" rowspan="2"><textarea v-model="block.pos_L" :name="`pos_L_${blockIndex}`" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
-                    <td v-else></td>
+                    <!-- 左栏：一个测点位置对应 6 行深度/锤击数 -->
+                    <td v-if="subIndex === 0" rowspan="6">
+                      <textarea
+                        v-model="block.pos_L"
+                        :name="`pos_L_${blockIndex}`"
+                        style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"
+                      ></textarea>
+                    </td>
 
-                    <td><input type="text" v-model="depth.depth_L" :name="`depth_L_${blockIndex * 2 + subIndex}`"></td>
-                    <td><input type="text" v-model="depth.actual_L" :name="`actual_L_${blockIndex * 2 + subIndex}`"></td>
+                    <td><input type="text" v-model="depth.depth_L" :name="`depth_L_${blockIndex * 6 + subIndex}`"></td>
+                    <td><input type="text" v-model="depth.actual_L" :name="`actual_L_${blockIndex * 6 + subIndex}`"></td>
 
-                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.avg_L" :name="`avg_L_${blockIndex}`" style="height: 100%;"></td>
-                    <td v-else></td>
-                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.capacity_L" :name="`capacity_L_${blockIndex}`" style="height: 100%;"></td>
-                    <td v-else></td>
+                    <td v-if="subIndex === 0" rowspan="6">
+                      <input type="text" v-model="block.avg_L" :name="`avg_L_${blockIndex}`" style="height: 100%;" />
+                    </td>
+                    <td v-if="subIndex === 0" rowspan="6">
+                      <input type="text" v-model="block.capacity_L" :name="`capacity_L_${blockIndex}`" style="height: 100%;" />
+                    </td>
 
                     <!-- 右栏 -->
-                    <td v-if="subIndex === 0" rowspan="2"><textarea v-model="block.pos_R" :name="`pos_R_${blockIndex}`" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
-                    <td v-else></td>
+                    <td v-if="subIndex === 0" rowspan="6">
+                      <textarea
+                        v-model="block.pos_R"
+                        :name="`pos_R_${blockIndex}`"
+                        style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"
+                      ></textarea>
+                    </td>
 
-                    <td><input type="text" v-model="block.depths_R[subIndex].depth_R" :name="`depth_R_${blockIndex * 2 + subIndex}`"></td>
-                    <td><input type="text" v-model="block.depths_R[subIndex].actual_R" :name="`actual_R_${blockIndex * 2 + subIndex}`"></td>
+                    <td><input type="text" v-model="block.depths_R[subIndex].depth_R" :name="`depth_R_${blockIndex * 6 + subIndex}`"></td>
+                    <td><input type="text" v-model="block.depths_R[subIndex].actual_R" :name="`actual_R_${blockIndex * 6 + subIndex}`"></td>
 
-                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.avg_R" :name="`avg_R_${blockIndex}`" style="height: 100%;"></td>
-                    <td v-else></td>
-                    <td v-if="subIndex === 0" rowspan="2"><input type="text" v-model="block.capacity_R" :name="`capacity_R_${blockIndex}`" style="height: 100%;"></td>
-                    <td v-else></td>
+                    <td v-if="subIndex === 0" rowspan="6">
+                      <input type="text" v-model="block.avg_R" :name="`avg_R_${blockIndex}`" style="height: 100%;" />
+                    </td>
+                    <td v-if="subIndex === 0" rowspan="6">
+                      <input type="text" v-model="block.capacity_R" :name="`capacity_R_${blockIndex}`" style="height: 100%;" />
+                    </td>
                 </tr>
             </template>
         </template>
@@ -310,11 +325,10 @@ const formData = reactive({
   companyAddress: '',
   companyPhone: '',
   conclusion: '',
+  // 2 组测点，每组左/右各 6 行深度/锤击数
   dataBlocks: [
-    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' },
-    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' },
-    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' },
-    { pos_L: '', depths: [{ depth_L: '', actual_L: '' }, { depth_L: '', actual_L: '' }], avg_L: '', capacity_L: '', pos_R: '', depths_R: [{ depth_R: '', actual_R: '' }, { depth_R: '', actual_R: '' }], avg_R: '', capacity_R: '' }
+    { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' },
+    { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
   ]
 })
 
@@ -498,12 +512,12 @@ const loadData = async () => {
         }
       }
 
-      if (sourceJson) {
+          if (sourceJson) {
         try {
           const json = JSON.parse(sourceJson)
           if (json.testDate) formData.testDate = json.testDate
 
-          for (let b = 0; b < 4; b++) {
+          for (let b = 0; b < 2; b++) {
             formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
             formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
             formData.dataBlocks[b].capacity_L = json[`capacity_L_${b}`] || ''
@@ -512,8 +526,8 @@ const loadData = async () => {
             formData.dataBlocks[b].avg_R = json[`avg_R_${b}`] || ''
             formData.dataBlocks[b].capacity_R = json[`capacity_R_${b}`] || ''
 
-            for (let s = 0; s < 2; s++) {
-              const idx = b * 2 + s
+            for (let s = 0; s < 6; s++) {
+              const idx = b * 6 + s
               formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${idx}`] || ''
               formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${idx}`] || ''
 
@@ -625,7 +639,7 @@ const submitForm = async () => {
     const dynamicData = {}
     if (formData.testDate) dynamicData.testDate = formData.testDate
 
-    for (let b = 0; b < 4; b++) {
+    for (let b = 0; b < 2; b++) {
         const block = formData.dataBlocks[b]
         if (block.pos_L) dynamicData[`pos_L_${b}`] = block.pos_L
         if (block.avg_L) dynamicData[`avg_L_${b}`] = block.avg_L
@@ -635,8 +649,8 @@ const submitForm = async () => {
         if (block.avg_R) dynamicData[`avg_R_${b}`] = block.avg_R
         if (block.capacity_R) dynamicData[`capacity_R_${b}`] = block.capacity_R
 
-        for (let s = 0; s < 2; s++) {
-            const idx = b * 2 + s
+        for (let s = 0; s < 6; s++) {
+            const idx = b * 6 + s
             if (block.depths[s].depth_L) dynamicData[`depth_L_${idx}`] = block.depths[s].depth_L
             if (block.depths[s].actual_L) dynamicData[`actual_L_${idx}`] = block.depths[s].actual_L
             

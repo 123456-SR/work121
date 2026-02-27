@@ -273,6 +273,24 @@ const mapRecordToFormData = (record) => {
   if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
 }
 
+// 从委托信息中补充头部字段（只在当前字段为空时填充，避免覆盖用户修改）
+const fillHeaderFromEntrustment = async (unifiedNumber) => {
+  if (!unifiedNumber) return
+  try {
+    const resp = await axios.get('/api/jc-core-wt-info/detail', {
+      params: { unifiedNumber }
+    })
+    if (resp.data && resp.data.success && resp.data.data) {
+      const eData = resp.data.data
+      if (!formData.constructionPart && eData.constructionPart) {
+        formData.constructionPart = eData.constructionPart
+      }
+    }
+  } catch (e) {
+    console.error('fillHeaderFromEntrustment error', e)
+  }
+}
+
 const saveCurrentRecordState = () => {
   if (records.value.length === 0) return
   
@@ -360,6 +378,8 @@ const loadData = async () => {
         records.value = response.data.data
         currentIndex.value = 0
         mapRecordToFormData(records.value[0])
+        // 补齐施工部位等头部信息，使之与检测报告一致
+        await fillHeaderFromEntrustment(key)
       } else {
         // 2. If no result, fetch entrustment info
         const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {

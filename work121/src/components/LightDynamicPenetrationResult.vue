@@ -164,52 +164,99 @@
             <td class="label">承载力<br>特征值<br>(kPa)</td>
         </tr>
 
-        <!-- Data Rows -->
-        <template v-for="(b, b_idx) in 4" :key="b_idx">
-            <template v-for="(s, s_idx) in 2" :key="s_idx">
+        <!-- Data Rows：3 组测点，每组 6 行深度/锤击数 -->
+        <template v-for="(b, b_idx) in 3" :key="b_idx">
+            <template v-for="(s, s_idx) in 6" :key="s_idx">
             <tr>
-                <!-- 左栏 -->
-                <td v-if="s_idx === 0" rowspan="2"><textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
+                <!-- 左栏：一个测点位置对应 6 行深度/锤击数 -->
+                <td v-if="s_idx === 0" rowspan="6">
+                  <textarea
+                    :name="'pos_L_' + b_idx"
+                    v-model="formData['pos_L_' + b_idx]"
+                    style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"
+                  ></textarea>
+                </td>
 
-                <td><input type="text" :name="'depth_L_' + (b_idx * 2 + s_idx)" v-model="formData['depth_L_' + (b_idx * 2 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_L_' + (b_idx * 2 + s_idx)" v-model="formData['actual_L_' + (b_idx * 2 + s_idx)]"></td>
+                <td>
+                  <input
+                    type="text"
+                    :name="'depth_L_' + (b_idx * 6 + s_idx)"
+                    v-model="formData['depth_L_' + (b_idx * 6 + s_idx)]"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    :name="'actual_L_' + (b_idx * 6 + s_idx)"
+                    v-model="formData['actual_L_' + (b_idx * 6 + s_idx)]"
+                  />
+                </td>
 
-                <td v-if="s_idx === 0" rowspan="2"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="2"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="6">
+                  <input
+                    type="text"
+                    :name="'avg_L_' + b_idx"
+                    v-model="formData['avg_L_' + b_idx]"
+                    style="height: 100%;"
+                  />
+                </td>
+                <td v-if="s_idx === 0" rowspan="6">
+                  <input
+                    type="text"
+                    :name="'capacity_L_' + b_idx"
+                    v-model="formData['capacity_L_' + b_idx]"
+                    style="height: 100%;"
+                  />
+                </td>
 
                 <!-- 右栏 -->
-                <td v-if="s_idx === 0" rowspan="2"><textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
+                <td v-if="s_idx === 0" rowspan="6">
+                  <textarea
+                    :name="'pos_R_' + b_idx"
+                    v-model="formData['pos_R_' + b_idx]"
+                    style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"
+                  ></textarea>
+                </td>
 
-                <td><input type="text" :name="'depth_R_' + (b_idx * 2 + s_idx)" v-model="formData['depth_R_' + (b_idx * 2 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_R_' + (b_idx * 2 + s_idx)" v-model="formData['actual_R_' + (b_idx * 2 + s_idx)]"></td>
+                <td>
+                  <input
+                    type="text"
+                    :name="'depth_R_' + (b_idx * 6 + s_idx)"
+                    v-model="formData['depth_R_' + (b_idx * 6 + s_idx)]"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    :name="'actual_R_' + (b_idx * 6 + s_idx)"
+                    v-model="formData['actual_R_' + (b_idx * 6 + s_idx)]"
+                  />
+                </td>
 
-                <td v-if="s_idx === 0" rowspan="2"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="2"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="6">
+                  <input
+                    type="text"
+                    :name="'avg_R_' + b_idx"
+                    v-model="formData['avg_R_' + b_idx]"
+                    style="height: 100%;"
+                  />
+                </td>
+                <td v-if="s_idx === 0" rowspan="6">
+                  <input
+                    type="text"
+                    :name="'capacity_R_' + b_idx"
+                    v-model="formData['capacity_R_' + b_idx]"
+                    style="height: 100%;"
+                  />
+                </td>
             </tr>
             </template>
         </template>
 
-        <!-- Row: 检测依据 -->
-        <tr>
-            <td class="label">检测依据</td>
-            <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis"></td>
-        </tr>
         <!-- Row: 仪器设备 -->
         <tr>
             <td class="label">仪器设备</td>
             <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
-        </tr>
-        <!-- Row: 检测结论 -->
-        <tr>
-            <td class="label" style="height: 80px;">检测结论</td>
-            <td colspan="9" class="left-align" style="vertical-align: top;">
-                <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;"></textarea>
-            </td>
-        </tr>
-        <!-- Row: 备注 -->
-        <tr>
-            <td class="label">备注</td>
-            <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks"></td>
         </tr>
     </table>
 
