@@ -6,6 +6,7 @@ import org.example.work121.entity.WaterReplacementResult;
 import org.example.work121.mapper.WaterReplacementMapper;
 import org.example.work121.mapper.WaterReplacementReportMapper;
 import org.example.work121.mapper.WaterReplacementResultMapper;
+import org.example.work121.service.TableGenerationService;
 import org.example.work121.service.WaterReplacementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
     @Autowired
     private WaterReplacementResultMapper resultMapper;
 
+    @Autowired
+    private TableGenerationService tableGenerationService;
+
     @Override
     public java.util.List<WaterReplacement> getByEntrustmentId(String entrustmentId) {
         return mapper.selectByEntrustmentId(entrustmentId);
@@ -39,10 +43,19 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
     @Override
     @Transactional
     public void save(WaterReplacement waterReplacement) {
-        if (waterReplacement.getId() != null && mapper.selectById(waterReplacement.getId()) != null) {
+        // 兼容前端传入空字符串 ID（Oracle 中空字符串会当作 NULL 处理，导致 ORA-01400）
+        String id = waterReplacement.getId();
+        if (id != null && id.trim().isEmpty()) {
+            id = null;
+            waterReplacement.setId(null);
+        }
+
+        // 如果传了有效的 ID 且数据库中已存在，则执行更新
+        if (id != null && mapper.selectById(id) != null) {
             mapper.updateById(waterReplacement);
         } else {
-            if (waterReplacement.getId() == null) {
+            // 否则视为新增，补充生成主键 ID
+            if (waterReplacement.getId() == null || waterReplacement.getId().trim().isEmpty()) {
                 waterReplacement.setId(UUID.randomUUID().toString());
             }
             mapper.insert(waterReplacement);
@@ -90,15 +103,13 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
-        // Logic to generate report and result from record
-        // Since they share the same table (T_WATER_REPLACEMENT), the data is already there.
-        // This method serves as a placeholder for any post-approval processing.
-        
         java.util.List<WaterReplacement> records = mapper.selectByEntrustmentId(entrustmentId);
         if (records == null || records.isEmpty()) {
-            throw new RuntimeException("Cannot generate report/result: Record not found for entrustmentId " + entrustmentId);
+            throw new RuntimeException("Cannot generate WaterReplacement report/result: Record not found for entrustmentId " + entrustmentId);
         }
-        
-        System.out.println("Generated Report and Result for WaterReplacement entrustment: " + entrustmentId);
+
+        // 委托 + 灌水法记录表状态校验以及具体字段映射，集中在 TableGenerationServiceImpl.generateWaterReplacementReportAndResult 中处理
+        // 这里仅负责触发统一的报表生成服务
+        tableGenerationService.generateReportAndResult("WATER_REPLACEMENT", entrustmentId);
     }
 }

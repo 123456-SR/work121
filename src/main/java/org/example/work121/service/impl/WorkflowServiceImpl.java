@@ -94,17 +94,17 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         // ==== 权限校验：根据目录里配置的委托承接人 / 委托审核人限制操作人 ====
         validateEntrustmentPermission(entity, request);
-
+        
         applyChanges(entity, request);
         // Update both tables to ensure status consistency
         int extResult = jcCoreWtInfoMapper.updateExt(entity);
-
+        
         // Map status to sampleStatus for legacy support if needed
         if (entity.getStatus() != null) {
             // 目前 sampleStatus 未参与工作流，暂不强制同步
             // entity.setSampleStatus(String.valueOf(entity.getStatus()));
         }
-
+        
         // Sync data to other tables if Entrustment is approved or passes audit (Pending Sign)
         if (entity.getStatus() != null
                 && (STATUS_APPROVED.equals(entity.getStatus()) || STATUS_PENDING_SIGN.equals(entity.getStatus()))) {

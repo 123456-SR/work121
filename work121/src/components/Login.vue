@@ -15,7 +15,7 @@
             type="text"
             id="username"
             v-model="userForm.username"
-            placeholder="请输入用户名1234567"
+            placeholder="请输入用户名"
             class="form-control"
           >
         </div>

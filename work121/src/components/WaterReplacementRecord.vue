@@ -48,21 +48,22 @@
 
         <template v-if="formData.id && !draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            :disabled="Number(formData.status) === 1"
+            v-if="Number(formData.status) === 0 || Number(formData.status) === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="Number(formData.status) === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
-            升级为已审核
+            审核通过
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="Number(formData.status) === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -343,7 +344,8 @@ const formData = reactive({
 
 // Status Text Helper
 const getStatusText = (status) => {
-    switch(status) {
+    const s = parseInt(status)
+    switch(s) {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
@@ -354,7 +356,8 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
-    switch(status) {
+    const s = parseInt(status)
+    switch(s) {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
@@ -578,7 +581,7 @@ const mapRecordToFormData = (record) => {
   if (record.reviewer) formData.reviewer = record.reviewer
   
   if (record.status !== undefined) {
-      formData.status = record.status
+      formData.status = Number(record.status)
   } else {
       formData.status = 0 // Default to Draft if not present
   }
