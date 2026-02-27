@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-form">
       <h2 class="login-title">表格管理系统登录</h2>
-      
+
       <!-- 用户登录/注册 -->
       <div class="step-container">
         <div class="step-header">
@@ -11,21 +11,21 @@
 
         <div class="form-group">
           <label for="username">用户名</label>
-          <input 
-            type="text" 
-            id="username" 
-            v-model="userForm.username" 
-            placeholder="请输入用户名"
+          <input
+            type="text"
+            id="username"
+            v-model="userForm.username"
+            placeholder="请输入用户名1234567"
             class="form-control"
           >
         </div>
-        
+
         <div class="form-group">
           <label for="password">密码</label>
-          <input 
-            type="password" 
-            id="password" 
-            v-model="userForm.password" 
+          <input
+            type="password"
+            id="password"
+            v-model="userForm.password"
             placeholder="请输入密码"
             class="form-control"
           >
@@ -33,27 +33,27 @@
 
         <div v-if="isRegister" class="form-group">
           <label for="fullName">真实姓名 (选填)</label>
-          <input 
-            type="text" 
-            id="fullName" 
-            v-model="userForm.fullName" 
+          <input
+            type="text"
+            id="fullName"
+            v-model="userForm.fullName"
             placeholder="请输入真实姓名"
             class="form-control"
           >
         </div>
-        
+
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        
-        <button 
-          @click="handleUserAction" 
+
+        <button
+          @click="handleUserAction"
           class="login-button"
           :disabled="isLoading"
         >
           {{ isLoading ? '处理中...' : (isRegister ? '注册' : '登录') }}
         </button>
-        
+
         <div class="toggle-action">
           <span v-if="!isRegister">
             没有账号? <a href="#" @click.prevent="toggleMode">立即注册</a>
@@ -63,7 +63,7 @@
           </span>
         </div>
       </div>
-      
+
     </div>
   </div>
 </template>
@@ -97,22 +97,22 @@ const handleUserAction = async () => {
     errorMessage.value = '用户名和密码不能为空'
     return
   }
-  
+
   try {
     isLoading.value = true
     errorMessage.value = ''
-    
+
     const endpoint = isRegister.value ? '/api/register' : '/api/login'
-    
+
     const payload = {
       // User Info
       username: userForm.username,
       password: userForm.password,
       fullName: userForm.fullName
     }
-    
+
     const response = await axios.post(endpoint, payload)
-    
+
     if (response.data.success) {
       if (isRegister.value) {
         // 注册成功后自动切换到登录模式
@@ -274,7 +274,7 @@ const handleUserAction = async () => {
   .login-form {
     padding: 30px 20px;
   }
-  
+
   .login-title {
     font-size: 20px;
   }
