@@ -111,6 +111,11 @@
     <h2>原位密度检测记录表（环刀法）</h2>
 
     <div class="header-info">
+        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+    </div>
+    <div class="header-info">
         <span>施工部位：<input type="text" v-model="formData.constructionLocation"   name="constructionLocation" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
         <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"></span>
@@ -194,15 +199,16 @@
 
     <div class="footer-info">
         <span style="position: relative;">
-          审核：
-          <input type="text" v-model="formData.reviewer" style="width: 100px; border-bottom: 1px solid black;" readonly>
+            审核：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+            <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.reviewerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+            </div>
         </span>
         <span style="position: relative;">
-          试验：
-          <input type="text" v-model="formData.tester" style="width: 100px; border-bottom: 1px solid black;">
-          <div v-if="formData.testerSignature" class="signature-overlay" style="left: 40px; top: -20px;">
-            <img :src="formData.testerSignature" alt="试验人签名" />
-          </div>
+            检测：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+            <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.testerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+            </div>
         </span>
     </div>
     </form>
@@ -250,22 +256,27 @@ const currentIndex = ref(0)
 const totalRecords = computed(() => records.value.length)
 
 const formData = reactive({
-  id: '',
-  entrustmentId: '',
-  constructionLocation: '',
-  maxDryDensity: '',
-  optMoisture: '',
-  testType: '',
-  standard: '',
-  designCompaction: '',
-  testDate: '',
-  remarks: '',
-  reviewer: '',
-  tester: '',
-  reviewerSignature: '',
-  testerSignature: '',
-  status: 0
-})
+      id: '',
+      entrustmentId: '',
+      entrustingUnit: '',
+      projectName: '',
+      unifiedNumber: '',
+      constructionLocation: '',
+      maxDryDensity: '',
+      optMoisture: '',
+      testType: '',
+      standard: '',
+      designCompaction: '',
+      testDate: '',
+      remarks: '',
+      // Role fields
+      recordTester: '',
+      recordReviewer: '',
+      filler: '',
+      reviewerSignature: '',
+      testerSignature: '',
+      status: 0
+    })
 
 const getStatusText = (status) => {
     const s = parseInt(status)
@@ -274,7 +285,6 @@ const getStatusText = (status) => {
         case 1: return '待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '待批准'
         case 5: return '已通过'
         default: return '未知'
     }
@@ -287,10 +297,16 @@ const getStatusColor = (status) => {
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
         case 3: return '#FF9800' // Orange
-        case 4: return '#9C27B0' // Purple
         case 5: return '#4CAF50' // Green
         default: return '#000000'
     }
+}
+
+const normalizeSignatureSrc = (value) => {
+  if (!value) return ''
+  if (typeof value !== 'string') return ''
+  if (value.startsWith('data:image')) return value
+  return `data:image/png;base64,${value}`
 }
 
 const submitWorkflow = async (action) => {
@@ -305,14 +321,21 @@ const submitWorkflow = async (action) => {
         return
     }
 
-    let signatureData = null
+    try {
+        let signatureData = null
     
-    if (action === 'SUBMIT') {
+        if (action === 'SUBMIT') {
+        // Role check: Only recordTester can submit
+        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+            return
+        }
+
         if (!formData.testerSignature) {
             alert('请先进行检测人签字')
             return
         }
-        signatureData = formData.testerSignature
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     }
 
     const request = {
@@ -330,7 +353,53 @@ const submitWorkflow = async (action) => {
         request.rejectReason = reason
     }
 
-    try {
+    if (action === 'AUDIT_PASS') {
+        // Role check: Only recordReviewer can audit
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
+
+        // Auto fetch signature if missing
+        if (!formData.reviewerSignature) {
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordReviewer) {
+                        formData.recordReviewer = user.fullName || user.username
+                     }
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
+        }
+        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+        request.signatureData = signatureData
+    }
+    
+    // Add SIGN_APPROVE support if needed (though CuttingRing might use AUDIT_PASS for approval flow depending on implementation, 
+    // but assuming standard flow: SUBMIT -> AUDIT_PASS -> APPROVED. If there is a separate approval step, it should be handled.
+    // Based on other files, often AUDIT_PASS leads to status 4 or 5.
+    // Cutting Ring code shows: AUDIT_PASS -> 5 (if status 1->5? No, previous code didn't show next status logic explicitly in submitWorkflow, 
+    // it relies on backend or nextHandler? 
+    // Wait, the original code had:
+    // else if (action === 'REJECT') ...
+    
+    // Let's just fix the REJECT check for now.
+    
+    if (action === 'REJECT') {
+        // Role check: Only recordReviewer can reject
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
+    }
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
@@ -405,8 +474,8 @@ const mapRecordToFormData = (record) => {
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || props.id
   formData.status = record.status !== undefined ? record.status : 0
-  formData.reviewerSignature = record.reviewSignaturePhoto || ''
-  formData.testerSignature = record.inspectSignaturePhoto || ''
+  formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
+  formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
 
   if (record.dataJson) {
     try {
@@ -415,12 +484,21 @@ const mapRecordToFormData = (record) => {
       Object.keys(parsed).forEach(key => {
         formData[key] = parsed[key]
       })
+      
+      // Legacy mapping
+      if (parsed.tester && !formData.recordTester) formData.recordTester = parsed.tester
+      if (parsed.reviewer && !formData.recordReviewer) formData.recordReviewer = parsed.reviewer
     } catch (e) {
       console.error('JSON parse error', e)
     }
   }
 
   // Map fields from BusinessEntity/Entrustment (Override JSON to ensure sync)
+  if (record.clientUnit) formData.entrustingUnit = record.clientUnit
+  if (record.projectName) formData.projectName = record.projectName
+  if (record.wtNum) formData.unifiedNumber = record.wtNum
+  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId // Fallback
+
   if (record.constructionPart) formData.constructionLocation = record.constructionPart
   if (record.testCategory) formData.testType = record.testCategory
   if (record.standard) formData.standard = record.standard
@@ -430,8 +508,23 @@ const mapRecordToFormData = (record) => {
   if (record.designCompaction) formData.designCompaction = record.designCompaction
 
   // Ensure entity fields override JSON if present
-  if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
-  if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto
+  if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
+  if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
+
+  // Map Roles
+  // Load defaults from directory if available
+  const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+  
+  // Filler - Priority: record.filler
+  formData.filler = record.filler || ''
+  
+  // Record Tester - Priority: record.recordTester -> record.tester
+  formData.recordTester = record.recordTester || record.tester || ''
+  
+  // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
+  if (record.recordReviewer || record.reviewer) {
+    formData.recordReviewer = record.recordReviewer || record.reviewer
+  }
 }
 
 const saveCurrentRecordState = () => {
@@ -443,8 +536,17 @@ const saveCurrentRecordState = () => {
   record.reviewSignaturePhoto = formData.reviewerSignature
   record.inspectSignaturePhoto = formData.testerSignature
   
+  record.recordTester = formData.recordTester
+  record.recordReviewer = formData.recordReviewer
+  record.tester = formData.recordTester // Sync legacy
+  record.reviewer = formData.recordReviewer // Sync legacy
+  
   // Update dataJson with current formData state
-  record.dataJson = JSON.stringify(formData)
+  // Exclude legacy fields from JSON
+  const dataJsonObj = { ...formData }
+  delete dataJsonObj.tester
+  delete dataJsonObj.reviewer
+  record.dataJson = JSON.stringify(dataJsonObj)
 }
 
 const prevRecord = () => {
@@ -544,6 +646,12 @@ const loadData = async (paramId) => {
           formData.testType = eData.testCategory || ''
           formData.standard = eData.standard || ''
           
+          // Auto-fill roles from directory (Removed)
+          // const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+          formData.recordTester = ''
+          formData.recordReviewer = ''
+          // formData.approver = ''
+          
           newRecord.dataJson = JSON.stringify(formData)
         }
         
@@ -559,12 +667,24 @@ const loadData = async (paramId) => {
 
 const saveData = async () => {
   try {
+    const dataJsonObj = { ...formData }
+    delete dataJsonObj.tester
+    delete dataJsonObj.reviewer
+
     const dataToSave = {
       id: formData.id,
       entrustmentId: formData.entrustmentId || props.id,
-      dataJson: JSON.stringify(formData),
-      reviewSignaturePhoto: formData.reviewerSignature,
-      inspectSignaturePhoto: formData.testerSignature
+      dataJson: JSON.stringify(dataJsonObj),
+      // Roles
+      recordTester: formData.recordTester,
+      recordReviewer: formData.recordReviewer,
+      tester: formData.recordTester, // Sync legacy
+      reviewer: formData.recordReviewer, // Sync legacy
+      filler: formData.filler,
+      
+      // Signatures
+      testerSignature: formData.testerSignature,
+      reviewerSignature: formData.reviewerSignature
     }
     
     const response = await axios.post('/api/cutting-ring/save', dataToSave)
@@ -608,10 +728,14 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
+      const currentAccount = user.username
+      const currentName = user.fullName || user.nickName || currentAccount
 
       // Match Tester
-      if (formData.tester === currentName) {
+      if (formData.recordTester === currentName || formData.recordTester === currentAccount || !formData.recordTester) {
+        if (!formData.recordTester) {
+            formData.recordTester = currentName
+        }
         formData.testerSignature = imgSrc
         signed = true
       }

@@ -69,14 +69,23 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
     @Override
     public List<LightDynamicPenetration> getByEntrustmentId(String entrustmentId) {
         // 兼容前端传 WT_NUM 或 WT_ID：若传入的是 WT_NUM，则先解析出 WT_ID
-        String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
-        return mapper.selectByEntrustmentId(resolvedId);
+        String key = entrustmentId;
+        String resolvedId = resolveEntrustmentIdToWtId(key);
+        List<LightDynamicPenetration> list = mapper.selectByEntrustmentId(resolvedId);
+        if ((list == null || list.isEmpty()) && key != null && !key.trim().isEmpty() && !resolvedId.equals(key)) {
+            return mapper.selectByEntrustmentId(key);
+        }
+        return list;
     }
 
     @Override
     @Transactional
     public void save(LightDynamicPenetration entity) {
         try {
+            if (entity != null && entity.getEntrustmentId() != null && !entity.getEntrustmentId().trim().isEmpty()) {
+                entity.setEntrustmentId(resolveEntrustmentIdToWtId(entity.getEntrustmentId()));
+            }
+
             // Prepare data map for DATA_JSON
             Map<String, Object> recordData = new HashMap<>();
             

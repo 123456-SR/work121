@@ -261,26 +261,20 @@
     </table>
 
     <div class="footer-info">
-        <span>
-            批准：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.approve" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.approveSignature ? 0 : 1 }">
-                <img v-if="formData.approveSignature" :src="formData.approveSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-            </div>
+        <span class="signature-box">
+          批准：
+          <span class="signature-line">{{ formData.approver }}</span>
+          <img v-if="formData.approveSignature" :src="formData.approveSignature" class="signature-img" alt="批准人签名" />
         </span>
-        <span>
-            审核：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.review" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.reviewSignature ? 0 : 1 }">
-                <img v-if="formData.reviewSignature" :src="formData.reviewSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-            </div>
+        <span class="signature-box">
+          审核：
+          <span class="signature-line">{{ formData.recordReviewer }}</span>
+          <img v-if="formData.reviewSignature" :src="formData.reviewSignature" class="signature-img" alt="审核人签名" />
         </span>
-        <span>
-            检验：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.inspect" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.inspectSignature ? 0 : 1 }">
-                <img v-if="formData.inspectSignature" :src="formData.inspectSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-            </div>
+        <span class="signature-box">
+          检测：
+          <span class="signature-line">{{ formData.recordTester }}</span>
+          <img v-if="formData.inspectSignature" :src="formData.inspectSignature" class="signature-img" alt="检测人签名" />
         </span>
     </div>
 
@@ -327,9 +321,10 @@ const formData = reactive({
   testBasis: '',
   equipment: '',
   remarks: '',
-  approve: '',
-  review: '',
-  inspect: '',
+  recordTester: '',
+  recordReviewer: '',
+  filler: '',
+  approver: '',
   conclusion: '',
   approveSignature: '',
   reviewSignature: '',
@@ -379,9 +374,10 @@ const submitWorkflow = async (action) => {
     let signatureData = null
     
     if (action === 'SUBMIT') {
-        // Role check: Only tester can submit
-        if (formData.inspect && user.username !== formData.inspect) {
-            alert('您不是该单据的检测人 (' + formData.inspect + ')，无权提交')
+        // Role check: Only recordTester can submit
+        // Logic: formData.recordTester (if set)
+        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+            alert('您不是该单据的检测人 (' + formData.recordTester + ')，无权提交')
             return
         }
 
@@ -390,34 +386,81 @@ const submitWorkflow = async (action) => {
             return
         }
         signatureData = formData.inspectSignature.replace(/^data:image\/\w+;base64,/, '')
-    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
-        // Role check: Only reviewer can audit/reject at status 1
-        if (formData.review && user.username !== formData.review) {
-            alert('您不是该单据的复核人 (' + formData.review + ')，无权操作')
+    } else if (action === 'AUDIT_PASS') {
+        // Role check: Only reviewer can audit
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的复核人 (' + formData.recordReviewer + ')，无权操作')
             return
+        }
+        // Auto sign Reviewer
+        if (!formData.reviewSignature) {
+             try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.reviewSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordReviewer) {
+                        formData.recordReviewer = user.fullName || user.username
+                     }
+                }
+             } catch (e) {
+                console.error('Auto sign error', e)
+             }
+        }
+        if (formData.reviewSignature) {
+            signatureData = formData.reviewSignature.replace(/^data:image\/\w+;base64,/, '')
         }
     } else if (action === 'SIGN_REVIEW') {
         // Role check: Only reviewer can sign
-        if (formData.review && user.username !== formData.review) {
-            alert('您不是该单据的复核人 (' + formData.review + ')，无权签字')
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的复核人 (' + formData.recordReviewer + ')，无权签字')
             return
         }
         
+        // Auto sign Reviewer if missing
         if (!formData.reviewSignature) {
-            alert('请先进行复核人签字')
-            return
+             try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.reviewSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordReviewer) {
+                        formData.recordReviewer = user.fullName || user.username
+                     }
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+             } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+             }
         }
         signatureData = formData.reviewSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'SIGN_APPROVE') {
         // Role check: Only approver can sign
-        if (formData.approve && user.username !== formData.approve) {
-            alert('您不是该单据的批准人 (' + formData.approve + ')，无权签字')
+        if (formData.approver && user.username !== formData.approver && user.fullName !== formData.approver) {
+            alert('您不是该单据的批准人 (' + formData.approver + ')，无权签字')
             return
         }
         
+        // Auto sign Approver if missing
         if (!formData.approveSignature) {
-            alert('请先进行批准人签字')
-            return
+             try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.approveSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.approver) {
+                        formData.approver = user.fullName || user.username
+                     }
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+             } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+             }
         }
         signatureData = formData.approveSignature.replace(/^data:image\/\w+;base64,/, '')
     }
@@ -482,9 +525,13 @@ const loadData = async () => {
             formData.testBasis = data.testBasis || ''
             formData.equipment = data.equipment || ''
             formData.remarks = data.remarks || ''
-            formData.approve = data.approver || ''
-            formData.review = data.reviewer || ''
-            formData.inspect = data.tester || ''
+            
+            // Map roles
+            formData.approver = data.approver || ''
+            formData.recordReviewer = data.reviewer || ''
+            formData.recordTester = data.tester || ''
+            formData.filler = data.filler || ''
+            
             formData.conclusion = data.conclusion || ''
             
             formData.approveSignature = data.approveSignaturePhoto || ''
@@ -502,6 +549,24 @@ const loadData = async () => {
                     console.error('JSON parse error', e)
                 }
             }
+            
+            // Directory Fallback - REMOVED
+            // const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+            // const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+            
+            // Filler
+            // if (!formData.filler) {
+            //      formData.filler = directory.filler || directory.jcFiller || user.username || ''
+            // }
+            
+            // Record Tester
+            formData.recordTester = data.recordTester || data.tester || ''
+            
+            // Record Reviewer
+            formData.recordReviewer = data.recordReviewer || data.reviewer || ''
+            
+            // Approver
+            formData.approver = data.approver || ''
         }
     } catch (e) {
         console.error('Load error', e)
@@ -536,20 +601,9 @@ const handleSign = async () => {
 
       let signed = false
 
-      // Match Approve by account (兼容姓名)
-      if (formData.approve === currentAccount || formData.approve === currentRealName) {
-        formData.approveSignature = imgSrc
-        signed = true
-      }
-
-      // Match Review by account (兼容姓名)
-      if (formData.review === currentAccount || formData.review === currentRealName) {
-        formData.reviewSignature = imgSrc
-        signed = true
-      }
-      
-      // Match Inspect by account (兼容姓名)
-      if (formData.inspect === currentAccount || formData.inspect === currentRealName) {
+      // Match Tester
+      if (!formData.recordTester || formData.recordTester === currentAccount || formData.recordTester === currentRealName) {
+        if (!formData.recordTester) formData.recordTester = currentRealName
         formData.inspectSignature = imgSrc
         signed = true
       }
@@ -557,8 +611,7 @@ const handleSign = async () => {
       if (signed) {
         alert('签名成功')
       } else {
-        const formPerson = formData.approve || formData.review || formData.inspect || ''
-        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的人员(${formPerson})不匹配，无法签名`)
+        alert(`当前用户(${currentRealName})与表单中的检测人员(${formData.recordTester})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')
@@ -583,6 +636,12 @@ const saveData = async () => {
                 dynamicData[key] = formData[key]
             }
         }
+        
+        // Update dataJson with current formData, but exclude legacy/redundant fields
+        const dataJsonObj = { ...formData }
+        delete dataJsonObj.tester
+        delete dataJsonObj.reviewer
+        const dataJsonStr = JSON.stringify(dataJsonObj)
 
         const payload = {
             id: props.id,
@@ -590,23 +649,22 @@ const saveData = async () => {
             designCapacity: formData.designCapacity,
             hammerWeight: formData.hammerWeight,
             dropDistance: formData.dropDistance,
+            testCategory: formData.testCategory,
             testBasis: formData.testBasis,
             equipment: formData.equipment,
             remarks: formData.remarks,
-            approver: formData.approve,
-            reviewer: formData.review,
-            tester: formData.inspect,
             conclusion: formData.conclusion,
+            dataJson: dataJsonStr,
             approveSignaturePhoto: formData.approveSignature,
             reviewSignaturePhoto: formData.reviewSignature,
             inspectSignaturePhoto: formData.inspectSignature,
-            // reportDate should be handled carefully. If input type=text, it's string.
-            // But entity expects Date. If I send string 'yyyy-MM-dd', Spring might parse it if configured.
-            // Or I can send timestamp.
-            // Let's try sending string and see. If backend is configured with Jackson, it might work.
-            // Or I can send null if empty.
-            reportDate: formData.reportDate ? new Date(formData.reportDate) : null,
-            dataJson: JSON.stringify(dynamicData)
+            recordTester: formData.recordTester,
+            recordReviewer: formData.recordReviewer,
+            filler: formData.filler,
+            approver: formData.approver,
+            tester: formData.recordTester, // Keep legacy fields sync
+            reviewer: formData.recordReviewer,
+            // approver: formData.approver
         }
 
         const res = await axios.post('/api/light-dynamic-penetration/save', payload)
@@ -648,7 +706,31 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
-        .no-print {
+        /* Signature styles */
+.signature-box {
+  position: relative;
+  display: inline-block;
+  min-width: 120px;
+  vertical-align: bottom;
+}
+.signature-line {
+  display: inline-block;
+  min-width: 80px;
+  border-bottom: 1px solid black;
+  text-align: center;
+  padding: 0 5px;
+  height: 20px;
+  line-height: 20px;
+}
+.signature-img {
+  position: absolute;
+  left: 40px;
+  top: -20px;
+  width: 80px;
+  height: 40px;
+  mix-blend-mode: multiply;
+}
+.no-print {
             margin-bottom: 20px;
         }
         .toolbar {

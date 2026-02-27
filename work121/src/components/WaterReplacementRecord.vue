@@ -263,14 +263,19 @@
         </tr>
     </table>
 
-        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; display: flex; flex-wrap: wrap; justify-content: space-between;">
-            <div style="position: relative; display: inline-block; margin-right: 20px;">
-                <span>试验：<input type="text" v-model="formData.tester" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
-                <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; width: 80px; height: 40px; mix-blend-mode: multiply;" />
-            </div>
-            <div style="position: relative; display: inline-block; margin-right: 20px;">
-                <span>审核：<input type="text" v-model="formData.reviewer" readonly style="width: 100px; border: none; border-bottom: 1px solid black;"></span>
-            </div>
+        <div class="footer-info">
+            <span style="position: relative; margin-right: 20px;">
+                试验：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+                <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                    <img :src="formData.testerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+                </div>
+            </span>
+            <span style="position: relative;">
+                审核：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+                <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                    <img :src="formData.reviewerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+                </div>
+            </span>
         </div>
 
 
@@ -327,36 +332,33 @@ const formData = reactive({
   equipment: '',
   designCompaction: '',
   testCategory: '',
-  reviewer: '',
-  tester: '',
+  recordTester: '',
+  recordReviewer: '',
+  filler: '',
   remarks: '',
   reviewerSignature: '',
   testerSignature: '',
-  status: 0 // 0:Draft, 1:PendingAudit, 2:Returned, 3:PendingSign, 4:PendingApproval, 5:Approved
+  status: 0 // 0:Draft, 1:PendingAudit, 2:Returned, 3:PendingSign, 5:Approved
 })
 
 // Status Text Helper
 const getStatusText = (status) => {
-    const s = parseInt(status)
-    switch(s) {
+    switch(status) {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '待批准'
         case 5: return '已通过'
         default: return '未知'
     }
 }
 
 const getStatusColor = (status) => {
-    const s = parseInt(status)
-    switch(s) {
+    switch(status) {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
         case 3: return '#FF9800' // Orange
-        case 4: return '#9C27B0' // Purple
         case 5: return '#4CAF50' // Green
         default: return '#000000'
     }
@@ -384,7 +386,47 @@ const submitWorkflow = async (action) => {
             alert('请先进行检测人签字')
             return
         }
-        signatureData = formData.testerSignature
+        
+        // Check if current user is the tester
+        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+            return
+        }
+        
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'AUDIT_PASS') {
+        // Role check
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
+
+        // Auto fetch signature if missing
+        if (!formData.reviewerSignature) {
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordReviewer) {
+                        formData.recordReviewer = user.fullName || user.username
+                     }
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
+        }
+        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'REJECT') {
+        // Role check: Only recordReviewer can reject
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
     }
 
     const request = {
@@ -440,38 +482,55 @@ const initDynamicFields = () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   initDynamicFields()
-  
-  // Get entrustment ID (wtNum) from props or URL
-  let wtNum = props.wtNum
-  if (!wtNum) {
-      const urlParams = new URLSearchParams(window.location.search)
-      wtNum = urlParams.get('wtNum') || urlParams.get('id') // Fallback to id if wtNum missing
+  const urlParams = new URLSearchParams(window.location.search)
+  const wtNumParam = props.wtNum || urlParams.get('wtNum')
+  const idParam = props.id || urlParams.get('id')
+
+  if (wtNumParam) {
+    try {
+      const res = await axios.get('/api/jc-core-wt-info/by-wt-num', { params: { wtNum: wtNumParam } })
+      if (res.data && res.data.success && res.data.data) {
+        const wt = res.data.data
+        formData.entrustmentId = wt.id || wtNumParam
+        formData.unifiedNumber = wt.sampleNumber || wtNumParam
+        loadData(formData.entrustmentId)
+        return
+      }
+    } catch (e) {}
+    formData.entrustmentId = wtNumParam
+    formData.unifiedNumber = wtNumParam
+    loadData(wtNumParam)
+    return
   }
 
-  if (wtNum) {
-      formData.entrustmentId = wtNum
-      formData.unifiedNumber = wtNum
-      loadData(wtNum)
-  } else if (props.id) {
-      // If only id is provided (legacy or direct link), try using it as wtNum
-      formData.entrustmentId = props.id
-      formData.unifiedNumber = props.id
-      loadData(props.id)
-  } else {
-      const newRecord = {
-          id: '',
-          entrustmentId: '',
-          dataJson: JSON.stringify(formData),
-          reviewSignaturePhoto: '',
-          inspectSignaturePhoto: ''
+  if (idParam) {
+    try {
+      const res = await axios.get('/api/jc-core-wt-info/by-id', { params: { id: idParam } })
+      if (res.data && res.data.success && res.data.data) {
+        const wt = res.data.data
+        formData.entrustmentId = wt.id || idParam
+        formData.unifiedNumber = wt.sampleNumber || formData.unifiedNumber
+        loadData(formData.entrustmentId)
+        return
       }
-      
-      records.value = [newRecord]
-      currentIndex.value = 0
-      mapRecordToFormData(newRecord)
+    } catch (e) {}
+    formData.entrustmentId = idParam
+    loadData(idParam)
+    return
   }
+
+  const newRecord = {
+    id: '',
+    entrustmentId: '',
+    dataJson: JSON.stringify(formData),
+    reviewSignaturePhoto: '',
+    inspectSignaturePhoto: ''
+  }
+  records.value = [newRecord]
+  currentIndex.value = 0
+  mapRecordToFormData(newRecord)
 })
 
 const mapRecordToFormData = (record) => {
@@ -486,8 +545,6 @@ const mapRecordToFormData = (record) => {
     try {
       const parsed = JSON.parse(record.dataJson)
       Object.keys(parsed).forEach(key => {
-        // 不允许旧 JSON 里的 status 覆盖当前状态，避免状态显示异常
-        if (key === 'status') return
         formData[key] = parsed[key]
       })
     } catch (e) {
@@ -500,8 +557,15 @@ const mapRecordToFormData = (record) => {
   if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto;
   
   if (record.projectName) formData.projectName = record.projectName;
-  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId;
-  if (record.wtNum && !formData.unifiedNumber) formData.unifiedNumber = record.wtNum;
+  
+  // Correctly map unifiedNumber and entrustmentId
+  if (record.wtNum) {
+      formData.unifiedNumber = record.wtNum
+  } else if (record.entrustmentId) {
+      // If wtNum is not available, try to use entrustmentId (legacy behavior)
+      // But don't overwrite if we already have a unifiedNumber
+      if (!formData.unifiedNumber) formData.unifiedNumber = record.entrustmentId
+  }
 
   // Added mappings
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
@@ -511,11 +575,57 @@ const mapRecordToFormData = (record) => {
   if (record.testBasis) formData.standard = record.testBasis
   if (record.commissionDate && !formData.testDate) formData.testDate = record.commissionDate // Fallback if testDate empty
   
-  if (record.status !== undefined && record.status !== null) {
-      formData.status = Number(record.status)
+  if (record.status !== undefined) {
+      formData.status = record.status
   } else {
       formData.status = 0 // Default to Draft if not present
   }
+
+  // Map Roles
+  // Load defaults from directory if available
+  const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+  
+  // Filler - Priority: record.filler
+  formData.filler = record.filler || ''
+  
+  // Record Tester - Priority: record.recordTester -> legacy tester
+  formData.recordTester = record.recordTester || record.tester || ''
+  
+  // Record Reviewer - Priority: record.recordReviewer -> legacy reviewer
+  if (record.recordReviewer || record.reviewer) {
+    formData.recordReviewer = record.recordReviewer || record.reviewer
+  }
+  
+  // If JSON has tester/reviewer but record fields are empty (legacy data in JSON), map them
+  if (!formData.recordTester && formData.tester) formData.recordTester = formData.tester
+  if (!formData.recordReviewer && formData.reviewer) formData.recordReviewer = formData.reviewer
+}
+
+const getCleanDataJson = () => {
+  const dynamicData = {}
+  
+  // Static fields to include in JSON
+  const staticFields = [
+    'projectName', 'testDate', 'standard', 'maxDryDensity', 'minDryDensity', 
+    'optMoisture', 'relativeDensity', 'waterDensity', 'equipment', 
+    'designCompaction', 'testCategory', 'remarks'
+  ]
+  
+  staticFields.forEach(field => {
+    if (formData[field] !== undefined && formData[field] !== null) {
+      dynamicData[field] = formData[field]
+    }
+  })
+
+  // Dynamic fields
+  Object.keys(formData).forEach(key => {
+    // Match dynamic fields: samplingLocation_0, ringVolume_0, etc.
+    if (key.match(/^(samplingLocation|ringVolume|initialWaterLevel|finalWaterLevel|tankArea|pitVolume|sampleMass|wetDensity|moistureNo|containerMass|wetSampleMass|drySampleMass|moistureContent|avgMoisture|measuredDryDensity|avgMeasuredDryDensity|relativeDensity)_\d+$/)) {
+      dynamicData[key] = formData[key]
+    }
+  })
+  
+  return JSON.stringify(dynamicData)
 }
 
 const saveCurrentRecordState = () => {
@@ -528,7 +638,7 @@ const saveCurrentRecordState = () => {
   record.inspectSignaturePhoto = formData.testerSignature
   record.projectName = formData.projectName
   
-  record.dataJson = JSON.stringify(formData)
+  record.dataJson = getCleanDataJson()
 }
 
 const prevRecord = () => {
@@ -610,22 +720,22 @@ const loadData = async (entrustmentId) => {
         
         // Fetch entrustment info to pre-fill
         try {
-             const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
-              params: { unifiedNumber: entrustmentId }
-            })
-            if (entrustmentResponse.data.success) {
-                const eData = entrustmentResponse.data.data
-                formData.entrustmentId = entrustmentId
-                formData.unifiedNumber = entrustmentId
-                formData.projectName = eData.projectName || ''
-                // Pre-fill user names
-                const userInfoStr = localStorage.getItem('userInfo')
-                if (userInfoStr) {
-                    const userInfo = JSON.parse(userInfoStr)
-                    formData.reviewer = userInfo.userName
-                    formData.tester = userInfo.userName
-                }
-                newRecord.dataJson = JSON.stringify(formData)
+            let eData = null
+            const byIdRes = await axios.get('/api/jc-core-wt-info/by-id', { params: { id: entrustmentId } })
+            if (byIdRes.data && byIdRes.data.success && byIdRes.data.data) {
+              eData = byIdRes.data.data
+            } else {
+              const detailRes = await axios.get('/api/jc-core-wt-info/detail', { params: { unifiedNumber: entrustmentId } })
+              if (detailRes.data && detailRes.data.success) eData = detailRes.data.data
+            }
+            if (eData) {
+              formData.entrustmentId = eData.id || entrustmentId
+              formData.unifiedNumber = eData.sampleNumber || formData.unifiedNumber || entrustmentId
+              formData.projectName = eData.projectName || ''
+              formData.recordTester = ''
+              formData.recordReviewer = ''
+              formData.filler = ''
+              newRecord.dataJson = JSON.stringify(formData)
             }
         } catch (e) {
             console.error('Failed to load entrustment details', e)
@@ -644,10 +754,14 @@ const submitForm = async () => {
   try {
     const submitData = {
       id: formData.id,
-      entrustmentId: props.id || formData.unifiedNumber,
-      dataJson: JSON.stringify(formData),
+      entrustmentId: formData.entrustmentId || formData.unifiedNumber,
+      dataJson: getCleanDataJson(),
       reviewSignaturePhoto: formData.reviewerSignature,
-      inspectSignaturePhoto: formData.testerSignature
+      inspectSignaturePhoto: formData.testerSignature,
+      // Add explicit role fields
+      recordTester: formData.recordTester,
+      recordReviewer: formData.recordReviewer,
+      filler: formData.filler
     }
     
     const response = await axios.post('/api/water-replacement/save', submitData)
@@ -677,13 +791,9 @@ const handleSign = async () => {
     return
   }
 
-  // 支持按账号匹配（优先）并兼容姓名匹配，和核子法/灌砂法保持一致
-  const currentAccount = user.username || user.userAccount || user.userName
-  const currentRealName = user.fullName || user.userName || currentAccount
-
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: currentAccount
+      userAccount: user.username
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -698,29 +808,22 @@ const handleSign = async () => {
       }
 
       let signed = false
+      const currentAccount = user.username
+      const currentName = user.fullName || user.nickName || currentAccount
 
-      // 试验人匹配：支持账号字段和姓名字段
-      if (
-        formData.tester === currentAccount ||
-        formData.tester === currentRealName ||
-        formData.TESTER === currentAccount ||
-        formData.recordTester === currentAccount ||
-        formData.RECORD_TESTER === currentAccount
-      ) {
-        formData.testerSignature = imgSrc
-        signed = true
+      // Match Tester
+      if (formData.recordTester === currentName || formData.recordTester === currentAccount || !formData.recordTester) {
+          if (!formData.recordTester) {
+              formData.recordTester = currentName
+          }
+          formData.testerSignature = imgSrc
+          signed = true
       }
 
       if (signed) {
         alert('签名成功')
       } else {
-        const formPerson =
-          formData.tester ||
-          formData.TESTER ||
-          formData.recordTester ||
-          formData.RECORD_TESTER ||
-          ''
-        alert(`当前用户(${currentAccount}/${currentRealName})与表单中的试验人员(${formPerson})不匹配，无法签名`)
+        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

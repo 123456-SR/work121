@@ -47,21 +47,21 @@
 
         <template v-if="formData.id && !draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="canSubmitForAudit"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="canAuditPass"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
-            升级为已审核
+            审核通过
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="canReject"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -75,6 +75,12 @@
           class="btn btn-secondary btn-small"
         >
           签字
+        </button>
+        <button
+          @click="analyzeData"
+          class="btn btn-secondary btn-small"
+        >
+          数据分析
         </button>
         <button
           @click="saveData"
@@ -216,24 +222,16 @@
     </table>
 
     <div class="footer-info">
-        <span>
-            审核：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.reviewer" style="width: 100%; border-bottom: 1px solid black;" readonly>
+        <span style="position: relative;">
+            审核：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+            <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.reviewerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
             </div>
         </span>
-        <span>
-            计算：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.calculator" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.calculatorSignature ? 0 : 1 }">
-                <img v-if="formData.calculatorSignature" :src="formData.calculatorSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-            </div>
-        </span>
-        <span>
-            检测：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.tester" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.testerSignature ? 0 : 1 }">
-                <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
+        <span style="position: relative;">
+            检测：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+            <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.testerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
             </div>
         </span>
     </div>
@@ -247,7 +245,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, defineProps, inject, watch } from 'vue'
+import { reactive, ref, onMounted, defineProps, inject, watch, computed } from 'vue'
 import axios from 'axios'
 
 // 注入导航方法
@@ -287,13 +285,14 @@ const formData = reactive({
   equipment: '',
   remarks: '',
   reviewer: '',
-  // approver: '',
+  recordReviewer: '',
   calculator: '',
   tester: '',
+  recordTester: '',
+  filler: '',
   conclusion: '',
   testerSignature: '',
-  // reviewerSignature: '',
-  // approverSignature: '',
+  reviewerSignature: '',
   calculatorSignature: '',
   status: 0
 })
@@ -305,8 +304,7 @@ const getStatusText = (status) => {
         case 1: return '待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '待批准'
-        case 5: return '已通过'
+                case 5: return '已通过'
         default: return '未知'
     }
 }
@@ -324,6 +322,61 @@ const getStatusColor = (status) => {
     }
 }
 
+const statusNumber = computed(() => parseInt(formData.status))
+
+const canSubmitForAudit = computed(() => {
+    if (draftMode.value) return false
+    if (!formData.id) return false
+    if (!formData.testerSignature) return false
+    return [0, 2, 3].includes(statusNumber.value)
+})
+
+const canAuditPass = computed(() => {
+    if (draftMode.value) return false
+    if (!formData.id) return false
+    return statusNumber.value === 1
+})
+
+const canReject = computed(() => {
+    if (draftMode.value) return false
+    if (!formData.id) return false
+    return statusNumber.value === 1
+})
+
+const normalizePersonText = (value) => {
+    if (!value) return ''
+    return String(value).trim().replace(/\s+/g, '').toLowerCase()
+}
+
+const getUserAccount = (user) => {
+    return user?.username || user?.userAccount || user?.userName || ''
+}
+
+const getUserDisplayName = (user) => {
+    return user?.fullName || user?.realName || user?.userName || user?.nickName || getUserAccount(user) || ''
+}
+
+const isCurrentUser = (assigned, user) => {
+    if (!assigned) return true
+    const target = normalizePersonText(assigned)
+    const candidates = [
+        user?.username,
+        user?.userAccount,
+        user?.userName,
+        user?.fullName,
+        user?.realName,
+        user?.nickName
+    ].filter(Boolean)
+    return candidates.some(c => normalizePersonText(c) === target)
+}
+
+const normalizeSignatureSrc = (value) => {
+    if (!value) return ''
+    if (typeof value !== 'string') return ''
+    if (value.startsWith('data:image')) return value
+    return `data:image/png;base64,${value}`
+}
+
 const submitWorkflow = async (action) => {
     if (!formData.id) {
         alert('请先保存记录')
@@ -339,10 +392,11 @@ const submitWorkflow = async (action) => {
     let signatureData = null
     
     if (action === 'SUBMIT') {
-        // Role check: Only tester can submit
-        if (formData.tester && user.username !== formData.tester) {
-            alert('您不是该单据的检测人 (' + formData.tester + ')，无权提交')
-            return
+        // Role check: Only recordTester can submit
+        // Logic: formData.recordTester (if set)
+        if (formData.recordTester && !isCurrentUser(formData.recordTester, user)) {
+             alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+             return
         }
 
         if (!formData.testerSignature) {
@@ -350,18 +404,33 @@ const submitWorkflow = async (action) => {
             return
         }
         
-        // Ensure calculator has signed if a calculator is specified
-        if (formData.calculator && !formData.calculatorSignature) {
-            alert('请先进行计算人签字')
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
+        // Role check: Only recordReviewer can audit/reject at status 1
+        // Logic: formData.recordReviewer (if set)
+        if (formData.recordReviewer && !isCurrentUser(formData.recordReviewer, user)) {
+            alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
             return
         }
-        
-        signatureData = formData.testerSignature
-    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
-        // Role check: Only reviewer can audit/reject at status 1
-        if (formData.reviewer && user.username !== formData.reviewer) {
-            alert('您不是该单据的复核人 (' + formData.reviewer + ')，无权操作')
-            return
+
+        if (action === 'AUDIT_PASS') {
+            // Auto fetch signature if missing
+            if (!formData.reviewerSignature) {
+                try {
+                    const sigRes = await axios.post('/api/signature/get', { userAccount: getUserAccount(user) })
+                    if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                         formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                    } else {
+                         alert('未找到您的电子签名，无法自动签名')
+                         return
+                    }
+                } catch (e) {
+                    console.error('Auto sign error', e)
+                    alert('自动签名失败')
+                    return
+                }
+            }
+            signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
         }
     }
     // else if (action === 'SIGN_REVIEW') {
@@ -449,7 +518,7 @@ const clearFormData = () => {
         if (!keepKeys.includes(key)) {
             if (key.match(/^(pos|depth|actual|avg|capacity)_[LR]_\d+$/)) {
                  formData[key] = ''
-            } else if (!['reviewer', 'approver', 'tester', 'calculator', 'reviewerSignature', 'approverSignature', 'testerSignature', 'calculatorSignature'].includes(key)) { // Optional: clear signatures?
+            } else if (!['reviewer', 'tester', 'calculator', 'reviewerSignature', 'testerSignature', 'calculatorSignature'].includes(key)) { // Optional: clear signatures?
                  formData[key] = ''
             }
         }
@@ -505,14 +574,26 @@ const mapRecordToFormData = (record) => {
     if (record.testBasis) formData.testBasis = record.testBasis
     if (record.equipment) formData.equipment = record.equipment
     if (record.remarks) formData.remarks = record.remarks
-    if (record.reviewer) formData.reviewer = record.reviewer
-    if (record.tester) formData.tester = record.tester
+    // Map Roles
+    // Filler - Priority: record.filler
+    formData.filler = record.filler || ''
+
+    // Record Tester - Priority: record.recordTester -> record.tester (legacy)
+    formData.recordTester = record.recordTester || record.tester || ''
+
+    // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
+    formData.recordReviewer = record.recordReviewer || record.reviewer || ''
+
+    
+    // We don't map legacy tester/reviewer to formData.tester/reviewer anymore to avoid confusion
+    // if (record.tester) formData.tester = record.tester
+    // if (record.reviewer) formData.reviewer = record.reviewer
     if (record.conclusion) formData.conclusion = record.conclusion
+
     
     // Ensure signatures from entity override JSON
-    if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto
-    if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
-    if (record.approveSignaturePhoto) formData.approverSignature = record.approveSignaturePhoto
+    if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
+    if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
 }
 
 const saveCurrentToState = () => {
@@ -522,7 +603,7 @@ const saveCurrentToState = () => {
     
     // Map formData back to record fields
     record.clientUnit = formData.entrustingUnit
-    record.entrustmentId = formData.unifiedNumber // Assuming unifiedNumber is the ID
+    record.wtNum = formData.unifiedNumber
     record.projectName = formData.projectName
     // commissionDate is formatted string, entity expects Date?
     // If backend accepts string in JSON (Jackson), it's fine. 
@@ -541,13 +622,23 @@ const saveCurrentToState = () => {
     record.testBasis = formData.testBasis
     record.equipment = formData.equipment
     record.remarks = formData.remarks
-    record.reviewer = formData.reviewer
-    record.approver = formData.approver
-    record.tester = formData.tester
+    // record.reviewer = formData.recordReviewer
+    // record.tester = formData.recordTester
+    record.recordTester = formData.recordTester
+    record.recordReviewer = formData.recordReviewer
+    record.filler = formData.filler
+    
+    // Sync legacy fields
+    record.tester = formData.recordTester
+    record.reviewer = formData.recordReviewer
+
+    // Remove legacy fields from payload to avoid confusion - Wait, we WANT them in the payload for backend compatibility
+    // But we don't want them in dataJson (handled below by dynamicData construction)
+    // delete record.tester
+    // delete record.reviewer
     record.conclusion = formData.conclusion
     record.inspectSignaturePhoto = formData.testerSignature
     record.reviewSignaturePhoto = formData.reviewerSignature
-    record.approveSignaturePhoto = formData.approverSignature
 
     const dynamicData = {}
     if (formData.testDate) dynamicData.testDate = formData.testDate
@@ -621,6 +712,7 @@ const loadData = async () => {
                 newRecord.projectName = ent.projectName || ''
                 newRecord.commissionDate = ent.commissionDate || ''
                 newRecord.wtNum = ent.wtNum || queryId
+                newRecord.entrustmentId = ent.id || newRecord.entrustmentId
                 // Populate other fields if needed
                 newRecord.constructionPart = ent.constructionPart || ''
                 newRecord.testCategory = ent.testCategory || ''
@@ -665,11 +757,11 @@ const addRecord = () => {
     const current = records.value[currentIndex.value]
     const newRecord = {
         id: null,
-        entrustmentId: props.wtNum || props.id || current.entrustmentId,
+        entrustmentId: current.entrustmentId,
         clientUnit: current.clientUnit,
         projectName: current.projectName,
         commissionDate: current.commissionDate,
-        wtNum: current.wtNum, // Unified number should be same
+        wtNum: current.wtNum || props.wtNum || formData.unifiedNumber,
         constructionPart: '', // Clear specific fields
         testDate: current.testDate, // Maybe keep date?
         soilProperty: current.soilProperty,
@@ -682,12 +774,12 @@ const addRecord = () => {
         equipment: current.equipment,
         remarks: '',
         reviewer: current.reviewer,
-        approver: current.approver,
         tester: current.tester,
+        recordTester: current.recordTester,
+        recordReviewer: current.recordReviewer,
         conclusion: '',
         inspectSignaturePhoto: current.inspectSignaturePhoto,
         reviewSignaturePhoto: current.reviewSignaturePhoto,
-        approveSignaturePhoto: current.approveSignaturePhoto,
         dataJson: '{}'
     }
     
@@ -793,7 +885,7 @@ const handleSign = async () => {
 
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: getUserAccount(user)
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -808,29 +900,15 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
+      const currentAccount = getUserAccount(user)
+      const currentName = getUserDisplayName(user)
 
       // Match Tester
-      if (formData.tester === user.username || formData.tester === currentName) {
+      if (!formData.recordTester || isCurrentUser(formData.recordTester, user)) {
+        if (!formData.recordTester) {
+            formData.recordTester = currentName
+        }
         formData.testerSignature = imgSrc
-        signed = true
-      }
-
-      // Match Reviewer
-      // if (formData.reviewer === user.username || formData.reviewer === currentName) {
-      //   formData.reviewerSignature = imgSrc
-      //   signed = true
-      // }
-
-      // Match Approver
-      // if (formData.approver === user.username || formData.approver === currentName) {
-      //   formData.approverSignature = imgSrc
-      //   signed = true
-      // }
-      
-      // Match Calculator
-      if (formData.calculator === user.username || formData.calculator === currentName) {
-        formData.calculatorSignature = imgSrc
         signed = true
       }
       
@@ -846,6 +924,41 @@ const handleSign = async () => {
     console.error('Sign error:', error)
     alert('签名失败')
   }
+}
+
+const analyzeData = () => {
+    let count = 0
+    for (let b = 0; b < 2; b++) {
+        for (let s = 0; s < 5; s++) {
+            const idx = b * 5 + s
+            
+            // Left side
+            if (formData[`depth_L_${idx}`]) {
+                const depthL = parseFloat(formData[`depth_L_${idx}`])
+                if (!isNaN(depthL)) {
+                    // hammerCount = (penetrationDepth / 10) * 3
+                    const val = Math.round((depthL / 10) * 3)
+                    formData[`actual_L_${idx}`] = val
+                    count++
+                }
+            }
+            
+            // Right side
+            if (formData[`depth_R_${idx}`]) {
+                const depthR = parseFloat(formData[`depth_R_${idx}`])
+                if (!isNaN(depthR)) {
+                    const val = Math.round((depthR / 10) * 3)
+                    formData[`actual_R_${idx}`] = val
+                    count++
+                }
+            }
+        }
+    }
+    if (count > 0) {
+        alert('数据分析完成，已更新 ' + count + ' 个锤击数')
+    } else {
+        alert('未找到有效的贯入深度数据')
+    }
 }
 
 const saveData = async () => {

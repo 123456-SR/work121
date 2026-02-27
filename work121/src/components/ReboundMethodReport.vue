@@ -237,24 +237,21 @@
     </table>
 
     <div class="footer-info">
-        <span style="position: relative;">
-            批准：<input type="text" v-model="formData.approver" name="approver" style="width: 100px; border-bottom: 1px solid black;">
-            <div v-if="formData.approverSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
-                <img :src="formData.approverSignature" style="width: 80px; height: auto;" />
-            </div>
-        </span>
-        <span style="position: relative;">
-            审核：<input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100px; border-bottom: 1px solid black;">
-            <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
-                <img :src="formData.reviewerSignature" style="width: 80px; height: auto;" />
-            </div>
-        </span>
-        <span style="position: relative;">
-            检验：<input type="text" v-model="formData.tester" name="tester" style="width: 100px; border-bottom: 1px solid black;">
-            <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
-                <img :src="formData.testerSignature" style="width: 80px; height: auto;" />
-            </div>
-        </span>
+        <div class="signature-box">
+            批准：
+            <span class="signature-line">{{ formData.approver }}</span>
+            <img v-if="formData.approverSignature" :src="formData.approverSignature" class="signature-img" alt="批准人签名" />
+        </div>
+        <div class="signature-box">
+            审核：
+            <span class="signature-line">{{ formData.recordReviewer }}</span>
+            <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" class="signature-img" alt="审核人签名" />
+        </div>
+        <div class="signature-box">
+            检验：
+            <span class="signature-line">{{ formData.recordTester }}</span>
+            <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
+        </div>
     </div>
 
     <div class="disclaimer">
@@ -318,9 +315,10 @@ const formData = reactive({
   coefVariation: '',
   equipment: '',
   standard: '',
+  recordTester: '',
+  recordReviewer: '',
+  filler: '',
   approver: '',
-  reviewer: '',
-  tester: '',
   companyName: '',
   companyAddress: '',
   companyPhone: '',
@@ -395,9 +393,41 @@ const loadData = async (id) => {
       if (userInfoStr) {
           userInfo = JSON.parse(userInfoStr)
       }
-      if (!formData.approver && userInfo) formData.approver = userInfo.userName
-      if (!formData.reviewer && userInfo) formData.reviewer = userInfo.userName
-      if (!formData.tester && userInfo) formData.tester = userInfo.userName
+
+      // 1. Map from dataJson
+      if (data.dataJson) {
+        try {
+            const jsonData = JSON.parse(data.dataJson)
+            Object.assign(formData, jsonData)
+            // Legacy mapping
+            if (jsonData.tester && !formData.recordTester) formData.recordTester = jsonData.tester
+            if (jsonData.reviewer && !formData.recordReviewer) formData.recordReviewer = jsonData.reviewer
+        } catch (e) {
+            console.error('Failed to parse dataJson', e)
+        }
+      }
+
+      // 2. Map from record entity fields (if they exist in backend entity)
+      if (data.recordTester) formData.recordTester = data.recordTester
+      if (data.recordReviewer) formData.recordReviewer = data.recordReviewer
+      if (data.filler) formData.filler = data.filler
+      if (data.approver) formData.approver = data.approver
+
+      // 3. Directory fallback for new/empty fields
+      const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+      
+      if (!formData.recordTester) {
+          formData.recordTester = directory.tester || directory.jcTester || (userInfo ? userInfo.userName : '')
+      }
+      if (!formData.recordReviewer) {
+          formData.recordReviewer = directory.reviewer || directory.jcReviewer || ''
+      }
+      if (!formData.approver) {
+          formData.approver = directory.approver || directory.bgApprover || ''
+      }
+      if (!formData.filler && userInfo) {
+          formData.filler = userInfo.userName
+      }
       
     } else {
         console.log('No report data found, trying to load record data or init defaults')
@@ -449,23 +479,104 @@ const submitWorkflow = async (action) => {
   let signatureData = null
 
   if (action === 'SUBMIT') {
+    // Role check
+    // Priority: formData.recordTester -> directory.jcTester
+    if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+        const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+        if (directory.jcTester && directory.jcTester !== user.username) {
+            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+            return
+        }
+    }
     if (!formData.testerSignature) {
       alert('请先进行检测人签字')
       return
     }
     signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+  } else if (action === 'AUDIT_PASS') {
+      // Role check
+      // Priority: formData.recordReviewer -> directory.jcReviewer
+      if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+          const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+          if (directory.jcReviewer && directory.jcReviewer !== user.username) {
+              alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权审核')
+              return
+          }
+      }
+      // Auto-fetch signature for Reviewer
+      try {
+        const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+        if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+             signatureData = sigRes.data.data.signatureBlob
+             formData.reviewerSignature = `data:image/png;base64,${signatureData}`
+             if (!formData.recordReviewer) {
+                 formData.recordReviewer = user.fullName || user.username
+             }
+        } else {
+             alert('未找到您的电子签名，无法审核通过')
+             return
+        }
+      } catch (e) {
+        console.error('Fetch signature error', e)
+        alert('获取签名失败')
+        return
+      }
   } else if (action === 'SIGN_REVIEW') {
-    if (!formData.reviewerSignature) {
-      alert('请先进行复核人签字')
-      return
+    if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+        const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+        if (directory.jcReviewer && directory.jcReviewer !== user.username) {
+            alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权签字')
+            return
+        }
     }
-    signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+    // Auto-fetch signature for Reviewer (if using this action)
+    try {
+        const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+        if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+             signatureData = sigRes.data.data.signatureBlob
+        } else {
+             alert('未找到您的电子签名，无法签字')
+             return
+        }
+    } catch (e) {
+        console.error('Fetch signature error', e)
+        alert('获取签名失败')
+        return
+    }
   } else if (action === 'SIGN_APPROVE') {
-    if (!formData.approverSignature) {
-      alert('请先进行批准人签字')
-      return
+    if (formData.approver && user.username !== formData.approver && user.fullName !== formData.approver) {
+        const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+        if (directory.bgApprover && directory.bgApprover !== user.username) {
+            alert('您不是该单据的批准人 (' + formData.approver + ')，无权签字')
+            return
+        }
     }
-    signatureData = formData.approverSignature.replace(/^data:image\/\w+;base64,/, '')
+    // Auto-fetch signature for Approver
+    try {
+        const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+        if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+             signatureData = sigRes.data.data.signatureBlob
+             formData.approverSignature = `data:image/png;base64,${signatureData}`
+             if (!formData.approver) {
+                 formData.approver = user.fullName || user.username
+             }
+        } else {
+             alert('未找到您的电子签名，无法批准')
+             return
+        }
+    } catch (e) {
+        console.error('Fetch signature error', e)
+        alert('获取签名失败')
+        return
+    }
+  } else if (action === 'REJECT') {
+      if (formData.status === 1 && formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+          const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+          if (directory.jcReviewer && directory.jcReviewer !== user.username) {
+              alert('您不是该单据的记录审核人，无权退回')
+              return
+          }
+      }
   }
 
   const request = {
@@ -503,13 +614,20 @@ const submitForm = async () => {
     const submitData = {
       entrustmentId: props.id || formData.unifiedNumber, // Use props.id as entrustmentId
       ...formData, // Include all form data
+      // Sync legacy fields
+      tester: formData.recordTester,
+      reviewer: formData.recordReviewer,
       approveSignaturePhoto: formData.approverSignature,
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature
     };
 
     // Serialize to dataJson
-    submitData.dataJson = JSON.stringify(formData);
+    // Remove legacy fields from dataJson to avoid confusion
+    const dataJsonObj = { ...formData }
+    delete dataJsonObj.tester
+    delete dataJsonObj.reviewer
+    submitData.dataJson = JSON.stringify(dataJsonObj);
 
     // 发送请求
     const response = await axios.post('/api/reboundMethod/report/save', submitData);
@@ -550,29 +668,18 @@ const handleSign = async () => {
 
       let signed = false
       const currentName = user.fullName || user.username
+      const currentAccount = user.username
 
       // Match Tester
-      if (formData.tester === currentName) {
+      if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
         formData.testerSignature = imgSrc
         signed = true
       }
 
-      // Match Reviewer
-      if (formData.reviewer === currentName) {
-        formData.reviewerSignature = imgSrc
-        signed = true
-      }
-
-      // Match Approver
-      if (formData.approver === currentName) {
-        formData.approverSignature = imgSrc
-        signed = true
-      }
-      
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的检测/审核/批准人员不匹配，无法签名`)
+        alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')
@@ -764,6 +871,33 @@ const previewPdf = () => {
             margin-top: 10px;
             font-size: 14px;
         }
+
+        /* Signature styles */
+        .signature-box {
+            position: relative;
+            display: inline-block;
+            min-width: 120px;
+            vertical-align: bottom;
+            margin-right: 20px;
+        }
+        .signature-line {
+            display: inline-block;
+            min-width: 80px;
+            border-bottom: 1px solid black;
+            text-align: center;
+            padding: 0 5px;
+            height: 20px;
+            line-height: 20px;
+        }
+        .signature-img {
+            position: absolute;
+            left: 40px;
+            top: -20px;
+            width: 80px;
+            height: 40px;
+            mix-blend-mode: multiply;
+        }
+        
         @media print {
             .reboundMethodReport-container {
                 width: 100%;

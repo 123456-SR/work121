@@ -82,6 +82,11 @@ public class JcCoreWtInfoController {
         return result;
     }
 
+    @GetMapping("/detail")
+    public Map<String, Object> getDetail(@RequestParam("unifiedNumber") String unifiedNumber) {
+        return getByWtNum(unifiedNumber);
+    }
+
     @GetMapping("/by-wt-num")
     public Map<String, Object> getByWtNum(@RequestParam("wtNum") String wtNum) {
         Map<String, Object> result = new HashMap<>();

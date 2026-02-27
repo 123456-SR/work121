@@ -319,18 +319,21 @@
     </table>
 
     <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-        <div>
-            审核：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100%; border-bottom: 1px solid black;" readonly>
-            </div>
+        <div class="footer-info">
+            <span style="position: relative;">
+                审核：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+                <div v-if="formData.reviewerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                    <img :src="formData.reviewerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+                </div>
+            </span>
         </div>
-        <div>
-            检测：
-            <div style="display: inline-block; position: relative; width: 100px;">
-                <input type="text" v-model="formData.tester" name="tester" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.testerSignature ? 0 : 1 }">
-                <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-            </div>
+        <div class="footer-info">
+            <span style="position: relative;">
+                检测：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+                <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                    <img :src="formData.testerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+                </div>
+            </span>
         </div>
     </div>
 
@@ -412,8 +415,9 @@ const formData = reactive({
   cleanRepDeflection: '',
   cleanTempCorrectedAvg: '',
   remarks: '',
-  reviewer: '',
-  tester: '',
+  recordTester: '',
+  recordReviewer: '',
+  filler: '',
   reviewerSignature: '',
   testerSignature: '',
   status: 0
@@ -426,8 +430,7 @@ const getStatusText = (status) => {
         case 1: return '待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '待批准'
-        case 5: return '已通过'
+                case 5: return '已通过'
         default: return '未知'
     }
 }
@@ -439,10 +442,16 @@ const getStatusColor = (status) => {
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
         case 3: return '#FF9800' // Orange
-        case 4: return '#9C27B0' // Purple
         case 5: return '#4CAF50' // Green
         default: return '#000000'
     }
+}
+
+const normalizeSignatureSrc = (value) => {
+  if (!value) return ''
+  if (typeof value !== 'string') return ''
+  if (value.startsWith('data:image')) return value
+  return `data:image/png;base64,${value}`
 }
 
 const submitWorkflow = async (action) => {
@@ -460,11 +469,17 @@ const submitWorkflow = async (action) => {
     let signatureData = null
     
     if (action === 'SUBMIT') {
+        // Role check: Only recordTester can submit
+        // Priority: formData.recordTester
+        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+            return
+        }
         if (!formData.testerSignature) {
             alert('请先进行检测人签字')
             return
         }
-        signatureData = formData.testerSignature
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     }
 
     const request = {
@@ -480,6 +495,48 @@ const submitWorkflow = async (action) => {
         const reason = prompt('请输入打回原因:')
         if (!reason) return
         request.rejectReason = reason
+    }
+
+    if (action === 'AUDIT_PASS') {
+        // Role check: Only recordReviewer can audit
+        // Priority: formData.recordReviewer
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+             alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
+             return
+        }
+
+        if (!formData.reviewerSignature) {
+            // Auto-fetch signature for reviewer
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     const signatureBlob = sigRes.data.data.signatureBlob
+                     if (typeof signatureBlob === 'string') {
+                         formData.reviewerSignature = `data:image/png;base64,${signatureBlob}`
+                     }
+                } else {
+                    alert('请先去“电子签名”页面设置您的签名')
+                    return
+                }
+            } catch (e) {
+                console.error('Failed to fetch signature', e)
+                alert('无法获取您的电子签名')
+                return
+            }
+        }
+        
+        if (!formData.reviewerSignature) {
+            alert('请先进行校核人签字')
+            return
+        }
+        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+        request.signatureData = signatureData
+    } else if (action === 'REJECT' && formData.status === 1) {
+         // Role check: Only recordReviewer can reject
+         if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+             alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
+             return
+         }
     }
 
     try {
@@ -545,8 +602,8 @@ const mapRecordToFormData = (record) => {
   formData.status = record.status !== undefined ? record.status : 0
   
   // Map signature photos
-  formData.reviewerSignature = record.reviewSignaturePhoto || ''
-  formData.testerSignature = record.inspectSignaturePhoto || ''
+  formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
+  formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
   
   // Map explicit columns
   if (record.subgradeType) formData.pavementType = record.subgradeType
@@ -571,9 +628,42 @@ const mapRecordToFormData = (record) => {
   if (record.constructionPart) formData.constructionPart = record.constructionPart
   if (record.testCategory) formData.testCategory = record.testCategory
 
+  // Map Roles
+  // Load defaults from directory if available
+  const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+  
+  // Filler - Priority: record.filler
+  // Note: We check formData.filler (from JSON) to avoid overwriting if entity column is empty
+  formData.filler = record.filler || (formData.filler && formData.filler !== records.value[currentIndex.value === 0 && records.value.length > 1 ? 1 : 0]?.filler ? formData.filler : '') || ''
+  
+  // Record Tester - Priority: record.recordTester -> record.tester (legacy)
+  formData.recordTester = record.recordTester || record.tester || ''
+  
+  // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
+  formData.recordReviewer = record.recordReviewer || record.reviewer || ''
+  
   // Ensure entity fields override JSON if present
-  if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
-  if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto
+  if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
+  if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
+}
+
+const getCleanDataJson = () => {
+  const dynamicData = {}
+  
+  // Fields that should NOT be in dataJson (because they have their own columns or are UI state)
+  const excludeFields = [
+    'id', 'entrustmentId', 'status', 'reviewerSignature', 'testerSignature',
+    'recordTester', 'recordReviewer', 'filler', 
+    'pavementType', 'equipmentCode' // These map to subgradeType/deflectometerType
+  ]
+
+  Object.keys(formData).forEach(key => {
+    if (!excludeFields.includes(key)) {
+      dynamicData[key] = formData[key]
+    }
+  })
+  
+  return JSON.stringify(dynamicData)
 }
 
 const saveCurrentRecordState = () => {
@@ -592,7 +682,7 @@ const saveCurrentRecordState = () => {
   record.deflectometerType = formData.equipmentCode
   
   // Update dataJson
-  record.dataJson = JSON.stringify(formData)
+  record.dataJson = getCleanDataJson()
 }
 
 const prevRecord = () => {
@@ -631,7 +721,7 @@ const addRecord = () => {
             'designDeflection', 'tempCorrectionK', 'vehicleModel', 'avgAsphaltTemp',
             'tireArea', 'avgTempPrev5Days', 'pavementType', 'pavementThickness',
             'rearAxleWeight', 'tirePressureLeft', 'tirePressureRight',
-            'testInterval', 'laneCount', 'tester', 'reviewer'
+            'testInterval', 'laneCount', 'recordTester', 'recordReviewer', 'filler'
           ]
           fieldsToCopy.forEach(key => {
             if (json[key] !== undefined) newJson[key] = json[key]
@@ -709,8 +799,8 @@ const loadData = async (identifier) => {
         formData.testCategory = wtInfo.testCategory || ''
         formData.sampleStatus = wtInfo.sampleStatus || ''
         // Tester/Reviewer might be pre-filled from task assignment if available
-        if (wtInfo.tester) formData.tester = wtInfo.tester
-        if (wtInfo.reviewer) formData.reviewer = wtInfo.reviewer
+        if (wtInfo.tester) formData.recordTester = wtInfo.tester
+        if (wtInfo.reviewer) formData.recordReviewer = wtInfo.reviewer
 
         // 2. Now try to get existing BeckmanBeam record(s)
         try {
@@ -729,12 +819,14 @@ const loadData = async (identifier) => {
                     entrustmentId: wtNum,
                     dataJson: '{}'
                 }
-                // Pre-fill user names if not set
+                // Pre-fill user names if not set (Removed to prevent auto-fill)
                 const userInfoStr = localStorage.getItem('userInfo')
                 if (userInfoStr) {
-                    const userInfo = JSON.parse(userInfoStr)
-                    if (!formData.tester) formData.tester = userInfo.userName
-                    if (!formData.reviewer) formData.reviewer = userInfo.userName
+                    // const userInfo = JSON.parse(userInfoStr)
+                    // const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+                    if (!formData.recordTester) formData.recordTester = ''
+                    if (!formData.recordReviewer) formData.recordReviewer = ''
+                    if (!formData.filler) formData.filler = ''
                 }
                 
                 records.value = [newRecord]
@@ -771,15 +863,17 @@ const submitForm = async () => {
     }
     
     try {
-        // Prepare entity
-        const dataJson = JSON.stringify(formData)
-        
         const payload = {
             id: formData.id || null, 
             entrustmentId: formData.entrustmentId,
-            dataJson: dataJson,
-            tester: formData.tester,
-            reviewer: formData.reviewer,
+            dataJson: getCleanDataJson(),
+            // Roles
+            recordTester: formData.recordTester,
+            recordReviewer: formData.recordReviewer,
+            filler: formData.filler,
+            // Sync legacy fields for backward compatibility
+            tester: formData.recordTester,
+            reviewer: formData.recordReviewer,
             // Map signatures to columns
             inspectSignaturePhoto: formData.testerSignature,
             reviewSignaturePhoto: formData.reviewerSignature,
@@ -832,18 +926,21 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
+      const currentAccount = user.username
+      const currentName = user.fullName || user.nickName || currentAccount
 
-      // Match Tester
-      if (formData.tester === currentName) {
+      // Match Tester - Only Tester can use this button
+      if (formData.recordTester === currentName || formData.recordTester === currentAccount || !formData.recordTester) {
         formData.testerSignature = imgSrc
         signed = true
       }
-
+      
+      // Reviewer signature is handled in AUDIT_PASS action
+      
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+        alert(`当前用户(${currentName})不是该单据的记录检测人，无法签字`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

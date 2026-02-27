@@ -237,16 +237,17 @@
     </table>
 
     <div class="footer-info">
-
         <span style="position: relative;">
-            审核：<input type="text" v-model="formData.recordReviewer" name="recordReviewer" style="width: 100px; border-bottom: 1px solid black;" readonly>
+            审核：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
             <div v-if="formData.recordReviewSign" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
-                <img :src="formData.recordReviewSign" style="width: 80px; height: auto;" />
+                <img :src="formData.recordReviewSign" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
             </div>
         </span>
         <span style="position: relative;">
-            检测：<input type="text" v-model="formData.recordTester" name="recordTester" style="width: 100px; border-bottom: 1px solid black;">
-            <!-- Record Tester Signature if needed -->
+            检测：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span>
+            <div v-if="formData.testerSignature" style="position: absolute; top: -20px; left: 40px; pointer-events: none;">
+                <img :src="formData.testerSignature" style="width: 80px; height: 40px; mix-blend-mode: multiply;" />
+            </div>
         </span>
     </div>
 
@@ -317,11 +318,7 @@ const formData = reactive({
   recordReviewer: '',
   recordReviewSign: '',
   filler: '',
-  // approver: '',
-  reviewer: '',
-  tester: '',
   remarks: '',
-  // approverSignature: '',
   reviewerSignature: '',
   testerSignature: '',
   status: 0
@@ -334,7 +331,6 @@ const getStatusText = (status) => {
         case 1: return '待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '待批准'
         case 5: return '已通过'
         default: return '未知'
     }
@@ -347,10 +343,16 @@ const getStatusColor = (status) => {
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
         case 3: return '#FF9800' // Orange
-        case 4: return '#9C27B0' // Purple
         case 5: return '#4CAF50' // Green
         default: return '#000000'
     }
+}
+
+const normalizeSignatureSrc = (value) => {
+  if (!value) return ''
+  if (typeof value !== 'string') return ''
+  if (value.startsWith('data:image')) return value
+  return `data:image/png;base64,${value}`
 }
 
 const submitWorkflow = async (action) => {
@@ -369,22 +371,47 @@ const submitWorkflow = async (action) => {
     
     if (action === 'SUBMIT') {
         // Role check: Only recordTester can submit
-        if (formData.recordTester && user.username !== formData.recordTester) {
+        // Priority: formData.recordTester
+        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
             alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
             return
         }
 
-        // Record Tester might not need signature per user request "记录表检验人" (no sign mentioned explicitly compared to reviewer)
-        // But if we want to be safe or consistent, we can require it. 
-        // User said: "记录表审核人（在审核后需要留下电子签名）", "报告表和结果表检测人（留下电子签名）".
-        // It didn't explicitly say Record Tester needs signature. 
-        // But usually submit doesn't need signature unless specified.
-        // Let's assume no signature for Record Tester for now, or use testerSignature if they share?
-        // User said "Record table uses its own Tester". 
-        // Let's skip signature check for Record Tester for now unless we add a recordTesterSign field.
-    } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
+        if (!formData.testerSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'AUDIT_PASS') {
         // Role check: Only recordReviewer can audit/reject at status 1
-        if (formData.recordReviewer && user.username !== formData.recordReviewer) {
+        // Priority: formData.recordReviewer
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
+
+        // Auto fetch signature if missing
+        if (!formData.recordReviewSign) {
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     const sigData = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     formData.recordReviewSign = sigData
+                     formData.reviewerSignature = sigData
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
+        }
+        signatureData = formData.recordReviewSign.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'REJECT' && formData.status === 1) {
+        // Role check: Only recordReviewer can audit/reject at status 1
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
             alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
             return
         }
@@ -475,10 +502,9 @@ const mapRecordToFormData = (record) => {
   formData.entrustmentId = record.entrustmentId || formData.unifiedNumber
   
   // Map signature photos
-  formData.approverSignature = record.approveSignaturePhoto || ''
-  formData.reviewerSignature = record.reviewSignaturePhoto || ''
-  formData.testerSignature = record.inspectSignaturePhoto || ''
-  formData.recordReviewSign = record.recordReviewSign || ''
+  formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
+  formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
+  formData.recordReviewSign = normalizeSignatureSrc(record.recordReviewSign || record.reviewSignaturePhoto || '')
   
   // Map explicit columns
   if (record.structurePart) formData.structurePart = record.structurePart
@@ -501,28 +527,34 @@ const mapRecordToFormData = (record) => {
   // Load defaults from directory if available
   const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
 
-  // Filler - Priority: record.filler -> directory.jcFiller
-  formData.filler = record.filler || directory.jcFiller || ''
+  // Filler - Priority: record.filler
+  formData.filler = record.filler || ''
+  // formData.approver = ''
 
-  // Record Tester - Priority: record.recordTester -> directory.jcTester
-  formData.recordTester = record.recordTester || directory.jcTester || ''
+  // Record Tester - Priority: record.recordTester -> record.tester (legacy)
+  formData.recordTester = record.recordTester || record.tester || ''
 
-  // Record Reviewer - Priority: record.recordReviewer -> directory.jcReviewer
-  formData.recordReviewer = record.recordReviewer || directory.jcReviewer || ''
-
-  // Approver (Shared) - Priority: record.approver -> directory.bgApprover
-  formData.approver = record.approver || directory.bgApprover || ''
+  // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
+  if (record.recordReviewer || record.reviewer) {
+    formData.recordReviewer = record.recordReviewer || record.reviewer
+  }
   
   if (record.dataJson) {
     try {
       const json = JSON.parse(record.dataJson)
       // Merge json into formData
       Object.assign(formData, json)
+      
+      // Map legacy fields
+      if (json.tester && !formData.recordTester) formData.recordTester = json.tester
+      if (json.reviewer && !formData.recordReviewer) formData.recordReviewer = json.reviewer
+      
       // Ensure entity fields override JSON if present
-      if (record.approveSignaturePhoto) formData.approverSignature = record.approveSignaturePhoto
-      if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
-      if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto
-      if (record.recordReviewSign) formData.recordReviewSign = record.recordReviewSign
+      if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
+      if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
+      if (record.recordReviewSign || record.reviewSignaturePhoto) {
+        formData.recordReviewSign = normalizeSignatureSrc(record.recordReviewSign || record.reviewSignaturePhoto)
+      }
       if (record.recordTester) formData.recordTester = record.recordTester
       if (record.recordReviewer) formData.recordReviewer = record.recordReviewer
       if (record.filler) formData.filler = record.filler
@@ -544,7 +576,6 @@ const saveCurrentRecordState = () => {
     currentRecord.structurePart = formData.structurePart
     currentRecord.testResult = formData.conclusion
     currentRecord.remarks = formData.remarks
-    currentRecord.approveSignaturePhoto = formData.approverSignature
     currentRecord.reviewSignaturePhoto = formData.reviewerSignature
     currentRecord.inspectSignaturePhoto = formData.testerSignature
     currentRecord.recordReviewSign = formData.recordReviewSign
@@ -736,16 +767,22 @@ const submitForm = async () => {
       calibrationBefore: formData.calibrationBefore || '',
       calibrationAfter: formData.calibrationAfter || '',
       conclusion: formData.conclusion || '',
-      approver: formData.approver || userInfo?.userName || '',
-      reviewer: formData.reviewer || userInfo?.userName || '',
-      tester: formData.tester || userInfo?.userName || '',
-      approveSignaturePhoto: formData.approverSignature,
+      recordTester: formData.recordTester,
+      recordReviewer: formData.recordReviewer,
+      filler: formData.filler,
+      // Sync legacy fields
+      tester: formData.recordTester,
+      reviewer: formData.recordReviewer,
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature
     };
 
     // Include dataJson for persistence
-    submitData.dataJson = JSON.stringify(formData);
+    const dataJsonObj = { ...formData }
+    // Remove legacy fields from dataJson to avoid confusion
+    delete dataJsonObj.tester
+    delete dataJsonObj.reviewer
+    submitData.dataJson = JSON.stringify(dataJsonObj);
 
     // 发送请求
     const response = await axios.post('/api/reboundMethod/save', submitData);
@@ -791,30 +828,19 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
+      const currentAccount = user.username
+      const currentName = user.fullName || user.nickName || currentAccount
 
-      // Match Tester
-      if (formData.tester === currentName) {
+      // Match Record Tester (UI field)
+      if (formData.recordTester === currentName || formData.recordTester === currentAccount || !formData.recordTester) {
         formData.testerSignature = imgSrc
         signed = true
       }
 
-      // Match Reviewer - Removed per requirements
-      // if (formData.reviewer === currentName) {
-      //   formData.reviewerSignature = imgSrc
-      //   signed = true
-      // }
-
-      // Match Approver - Removed per requirements
-      // if (formData.approver === currentName) {
-      //   formData.approverSignature = imgSrc
-      //   signed = true
-      // }
-      
       if (signed) {
         alert('签名成功')
       } else {
-        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+        alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

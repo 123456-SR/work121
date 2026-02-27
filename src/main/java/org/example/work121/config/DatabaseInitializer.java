@@ -100,6 +100,30 @@ public class DatabaseInitializer implements CommandLineRunner {
         // Add columns to JC_CORE_WT_INFO (Extension table)
         // Ensure extension columns exist
         addColumnSafe("JC_CORE_WT_INFO", "WT_MAN", "VARCHAR2(64)");
+
+        // Fix JZS_LIGHT_DYNAMIC_PENETRATION schema
+        // Ensure specific columns exist for Light Dynamic Penetration
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "ENTRUSTING_UNIT", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "PROJECT_NAME", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "ENTRUST_DATE", "DATE");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "CONSTRUCTION_PART", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "TEST_DATE", "DATE");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "SOIL_PROPERTY", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "REPORT_DATE", "DATE");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "WITNESS_UNIT", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "WITNESS", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "DESIGN_CAPACITY", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "HAMMER_WEIGHT", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "DROP_DISTANCE", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "TEST_CATEGORY", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "TEST_BASIS", "VARCHAR2(500)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "EQUIPMENT", "VARCHAR2(500)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "REMARKS", "VARCHAR2(1000)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "APPROVE", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "REVIEW", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "INSPECT", "VARCHAR2(100)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "COMPANY_NAME", "VARCHAR2(200)");
+        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "CONCLUSION", "VARCHAR2(1000)");
         addColumnSafe("JC_CORE_WT_INFO", "JD_MAN", "VARCHAR2(64)");
         addColumnSafe("JC_CORE_WT_INFO", "JZ_MAN", "VARCHAR2(64)");
         addColumnSafe("JC_CORE_WT_INFO", "JC_TASK_JS_MAN", "VARCHAR2(64)");
@@ -174,6 +198,16 @@ public class DatabaseInitializer implements CommandLineRunner {
             addColumnSafe(table, "TESTER", "VARCHAR2(64)");
             addColumnSafe(table, "REVIEWER", "VARCHAR2(64)");
             addColumnSafe(table, "APPROVER", "VARCHAR2(64)");
+            
+            // Ensure standard columns exist for all test tables
+            addColumnSafe(table, "DATA_JSON", "CLOB");
+            addColumnSafe(table, "STATUS", "VARCHAR2(64)");
+            addColumnSafe(table, "REJECT_REASON", "VARCHAR2(500)");
+            addColumnSafe(table, "NEXT_HANDLER", "VARCHAR2(64)");
+            addColumnSafe(table, "CREATE_BY", "VARCHAR2(64)");
+            addColumnSafe(table, "CREATE_TIME", "TIMESTAMP");
+            addColumnSafe(table, "UPDATE_BY", "VARCHAR2(64)");
+            addColumnSafe(table, "UPDATE_TIME", "TIMESTAMP");
         }
         addColumnSafe("T_REBOUND_METHOD", "STRUCTURE_PART", "VARCHAR2(255)");
         addColumnSafe("T_REBOUND_METHOD", "CONCRETE_GRADE", "VARCHAR2(64)");
@@ -192,6 +226,26 @@ public class DatabaseInitializer implements CommandLineRunner {
         addColumnSafe("JC_CORE_WT_INFO", "CLIENT_ADDRESS_PHONE", "VARCHAR2(255)");
         addColumnSafe("JC_CORE_WT_INFO", "GC_BEIZHU", "VARCHAR2(255)");
         addColumnSafe("JC_CORE_WT_INFO", "WT_STATUS", "VARCHAR2(64)");
+
+        // Add columns to T_DENSITY_TEST
+        addColumnSafe("T_DENSITY_TEST", "SOIL_TYPE", "VARCHAR2(255)");
+        addColumnSafe("T_DENSITY_TEST", "PIT_VOLUME", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "WET_WEIGHT", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "DRY_WEIGHT", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "WATER_CONTENT", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "WET_DENSITY", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "DRY_DENSITY", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "MAX_DRY_DENSITY", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "MIN_DRY_DENSITY", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "COMPACTION_COEFFICIENT", "VARCHAR2(64)");
+        addColumnSafe("T_DENSITY_TEST", "QUALIFIED_RATE", "VARCHAR2(64)");
+
+        // Add columns to T_BECKMAN_BEAM
+        addColumnSafe("T_BECKMAN_BEAM", "SUBGRADE_TYPE", "VARCHAR2(255)");
+        addColumnSafe("T_BECKMAN_BEAM", "DEFLECTOMETER_TYPE", "VARCHAR2(255)");
+        addColumnSafe("T_BECKMAN_BEAM", "AXLE_WEIGHT", "VARCHAR2(64)");
+        addColumnSafe("T_BECKMAN_BEAM", "TIRE_PRESSURE", "VARCHAR2(64)");
+        addColumnSafe("T_BECKMAN_BEAM", "TEST_LENGTH", "VARCHAR2(64)");
     }
     
     private void fixSimpleDirectorySchema() {

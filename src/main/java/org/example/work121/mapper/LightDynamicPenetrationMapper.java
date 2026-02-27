@@ -93,7 +93,7 @@ public interface LightDynamicPenetrationMapper {
             "(ID, ENTRUSTMENT_ID, ENTRUSTING_UNIT, PROJECT_NAME, ENTRUST_DATE, CONSTRUCTION_PART, " +
             "TEST_DATE, SOIL_PROPERTY, REPORT_DATE, WITNESS_UNIT, WITNESS, DESIGN_CAPACITY, " +
             "HAMMER_WEIGHT, DROP_DISTANCE, TEST_CATEGORY, TEST_BASIS, EQUIPMENT, REMARKS, " +
-            "APPROVE, REVIEW, INSPECT, CONCLUSION, DATA_JSON, " +
+            "APPROVE, REVIEW, INSPECT, COMPANY_NAME, CONCLUSION, DATA_JSON, " +
             "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
@@ -101,7 +101,7 @@ public interface LightDynamicPenetrationMapper {
             "(#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{clientUnit,jdbcType=VARCHAR}, #{projectName,jdbcType=VARCHAR}, #{commissionDate,jdbcType=TIMESTAMP}, #{constructionPart,jdbcType=VARCHAR}, " +
             "#{testDate,jdbcType=TIMESTAMP}, #{soilProperty,jdbcType=VARCHAR}, #{reportDate,jdbcType=TIMESTAMP}, #{witnessUnit,jdbcType=VARCHAR}, #{witness,jdbcType=VARCHAR}, #{designCapacity,jdbcType=VARCHAR}, " +
             "#{hammerWeight,jdbcType=VARCHAR}, #{dropDistance,jdbcType=VARCHAR}, #{testCategory,jdbcType=VARCHAR}, #{testBasis,jdbcType=VARCHAR}, #{equipment,jdbcType=VARCHAR}, #{remarks,jdbcType=VARCHAR}, " +
-            "#{approver,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{conclusion,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, " +
+            "#{approver,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{constructionUnit,jdbcType=VARCHAR}, #{conclusion,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, " +
             "#{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
             "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")

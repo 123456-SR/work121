@@ -259,26 +259,20 @@
 
     <div class="footer-section">
         <div class="footer-line">
-            <div>
+            <div class="signature-box">
                 批准：
-                <div style="display: inline-block; position: relative; width: 100px;">
-                    <input type="text" v-model="formData.approver" name="approver" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.approverSignature ? 0 : 1 }">
-                    <img v-if="formData.approverSignature" :src="formData.approverSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-                </div>
+                <span class="signature-line">{{ formData.approver }}</span>
+                <img v-if="formData.approverSignature" :src="formData.approverSignature" class="signature-img" alt="批准人签名" />
             </div>
-            <div>
+            <div class="signature-box">
                 审核：
-                <div style="display: inline-block; position: relative; width: 100px;">
-                    <input type="text" v-model="formData.reviewer" name="reviewer" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.reviewerSignature ? 0 : 1 }">
-                    <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-                </div>
+                <span class="signature-line">{{ formData.recordReviewer }}</span>
+                <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" class="signature-img" alt="审核人签名" />
             </div>
-            <div>
+            <div class="signature-box">
                 检测：
-                <div style="display: inline-block; position: relative; width: 100px;">
-                    <input type="text" v-model="formData.tester" name="tester" style="width: 100%; border-bottom: 1px solid black;" :style="{ opacity: formData.testerSignature ? 0 : 1 }">
-                    <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; object-fit: contain; pointer-events: none; background-color: transparent;">
-                </div>
+                <span class="signature-line">{{ formData.recordTester }}</span>
+                <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
             </div>
         </div>
 
@@ -350,8 +344,9 @@ const formData = reactive({
   testConclusion: '',
   reportDesc: '',
   approver: '',
-  reviewer: '',
-  tester: '',
+  recordReviewer: '',
+  recordTester: '',
+  filler: '',
   approverSignature: '',
   reviewerSignature: '',
   testerSignature: '',
@@ -418,23 +413,96 @@ const submitWorkflow = async (action) => {
   let signatureData = null
 
   if (action === 'SUBMIT') {
+    // Role check
+    // Logic: formData.recordTester (if set)
+    if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+        alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+        return
+    }
     if (!formData.testerSignature) {
       alert('请先进行检测人签字')
       return
     }
     signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+  } else if (action === 'AUDIT_PASS') {
+      // Role check
+      // Logic: formData.recordReviewer (if set)
+      if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+          alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权审核')
+          return
+      }
+      // Auto-fetch signature for Reviewer
+      try {
+        const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+        if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+             signatureData = sigRes.data.data.signatureBlob
+             formData.reviewerSignature = `data:image/png;base64,${signatureData}`
+             if (!formData.recordReviewer) {
+                 formData.recordReviewer = user.fullName || user.username
+             }
+        } else {
+             alert('未找到您的电子签名，无法审核通过')
+             return
+        }
+      } catch (e) {
+        console.error('Fetch signature error', e)
+        alert('获取签名失败')
+        return
+      }
   } else if (action === 'SIGN_REVIEW') {
-    if (!formData.reviewerSignature) {
-      alert('请先进行复核人签字')
-      return
+    if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+        alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权签字')
+        return
     }
-    signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+    // Auto-fetch signature for Reviewer (if using this action)
+    try {
+        const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+        if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+             signatureData = sigRes.data.data.signatureBlob
+        } else {
+             alert('未找到您的电子签名，无法签字')
+             return
+        }
+    } catch (e) {
+        console.error('Fetch signature error', e)
+        alert('获取签名失败')
+        return
+    }
   } else if (action === 'SIGN_APPROVE') {
-    if (!formData.approverSignature) {
-      alert('请先进行批准人签字')
-      return
+    if (formData.approver && user.username !== formData.approver && user.fullName !== formData.approver) {
+        alert('您不是该单据的批准人 (' + formData.approver + ')，无权签字')
+        return
     }
-    signatureData = formData.approverSignature.replace(/^data:image\/\w+;base64,/, '')
+    // Auto-fetch signature for Approver
+    try {
+        const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+        if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+             signatureData = sigRes.data.data.signatureBlob
+             formData.approverSignature = `data:image/png;base64,${signatureData}`
+             if (!formData.approver) {
+                 formData.approver = user.fullName || user.username
+             }
+        } else {
+             alert('未找到您的电子签名，无法批准')
+             return
+        }
+    } catch (e) {
+        console.error('Fetch signature error', e)
+        alert('获取签名失败')
+        return
+    }
+  } else if (action === 'REJECT') {
+      if (formData.status === 1) {
+          if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+              alert('您不是该单据的记录审核人，无权退回')
+              return
+          }
+      } else if (formData.status === 4) {
+          if (formData.approver && user.username !== formData.approver && user.fullName !== formData.approver) {
+               alert('您不是该单据的批准人，无权退回')
+               return
+          }
+      }
   }
 
   const request = {
@@ -482,8 +550,7 @@ const loadData = async (entrustmentId) => {
       formData.testCategory = ent.testCategory
       formData.witnessUnit = ent.witnessUnit
       formData.witness = ent.witness
-      formData.tester = ent.tester
-      formData.reviewer = ent.reviewer
+      // Don't set tester/reviewer here, use directory fallback
     }
 
     const response = await axios.get('/api/beckman-beam/report/get-by-entrustment-id', {
@@ -491,9 +558,11 @@ const loadData = async (entrustmentId) => {
     })
 
     let sourceJson = null
+    let dbData = {}
 
     if (response.data.success && response.data.data) {
       const data = response.data.data
+      dbData = data
       formData.id = data.id
       formData.entrustmentId = data.entrustmentId
       formData.status = data.status !== undefined ? data.status : 0
@@ -526,11 +595,37 @@ const loadData = async (entrustmentId) => {
     if (sourceJson) {
       try {
         const parsedData = JSON.parse(sourceJson)
+        // Map legacy fields
+        if (parsedData.tester && !parsedData.recordTester) parsedData.recordTester = parsedData.tester
+        if (parsedData.reviewer && !parsedData.recordReviewer) parsedData.recordReviewer = parsedData.reviewer
         Object.assign(formData, parsedData)
       } catch (e) {
         console.error('beckman report autofill parse error', e)
       }
     }
+    
+    // Directory Fallback
+    // const currentDirectory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+    const ent = entrustResponse.data.data || {}
+    
+    // Filler - Priority: record.filler
+    formData.filler = formData.filler || ''
+    
+    // Record Tester - Priority: record.recordTester -> ent.tester
+    formData.recordTester = formData.recordTester || ent.tester || ''
+    
+    // Record Reviewer - Priority: record.recordReviewer -> ent.reviewer
+    formData.recordReviewer = formData.recordReviewer || ent.reviewer || ''
+    
+    // Approver - Priority: record.approver
+    formData.approver = formData.approver || ''
+
+    // Set filler to current user if new
+    const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    if (user.username && !formData.filler) {
+       formData.filler = user.username
+    }
+
   } catch (error) {
     console.error('Failed to load data', error)
   }
@@ -538,13 +633,28 @@ const loadData = async (entrustmentId) => {
 
 const saveData = async () => {
     try {
+        const dataJsonObj = { ...formData }
+        // Remove legacy fields from JSON
+        delete dataJsonObj.tester
+        delete dataJsonObj.reviewer
+
         const dataToSave = {
             id: formData.id,
             entrustmentId: formData.entrustmentId || props.id,
-            dataJson: JSON.stringify(formData),
+            dataJson: JSON.stringify(dataJsonObj),
             reviewSignaturePhoto: formData.reviewerSignature,
             inspectSignaturePhoto: formData.testerSignature,
-            approveSignaturePhoto: formData.approverSignature
+            approveSignaturePhoto: formData.approverSignature,
+            recordTester: formData.recordTester,
+            recordReviewer: formData.recordReviewer,
+            // Sync legacy fields
+            tester: formData.recordTester,
+            reviewer: formData.recordReviewer,
+            filler: formData.filler,
+            approver: formData.approver,
+            // Other fields
+            testDate: formData.testDate,
+            reportDate: formData.reportDate
         }
         
         const response = await axios.post('/api/beckman-beam/report/save', dataToSave)
@@ -590,27 +700,18 @@ const handleSign = async () => {
             const currentName = user.fullName || user.username
 
             // Match Tester
-            if (formData.tester === currentName) {
+            if (!formData.recordTester || formData.recordTester === user.username || formData.recordTester === currentName) {
                 formData.testerSignature = imgSrc
                 signed = true
+                if (!formData.recordTester || (formData.recordTester === user.username && currentName !== user.username)) {
+                    formData.recordTester = currentName
+                }
             }
 
-            // Match Reviewer
-            if (formData.reviewer === currentName) {
-                formData.reviewerSignature = imgSrc
-                signed = true
-            }
-
-            // Match Approver
-            if (formData.approver === currentName) {
-                formData.approverSignature = imgSrc
-                signed = true
-            }
-            
             if (signed) {
                 alert('签名成功')
             } else {
-                alert(`当前用户(${currentName})与表单中的检测/审核/批准人员不匹配，无法签名`)
+                alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)
             }
         } else {
             alert('未找到您的电子签名，请先去“电子签名”页面设置')
@@ -795,6 +896,31 @@ const previewPdf = () => {
         .company-info {
             margin-top: 20px;
             font-size: 14px;
+        }
+
+        /* Signature styles */
+        .signature-box {
+            position: relative;
+            display: inline-block;
+            min-width: 120px;
+            vertical-align: bottom;
+        }
+        .signature-line {
+            display: inline-block;
+            min-width: 80px;
+            border-bottom: 1px solid black;
+            text-align: center;
+            padding: 0 5px;
+            height: 20px;
+            line-height: 20px;
+        }
+        .signature-img {
+            position: absolute;
+            left: 40px;
+            top: -20px;
+            width: 80px;
+            height: 40px;
+            mix-blend-mode: multiply;
         }
     
 </style>
