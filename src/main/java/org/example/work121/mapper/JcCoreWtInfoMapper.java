@@ -631,6 +631,8 @@ public interface JcCoreWtInfoMapper {
             "OR UPPER(TRIM(TO_CHAR(t_beckman.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.WT_UNDERTAKER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.WT_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "</foreach> " +
             ")" +
             "</if>" +
