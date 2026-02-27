@@ -204,6 +204,8 @@ public interface JcCoreWtInfoMapper {
             "OR UPPER(TRIM(TO_CHAR(t3.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.WT_UNDERTAKER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.WT_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.CREATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.UPDATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
@@ -394,6 +396,8 @@ public interface JcCoreWtInfoMapper {
             "OR UPPER(TRIM(TO_CHAR(t3.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.WT_UNDERTAKER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.WT_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.CREATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.UPDATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
