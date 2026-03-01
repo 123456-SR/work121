@@ -429,11 +429,27 @@ const formData = reactive({
 const getStatusText = (status) => {
     const s = parseInt(status)
     switch(s) {
+        // 统一状态名称
         case 0: return '草稿'
-        case 1: return '待审核'
+        case 1: return '已提交待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-                case 5: return '已通过'
+        case 4: return '已签字待提交'
+        case 5: return '审核通过'
+        // 报告表状态 (10-15)
+        case 10: return '草稿'
+        case 11: return '已提交待审核'
+        case 12: return '已打回'
+        case 13: return '待签字'
+        case 14: return '已签字待提交'
+        case 15: return '审核通过'
+        // 结果表状态 (20-25)
+        case 20: return '草稿'
+        case 21: return '已提交待审核'
+        case 22: return '已打回'
+        case 23: return '待签字'
+        case 24: return '已签字待提交'
+        case 25: return '审核通过'
         default: return '未知'
     }
 }
@@ -441,12 +457,28 @@ const getStatusText = (status) => {
 const getStatusColor = (status) => {
     const s = parseInt(status)
     switch(s) {
-        case 0: return '#9E9E9E' // Grey
-        case 1: return '#2196F3' // Blue
-        case 2: return '#F44336' // Red
-        case 3: return '#FF9800' // Orange
-        case 5: return '#4CAF50' // Green
-        default: return '#000000'
+        // 记录表状态 (0-5)
+        case 0: return '#6c757d' // secondary
+        case 1: return '#007bff' // primary
+        case 2: return '#dc3545' // danger
+        case 3: return '#ffc107' // warning
+        case 4: return '#17a2b8' // info
+        case 5: return '#28a745' // success
+        // 报告表状态 (10-15)
+        case 10: return '#6c757d' // secondary
+        case 11: return '#007bff' // primary
+        case 12: return '#dc3545' // danger
+        case 13: return '#ffc107' // warning
+        case 14: return '#17a2b8' // info
+        case 15: return '#28a745' // success
+        // 结果表状态 (20-25)
+        case 20: return '#6c757d' // secondary
+        case 21: return '#007bff' // primary
+        case 22: return '#dc3545' // danger
+        case 23: return '#ffc107' // warning
+        case 24: return '#17a2b8' // info
+        case 25: return '#28a745' // success
+        default: return '#6c757d'
     }
 }
 
@@ -848,25 +880,34 @@ const loadData = async (identifier) => {
     if (wtRes.data.success && wtRes.data.data) {
         const wtInfo = wtRes.data.data
         const wtNum = wtInfo.wtNum
+        const isEntrustmentApproved = wtInfo.status === 5
         
-        // Auto-fill basic info from Entrustment
-        formData.entrustingUnit = wtInfo.clientUnit || ''
-        formData.unifiedNumber = wtNum
-        formData.entrustmentId = wtNum
-        formData.projectName = wtInfo.projectName || ''
-        formData.commissionDate = formatDate(wtInfo.commissionDate)
-        formData.constructionPart = wtInfo.constructionPart || ''
-        formData.testCategory = wtInfo.testCategory || ''
-        formData.sampleName = wtInfo.sampleName || ''
-        formData.sampleStatus = wtInfo.sampleStatus || ''
-        // 拼接样品名称和状态
-        if (formData.sampleName && formData.sampleStatus) {
-            formData.sampleNameStatus = `${formData.sampleName} / ${formData.sampleStatus}`
-        } else if (formData.sampleName) {
-            formData.sampleNameStatus = formData.sampleName
-        } else if (formData.sampleStatus) {
-            formData.sampleNameStatus = formData.sampleStatus
+        // Auto-fill basic info from Entrustment only if approved
+        if (isEntrustmentApproved) {
+            formData.entrustingUnit = wtInfo.clientUnit || ''
+            formData.unifiedNumber = wtNum
+            formData.entrustmentId = wtNum
+            formData.projectName = wtInfo.projectName || ''
+            formData.commissionDate = formatDate(wtInfo.commissionDate)
+            formData.constructionPart = wtInfo.constructionPart || ''
+            formData.testCategory = wtInfo.testCategory || ''
+            formData.sampleName = wtInfo.sampleName || ''
+            formData.sampleStatus = wtInfo.sampleStatus || ''
+            // 拼接样品名称和状态
+            if (formData.sampleName && formData.sampleStatus) {
+                formData.sampleNameStatus = `${formData.sampleName} / ${formData.sampleStatus}`
+            } else if (formData.sampleName) {
+                formData.sampleNameStatus = formData.sampleName
+            } else if (formData.sampleStatus) {
+                formData.sampleNameStatus = formData.sampleStatus
+            }
+        } else {
+            console.log('委托单状态未审核通过，不自动填充数据')
+            // 仅设置统一编号和委托ID，不填充其他字段
+            formData.unifiedNumber = wtNum
+            formData.entrustmentId = wtNum
         }
+        
         // Tester/Reviewer might be pre-filled from task assignment if available
         if (wtInfo.tester) formData.recordTester = wtInfo.tester
         if (wtInfo.reviewer) formData.recordReviewer = wtInfo.reviewer
@@ -918,6 +959,8 @@ const loadData = async (identifier) => {
             currentIndex.value = 0
             formData.id = ''
         }
+    } else {
+        console.log('未找到委托单信息')
     }
   } catch (e) {
     console.error('Failed to load data', e)

@@ -295,11 +295,27 @@ const formData = reactive({
 const getStatusText = (status) => {
     const s = parseInt(status)
     switch(s) {
+        // 统一状态名称
         case 0: return '草稿'
-        case 1: return '待审核'
+        case 1: return '已提交待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-                case 5: return '已通过'
+        case 4: return '已签字待提交'
+        case 5: return '审核通过'
+        // 报告表状态 (10-15)
+        case 10: return '草稿'
+        case 11: return '已提交待审核'
+        case 12: return '已打回'
+        case 13: return '待签字'
+        case 14: return '已签字待提交'
+        case 15: return '审核通过'
+        // 结果表状态 (20-25)
+        case 20: return '草稿'
+        case 21: return '已提交待审核'
+        case 22: return '已打回'
+        case 23: return '待签字'
+        case 24: return '已签字待提交'
+        case 25: return '审核通过'
         default: return '未知'
     }
 }
@@ -307,13 +323,28 @@ const getStatusText = (status) => {
 const getStatusColor = (status) => {
     const s = parseInt(status)
     switch(s) {
-        case 0: return '#9E9E9E' // Grey
-        case 1: return '#2196F3' // Blue
-        case 2: return '#F44336' // Red
-        case 3: return '#FF9800' // Orange
-        case 4: return '#9C27B0' // Purple
-        case 5: return '#4CAF50' // Green
-        default: return '#000000'
+        // 记录表状态 (0-5)
+        case 0: return '#6c757d' // secondary
+        case 1: return '#007bff' // primary
+        case 2: return '#dc3545' // danger
+        case 3: return '#ffc107' // warning
+        case 4: return '#17a2b8' // info
+        case 5: return '#28a745' // success
+        // 报告表状态 (10-15)
+        case 10: return '#6c757d' // secondary
+        case 11: return '#007bff' // primary
+        case 12: return '#dc3545' // danger
+        case 13: return '#ffc107' // warning
+        case 14: return '#17a2b8' // info
+        case 15: return '#28a745' // success
+        // 结果表状态 (20-25)
+        case 20: return '#6c757d' // secondary
+        case 21: return '#007bff' // primary
+        case 22: return '#dc3545' // danger
+        case 23: return '#ffc107' // warning
+        case 24: return '#17a2b8' // info
+        case 25: return '#28a745' // success
+        default: return '#6c757d'
     }
 }
 
@@ -727,15 +758,20 @@ const loadData = async () => {
             }
             
             if (ent) {
-                newRecord.clientUnit = ent.client || ent.clientUnit || ''
-                newRecord.projectName = ent.projectName || ''
-                newRecord.commissionDate = ent.commissionDate || ''
-                newRecord.wtNum = ent.wtNum || queryId
-                newRecord.entrustmentId = ent.id || newRecord.entrustmentId
-                // Populate other fields if needed
-                newRecord.constructionPart = ent.constructionPart || ''
-                newRecord.testCategory = ent.testCategory || ''
-                newRecord.testDate = ent.testDate || ''
+                // 检查委托单状态是否为审核通过（状态值为5）
+                if (ent.status === 5) {
+                    newRecord.clientUnit = ent.client || ent.clientUnit || ''
+                    newRecord.projectName = ent.projectName || ''
+                    newRecord.commissionDate = ent.commissionDate || ''
+                    newRecord.wtNum = ent.wtNum || queryId
+                    newRecord.entrustmentId = ent.id || newRecord.entrustmentId
+                    // Populate other fields if needed
+                    newRecord.constructionPart = ent.constructionPart || ''
+                    newRecord.testCategory = ent.testCategory || ''
+                    newRecord.testDate = ent.testDate || ''
+                } else {
+                    console.log('委托单状态未审核通过，不自动填充数据')
+                }
             }
 
             records.value = [newRecord]

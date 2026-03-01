@@ -287,12 +287,27 @@ const getStatusText = (status) => {
         return '草稿'
     }
     switch(s) {
+        // 统一状态名称
         case 0: return '草稿'
-        case 1: return '待审核'
+        case 1: return '已提交待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '待批准'
-        case 5: return '已通过'
+        case 4: return '已签字待提交'
+        case 5: return '审核通过'
+        // 报告表状态 (10-15)
+        case 10: return '草稿'
+        case 11: return '已提交待审核'
+        case 12: return '已打回'
+        case 13: return '待签字'
+        case 14: return '已签字待提交'
+        case 15: return '审核通过'
+        // 结果表状态 (20-25)
+        case 20: return '草稿'
+        case 21: return '已提交待审核'
+        case 22: return '已打回'
+        case 23: return '待签字'
+        case 24: return '已签字待提交'
+        case 25: return '审核通过'
         default: return '未知'
     }
 }
@@ -306,12 +321,27 @@ const getStatusColor = (status) => {
         return '#9E9E9E' // Grey (草稿)
     }
     switch(s) {
+        // 记录表状态 (0-5)
         case 0: return '#9E9E9E' // Grey (草稿)
         case 1: return '#2196F3' // Blue (待审核)
         case 2: return '#F44336' // Red (已打回)
         case 3: return '#FF9800' // Orange (待签字)
         case 4: return '#17a2b8' // Info (待批准)
         case 5: return '#4CAF50' // Green (已通过)
+        // 报告表状态 (10-15)
+        case 10: return '#9E9E9E' // Grey (报告草稿)
+        case 11: return '#2196F3' // Blue (报告待审核)
+        case 12: return '#F44336' // Red (报告已打回)
+        case 13: return '#FF9800' // Orange (报告待签字)
+        case 14: return '#17a2b8' // Info (报告待批准)
+        case 15: return '#4CAF50' // Green (报告已通过)
+        // 结果表状态 (20-25)
+        case 20: return '#9E9E9E' // Grey (结果草稿)
+        case 21: return '#2196F3' // Blue (结果待审核)
+        case 22: return '#F44336' // Red (结果已打回)
+        case 23: return '#FF9800' // Orange (结果待签字)
+        case 24: return '#17a2b8' // Info (结果待批准)
+        case 25: return '#4CAF50' // Green (结果已通过)
         default: return '#9E9E9E' // Grey (默认草稿)
     }
 }
@@ -677,17 +707,22 @@ const loadData = async (paramId) => {
         console.warn('Failed to load entrustment info:', e)
       }
       
-      // 2. Fill basic fields from entrustment
+      // 2. Fill basic fields from entrustment, but only if entrustment is approved
       if (entrustmentData) {
-        formData.entrustmentId = idOrWtNum
-        formData.unifiedNumber = entrustmentData.wtNum || idOrWtNum
-        formData.entrustingUnit = entrustmentData.clientUnit || ''
-        formData.projectName = entrustmentData.projectName || ''
-        formData.constructionLocation = entrustmentData.constructionPart || ''
-        formData.testType = entrustmentData.testCategory || ''
-        formData.standard = entrustmentData.testBasis || entrustmentData.standard || ''
-        if (!formData.testDate) {
-          formData.testDate = new Date().toISOString().split('T')[0]
+        // 检查委托单状态是否为审核通过（状态值为5）
+        if (entrustmentData.status === 5) {
+          formData.entrustmentId = idOrWtNum
+          formData.unifiedNumber = entrustmentData.wtNum || idOrWtNum
+          formData.entrustingUnit = entrustmentData.clientUnit || ''
+          formData.projectName = entrustmentData.projectName || ''
+          formData.constructionLocation = entrustmentData.constructionPart || ''
+          formData.testType = entrustmentData.testCategory || ''
+          formData.standard = entrustmentData.testBasis || entrustmentData.standard || ''
+          if (!formData.testDate) {
+            formData.testDate = new Date().toISOString().split('T')[0]
+          }
+        } else {
+          console.log('委托单状态未审核通过，不自动填充数据')
         }
       }
       

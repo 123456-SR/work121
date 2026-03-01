@@ -358,12 +358,27 @@ const normalizeSignatureSrc = (src) => {
 const getStatusText = (status) => {
   const s = parseInt(status)
   switch(s) {
+    // 统一状态名称
     case 0: return '草稿'
-    case 1: return '待审核'
+    case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '待批准'
-    case 5: return '已通过'
+    case 4: return '已签字待提交'
+    case 5: return '审核通过'
+    // 报告表状态 (10-15)
+    case 10: return '草稿'
+    case 11: return '已提交待审核'
+    case 12: return '已打回'
+    case 13: return '待签字'
+    case 14: return '已签字待提交'
+    case 15: return '审核通过'
+    // 结果表状态 (20-25)
+    case 20: return '草稿'
+    case 21: return '已提交待审核'
+    case 22: return '已打回'
+    case 23: return '待签字'
+    case 24: return '已签字待提交'
+    case 25: return '审核通过'
     default: return '未知'
   }
 }
@@ -371,12 +386,27 @@ const getStatusText = (status) => {
 const getStatusColor = (status) => {
   const s = parseInt(status)
   switch(s) {
+    // 记录表状态 (0-5)
     case 0: return '#6c757d' // secondary
     case 1: return '#007bff' // primary
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
     case 5: return '#28a745' // success
+    // 报告表状态 (10-15)
+    case 10: return '#6c757d' // secondary
+    case 11: return '#007bff' // primary
+    case 12: return '#dc3545' // danger
+    case 13: return '#ffc107' // warning
+    case 14: return '#17a2b8' // info
+    case 15: return '#28a745' // success
+    // 结果表状态 (20-25)
+    case 20: return '#6c757d' // secondary
+    case 21: return '#007bff' // primary
+    case 22: return '#dc3545' // danger
+    case 23: return '#ffc107' // warning
+    case 24: return '#17a2b8' // info
+    case 25: return '#28a745' // success
     default: return '#6c757d'
   }
 }
@@ -740,7 +770,13 @@ const loadData = async () => {
             })
             if (recordRes.data.success && recordRes.data.data && recordRes.data.data.length > 0) {
               const records = recordRes.data.data;
-              fallbackData = records.find(r => r.dataJson && r.dataJson.length > 2) || records[0];
+              // 检查记录表状态，只有审核通过(状态值5)才自动填充数据
+              const approvedRecords = records.filter(r => r.status === 5);
+              if (approvedRecords.length > 0) {
+                fallbackData = approvedRecords.find(r => r.dataJson && r.dataJson.length > 2) || approvedRecords[0];
+              } else {
+                console.log('记录表状态未审核通过，不自动填充数据');
+              }
             }
 
 

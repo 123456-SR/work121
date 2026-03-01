@@ -201,12 +201,27 @@ const formatDate = (dateStr) => {
 const getStatusText = (status) => {
   const s = parseInt(status)
   switch(s) {
+    // 统一状态名称
     case 0: return '草稿'
-    case 1: return '待审核'
+    case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '待批准'
-    case 5: return '已通过'
+    case 4: return '已签字待提交'
+    case 5: return '审核通过'
+    // 报告表状态 (10-15)
+    case 10: return '草稿'
+    case 11: return '已提交待审核'
+    case 12: return '已打回'
+    case 13: return '待签字'
+    case 14: return '已签字待提交'
+    case 15: return '审核通过'
+    // 结果表状态 (20-25)
+    case 20: return '草稿'
+    case 21: return '已提交待审核'
+    case 22: return '已打回'
+    case 23: return '待签字'
+    case 24: return '已签字待提交'
+    case 25: return '审核通过'
     default: return '未知'
   }
 }
@@ -214,12 +229,27 @@ const getStatusText = (status) => {
 const getStatusClass = (status) => {
   const s = parseInt(status)
   switch(s) {
+    // 记录表状态 (0-5)
     case 0: return 'status-draft'
     case 1: return 'status-pending'
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
     case 5: return 'status-completed'
+    // 报告表状态 (10-15)
+    case 10: return 'status-draft'
+    case 11: return 'status-pending'
+    case 12: return 'status-rejected'
+    case 13: return 'status-signing'
+    case 14: return 'status-approving'
+    case 15: return 'status-completed'
+    // 结果表状态 (20-25)
+    case 20: return 'status-draft'
+    case 21: return 'status-pending'
+    case 22: return 'status-rejected'
+    case 23: return 'status-signing'
+    case 24: return 'status-approving'
+    case 25: return 'status-completed'
     default: return ''
   }
 }

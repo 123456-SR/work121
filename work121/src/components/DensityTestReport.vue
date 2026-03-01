@@ -325,12 +325,27 @@ const isNuclearMethod = computed(() => {
 const getStatusText = (status) => {
   const s = parseInt(status)
   switch(s) {
+    // 统一状态名称
     case 0: return '草稿'
-    case 1: return '待审核'
+    case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '待批准'
-    case 5: return '已通过'
+    case 4: return '已签字待提交'
+    case 5: return '审核通过'
+    // 报告表状态 (10-15)
+    case 10: return '草稿'
+    case 11: return '已提交待审核'
+    case 12: return '已打回'
+    case 13: return '待签字'
+    case 14: return '已签字待提交'
+    case 15: return '审核通过'
+    // 结果表状态 (20-25)
+    case 20: return '草稿'
+    case 21: return '已提交待审核'
+    case 22: return '已打回'
+    case 23: return '待签字'
+    case 24: return '已签字待提交'
+    case 25: return '审核通过'
     default: return '未知'
   }
 }
@@ -638,7 +653,10 @@ onMounted(() => {
               params: { entrustmentId: formData.unifiedNumber }
             })
             if (resultResponse.data.success && resultResponse.data.data && resultResponse.data.data.length > 0) {
-              const record = resultResponse.data.data[0]
+              // Filter records with status 5 (approved)
+              const approvedRecords = resultResponse.data.data.filter(record => record.status === 5)
+              if (approvedRecords.length > 0) {
+                const record = approvedRecords[0]
               if (record.dataJson) {
                 try {
                   const parsed = JSON.parse(record.dataJson)
@@ -727,6 +745,9 @@ onMounted(() => {
                   console.error('density report auto-fill parse error', e)
                 }
               }
+              } else {
+                console.log('记录表状态未审核通过，不自动填充数据')
+              }
             }
             
             // 无论是否有检测结果记录，如果是核子法，都尝试直接从核子法记录获取数据以确保完整性
@@ -737,15 +758,20 @@ onMounted(() => {
                   })
                   if (nuclearRes.data.success && nuclearRes.data.data && nuclearRes.data.data.length > 0) {
                      const nRecord = nuclearRes.data.data[0]
-                     if (nRecord.dataJson) {
-                         const nParsed = JSON.parse(nRecord.dataJson)
-                         // 直接合并数据，核子法记录作为源头数据优先
-                         Object.assign(formData, nParsed)
-                         
-                         // 映射标准击实参数
-                         if (nParsed.maxDryDensity) formData.maxDryDensity = nParsed.maxDryDensity
-                         if (nParsed.optimumMoisture) formData.optimumMoisture = nParsed.optimumMoisture
-                         if (nParsed.minDryDensity) formData.minDryDensity = nParsed.minDryDensity
+                     // 检查记录表状态是否为审核通过（状态值为5）
+                     if (nRecord.status === 5) {
+                         if (nRecord.dataJson) {
+                             const nParsed = JSON.parse(nRecord.dataJson)
+                             // 直接合并数据，核子法记录作为源头数据优先
+                             Object.assign(formData, nParsed)
+                             
+                             // 映射标准击实参数
+                             if (nParsed.maxDryDensity) formData.maxDryDensity = nParsed.maxDryDensity
+                             if (nParsed.optimumMoisture) formData.optimumMoisture = nParsed.optimumMoisture
+                             if (nParsed.minDryDensity) formData.minDryDensity = nParsed.minDryDensity
+                         }
+                     } else {
+                         console.log('核子密度仪记录表状态未审核通过，不自动填充数据')
                      }
                   }
                 } catch (e) {
@@ -761,70 +787,75 @@ onMounted(() => {
                   })
                   if (sandRes.data.success && sandRes.data.data && sandRes.data.data.length > 0) {
                      const sRecord = sandRes.data.data[0]
-                     if (sRecord.dataJson) {
-                         const sParsed = JSON.parse(sRecord.dataJson)
-                         
-                         // 1. 基础字段合并
-                         // 注意：先不要直接 Object.assign 覆盖 dryDensity_X，因为灌砂法的 dryDensity_X 需要重排
-                         // 我们先提取非数组字段
-                         const { ...otherFields } = sParsed
-                         // 排除掉 dryDensity_X, wetDensity_X 等数组字段，避免直接覆盖导致错乱？
-                         // 其实直接 assign 也没关系，因为后面会重写。但是为了保险，我们可以先 assign。
-                         Object.assign(formData, sParsed)
-                         
-                         // 2. 映射特殊字段
-                         if (sParsed.optMoisture !== undefined) {
-                            formData.optimumMoisture = sParsed.optMoisture
-                         }
+                     // 检查记录表状态是否为审核通过（状态值为5）
+                     if (sRecord.status === 5) {
+                         if (sRecord.dataJson) {
+                             const sParsed = JSON.parse(sRecord.dataJson)
+                             
+                             // 1. 基础字段合并
+                             // 注意：先不要直接 Object.assign 覆盖 dryDensity_X，因为灌砂法的 dryDensity_X 需要重排
+                             // 我们先提取非数组字段
+                             const { ...otherFields } = sParsed
+                             // 排除掉 dryDensity_X, wetDensity_X 等数组字段，避免直接覆盖导致错乱？
+                             // 其实直接 assign 也没关系，因为后面会重写。但是为了保险，我们可以先 assign。
+                             Object.assign(formData, sParsed)
+                             
+                             // 2. 映射特殊字段
+                             if (sParsed.optMoisture !== undefined) {
+                                formData.optimumMoisture = sParsed.optMoisture
+                             }
 
-                         // 3. 灌砂法专用重排逻辑：将 8 个平铺的密度值映射到 4 个检测点（每个点 2 个值）
+                             // 3. 灌砂法专用重排逻辑：将 8 个平铺的密度值映射到 4 个检测点（每个点 2 个值）
 
-                         // 重排干密度
-                         for (let row = 0; row < 4; row++) {
-                            const idx1 = row * 2
-                            const idx2 = row * 2 + 1
-                            // 从 sParsed 中获取
-                            const v1 = sParsed['dryDensity_' + idx1]
-                            const v2 = sParsed['dryDensity_' + idx2]
-                            
-                            // 赋值给 formData 的 dryDensity_row 和 dryDensity2_row
-                            if (v1 !== undefined && v1 !== null && v1 !== '') {
-                                formData['dryDensity_' + row] = v1
-                            }
-                            if (v2 !== undefined && v2 !== null && v2 !== '') {
-                                formData['dryDensity2_' + row] = v2
-                            }
-                         }
+                             // 重排干密度
+                             for (let row = 0; row < 4; row++) {
+                                const idx1 = row * 2
+                                const idx2 = row * 2 + 1
+                                // 从 sParsed 中获取
+                                const v1 = sParsed['dryDensity_' + idx1]
+                                const v2 = sParsed['dryDensity_' + idx2]
+                                
+                                // 赋值给 formData 的 dryDensity_row 和 dryDensity2_row
+                                if (v1 !== undefined && v1 !== null && v1 !== '') {
+                                    formData['dryDensity_' + row] = v1
+                                }
+                                if (v2 !== undefined && v2 !== null && v2 !== '') {
+                                    formData['dryDensity2_' + row] = v2
+                                }
+                             }
 
-                         // 重排湿密度
-                         for (let row = 0; row < 4; row++) {
-                            const idx1 = row * 2
-                            const idx2 = row * 2 + 1
-                            const v1 = sParsed['wetDensity_' + idx1]
-                            const v2 = sParsed['wetDensity_' + idx2]
-                            
-                            if (v1 !== undefined && v1 !== null && v1 !== '') {
-                                formData['wetDensity_' + row] = v1
-                            }
-                            if (v2 !== undefined && v2 !== null && v2 !== '') {
-                                formData['wetDensity2_' + row] = v2
-                            }
+                             // 重排湿密度
+                             for (let row = 0; row < 4; row++) {
+                                const idx1 = row * 2
+                                const idx2 = row * 2 + 1
+                                const v1 = sParsed['wetDensity_' + idx1]
+                                const v2 = sParsed['wetDensity_' + idx2]
+                                
+                                if (v1 !== undefined && v1 !== null && v1 !== '') {
+                                    formData['wetDensity_' + row] = v1
+                                }
+                                if (v2 !== undefined && v2 !== null && v2 !== '') {
+                                    formData['wetDensity2_' + row] = v2
+                                }
+                             }
+                             
+                             // 重排含水率 (moisture)
+                             for (let row = 0; row < 4; row++) {
+                                const idx1 = row * 2
+                                const idx2 = row * 2 + 1
+                                const v1 = sParsed['moisture_' + idx1]
+                                const v2 = sParsed['moisture_' + idx2]
+                                
+                                if (v1 !== undefined && v1 !== null && v1 !== '') {
+                                    formData['moisture_' + row] = v1
+                                }
+                                if (v2 !== undefined && v2 !== null && v2 !== '') {
+                                    formData['moisture2_' + row] = v2
+                                }
+                             }
                          }
-                         
-                         // 重排含水率 (moisture)
-                         for (let row = 0; row < 4; row++) {
-                            const idx1 = row * 2
-                            const idx2 = row * 2 + 1
-                            const v1 = sParsed['moisture_' + idx1]
-                            const v2 = sParsed['moisture_' + idx2]
-                            
-                            if (v1 !== undefined && v1 !== null && v1 !== '') {
-                                formData['moisture_' + row] = v1
-                            }
-                            if (v2 !== undefined && v2 !== null && v2 !== '') {
-                                formData['moisture2_' + row] = v2
-                            }
-                         }
+                     } else {
+                         console.log('灌砂法记录表状态未审核通过，不自动填充数据')
                      }
                   }
                 } catch (e) {

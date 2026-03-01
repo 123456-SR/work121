@@ -662,6 +662,12 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             ReboundMethod record = records.get(0);
+            // 检查记录表状态是否为审核通过（状态值为5）
+            if (record.getStatus() == null || !"5".equals(record.getStatus())) {
+                System.err.println("Warning: ReboundMethod record is not approved for entrustmentId " + entrustmentId);
+                return;
+            }
+            
             Map<String, Object> recordData = new HashMap<>();
 
             // 1）先合并委托单数据（委托级别的工程名称、委托单位、施工部位、检测类别等）
