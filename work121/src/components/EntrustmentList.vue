@@ -100,7 +100,9 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
     default: return '未知'
   }
 }
@@ -113,8 +115,10 @@ const getStatusClass = (status) => {
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
-    case 5: return 'status-completed'
-    default: return ''
+    case 5: return 'status-approving'
+    case 6: return 'status-completed'
+    case 7: return 'status-rejected'
+    default: return 'status-unknown'
   }
 }
 

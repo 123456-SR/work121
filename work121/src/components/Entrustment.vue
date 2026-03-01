@@ -883,7 +883,9 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
     default: return '未知/历史'
   }
 }
@@ -896,7 +898,9 @@ const getStatusColor = (status) => {
     case 2: return '#F44336' // Red
     case 3: return '#FF9800' // Orange
     case 4: return '#9C27B0' // Purple
-    case 5: return '#4CAF50' // Green
+    case 5: return '#FF8C00' // orange
+    case 6: return '#4CAF50' // Green
+    case 7: return '#F44336' // Red
     default: return '#000000'
   }
 }

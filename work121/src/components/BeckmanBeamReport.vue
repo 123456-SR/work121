@@ -261,17 +261,17 @@
         <div class="footer-line">
             <div class="signature-box">
                 批准：
-                <span class="signature-line">{{ formData.approver }}</span>
+                <span class="signature-line"></span>
                 <img v-if="formData.approverSignature" :src="formData.approverSignature" class="signature-img" alt="批准人签名" />
             </div>
             <div class="signature-box">
                 审核：
-                <span class="signature-line">{{ formData.recordReviewer }}</span>
+                <span class="signature-line"></span>
                 <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" class="signature-img" alt="审核人签名" />
             </div>
             <div class="signature-box">
                 检测：
-                <span class="signature-line">{{ formData.recordTester }}</span>
+                <span class="signature-line"></span>
                 <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
             </div>
         </div>
@@ -381,21 +381,27 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
-    // 报告表状态 (10-15)
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
+    // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过'
-    // 结果表状态 (20-25)
+    case 15: return '审核通过待批准'
+    case 16: return '已批准'
+    case 17: return '驳回'
+    // 结果表状态 (20-27)
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过'
+    case 25: return '审核通过待批准'
+    case 26: return '已批准'
+    case 27: return '驳回'
     default: return '未知'
   }
 }
@@ -408,7 +414,27 @@ const getStatusColor = (status) => {
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
-    case 5: return '#28a745' // success
+    case 5: return '#ff8c00' // orange
+    case 6: return '#28a745' // success
+    case 7: return '#dc3545' // danger
+    // 报告表状态 (10-17)
+    case 10: return '#6c757d' // secondary
+    case 11: return '#007bff' // primary
+    case 12: return '#dc3545' // danger
+    case 13: return '#ffc107' // warning
+    case 14: return '#17a2b8' // info
+    case 15: return '#ff8c00' // orange
+    case 16: return '#28a745' // success
+    case 17: return '#dc3545' // danger
+    // 结果表状态 (20-27)
+    case 20: return '#6c757d' // secondary
+    case 21: return '#007bff' // primary
+    case 22: return '#dc3545' // danger
+    case 23: return '#ffc107' // warning
+    case 24: return '#17a2b8' // info
+    case 25: return '#ff8c00' // orange
+    case 26: return '#28a745' // success
+    case 27: return '#dc3545' // danger
     default: return '#6c757d'
   }
 }
@@ -736,23 +762,15 @@ const handleSign = async () => {
                 return
             }
 
-            let signed = false
             const currentName = user.fullName || user.username
 
-            // Match Tester
-            if (!formData.recordTester || formData.recordTester === user.username || formData.recordTester === currentName) {
-                formData.testerSignature = imgSrc
-                signed = true
-                if (!formData.recordTester || (formData.recordTester === user.username && currentName !== user.username)) {
-                    formData.recordTester = currentName
-                }
+            // 点击签名时只在检测那里加上电子签名
+            formData.testerSignature = imgSrc
+            if (!formData.recordTester) {
+                formData.recordTester = currentName
             }
 
-            if (signed) {
-                alert('签名成功')
-            } else {
-                alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)
-            }
+            alert('检测人签名成功')
         } else {
             alert('未找到您的电子签名，请先去“电子签名”页面设置')
         }

@@ -219,17 +219,17 @@
     <div class="footer-info">
         <span class="signature-box">
             批准：
-            <span class="signature-line">{{ formData.approver }}</span>
+            <span class="signature-line"></span>
             <img v-if="formData.approverSignature" :src="formData.approverSignature" class="signature-img" alt="批准人签名" />
         </span>
         <span class="signature-box">
             审核：
-            <span class="signature-line">{{ formData.recordReviewer }}</span>
+            <span class="signature-line"></span>
             <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" class="signature-img" alt="审核人签名" />
         </span>
         <span class="signature-box">
             检测：
-            <span class="signature-line">{{ formData.recordTester }}</span>
+            <span class="signature-line"></span>
             <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
         </span>
     </div>
@@ -331,21 +331,27 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
-    // 报告表状态 (10-15)
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
+    // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过'
-    // 结果表状态 (20-25)
+    case 15: return '审核通过待批准'
+    case 16: return '已批准'
+    case 17: return '驳回'
+    // 结果表状态 (20-27)
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过'
+    case 25: return '审核通过待批准'
+    case 26: return '已批准'
+    case 27: return '驳回'
     default: return '未知'
   }
 }
@@ -358,7 +364,27 @@ const getStatusColor = (status) => {
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
-    case 5: return '#28a745' // success
+    case 5: return '#ff8c00' // orange
+    case 6: return '#28a745' // success
+    case 7: return '#dc3545' // danger
+    // 报告表状态 (10-17)
+    case 10: return '#6c757d' // secondary
+    case 11: return '#007bff' // primary
+    case 12: return '#dc3545' // danger
+    case 13: return '#ffc107' // warning
+    case 14: return '#17a2b8' // info
+    case 15: return '#ff8c00' // orange
+    case 16: return '#28a745' // success
+    case 17: return '#dc3545' // danger
+    // 结果表状态 (20-27)
+    case 20: return '#6c757d' // secondary
+    case 21: return '#007bff' // primary
+    case 22: return '#dc3545' // danger
+    case 23: return '#ffc107' // warning
+    case 24: return '#17a2b8' // info
+    case 25: return '#ff8c00' // orange
+    case 26: return '#28a745' // success
+    case 27: return '#dc3545' // danger
     default: return '#6c757d'
   }
 }
@@ -762,13 +788,25 @@ onMounted(() => {
                      if (nRecord.status === 5) {
                          if (nRecord.dataJson) {
                              const nParsed = JSON.parse(nRecord.dataJson)
-                             // 直接合并数据，核子法记录作为源头数据优先
-                             Object.assign(formData, nParsed)
                              
-                             // 映射标准击实参数
-                             if (nParsed.maxDryDensity) formData.maxDryDensity = nParsed.maxDryDensity
-                             if (nParsed.optimumMoisture) formData.optimumMoisture = nParsed.optimumMoisture
-                             if (nParsed.minDryDensity) formData.minDryDensity = nParsed.minDryDensity
+                             // 映射标准击实参数和其他通用字段
+                             const commonFields = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate', 'constructionPart', 'testCategory', 'equipment', 'sampleNameStatus', 'standard', 'designCompaction', 'maxDryDensity', 'optimumMoisture', 'minDryDensity']
+                             commonFields.forEach(field => {
+                                 if (nParsed[field] !== undefined) {
+                                     formData[field] = nParsed[field]
+                                 }
+                             })
+                             
+                             // 只填充前8行数据到报告表（从核子法记录表第一页）
+                             const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']
+                             for (let i = 0; i < 8; i++) {
+                                 rowFields.forEach(field => {
+                                     const key = field + '_' + i
+                                     if (nParsed[key] !== undefined) {
+                                         formData[key] = nParsed[key]
+                                     }
+                                 })
+                             }
                          }
                      } else {
                          console.log('核子密度仪记录表状态未审核通过，不自动填充数据')

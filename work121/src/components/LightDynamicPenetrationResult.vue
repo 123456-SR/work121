@@ -104,6 +104,27 @@
 
     <form id="pdfForm" ref="pdfForm" method="post">
     <h2>轻型动力触探检测结果</h2>
+    
+    <!-- 分页导航 -->
+    <div class="no-print pagination" style="margin: 10px 0; text-align: center;">
+      <button 
+        @click="prevRecord" 
+        class="btn btn-secondary btn-small" 
+        :disabled="currentIndex <= 1"
+      >
+        上一页
+      </button>
+      <span style="margin: 0 10px;">
+        第 {{ currentIndex + 1 }} 页 / 共 {{ totalRecords }} 页
+      </span>
+      <button 
+        @click="nextRecord" 
+        class="btn btn-secondary btn-small" 
+        :disabled="currentIndex >= totalRecords - 1"
+      >
+        下一页
+      </button>
+    </div>
 
     <div class="header-info">
         <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
@@ -164,12 +185,12 @@
             <td class="label">承载力<br>特征值<br>(kPa)</td>
         </tr>
 
-        <!-- Data Rows：3 组测点，每组 6 行深度/锤击数 -->
+        <!-- Data Rows：3 组测点，每组 7 行深度/锤击数 -->
         <template v-for="(b, b_idx) in 3" :key="b_idx">
-            <template v-for="(s, s_idx) in 6" :key="s_idx">
+            <template v-for="(s, s_idx) in 7" :key="s_idx">
             <tr>
-                <!-- 左栏：一个测点位置对应 6 行深度/锤击数 -->
-                <td v-if="s_idx === 0" rowspan="6">
+                <!-- 左栏：一个测点位置对应 7 行深度/锤击数 -->
+                <td v-if="s_idx === 0" rowspan="7">
                   <textarea
                     :name="'pos_L_' + b_idx"
                     v-model="formData['pos_L_' + b_idx]"
@@ -180,19 +201,19 @@
                 <td>
                   <input
                     type="text"
-                    :name="'depth_L_' + (b_idx * 6 + s_idx)"
-                    v-model="formData['depth_L_' + (b_idx * 6 + s_idx)]"
+                    :name="'depth_L_' + (b_idx * 7 + s_idx)"
+                    v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]"
                   />
                 </td>
                 <td>
                   <input
                     type="text"
-                    :name="'actual_L_' + (b_idx * 6 + s_idx)"
-                    v-model="formData['actual_L_' + (b_idx * 6 + s_idx)]"
+                    :name="'actual_L_' + (b_idx * 7 + s_idx)"
+                    v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]"
                   />
                 </td>
 
-                <td v-if="s_idx === 0" rowspan="6">
+                <td v-if="s_idx === 0" rowspan="7">
                   <input
                     type="text"
                     :name="'avg_L_' + b_idx"
@@ -200,7 +221,7 @@
                     style="height: 100%;"
                   />
                 </td>
-                <td v-if="s_idx === 0" rowspan="6">
+                <td v-if="s_idx === 0" rowspan="7">
                   <input
                     type="text"
                     :name="'capacity_L_' + b_idx"
@@ -210,7 +231,7 @@
                 </td>
 
                 <!-- 右栏 -->
-                <td v-if="s_idx === 0" rowspan="6">
+                <td v-if="s_idx === 0" rowspan="7">
                   <textarea
                     :name="'pos_R_' + b_idx"
                     v-model="formData['pos_R_' + b_idx]"
@@ -221,19 +242,19 @@
                 <td>
                   <input
                     type="text"
-                    :name="'depth_R_' + (b_idx * 6 + s_idx)"
-                    v-model="formData['depth_R_' + (b_idx * 6 + s_idx)]"
+                    :name="'depth_R_' + (b_idx * 7 + s_idx)"
+                    v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]"
                   />
                 </td>
                 <td>
                   <input
                     type="text"
-                    :name="'actual_R_' + (b_idx * 6 + s_idx)"
-                    v-model="formData['actual_R_' + (b_idx * 6 + s_idx)]"
+                    :name="'actual_R_' + (b_idx * 7 + s_idx)"
+                    v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]"
                   />
                 </td>
 
-                <td v-if="s_idx === 0" rowspan="6">
+                <td v-if="s_idx === 0" rowspan="7">
                   <input
                     type="text"
                     :name="'avg_R_' + b_idx"
@@ -241,7 +262,7 @@
                     style="height: 100%;"
                   />
                 </td>
-                <td v-if="s_idx === 0" rowspan="6">
+                <td v-if="s_idx === 0" rowspan="7">
                   <input
                     type="text"
                     :name="'capacity_R_' + b_idx"
@@ -263,17 +284,17 @@
     <div class="footer-info">
         <span class="signature-box">
           批准：
-          <span class="signature-line">{{ formData.approver }}</span>
+          <span class="signature-line"></span>
           <img v-if="formData.approveSignature" :src="formData.approveSignature" class="signature-img" alt="批准人签名" />
         </span>
         <span class="signature-box">
           审核：
-          <span class="signature-line">{{ formData.recordReviewer }}</span>
+          <span class="signature-line"></span>
           <img v-if="formData.reviewSignature" :src="formData.reviewSignature" class="signature-img" alt="审核人签名" />
         </span>
         <span class="signature-box">
           检测：
-          <span class="signature-line">{{ formData.recordTester }}</span>
+          <span class="signature-line"></span>
           <img v-if="formData.inspectSignature" :src="formData.inspectSignature" class="signature-img" alt="检测人签名" />
         </span>
     </div>
@@ -286,7 +307,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, defineProps, inject } from 'vue'
+import { reactive, ref, onMounted, defineProps, inject, computed } from 'vue'
 import axios from 'axios'
 
 const navigateTo = inject('navigateTo')
@@ -304,6 +325,14 @@ const props = defineProps({
 const pdfForm = ref(null)
 const resultId = ref(null)
 const currentEntrustmentId = ref(null)
+
+// 分页相关变量
+const records = ref([])
+const currentIndex = ref(1) // 从第2页开始（索引1）
+const totalRecords = computed(() => records.value.length)
+
+// 存储所有页的表单数据
+const pageFormData = ref([])
 
 const formData = reactive({
   entrustingUnit: '',
@@ -344,21 +373,27 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
-    // 报告表状态 (10-15)
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
+    // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过'
-    // 结果表状态 (20-25)
+    case 15: return '审核通过待批准'
+    case 16: return '已批准'
+    case 17: return '驳回'
+    // 结果表状态 (20-27)
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过'
+    case 25: return '审核通过待批准'
+    case 26: return '已批准'
+    case 27: return '驳回'
     default: return '未知'
   }
 }
@@ -372,21 +407,27 @@ const getStatusColor = (status) => {
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
-    case 5: return '#28a745' // success
-    // 报告表状态 (10-15)
+    case 5: return '#ff8c00' // orange
+    case 6: return '#28a745' // success
+    case 7: return '#dc3545' // danger
+    // 报告表状态 (10-17)
     case 10: return '#6c757d' // secondary
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
     case 13: return '#ffc107' // warning
     case 14: return '#17a2b8' // info
-    case 15: return '#28a745' // success
-    // 结果表状态 (20-25)
+    case 15: return '#ff8c00' // orange
+    case 16: return '#28a745' // success
+    case 17: return '#dc3545' // danger
+    // 结果表状态 (20-27)
     case 20: return '#6c757d' // secondary
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
     case 23: return '#ffc107' // warning
     case 24: return '#17a2b8' // info
-    case 25: return '#28a745' // success
+    case 25: return '#ff8c00' // orange
+    case 26: return '#28a745' // success
+    case 27: return '#dc3545' // danger
     default: return '#6c757d'
   }
 }
@@ -543,6 +584,7 @@ const loadData = async () => {
         let res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
         
         // 2. If not found, assume props.id might be Entrustment ID and try get-by-entrustment-id
+        // 轻型动力触探结果表从记录表第2页及以后的所有记录获取数据
         if (!res.data.success || !res.data.data) {
              try {
                 const listRes = await axios.get(`/api/light-dynamic-penetration/get-by-entrustment-id`, {
@@ -551,8 +593,18 @@ const loadData = async () => {
                 if (listRes.data.success && listRes.data.data && listRes.data.data.length > 0) {
                     // Filter records with status 5 (approved)
                     const approvedRecords = listRes.data.data.filter(record => record.status === 5)
-                    if (approvedRecords.length > 0) {
-                        data = approvedRecords[0]
+                    records.value = approvedRecords
+                    
+                    // 初始化pageFormData数组
+                    pageFormData.value = Array(approvedRecords.length).fill(null)
+                    
+                    if (approvedRecords.length > 1) {
+                        // 轻型动力触探结果表从记录表第2页及以后（索引1及以后）的所有记录获取数据
+                        currentIndex.value = 1 // 从第2页开始
+                        data = approvedRecords[currentIndex.value]
+                        console.log(`轻型动力触探结果表从记录表第2页及以后获取数据，共${approvedRecords.length - 1}页`)
+                    } else if (approvedRecords.length === 1) {
+                        console.log('轻型动力触探记录表只有1页，结果表不填充数据')
                     } else {
                         console.log('记录表状态未审核通过，不自动填充数据')
                     }
@@ -788,64 +840,178 @@ const saveData = async () => {
         return
     }
     try {
-        const dynamicData = {}
-        if (formData.testDate) dynamicData.testDate = formData.testDate
+        // 保存当前页的数据
+        if (currentIndex.value >= 1 && currentIndex.value < records.value.length) {
+            pageFormData.value[currentIndex.value] = { ...formData }
+        }
         
-        for (const key in formData) {
-            if (key.match(/^(pos|depth|actual|avg|capacity)_[LR]_\d+$/)) {
-                dynamicData[key] = formData[key]
+        // 遍历所有页的数据并保存
+        let successCount = 0
+        for (let i = 1; i < records.value.length; i++) {
+            const pageData = pageFormData.value[i] || formData
+            
+            // Update dataJson with current page data, but exclude legacy/redundant fields
+            const dataJsonObj = { ...pageData, format: '6-row' }
+            delete dataJsonObj.tester
+            delete dataJsonObj.reviewer
+            const dataJsonStr = JSON.stringify(dataJsonObj)
+
+            const payload = {
+                id: resultId.value,
+                entrustmentId: currentEntrustmentId.value || props.id,
+                soilProperty: pageData.soilProperty,
+                designCapacity: pageData.designCapacity,
+                hammerWeight: pageData.hammerWeight,
+                dropDistance: pageData.dropDistance,
+                testCategory: pageData.testCategory,
+                testBasis: pageData.testBasis,
+                equipment: pageData.equipment,
+                remarks: pageData.remarks,
+                conclusion: pageData.conclusion,
+                testDate: pageData.testDate,
+                reportDate: pageData.reportDate,
+                dataJson: dataJsonStr,
+                approveSignaturePhoto: pageData.approveSignature,
+                reviewSignaturePhoto: pageData.reviewSignature,
+                inspectSignaturePhoto: pageData.inspectSignature,
+                recordTester: pageData.recordTester,
+                recordReviewer: pageData.recordReviewer,
+                filler: pageData.filler,
+                approver: pageData.approver,
+                tester: pageData.recordTester, // Keep legacy fields sync
+                reviewer: pageData.recordReviewer,
+            }
+
+            const res = await axios.post('/api/light-dynamic-penetration/result/save', payload)
+            if (res.data.success) {
+                successCount++
+                if (res.data.data && res.data.data.id) {
+                    resultId.value = res.data.data.id
+                }
             }
         }
         
-        // Update dataJson with current formData, but exclude legacy/redundant fields
-        const dataJsonObj = { ...formData, format: '6-row' }
-        delete dataJsonObj.tester
-        delete dataJsonObj.reviewer
-        const dataJsonStr = JSON.stringify(dataJsonObj)
-
-        const payload = {
-            id: resultId.value,
-            entrustmentId: currentEntrustmentId.value || props.id,
-            soilProperty: formData.soilProperty,
-            designCapacity: formData.designCapacity,
-            hammerWeight: formData.hammerWeight,
-            dropDistance: formData.dropDistance,
-            testCategory: formData.testCategory,
-            testBasis: formData.testBasis,
-            equipment: formData.equipment,
-            remarks: formData.remarks,
-            conclusion: formData.conclusion,
-            testDate: formData.testDate,
-            reportDate: formData.reportDate,
-            dataJson: dataJsonStr,
-            approveSignaturePhoto: formData.approveSignature,
-            reviewSignaturePhoto: formData.reviewSignature,
-            inspectSignaturePhoto: formData.inspectSignature,
-            recordTester: formData.recordTester,
-            recordReviewer: formData.recordReviewer,
-            filler: formData.filler,
-            approver: formData.approver,
-            tester: formData.recordTester, // Keep legacy fields sync
-            reviewer: formData.recordReviewer,
-            // approver: formData.approver
-        }
-
-        const res = await axios.post('/api/light-dynamic-penetration/result/save', payload)
-        if (res.data.success) {
-            alert('保存成功')
-            if (res.data.data && res.data.data.id) {
-                resultId.value = res.data.data.id
-            }
+        if (successCount > 0) {
+            alert(`保存成功，共保存了 ${successCount} 页数据`)
         } else {
-            alert('保存失败: ' + (res.data.message || '未知错误'))
+            alert('保存失败: 没有可保存的数据')
         }
     } catch (e) {
         alert('保存失败: ' + e.message)
     }
 }
 
+// 分页导航函数
+const prevRecord = () => {
+    if (currentIndex.value > 1) {
+        currentIndex.value--
+        loadRecordByIndex(currentIndex.value)
+    }
+}
+
+const nextRecord = () => {
+    if (currentIndex.value < records.value.length - 1) {
+        currentIndex.value++
+        loadRecordByIndex(currentIndex.value)
+    }
+}
+
+// 根据索引加载记录
+const loadRecordByIndex = (index) => {
+    if (records.value.length > 0 && index >= 1 && index < records.value.length) {
+        // 保存当前页的数据
+        if (currentIndex.value >= 1 && currentIndex.value < records.value.length) {
+            pageFormData.value[currentIndex.value] = { ...formData }
+        }
+        
+        const data = records.value[index]
+        currentEntrustmentId.value = data.entrustmentId
+        
+        // 填充基础信息
+        formData.entrustingUnit = data.clientUnit || ''
+        formData.unifiedNumber = data.wtNum || ''
+        formData.projectName = data.projectName || ''
+        formData.entrustDate = formatDate(data.commissionDate)
+        formData.constructionPart = data.constructionPart || ''
+        formData.testDate = data.testDate ? formatDate(data.testDate) : ''
+        formData.soilProperty = data.soilProperty || ''
+        formData.reportDate = formatDate(data.reportDate) || formatDate(new Date())
+        formData.witnessUnit = data.witnessUnit || ''
+        formData.witness = data.witness || ''
+        formData.designCapacity = data.designCapacity || ''
+        formData.hammerWeight = data.hammerWeight || ''
+        formData.dropDistance = data.dropDistance || ''
+        formData.testCategory = data.testCategory || ''
+        formData.testBasis = data.testBasis || ''
+        formData.equipment = data.equipment || ''
+        formData.remarks = data.remarks || ''
+        formData.approver = data.approver || ''
+        formData.recordReviewer = data.recordReviewer || data.reviewer || ''
+        formData.recordTester = data.recordTester || data.tester || ''
+        formData.filler = data.filler || ''
+        formData.conclusion = data.conclusion || ''
+        formData.approveSignature = data.approveSignaturePhoto || ''
+        formData.reviewSignature = data.reviewSignaturePhoto || ''
+        formData.inspectSignature = data.inspectSignaturePhoto || ''
+        formData.status = data.status || 0
+        formData.rejectReason = data.rejectReason || ''
+
+        // 解析dataJson
+        if (data.dataJson) {
+            try {
+                const json = JSON.parse(data.dataJson)
+                const keys = Object.keys(json)
+                const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
+                const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
+                const is6Row = json.format === '6-row' || maxIdx > 14
+
+                // 填充数据块
+                for (let b = 0; b < 3; b++) {
+                     if (json[`pos_L_${b}`]) formData[`pos_L_${b}`] = json[`pos_L_${b}`]
+                     if (json[`avg_L_${b}`]) formData[`avg_L_${b}`] = json[`avg_L_${b}`]
+                     if (json[`capacity_L_${b}`]) formData[`capacity_L_${b}`] = json[`capacity_L_${b}`]
+                      
+                     if (json[`pos_R_${b}`]) formData[`pos_R_${b}`] = json[`pos_R_${b}`]
+                     if (json[`avg_R_${b}`]) formData[`avg_R_${b}`] = json[`avg_R_${b}`]
+                     if (json[`capacity_R_${b}`]) formData[`capacity_R_${b}`] = json[`capacity_R_${b}`]
+
+                     if (is6Row) {
+                         for (let s = 0; s < 6; s++) {
+                            const idx = b * 6 + s
+                            if (json[`depth_L_${idx}`]) formData[`depth_L_${idx}`] = json[`depth_L_${idx}`]
+                            if (json[`actual_L_${idx}`]) formData[`actual_L_${idx}`] = json[`actual_L_${idx}`]
+                            
+                            if (json[`depth_R_${idx}`]) formData[`depth_R_${idx}`] = json[`depth_R_${idx}`]
+                            if (json[`actual_R_${idx}`]) formData[`actual_R_${idx}`] = json[`actual_R_${idx}`]
+                         }
+                     } else {
+                         // 5-row logic
+                         for (let s = 0; s < 5; s++) {
+                            const sourceIdx = b * 5 + s
+                            const targetIdx = b * 6 + s
+                            
+                            if (json[`depth_L_${sourceIdx}`]) formData[`depth_L_${targetIdx}`] = json[`depth_L_${sourceIdx}`]
+                            if (json[`actual_L_${sourceIdx}`]) formData[`actual_L_${targetIdx}`] = json[`actual_L_${sourceIdx}`]
+                            
+                            if (json[`depth_R_${sourceIdx}`]) formData[`depth_R_${targetIdx}`] = json[`depth_R_${sourceIdx}`]
+                            if (json[`actual_R_${sourceIdx}`]) formData[`actual_R_${targetIdx}`] = json[`actual_R_${sourceIdx}`]
+                         }
+                     }
+                }
+            } catch (e) {
+                console.error('JSON parse error', e)
+            }
+        }
+        
+        // 如果pageFormData中已有该页的数据，则使用保存的数据
+        if (pageFormData.value[index]) {
+            Object.assign(formData, pageFormData.value[index])
+        }
+    }
+}
+
 onMounted(() => {
-  loadData()
+    loadData()
 })
 
 const printDocument = () => {

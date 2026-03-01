@@ -173,8 +173,8 @@
         <template v-for="(block, blockIndex) in formData.dataBlocks" :key="blockIndex">
             <template v-for="(depth, subIndex) in block.depths" :key="`${blockIndex}-${subIndex}`">
                 <tr>
-                    <!-- 左栏：一个测点位置对应 6 行深度/锤击数 -->
-                    <td v-if="subIndex === 0" rowspan="6">
+                    <!-- 左栏：一个测点位置对应 7 行深度/锤击数 -->
+                    <td v-if="subIndex === 0" rowspan="7">
                       <textarea
                         v-model="block.pos_L"
                         :name="`pos_L_${blockIndex}`"
@@ -182,18 +182,18 @@
                       ></textarea>
                     </td>
 
-                    <td><input type="text" v-model="depth.depth_L" :name="`depth_L_${blockIndex * 6 + subIndex}`"></td>
-                    <td><input type="text" v-model="depth.actual_L" :name="`actual_L_${blockIndex * 6 + subIndex}`"></td>
+                    <td><input type="text" v-model="depth.depth_L" :name="`depth_L_${blockIndex * 7 + subIndex}`"></td>
+                    <td><input type="text" v-model="depth.actual_L" :name="`actual_L_${blockIndex * 7 + subIndex}`"></td>
 
-                    <td v-if="subIndex === 0" rowspan="6">
+                    <td v-if="subIndex === 0" rowspan="7">
                       <input type="text" v-model="block.avg_L" :name="`avg_L_${blockIndex}`" style="height: 100%;" />
                     </td>
-                    <td v-if="subIndex === 0" rowspan="6">
+                    <td v-if="subIndex === 0" rowspan="7">
                       <input type="text" v-model="block.capacity_L" :name="`capacity_L_${blockIndex}`" style="height: 100%;" />
                     </td>
 
                     <!-- 右栏 -->
-                    <td v-if="subIndex === 0" rowspan="6">
+                    <td v-if="subIndex === 0" rowspan="7">
                       <textarea
                         v-model="block.pos_R"
                         :name="`pos_R_${blockIndex}`"
@@ -201,13 +201,13 @@
                       ></textarea>
                     </td>
 
-                    <td><input type="text" v-model="block.depths_R[subIndex].depth_R" :name="`depth_R_${blockIndex * 6 + subIndex}`"></td>
-                    <td><input type="text" v-model="block.depths_R[subIndex].actual_R" :name="`actual_R_${blockIndex * 6 + subIndex}`"></td>
+                    <td><input type="text" v-model="block.depths_R[subIndex].depth_R" :name="`depth_R_${blockIndex * 7 + subIndex}`"></td>
+                    <td><input type="text" v-model="block.depths_R[subIndex].actual_R" :name="`actual_R_${blockIndex * 7 + subIndex}`"></td>
 
-                    <td v-if="subIndex === 0" rowspan="6">
+                    <td v-if="subIndex === 0" rowspan="7">
                       <input type="text" v-model="block.avg_R" :name="`avg_R_${blockIndex}`" style="height: 100%;" />
                     </td>
-                    <td v-if="subIndex === 0" rowspan="6">
+                    <td v-if="subIndex === 0" rowspan="7">
                       <input type="text" v-model="block.capacity_R" :name="`capacity_R_${blockIndex}`" style="height: 100%;" />
                     </td>
                 </tr>
@@ -297,13 +297,13 @@ const fullDataJson = ref({})
 
 const formData = reactive({
   status: 0,
-  dataBlocks: Array.from({ length: 3 }, () => ({
+  dataBlocks: Array.from({ length: 2 }, () => ({
     pos_L: "",
-    depths: Array.from({ length: 6 }, () => ({ depth_L: "", actual_L: "" })),
+    depths: Array.from({ length: 7 }, () => ({ depth_L: "", actual_L: "" })),
     avg_L: "",
     capacity_L: "",
     pos_R: "",
-    depths_R: Array.from({ length: 6 }, () => ({ depth_R: "", actual_R: "" })),
+    depths_R: Array.from({ length: 7 }, () => ({ depth_R: "", actual_R: "" })),
     avg_R: "",
     capacity_R: ""
   }))
@@ -364,21 +364,27 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
-    // 报告表状态 (10-15)
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
+    // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过'
-    // 结果表状态 (20-25)
+    case 15: return '审核通过待批准'
+    case 16: return '已批准'
+    case 17: return '驳回'
+    // 结果表状态 (20-27)
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过'
+    case 25: return '审核通过待批准'
+    case 26: return '已批准'
+    case 27: return '驳回'
     default: return '未知'
   }
 }
@@ -392,21 +398,27 @@ const getStatusColor = (status) => {
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
-    case 5: return '#28a745' // success
-    // 报告表状态 (10-15)
+    case 5: return '#ff8c00' // orange
+    case 6: return '#28a745' // success
+    case 7: return '#dc3545' // danger
+    // 报告表状态 (10-17)
     case 10: return '#6c757d' // secondary
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
     case 13: return '#ffc107' // warning
     case 14: return '#17a2b8' // info
-    case 15: return '#28a745' // success
-    // 结果表状态 (20-25)
+    case 15: return '#ff8c00' // orange
+    case 16: return '#28a745' // success
+    case 17: return '#dc3545' // danger
+    // 结果表状态 (20-27)
     case 20: return '#6c757d' // secondary
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
     case 23: return '#ffc107' // warning
     case 24: return '#17a2b8' // info
-    case 25: return '#28a745' // success
+    case 25: return '#ff8c00' // orange
+    case 26: return '#28a745' // success
+    case 27: return '#dc3545' // danger
     default: return '#6c757d'
   }
 }
@@ -714,10 +726,10 @@ const loadData = async () => {
                   }
               }
               
-              for (let b = 0; b < 3; b++) {
+              for (let b = 0; b < 2; b++) {
                 // Ensure block exists
                 if (!formData.dataBlocks[b]) {
-                    formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
+                    formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 7 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 7 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
                 }
                 formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
                 formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
@@ -759,6 +771,7 @@ const loadData = async () => {
       }
 
       // 2. Fallback: only fetch from Record (report precedes result in flow)
+      // 轻型动力触探报告表只从记录表第一页（索引0）获取数据
       if (!isDataLoaded || (fullDataJson.value && Object.keys(fullDataJson.value).length < 5)) {
         const entrustmentId = currentEntrustmentId.value || data.entrustmentId;
         
@@ -772,8 +785,9 @@ const loadData = async () => {
               const records = recordRes.data.data;
               // 检查记录表状态，只有审核通过(状态值5)才自动填充数据
               const approvedRecords = records.filter(r => r.status === 5);
+              // 报告表只从记录表第一页（索引0）获取数据
               if (approvedRecords.length > 0) {
-                fallbackData = approvedRecords.find(r => r.dataJson && r.dataJson.length > 2) || approvedRecords[0];
+                fallbackData = approvedRecords[0];
               } else {
                 console.log('记录表状态未审核通过，不自动填充数据');
               }
@@ -814,10 +828,10 @@ const loadData = async () => {
                    let isFallback6Row = false;
 
                    // Map Data Blocks
-                   for (let b = 0; b < 3; b++) {
+                   for (let b = 0; b < 2; b++) {
                       // Ensure block exists
                       if (!formData.dataBlocks[b]) {
-                          formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
+                          formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 7 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 7 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
                       }
                       // Map Headers
                       if (recordJson[`pos_L_${b}`]) formData.dataBlocks[b].pos_L = recordJson[`pos_L_${b}`]
@@ -952,9 +966,9 @@ const submitForm = async () => {
     const dynamicData = { ...fullDataJson.value, format: '6-row' }
     if (formData.testDate) dynamicData.testDate = formData.testDate
     
-    for (let b = 0; b < 3; b++) {
+    for (let b = 0; b < 2; b++) {
         const block = formData.dataBlocks[b]
-        if (!block) continue; // Skip if block doesn't exist (shouldn't happen with 3 initialized)
+        if (!block) continue; // Skip if block doesn't exist (shouldn't happen with 2 initialized)
         if (block.pos_L) dynamicData[`pos_L_${b}`] = block.pos_L
         if (block.avg_L) dynamicData[`avg_L_${b}`] = block.avg_L
         if (block.capacity_L) dynamicData[`capacity_L_${b}`] = block.capacity_L
@@ -963,9 +977,9 @@ const submitForm = async () => {
         if (block.avg_R) dynamicData[`avg_R_${b}`] = block.avg_R
         if (block.capacity_R) dynamicData[`capacity_R_${b}`] = block.capacity_R
 
-        // Always loop 6 rows
-        for (let s = 0; s < 6; s++) {
-            const idx = b * 6 + s;
+        // Always loop 7 rows to save all data
+        for (let s = 0; s < 7; s++) {
+            const idx = b * 7 + s;
             
             if (block.depths[s].depth_L) dynamicData[`depth_L_${idx}`] = block.depths[s].depth_L
             if (block.depths[s].actual_L) dynamicData[`actual_L_${idx}`] = block.depths[s].actual_L

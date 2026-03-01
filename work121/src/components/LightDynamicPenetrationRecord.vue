@@ -142,14 +142,12 @@
         </tr>
         <!-- Row 4: Params -->
         <tr>
-            <td colspan="3" class="label">设计承载力<br>(kPa)</td>
-            <td colspan="3" class="label">锤重量<br>(kg)</td>
-            <td colspan="4" class="label">落距<br>(cm)</td>
-        </tr>
-        <tr>
-            <td colspan="3"><input type="text" v-model="formData.designCapacity"   name="designCapacity"></td>
-            <td colspan="3"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight"></td>
-            <td colspan="4"><input type="text" v-model="formData.dropDistance"   name="dropDistance"></td>
+            <td class="label">设计<br>承载力<br>(kPa)</td>
+            <td colspan="2"><input type="text" v-model="formData.designCapacity"   name="designCapacity"></td>
+            <td class="label">锤重量<br>(kg)</td>
+            <td colspan="2"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight"></td>
+            <td class="label">落距<br>(cm)</td>
+            <td colspan="3"><input type="text" v-model="formData.dropDistance"   name="dropDistance"></td>
         </tr>
 
         <!-- Row 5: Table Header for Data -->
@@ -167,52 +165,80 @@
         </tr>
 
         <!-- Data Rows -->
-        <template v-for="(b, b_idx) in 2" :key="b_idx">
-            <template v-for="(s, s_idx) in 5" :key="s_idx">
+        <template v-for="(b, b_idx) in 3" :key="b_idx">
+            <template v-for="(s, s_idx) in 7" :key="s_idx">
             <tr>
                 <!-- 左栏 -->
-                <td v-if="s_idx === 0" rowspan="5"><textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
+                <td v-if="s_idx === 0" rowspan="7">
+                    <div v-if="currentIndex === 0">
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea>
+                    </div>
+                    <div v-else>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                    </div>
+                </td>
 
-                <td><input type="text" :name="'depth_L_' + (b_idx * 5 + s_idx)" v-model="formData['depth_L_' + (b_idx * 5 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_L_' + (b_idx * 5 + s_idx)" v-model="formData['actual_L_' + (b_idx * 5 + s_idx)]"></td>
+                <td><input type="text" :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]"></td>
+                <td><input type="text" :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]"></td>
 
-                <td v-if="s_idx === 0" rowspan="5"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="5"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;"></td>
 
                 <!-- 右栏 -->
-                <td v-if="s_idx === 0" rowspan="5"><textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea></td>
+                <td v-if="s_idx === 0" rowspan="7">
+                    <div v-if="currentIndex === 0">
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea>
+                    </div>
+                    <div v-else>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                    </div>
+                </td>
 
-                <td><input type="text" :name="'depth_R_' + (b_idx * 5 + s_idx)" v-model="formData['depth_R_' + (b_idx * 5 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_R_' + (b_idx * 5 + s_idx)" v-model="formData['actual_R_' + (b_idx * 5 + s_idx)]"></td>
+                <td><input type="text" :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]"></td>
+                <td><input type="text" :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]"></td>
 
-                <td v-if="s_idx === 0" rowspan="5"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="5"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;"></td>
             </tr>
             </template>
         </template>
 
-        <!-- Row: 检测依据 -->
-        <tr>
-            <td class="label">检测依据</td>
-            <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis"></td>
-        </tr>
-        <!-- Row: 仪器设备 -->
-        <tr>
-            <td class="label">仪器设备</td>
-            <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
-        </tr>
-        <!-- Row: 检测结论 -->
-        <tr>
-            <td class="label" style="height: 60px;">检测结论</td>
-            <td colspan="9" class="left-align" style="vertical-align: top;">
-                <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;"></textarea>
-            </td>
-        </tr>
-        <!-- Row: 备注 -->
-        <tr>
-            <td class="label">备注</td>
-            <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks"></td>
-        </tr>
+        <!-- 第一页显示完整信息，第二页及以后只显示仪器设备 -->
+        <template v-if="currentIndex === 0">
+            <!-- Row: 检测依据 -->
+            <tr>
+                <td class="label">检测依据</td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis"></td>
+            </tr>
+            <!-- Row: 仪器设备 -->
+            <tr>
+                <td class="label">仪器设备</td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
+            </tr>
+            <!-- Row: 检测结论 -->
+            <tr>
+                <td class="label" style="height: 60px;">检测结论</td>
+                <td colspan="9" class="left-align" style="vertical-align: top;">
+                    <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;"></textarea>
+                </td>
+            </tr>
+            <!-- Row: 备注 -->
+            <tr>
+                <td class="label">备注</td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks"></td>
+            </tr>
+        </template>
+        <template v-else>
+            <!-- Row: 仪器设备 -->
+            <tr>
+                <td class="label">仪器设备</td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
+            </tr>
+        </template>
     </table>
 
     <div class="footer-info">
@@ -491,14 +517,18 @@ const submitWorkflow = async (action) => {
 // Add dynamic fields to formData
 for (let b = 0; b < 2; b++) {
     formData[`pos_L_${b}`] = ''
+    formData[`pos_L2_${b}`] = '' // 第二页及以后的左侧测点位置第二行
+    formData[`pos_L3_${b}`] = ''
     formData[`avg_L_${b}`] = ''
     formData[`capacity_L_${b}`] = ''
     formData[`pos_R_${b}`] = ''
+    formData[`pos_R2_${b}`] = '' // 第二页及以后的右侧测点位置第二行
+    formData[`pos_R3_${b}`] = ''
     formData[`avg_R_${b}`] = ''
     formData[`capacity_R_${b}`] = ''
     
-    for (let s = 0; s < 5; s++) {
-        const idx = b * 5 + s
+    for (let s = 0; s < 7; s++) {
+        const idx = b * 7 + s
         formData[`depth_L_${idx}`] = ''
         formData[`actual_L_${idx}`] = ''
         formData[`depth_R_${idx}`] = ''
@@ -533,15 +563,20 @@ const clearFormData = () => {
 const mapRecordToFormData = (record) => {
     
     // Clear dynamic fields first
-    for (let b = 0; b < 2; b++) {
+    const pointCount = currentIndex.value === 0 ? 2 : 3
+    for (let b = 0; b < pointCount; b++) {
         formData[`pos_L_${b}`] = ''
+        formData[`pos_L2_${b}`] = ''
+        formData[`pos_L3_${b}`] = ''
         formData[`avg_L_${b}`] = ''
         formData[`capacity_L_${b}`] = ''
         formData[`pos_R_${b}`] = ''
+        formData[`pos_R2_${b}`] = ''
+        formData[`pos_R3_${b}`] = ''
         formData[`avg_R_${b}`] = ''
         formData[`capacity_R_${b}`] = ''
-        for (let s = 0; s < 5; s++) {
-            const idx = b * 5 + s
+        for (let s = 0; s < 7; s++) {
+            const idx = b * 7 + s
             formData[`depth_L_${idx}`] = ''
             formData[`actual_L_${idx}`] = ''
             formData[`depth_R_${idx}`] = ''
@@ -582,11 +617,12 @@ const mapRecordToFormData = (record) => {
             })
 
             if (is6Row) {
-                // Map 6-row JSON to 5-row Form
-                for (let b = 0; b < 2; b++) {
-                    for (let s = 0; s < 5; s++) { // We only have 5 slots
-                        const recordIdx = b * 5 + s; // Our UI index (0-9)
-                        const jsonIdx = b * 6 + s;   // JSON index (0-4, 6-10) - skipping 5 and 11
+                // Map 6-row JSON to 7-row Form
+                const pointCount = currentIndex.value === 0 ? 2 : 3
+                for (let b = 0; b < pointCount; b++) {
+                    for (let s = 0; s < 7; s++) { // We now have 7 slots
+                        const recordIdx = b * 7 + s; // Our UI index (0-13 or 0-20)
+                        const jsonIdx = b * 6 + s;   // JSON index (0-5, 6-11, 12-17)
                         
                         if (json[`depth_L_${jsonIdx}`]) formData[`depth_L_${recordIdx}`] = json[`depth_L_${jsonIdx}`]
                         if (json[`actual_L_${jsonIdx}`]) formData[`actual_L_${recordIdx}`] = json[`actual_L_${jsonIdx}`]
