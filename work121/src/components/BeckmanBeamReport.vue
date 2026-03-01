@@ -278,11 +278,12 @@
 
         <div class="company-info">
             <div>声明：</div>
-            <div>1.对本检测报告的复印件未加盖公司检验检测专用章无效。2.对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。</div>
-            <div style="margin-top: 10px;">公司名称：<input type="text" v-model="formData.companyName"   name="companyName" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></div>
+            <div>1.对本检测报告的复印件未加盖公司检验检测专用章无效。</div>
+            <div>2.对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。</div>
+            <div style="margin-top: 10px;">公司名称：河北金涛建设工程质量检测有限公司</div>
             <div class="footer-line" style="margin-top: 5px;">
-                <div>公司地址：<input type="text" v-model="formData.companyAddress"   name="companyAddress" style="width: 300px; border-bottom: 1px solid black; text-align: left;"></div>
-                <div>电话：<input type="text" v-model="formData.companyPhone"   name="companyPhone" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></div>
+                <div>公司地址：石家庄高新区方亿科技工业园区A区第2号楼</div>
+                <div>电话：0311—86107634 67300616</div>
             </div>
         </div>
 

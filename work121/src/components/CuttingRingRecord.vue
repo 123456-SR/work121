@@ -7,33 +7,34 @@
         <button @click="goToList" class="link-button">&lt; 返回列表</button>
         <span v-if="!draftMode" class="record-nav">
           <button
-            @click="prevRecord"
-            :disabled="currentIndex <= 0"
+            @click="prevPage"
+            :disabled="currentPage <= 0"
             class="btn btn-secondary btn-small"
           >
             上一页
           </button>
           <span class="record-nav-info">
-            记录 {{ currentIndex + 1 }} / {{ totalRecords }}
+            页面 {{ currentPage + 1 }} / {{ totalPages }}
           </span>
           <button
-            @click="nextRecord"
-            :disabled="currentIndex >= totalRecords - 1"
+            @click="nextPage"
+            :disabled="currentPage >= totalPages - 1"
             class="btn btn-secondary btn-small"
           >
             下一页
           </button>
           <button
-            @click="addRecord"
+            @click="addPage"
             class="btn btn-primary btn-small"
           >
-            添加记录
+            添加页面
           </button>
           <button
-            @click="deleteRecord"
+            v-if="totalPages > 1"
+            @click="deletePage"
             class="btn btn-danger btn-small"
           >
-            删除当前记录
+            删除当前页面
           </button>
         </span>
       </div>
@@ -155,34 +156,34 @@
         <tbody>
             <template v-for="(n, i_idx) in 5" :key="i_idx">
             <tr>
-                <td rowspan="2"><input type="text" :name="'sampleNo_' + i_idx" v-model="formData['sampleNo_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'status_' + i_idx" v-model="formData['status_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringNo_' + i_idx" v-model="formData['ringNo_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringMass_' + i_idx" v-model="formData['ringMass_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringWetMass_' + i_idx" v-model="formData['ringWetMass_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringVolume_' + i_idx" v-model="formData['ringVolume_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'sampleNo_page' + currentPage + '_' + i_idx" v-model="formData['sampleNo_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'location_page' + currentPage + '_' + i_idx" v-model="formData['location_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'status_page' + currentPage + '_' + i_idx" v-model="formData['status_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringNo_page' + currentPage + '_' + i_idx" v-model="formData['ringNo_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringMass_page' + currentPage + '_' + i_idx" v-model="formData['ringMass_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringWetMass_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]"></td>
                 
                 <!-- Moisture Box 1 -->
-                <td><input type="text" :name="'boxNo1_' + i_idx" v-model="formData['boxNo1_' + i_idx]"></td>
-                <td><input type="text" :name="'boxMass1_' + i_idx" v-model="formData['boxMass1_' + i_idx]"></td>
-                <td><input type="text" :name="'boxWetMass1_' + i_idx" v-model="formData['boxWetMass1_' + i_idx]"></td>
-                <td><input type="text" :name="'boxDryMass1_' + i_idx" v-model="formData['boxDryMass1_' + i_idx]"></td>
-                <td><input type="text" :name="'moisture1_' + i_idx" v-model="formData['moisture1_' + i_idx]"></td>
+                <td><input type="text" :name="'boxNo1_page' + currentPage + '_' + i_idx" v-model="formData['boxNo1_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxMass1_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxWetMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass1_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxDryMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass1_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'moisture1_page' + currentPage + '_' + i_idx" v-model="formData['moisture1_page' + currentPage + '_' + i_idx]"></td>
 
-                <td rowspan="2"><input type="text" :name="'avgMoisture_' + i_idx" v-model="formData['avgMoisture_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'avgDryDensity_' + i_idx" v-model="formData['avgDryDensity_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'dryDensity_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'compaction_page' + currentPage + '_' + i_idx" v-model="formData['compaction_page' + currentPage + '_' + i_idx]"></td>
             </tr>
             <tr>
                 <!-- Moisture Box 2 -->
-                <td><input type="text" :name="'boxNo2_' + i_idx" v-model="formData['boxNo2_' + i_idx]"></td>
-                <td><input type="text" :name="'boxMass2_' + i_idx" v-model="formData['boxMass2_' + i_idx]"></td>
-                <td><input type="text" :name="'boxWetMass2_' + i_idx" v-model="formData['boxWetMass2_' + i_idx]"></td>
-                <td><input type="text" :name="'boxDryMass2_' + i_idx" v-model="formData['boxDryMass2_' + i_idx]"></td>
-                <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
+                <td><input type="text" :name="'boxNo2_page' + currentPage + '_' + i_idx" v-model="formData['boxNo2_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxMass2_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass2_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxDryMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass2_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'moisture2_page' + currentPage + '_' + i_idx" v-model="formData['moisture2_page' + currentPage + '_' + i_idx]"></td>
             </tr>
             </template>
             <!-- Empty rows to fill space if needed, or just these 5 sample blocks (10 rows) -->
@@ -250,10 +251,13 @@ const goToList = () => {
 
 const pdfForm = ref(null)
 
-// 1:N State
-const records = ref([])
-const currentIndex = ref(0)
-const totalRecords = computed(() => records.value.length)
+// 单条记录 + 多页数据
+const currentRecord = ref(null)
+const currentPage = ref(0)  // 当前页面索引（从0开始）
+const totalPages = computed(() => {
+  // 从 formData 中获取总页数，如果没有则默认为1
+  return formData.totalPages || 1
+})
 
 const formData = reactive({
       id: '',
@@ -275,7 +279,9 @@ const formData = reactive({
       filler: '',
       reviewerSignature: '',
       testerSignature: '',
-      status: 0
+      status: 0,
+      // 页面管理
+      totalPages: 1  // 总页数
     })
 
 const getStatusText = (status) => {
@@ -358,6 +364,10 @@ const submitWorkflow = async (action) => {
         alert('请先保存记录')
         return
     }
+    
+    // 保存当前页面的数据
+    saveCurrentPageData()
+    saveCurrentRecordState()
     
     const user = JSON.parse(localStorage.getItem('userInfo'))
     if (!user || !user.username) {
@@ -447,7 +457,22 @@ const submitWorkflow = async (action) => {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            loadData()
+            // 保存当前页面索引，重新加载后恢复
+            const savedPage = currentPage.value
+            const idOrWtNum = formData.entrustmentId || props.wtNum || props.id
+            if (idOrWtNum) {
+                await loadData(idOrWtNum)
+                // 恢复页面索引
+                if (savedPage < totalPages.value) {
+                    currentPage.value = savedPage
+                    if (currentRecord.value && currentRecord.value.dataJson) {
+                        const json = JSON.parse(currentRecord.value.dataJson)
+                        loadPageData(savedPage, json)
+                    }
+                }
+            } else {
+                loadData()
+            }
         } else {
             alert('操作失败: ' + response.data.message)
         }
@@ -457,36 +482,50 @@ const submitWorkflow = async (action) => {
     }
 }
 
-// Initialize dynamic fields
-const initDynamicFields = () => {
-  for (let i_idx = 0; i_idx < 50; i_idx++) {
-    formData['location_' + i_idx] = ''
-    formData['boxMass2_' + i_idx] = ''
-    formData['boxWetMass2_' + i_idx] = ''
-    formData['ringWetMass_' + i_idx] = ''
-    formData['ringMass_' + i_idx] = ''
-    formData['boxDryMass2_' + i_idx] = ''
-    formData['moisture1_' + i_idx] = ''
-    formData['ringNo_' + i_idx] = ''
-    formData['compaction_' + i_idx] = ''
-    formData['boxWetMass1_' + i_idx] = ''
-    formData['boxNo2_' + i_idx] = ''
-    formData['boxDryMass1_' + i_idx] = ''
-    formData['sampleNo_' + i_idx] = ''
-    formData['wetDensity_' + i_idx] = ''
-    formData['boxNo1_' + i_idx] = ''
-    formData['dryDensity_' + i_idx] = ''
-    formData['avgDryDensity_' + i_idx] = ''
-    formData['ringVolume_' + i_idx] = ''
-    formData['avgMoisture_' + i_idx] = ''
-    formData['boxMass1_' + i_idx] = ''
-    formData['moisture2_' + i_idx] = ''
-    formData['status_' + i_idx] = ''
+// 初始化指定页面的动态字段
+const initDynamicFieldsForPage = (pageIndex) => {
+  for (let i_idx = 0; i_idx < 5; i_idx++) {
+    const pagePrefix = '_page' + pageIndex + '_' + i_idx
+    formData['location' + pagePrefix] = ''
+    formData['boxMass2' + pagePrefix] = ''
+    formData['boxWetMass2' + pagePrefix] = ''
+    formData['ringWetMass' + pagePrefix] = ''
+    formData['ringMass' + pagePrefix] = ''
+    formData['boxDryMass2' + pagePrefix] = ''
+    formData['moisture1' + pagePrefix] = ''
+    formData['ringNo' + pagePrefix] = ''
+    formData['compaction' + pagePrefix] = ''
+    formData['boxWetMass1' + pagePrefix] = ''
+    formData['boxNo2' + pagePrefix] = ''
+    formData['boxDryMass1' + pagePrefix] = ''
+    formData['sampleNo' + pagePrefix] = ''
+    formData['wetDensity' + pagePrefix] = ''
+    formData['boxNo1' + pagePrefix] = ''
+    formData['dryDensity' + pagePrefix] = ''
+    formData['avgDryDensity' + pagePrefix] = ''
+    formData['ringVolume' + pagePrefix] = ''
+    formData['avgMoisture' + pagePrefix] = ''
+    formData['boxMass1' + pagePrefix] = ''
+    formData['moisture2' + pagePrefix] = ''
+    formData['status' + pagePrefix] = ''
   }
 }
 
+// 初始化所有页面的字段（用于兼容旧数据）
+const initDynamicFields = () => {
+  // 兼容旧数据：如果没有 totalPages，初始化第一页
+  if (!formData.totalPages || formData.totalPages < 1) {
+    formData.totalPages = 1
+  }
+  // 初始化当前页面的字段
+  initDynamicFieldsForPage(currentPage.value)
+}
+
 onMounted(() => {
-  initDynamicFields()
+  // 初始化第一页的字段
+  currentPage.value = 0
+  formData.totalPages = 1
+  initDynamicFieldsForPage(0)
   
   let wtNum = props.wtNum
   if (!wtNum) {
@@ -511,9 +550,52 @@ const formatDate = (dateVal) => {
   return `${year}-${month}-${day}`
 }
 
+// 加载指定页面的数据
+const loadPageData = (pageIndex, parsedJson = null) => {
+  const json = parsedJson || (currentRecord.value && currentRecord.value.dataJson ? JSON.parse(currentRecord.value.dataJson) : {})
+  
+  // 初始化该页面的字段
+  initDynamicFieldsForPage(pageIndex)
+  
+  // 从 JSON 中加载该页面的数据
+  for (let i_idx = 0; i_idx < 5; i_idx++) {
+    const pagePrefix = '_page' + pageIndex + '_' + i_idx
+    const fieldNames = [
+      'location', 'boxMass2', 'boxWetMass2', 'ringWetMass', 'ringMass', 
+      'boxDryMass2', 'moisture1', 'ringNo', 'compaction', 'boxWetMass1',
+      'boxNo2', 'boxDryMass1', 'sampleNo', 'wetDensity', 'boxNo1',
+      'dryDensity', 'avgDryDensity', 'ringVolume', 'avgMoisture', 
+      'boxMass1', 'moisture2', 'status'
+    ]
+    
+    fieldNames.forEach(fieldName => {
+      // 先尝试新格式：fieldName_pageX_Y
+      const newKey = fieldName + pagePrefix
+      if (json[newKey] !== undefined && json[newKey] !== null) {
+        formData[newKey] = json[newKey]
+      } else {
+        // 兼容旧格式：fieldName_index（需要计算原始索引）
+        const oldIndex = pageIndex * 5 + i_idx
+        const oldKey = fieldName + '_' + oldIndex
+        
+        // 特殊处理：sampleId -> sampleNo（后端映射后的字段名）
+        if (fieldName === 'sampleNo') {
+          if (json['sampleId_' + oldIndex] !== undefined && json['sampleId_' + oldIndex] !== null) {
+            formData[newKey] = json['sampleId_' + oldIndex]
+          }
+        } else {
+          if (json[oldKey] !== undefined && json[oldKey] !== null) {
+            formData[newKey] = json[oldKey]
+          }
+        }
+      }
+    })
+  }
+}
+
 const mapRecordToFormData = (record) => {
-  // Clear existing dynamic fields first
-  initDynamicFields()
+  // 保存当前记录引用
+  currentRecord.value = record
   
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || props.id
@@ -527,27 +609,30 @@ const mapRecordToFormData = (record) => {
   formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
   formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
 
+  let parsedJson = {}
   if (record.dataJson) {
     try {
-      const parsed = JSON.parse(record.dataJson)
+      parsedJson = JSON.parse(record.dataJson)
       // 定义基础字段列表（这些字段应该优先从委托单获取，JSON 中的空值不应该覆盖）
       const basicFields = ['entrustingUnit', 'projectName', 'unifiedNumber', 'constructionLocation', 
-                          'testType', 'standard', 'entrustmentId']
+                          'testType', 'standard', 'entrustmentId', 'totalPages']
       
       // Merge parsed data into formData
-      Object.keys(parsed).forEach(key => {
+      Object.keys(parsedJson).forEach(key => {
         // 跳过 status 字段，使用数据库中的 status
         if (key === 'status') return
         
-        const value = parsed[key]
+        // 跳过带页面后缀的字段（这些字段由 loadPageData 处理）
+        if (key.includes('_page')) return
+        
+        const value = parsedJson[key]
         // 对于基础字段，如果 JSON 中是空值，不覆盖已有的委托单数据
         if (basicFields.includes(key)) {
           if (value !== undefined && value !== null && value !== '') {
             formData[key] = value
           }
-          // 如果 JSON 中是空值，保留 formData 中已有的值（来自委托单）
         } else {
-          // 对于其他字段（数据行字段等），直接合并
+          // 对于其他全局字段（如 remarks, maxDryDensity 等），直接合并
           if (value !== undefined && value !== null) {
             formData[key] = value
           }
@@ -555,131 +640,323 @@ const mapRecordToFormData = (record) => {
       })
       
       // Legacy mapping
-      if (parsed.tester && !formData.recordTester) formData.recordTester = parsed.tester
-      if (parsed.reviewer && !formData.recordReviewer) formData.recordReviewer = parsed.reviewer
+      if (parsedJson.tester && !formData.recordTester) formData.recordTester = parsedJson.tester
+      if (parsedJson.reviewer && !formData.recordReviewer) formData.recordReviewer = parsedJson.reviewer
+      
+      // 获取总页数
+      if (parsedJson.totalPages) {
+        formData.totalPages = parsedJson.totalPages
+      } else {
+        // 检查是否有带页面后缀的字段来确定页数
+        const pageIndices = new Set()
+        let hasPageSuffix = false
+        Object.keys(parsedJson).forEach(key => {
+          const match = key.match(/_page(\d+)_/)
+          if (match) {
+            hasPageSuffix = true
+            pageIndices.add(parseInt(match[1]))
+          }
+        })
+        
+        if (hasPageSuffix) {
+          // 新格式：有页面后缀
+          formData.totalPages = pageIndices.size > 0 ? Math.max(...Array.from(pageIndices)) + 1 : 1
+        } else {
+          // 旧格式：没有页面后缀，需要转换
+          // 检测数据字段的最大索引，计算页数（假设每页5个样品）
+          const dataFieldPrefixes = [
+            'sampleId_', 'location_', 'status_', 'ringNo_', 'ringMass_', 'ringWetMass_', 'ringVolume_',
+            'boxNo1_', 'boxNo2_', 'boxMass1_', 'boxMass2_', 'boxWetMass1_', 'boxWetMass2_',
+            'boxDryMass1_', 'boxDryMass2_', 'moisture1_', 'moisture2_', 'avgMoisture_',
+            'wetDensity_', 'dryDensity_', 'avgDryDensity_', 'compaction_'
+          ]
+          
+          let maxIndex = -1
+          Object.keys(parsedJson).forEach(key => {
+            for (const prefix of dataFieldPrefixes) {
+              if (key.startsWith(prefix)) {
+                try {
+                  const suffix = key.substring(prefix.length)
+                  const idx = parseInt(suffix)
+                  if (!isNaN(idx) && idx > maxIndex) {
+                    maxIndex = idx
+                  }
+                } catch (e) {
+                  // 忽略
+                }
+                break
+              }
+            }
+          })
+          
+          // 计算页数：每页5个样品
+          const samplesPerPage = 5
+          formData.totalPages = maxIndex >= 0 ? Math.ceil((maxIndex + 1) / samplesPerPage) : 1
+          
+          // 将旧格式数据转换为新格式（添加 _page0_ 后缀）
+          const convertedData = {}
+          Object.keys(parsedJson).forEach(key => {
+            let isDataField = false
+            let matchedPrefix = null
+            let suffix = null
+            
+            // 检查是否是数据字段
+            for (const prefix of dataFieldPrefixes) {
+              if (key.startsWith(prefix)) {
+                try {
+                  suffix = key.substring(prefix.length)
+                  const idx = parseInt(suffix)
+                  if (!isNaN(idx)) {
+                    isDataField = true
+                    matchedPrefix = prefix
+                    break
+                  }
+                } catch (e) {
+                  // 忽略
+                }
+              }
+            }
+            
+            if (isDataField && matchedPrefix && suffix !== null) {
+              // 计算应该属于哪一页和哪个位置
+              const fieldIndex = parseInt(suffix)
+              const pageIndex = Math.floor(fieldIndex / samplesPerPage)
+              const positionInPage = fieldIndex % samplesPerPage
+              
+              // 转换为新格式：fieldName_pageX_Y
+              const newKey = matchedPrefix.replace('_', '') + '_page' + pageIndex + '_' + positionInPage
+              convertedData[newKey] = parsedJson[key]
+            } else {
+              // 非数据字段，直接保留
+              convertedData[key] = parsedJson[key]
+            }
+          })
+          
+          // 更新 parsedJson 为转换后的数据
+          Object.keys(convertedData).forEach(key => {
+            parsedJson[key] = convertedData[key]
+          })
+          
+          // 删除旧格式的字段
+          Object.keys(parsedJson).forEach(key => {
+            if (dataFieldPrefixes.some(prefix => key.startsWith(prefix) && !key.includes('_page'))) {
+              delete parsedJson[key]
+            }
+          })
+          
+          // 设置总页数
+          parsedJson.totalPages = formData.totalPages
+          
+          console.log('检测到旧格式数据，已转换为新格式。总页数:', formData.totalPages)
+        }
+      }
     } catch (e) {
       console.error('JSON parse error', e)
     }
+  } else {
+    formData.totalPages = 1
   }
 
-  // Map fields from BusinessEntity/Entrustment (Override JSON to ensure sync)
-  // 基础字段：优先使用 record 中的值，如果没有则保留 formData 中已有的值（可能来自委托单）
-  // 这样即使记录表中没有这些字段，也能从委托单自动填充
-  if (record.clientUnit) formData.entrustingUnit = record.clientUnit
-  if (record.projectName) formData.projectName = record.projectName
-  if (record.wtNum) formData.unifiedNumber = record.wtNum
-  if (record.entrustmentId && !formData.unifiedNumber) formData.unifiedNumber = record.entrustmentId // Fallback
+  // Map fields from BusinessEntity/Entrustment (Override JSON only if entity fields are not null)
+  // 基础字段：只有当record中的值不为null时才覆盖formData中的值（formData可能已从dataJson加载了值）
+  if (record.clientUnit !== null && record.clientUnit !== undefined) formData.entrustingUnit = record.clientUnit
+  if (record.projectName !== null && record.projectName !== undefined) formData.projectName = record.projectName
+  if (record.wtNum !== null && record.wtNum !== undefined) formData.unifiedNumber = record.wtNum
+  if (record.entrustmentId !== null && record.entrustmentId !== undefined && !formData.unifiedNumber) formData.unifiedNumber = record.entrustmentId
 
-  if (record.constructionPart) formData.constructionLocation = record.constructionPart
-  if (record.testCategory) formData.testType = record.testCategory
-  if (record.standard || record.testBasis) formData.standard = record.standard || record.testBasis
-  if (record.testDate) formData.testDate = formatDate(record.testDate)
+  if (record.constructionPart !== null && record.constructionPart !== undefined) formData.constructionLocation = record.constructionPart
+  if (record.testCategory !== null && record.testCategory !== undefined) formData.testType = record.testCategory
+  if ((record.standard !== null && record.standard !== undefined) || (record.testBasis !== null && record.testBasis !== undefined)) formData.standard = record.standard || record.testBasis
+  if (record.testDate !== null && record.testDate !== undefined) formData.testDate = formatDate(record.testDate)
   
   // 这些字段通常不在委托单中，只在记录表的 JSON 中
-  if (record.maxDryDensity) formData.maxDryDensity = record.maxDryDensity
-  if (record.optMoisture) formData.optMoisture = record.optMoisture
-  if (record.designCompaction) formData.designCompaction = record.designCompaction
+  if (record.maxDryDensity !== null && record.maxDryDensity !== undefined) formData.maxDryDensity = record.maxDryDensity
+  if (record.optMoisture !== null && record.optMoisture !== undefined) formData.optMoisture = record.optMoisture
+  if (record.designCompaction !== null && record.designCompaction !== undefined) formData.designCompaction = record.designCompaction
 
   // Ensure entity fields override JSON if present
   if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
   if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
 
   // Map Roles
-  // Load defaults from directory if available
   const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
   
-  // Filler - Priority: record.filler
   formData.filler = record.filler || ''
-  
-  // Record Tester - Priority: record.recordTester -> record.tester
   formData.recordTester = record.recordTester || record.tester || ''
   
-  // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
   if (record.recordReviewer || record.reviewer) {
     formData.recordReviewer = record.recordReviewer || record.reviewer
   }
+  
+  // 加载所有页面的数据（如果存在）
+  // 先加载当前页面的数据
+  loadPageData(currentPage.value, parsedJson)
+  
+  // 如果有多个页面，确保所有页面的数据都被加载到 formData 中
+  // 这样切换页面时数据已经存在，不需要重新从 JSON 解析
+  if (formData.totalPages > 1) {
+    for (let pageIdx = 0; pageIdx < formData.totalPages; pageIdx++) {
+      if (pageIdx !== currentPage.value) {
+        loadPageData(pageIdx, parsedJson)
+      }
+    }
+  }
+}
+
+// 保存当前页面的数据到 formData（实际上数据已经在 formData 中，这个函数主要是为了确保数据完整性）
+const saveCurrentPageData = () => {
+  // 当前页面的所有字段已经在 formData 中，带页面后缀
+  // 不需要额外操作，因为数据是双向绑定的
 }
 
 const saveCurrentRecordState = () => {
-  if (records.value.length === 0) return
+  if (!currentRecord.value) return
   
-  const record = records.value[currentIndex.value]
-  record.id = formData.id
-  record.entrustmentId = formData.entrustmentId
-  record.reviewSignaturePhoto = formData.reviewerSignature
-  record.inspectSignaturePhoto = formData.testerSignature
+  // 保存当前页面的数据
+  saveCurrentPageData()
   
-  record.recordTester = formData.recordTester
-  record.recordReviewer = formData.recordReviewer
-  record.tester = formData.recordTester // Sync legacy
-  record.reviewer = formData.recordReviewer // Sync legacy
+  // 更新记录的基本信息
+  currentRecord.value.id = formData.id
+  currentRecord.value.entrustmentId = formData.entrustmentId
+  currentRecord.value.reviewSignaturePhoto = formData.reviewerSignature
+  currentRecord.value.inspectSignaturePhoto = formData.testerSignature
   
-  // Update dataJson with current formData state
-  // Exclude legacy fields from JSON
+  currentRecord.value.recordTester = formData.recordTester
+  currentRecord.value.recordReviewer = formData.recordReviewer
+  currentRecord.value.tester = formData.recordTester
+  currentRecord.value.reviewer = formData.recordReviewer
+  
+  // 更新 dataJson：包含所有页面的数据和全局字段
   const dataJsonObj = { ...formData }
+  // 排除不需要存储的字段
   delete dataJsonObj.tester
   delete dataJsonObj.reviewer
-  record.dataJson = JSON.stringify(dataJsonObj)
+  delete dataJsonObj.id
+  delete dataJsonObj.entrustmentId
+  
+  currentRecord.value.dataJson = JSON.stringify(dataJsonObj)
 }
 
-const prevRecord = () => {
-  if (currentIndex.value > 0) {
-    saveCurrentRecordState()
-    currentIndex.value--
-    mapRecordToFormData(records.value[currentIndex.value])
+const prevPage = () => {
+  if (currentPage.value > 0) {
+    saveCurrentPageData()
+    saveCurrentRecordState()  // 保存到数据库记录
+    currentPage.value--
+    // 从 currentRecord 中加载该页面的数据
+    if (currentRecord.value && currentRecord.value.dataJson) {
+      try {
+        const json = JSON.parse(currentRecord.value.dataJson)
+        loadPageData(currentPage.value, json)
+      } catch (e) {
+        console.error('Error loading page data:', e)
+        initDynamicFieldsForPage(currentPage.value)
+      }
+    } else {
+      initDynamicFieldsForPage(currentPage.value)
+    }
   }
 }
 
-const nextRecord = () => {
-  if (currentIndex.value < records.value.length - 1) {
-    saveCurrentRecordState()
-    currentIndex.value++
-    mapRecordToFormData(records.value[currentIndex.value])
+const nextPage = () => {
+  saveCurrentPageData()
+  saveCurrentRecordState()  // 保存到数据库记录
+  
+  // 如果下一页不存在，初始化它
+  if (currentPage.value >= totalPages.value - 1) {
+    currentPage.value++
+    initDynamicFieldsForPage(currentPage.value)
+    formData.totalPages = currentPage.value + 1
+  } else {
+    currentPage.value++
+    // 从 currentRecord 中加载该页面的数据
+    if (currentRecord.value && currentRecord.value.dataJson) {
+      try {
+        const json = JSON.parse(currentRecord.value.dataJson)
+        loadPageData(currentPage.value, json)
+      } catch (e) {
+        console.error('Error loading page data:', e)
+        initDynamicFieldsForPage(currentPage.value)
+      }
+    } else {
+      initDynamicFieldsForPage(currentPage.value)
+    }
   }
 }
 
-const addRecord = () => {
-  saveCurrentRecordState()
-  const newRecord = {
-    id: '',
-    entrustmentId: props.wtNum || props.id || formData.entrustmentId,
-    dataJson: '{}',
-    status: 0
-  }
-  records.value.push(newRecord)
-  currentIndex.value = records.value.length - 1
-  mapRecordToFormData(newRecord)
+const addPage = () => {
+  saveCurrentPageData()
+  saveCurrentRecordState()  // 保存当前状态
+  
+  // 添加新页面
+  const newPageIndex = totalPages.value
+  currentPage.value = newPageIndex
+  initDynamicFieldsForPage(newPageIndex)
+  formData.totalPages = newPageIndex + 1
 }
 
-const deleteRecord = async () => {
-  if (records.value.length <= 1) {
-    alert('至少保留一条记录')
+const deletePage = async () => {
+  if (totalPages.value <= 1) {
+    alert('至少保留一页')
     return
   }
   
-  if (!confirm('确定要删除当前记录吗？')) return
-
-  const currentRecord = records.value[currentIndex.value]
+  if (!confirm('确定要删除当前页面吗？')) return
   
-  if (currentRecord.id) {
+  saveCurrentPageData()
+  saveCurrentRecordState()
+  
+  // 从 dataJson 中删除当前页面的所有字段
+  if (currentRecord.value && currentRecord.value.dataJson) {
     try {
-      const response = await axios.post('/api/cutting-ring/delete', { id: currentRecord.id })
-      if (!response.data.success) {
-        alert('删除失败: ' + response.data.message)
-        return
+      const json = JSON.parse(currentRecord.value.dataJson)
+      const keysToDelete = []
+      Object.keys(json).forEach(key => {
+        if (key.includes('_page' + currentPage.value + '_')) {
+          keysToDelete.push(key)
+        }
+      })
+      keysToDelete.forEach(key => delete json[key])
+      
+      // 更新总页数
+      formData.totalPages = Math.max(1, formData.totalPages - 1)
+      json.totalPages = formData.totalPages
+      
+      // 如果删除的不是最后一页，需要重新编号后面的页面
+      if (currentPage.value < formData.totalPages) {
+        const renumberMap = {}
+        Object.keys(json).forEach(key => {
+          const match = key.match(/^(.+)_page(\d+)_(.+)$/)
+          if (match) {
+            const [, fieldName, pageIndex, suffix] = match
+            const oldPageIndex = parseInt(pageIndex)
+            if (oldPageIndex > currentPage.value) {
+              const newKey = `${fieldName}_page${oldPageIndex - 1}_${suffix}`
+              renumberMap[key] = newKey
+            }
+          }
+        })
+        
+        // 执行重新编号
+        Object.keys(renumberMap).forEach(oldKey => {
+          json[renumberMap[oldKey]] = json[oldKey]
+          delete json[oldKey]
+        })
       }
+      
+      currentRecord.value.dataJson = JSON.stringify(json)
+      
+      // 调整当前页面索引
+      if (currentPage.value >= formData.totalPages) {
+        currentPage.value = formData.totalPages - 1
+      }
+      
+      // 加载当前页面的数据
+      loadPageData(currentPage.value, json)
     } catch (e) {
-      console.error('Delete error', e)
-      alert('删除失败')
-      return
+      console.error('Delete page error', e)
+      alert('删除页面失败')
     }
   }
-  
-  records.value.splice(currentIndex.value, 1)
-  if (currentIndex.value >= records.value.length) {
-    currentIndex.value = records.value.length - 1
-  }
-  mapRecordToFormData(records.value[currentIndex.value])
 }
 
 const loadData = async (paramId) => {
@@ -732,20 +1009,23 @@ const loadData = async (paramId) => {
       })
 
       if (response.data.success && response.data.data && response.data.data.length > 0) {
-        records.value = response.data.data
-        currentIndex.value = 0
-        mapRecordToFormData(records.value[0])
+        // 使用第一条记录（现在只支持单条记录多页）
+        const record = response.data.data[0]
+        currentRecord.value = record
+        currentPage.value = 0
+        mapRecordToFormData(record)
       } else {
         // 4. If no record, create one
         const newRecord = {
           id: '',
           entrustmentId: idOrWtNum,
-          dataJson: JSON.stringify(formData)
+          dataJson: JSON.stringify({ ...formData, totalPages: 1 })
         }
         
-        records.value = [newRecord]
-        currentIndex.value = 0
-        mapRecordToFormData(newRecord)
+        currentRecord.value = newRecord
+        currentPage.value = 0
+        formData.totalPages = 1
+        initDynamicFieldsForPage(0)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -755,9 +1035,15 @@ const loadData = async (paramId) => {
 
 const saveData = async () => {
   try {
+    // 保存当前页面的数据
+    saveCurrentPageData()
+    saveCurrentRecordState()
+    
     const dataJsonObj = { ...formData }
     delete dataJsonObj.tester
     delete dataJsonObj.reviewer
+    delete dataJsonObj.id
+    delete dataJsonObj.entrustmentId
 
     const dataToSave = {
       id: formData.id,
@@ -766,8 +1052,8 @@ const saveData = async () => {
       // Roles
       recordTester: formData.recordTester,
       recordReviewer: formData.recordReviewer,
-      tester: formData.recordTester, // Sync legacy
-      reviewer: formData.recordReviewer, // Sync legacy
+      tester: formData.recordTester,
+      reviewer: formData.recordReviewer,
       filler: formData.filler,
       
       // Signatures
@@ -780,9 +1066,11 @@ const saveData = async () => {
       alert('保存成功')
       // If new record, update ID
       if (!formData.id && response.data.data && response.data.data.id) {
-           formData.id = response.data.data.id
+        formData.id = response.data.data.id
+        if (currentRecord.value) {
+          currentRecord.value.id = response.data.data.id
+        }
       }
-      // If the backend returns a message or data, handle it
     } else {
       alert('保存失败: ' + response.data.message)
     }

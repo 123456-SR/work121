@@ -408,6 +408,9 @@ public class TableGenerationServiceImpl implements TableGenerationService {
      * 将某一类密度记录表中所有记录的 DATA_JSON 合并到 recordData 里。
      * 对于数据字段（如 sampleId_0, dryDensity_1 等），会智能重新编号以避免覆盖。
      * 对于非数据字段（如 projectName, testCategory 等），后出现的会覆盖先前的。
+     * 
+     * 支持多页数据：识别带页面后缀的字段（如 sampleNo_page0_0, sampleNo_page1_0），
+     * 将所有页面的数据合并并重新编号（去掉页面后缀，统一编号）。
      */
     private <T> void mergeDensityRecordJson(List<T> records,
                                             Map<String, Object> recordData,
@@ -424,7 +427,12 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             "wetDensity2_", "dryDensity2_", "moisture2_",
             "samplingLocation_", "avgMeasuredDryDensity_", "relativeDensity_",
             // 环刀法特有的字段前缀（需要映射到标准字段）
-            "sampleNo_", "moisture1_"
+            "sampleNo_", "moisture1_",
+            // 环刀法其他字段
+            "status_", "ringNo_", "ringMass_", "ringWetMass_", "ringVolume_",
+            "boxNo1_", "boxNo2_", "boxMass1_", "boxMass2_", "boxWetMass1_", "boxWetMass2_",
+            "boxDryMass1_", "boxDryMass2_", "moisture2_", "avgMoisture_",
+            "wetDensity_", "dryDensity_", "avgDryDensity_"
         };
         
         for (T be : records) {
@@ -434,7 +442,6 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                     Map<String, Object> m = objectMapper.readValue(json, Map.class);
                     if (m != null) {
                         // 1. 先找出当前 recordData 中数据字段的最大索引
-                        // 注意：recordData 中可能已经有映射后的字段名（sampleId_, moisture_）
                         int maxExistingIndex = -1;
                         for (String key : recordData.keySet()) {
                             for (String prefix : dataFieldPrefixes) {
@@ -463,41 +470,99 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                             }
                         }
                         
-                        // 2. 找出新记录中数据字段的最大索引（考虑字段映射）
-                        int maxNewIndex = -1;
+                        // 2. 收集所有带页面后缀的数据字段，按页面和索引排序
+                        List<FieldEntry> pageFields = new ArrayList<>();
                         for (String key : m.keySet()) {
-                            for (String prefix : dataFieldPrefixes) {
-                                if (key.startsWith(prefix)) {
-                                    try {
-                                        String suffix = key.substring(prefix.length());
-                                        int idx = Integer.parseInt(suffix);
-                                        if (idx > maxNewIndex) {
-                                            maxNewIndex = idx;
-                                        }
-                                    } catch (NumberFormatException ignored) {
-                                        // 不是数字后缀，忽略
+                            // 检查是否是带页面后缀的字段（格式：fieldName_pageX_Y）
+                            java.util.regex.Pattern pagePattern = java.util.regex.Pattern.compile("^(.+?)_page(\\d+)_(\\d+)$");
+                            java.util.regex.Matcher pageMatcher = pagePattern.matcher(key);
+                            if (pageMatcher.matches()) {
+                                String baseFieldName = pageMatcher.group(1);
+                                int pageIndex = Integer.parseInt(pageMatcher.group(2));
+                                int fieldIndex = Integer.parseInt(pageMatcher.group(3));
+                                
+                                // 检查是否是数据字段
+                                boolean isDataField = false;
+                                String matchedPrefix = null;
+                                for (String prefix : dataFieldPrefixes) {
+                                    // 去掉前缀的下划线，因为 baseFieldName 不包含下划线
+                                    String prefixWithoutUnderscore = prefix.replace("_", "");
+                                    if (baseFieldName.equals(prefixWithoutUnderscore) || baseFieldName.startsWith(prefixWithoutUnderscore + "_")) {
+                                        isDataField = true;
+                                        matchedPrefix = prefix;
+                                        break;
                                     }
                                 }
-                            }
-                            // 也检查环刀法的特有字段（需要映射的）
-                            if (key.startsWith("sampleNo_") || key.startsWith("moisture1_")) {
-                                try {
-                                    String suffix = key.substring(key.lastIndexOf("_") + 1);
-                                    int idx = Integer.parseInt(suffix);
-                                    if (idx > maxNewIndex) {
-                                        maxNewIndex = idx;
+                                // 特殊处理：环刀法的特有字段（baseFieldName 可能是 "sampleNo" 或 "moisture1"）
+                                if (!isDataField) {
+                                    if ("sampleNo".equals(baseFieldName) || baseFieldName.startsWith("sampleNo")) {
+                                        isDataField = true;
+                                        matchedPrefix = "sampleNo_";
+                                    } else if ("moisture1".equals(baseFieldName) || baseFieldName.startsWith("moisture1")) {
+                                        isDataField = true;
+                                        matchedPrefix = "moisture1_";
                                     }
-                                } catch (NumberFormatException ignored) {
-                                    // 不是数字后缀，忽略
+                                }
+                                
+                                if (isDataField) {
+                                    pageFields.add(new FieldEntry(key, baseFieldName, pageIndex, fieldIndex, matchedPrefix, m.get(key)));
                                 }
                             }
                         }
                         
-                        // 3. 合并数据：数据字段重新编号，非数据字段直接合并（后覆盖前）
-                        int offset = maxExistingIndex + 1; // 新记录的起始索引
+                        // 3. 按页面索引和字段索引排序，然后重新编号
+                        pageFields.sort((a, b) -> {
+                            int pageCompare = Integer.compare(a.pageIndex, b.pageIndex);
+                            if (pageCompare != 0) return pageCompare;
+                            return Integer.compare(a.fieldIndex, b.fieldIndex);
+                        });
+                        
+                        // 4. 计算每页的样品数量（假设每页5个样品）
+                        int samplesPerPage = 5;
+                        int offset = maxExistingIndex + 1;
+                        
+                        for (FieldEntry entry : pageFields) {
+                            // 计算新的索引：页面索引 * 每页样品数 + 字段索引 + offset
+                            int newIndex = entry.pageIndex * samplesPerPage + entry.fieldIndex + offset;
+                            
+                            // 字段名映射：将不同记录表的字段名统一映射到报告表的字段名
+                            String mappedPrefix = entry.matchedPrefix;
+                            if ("sampleNo_".equals(entry.matchedPrefix)) {
+                                mappedPrefix = "sampleId_";
+                            } else if ("moisture1_".equals(entry.matchedPrefix)) {
+                                mappedPrefix = "moisture_";
+                            }
+                            
+                            // 提取基础字段名（去掉前缀）
+                            String baseName = entry.baseFieldName;
+                            if (entry.matchedPrefix != null && baseName.startsWith(entry.matchedPrefix)) {
+                                baseName = baseName.substring(entry.matchedPrefix.length());
+                            }
+                            
+                            String newKey = mappedPrefix + newIndex;
+                            recordData.put(newKey, entry.value);
+                            
+                            if ("CuttingRing".equals(debugLabel)) {
+                                System.out.println("[mergeDensityRecordJson] 多页字段映射: " + entry.originalKey + 
+                                    " (页面" + entry.pageIndex + ", 索引" + entry.fieldIndex + ") -> " + 
+                                    newKey + " (值: " + entry.value + ")");
+                            }
+                        }
+                        
+                        // 5. 处理不带页面后缀的字段（兼容旧数据）
                         for (Map.Entry<String, Object> entry : m.entrySet()) {
                             String key = entry.getKey();
                             Object value = entry.getValue();
+                            
+                            // 跳过已经处理过的带页面后缀的字段
+                            if (key.contains("_page") && key.matches("^.+_page\\d+_\\d+$")) {
+                                continue;
+                            }
+                            
+                            // 跳过 totalPages 等管理字段
+                            if ("totalPages".equals(key)) {
+                                continue;
+                            }
                             
                             boolean isDataField = false;
                             String matchedPrefix = null;
@@ -508,16 +573,15 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                                 if (key.startsWith(prefix)) {
                                     try {
                                         suffix = key.substring(prefix.length());
-                                        Integer.parseInt(suffix); // 验证是数字
+                                        Integer.parseInt(suffix);
                                         isDataField = true;
                                         matchedPrefix = prefix;
                                         break;
                                     } catch (NumberFormatException ignored) {
-                                        // 不是数字后缀，不是数据字段
                                     }
                                 }
                             }
-                            // 特殊处理：环刀法的特有字段（即使不在标准前缀列表中，也需要识别为数据字段）
+                            // 特殊处理：环刀法的特有字段
                             if (!isDataField) {
                                 if (key.startsWith("sampleNo_")) {
                                     try {
@@ -543,19 +607,13 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                                 int oldIndex = Integer.parseInt(suffix);
                                 int newIndex = offset + oldIndex;
                                 
-                                // 字段名映射：将不同记录表的字段名统一映射到报告表的字段名
+                                // 字段名映射
                                 String mappedPrefix = matchedPrefix;
                                 if ("sampleNo_".equals(matchedPrefix)) {
-                                    // 环刀法：sampleNo_ -> sampleId_
                                     mappedPrefix = "sampleId_";
-                                    System.out.println("[mergeDensityRecordJson] 字段映射: " + key + " -> " + mappedPrefix + newIndex + " (值: " + value + ")");
                                 } else if ("moisture1_".equals(matchedPrefix)) {
-                                    // 环刀法：moisture1_ -> moisture_（第一行含水率）
                                     mappedPrefix = "moisture_";
-                                    System.out.println("[mergeDensityRecordJson] 字段映射: " + key + " -> " + mappedPrefix + newIndex + " (值: " + value + ")");
                                 }
-                                // 注意：moisture2_ 不需要映射，直接使用
-                                // avgMoisture_ 是平均含水率，不应该映射到报告表
                                 
                                 String newKey = mappedPrefix + newIndex;
                                 recordData.put(newKey, value);
@@ -565,11 +623,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                             }
                         }
 
-                        // 4. 针对不同试验方法做额外的字段规范化映射
+                        // 6. 针对不同试验方法做额外的字段规范化映射
                         if ("WaterReplacement".equals(debugLabel)) {
-                            // 灌水法：将记录表里的 samplingLocation_0 / avgMeasuredDryDensity_0 / relativeDensity_0 等
-                            // 规范映射到通用的 location_0 / dryDensity_0 / compaction_0 / moisture_0，
-                            // 便于"原位密度检测报告/结果"自动填充。
                             normalizeWaterReplacementJson(recordData, m);
                         }
                     }
@@ -578,6 +633,27 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+    
+    /**
+     * 辅助类：用于存储带页面后缀的字段信息
+     */
+    private static class FieldEntry {
+        String originalKey;
+        String baseFieldName;
+        int pageIndex;
+        int fieldIndex;
+        String matchedPrefix;
+        Object value;
+        
+        FieldEntry(String originalKey, String baseFieldName, int pageIndex, int fieldIndex, String matchedPrefix, Object value) {
+            this.originalKey = originalKey;
+            this.baseFieldName = baseFieldName;
+            this.pageIndex = pageIndex;
+            this.fieldIndex = fieldIndex;
+            this.matchedPrefix = matchedPrefix;
+            this.value = value;
         }
     }
 
@@ -842,6 +918,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     private void generateCuttingRingReportAndResult(String entrustmentId) {
         try {
+            System.out.println("[generateCuttingRingReportAndResult] 开始生成环刀法报告和结果，entrustmentId: " + entrustmentId);
+            
             List<CuttingRing> records = cuttingRingMapper.selectByEntrustmentId(entrustmentId);
             if (records == null || records.isEmpty()) {
                 System.err.println("Warning: Record not found for entrustmentId " + entrustmentId);
@@ -849,7 +927,20 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             CuttingRing record = records.get(0);
+            System.out.println("[generateCuttingRingReportAndResult] 找到记录，ID: " + record.getId() + ", dataJson长度: " + 
+                (record.getDataJson() != null ? record.getDataJson().length() : 0));
+            
             Map<String, Object> recordData = prepareCuttingRingData(record);
+            
+            // 统计 recordData 中的表格数据字段数量
+            int tableDataCount = 0;
+            for (String key : recordData.keySet()) {
+                if (key.matches("^(sampleId|location|moisture|dryDensity|wetDensity|compaction)_\\d+$")) {
+                    tableDataCount++;
+                }
+            }
+            System.out.println("[generateCuttingRingReportAndResult] prepareCuttingRingData 返回的数据中，表格数据字段数: " + tableDataCount);
+            System.out.println("[generateCuttingRingReportAndResult] recordData 总字段数: " + recordData.size());
 
             CuttingRingReport report = cuttingRingReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -857,8 +948,14 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 report.setId(UUID.randomUUID().toString());
                 report.setEntrustmentId(entrustmentId);
                 fillTableFromEntrustment("CUTTING_RING", entrustmentId, report);
+                System.out.println("[generateCuttingRingReportAndResult] 创建新报告，ID: " + report.getId());
+            } else {
+                System.out.println("[generateCuttingRingReportAndResult] 使用现有报告，ID: " + report.getId());
             }
-            report.setDataJson(objectMapper.writeValueAsString(recordData));
+            
+            String dataJsonStr = objectMapper.writeValueAsString(recordData);
+            System.out.println("[generateCuttingRingReportAndResult] 准备保存的 dataJson 长度: " + dataJsonStr.length());
+            report.setDataJson(dataJsonStr);
             saveCuttingRingReport(report);
 
             CuttingRingResult result = cuttingRingResultMapper.selectByEntrustmentId(entrustmentId);
@@ -867,12 +964,16 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 result.setId(UUID.randomUUID().toString());
                 result.setEntrustmentId(entrustmentId);
                 fillTableFromEntrustment("CUTTING_RING", entrustmentId, result);
+                System.out.println("[generateCuttingRingReportAndResult] 创建新结果，ID: " + result.getId());
+            } else {
+                System.out.println("[generateCuttingRingReportAndResult] 使用现有结果，ID: " + result.getId());
             }
-            result.setDataJson(objectMapper.writeValueAsString(recordData));
+            result.setDataJson(dataJsonStr);
             saveCuttingRingResult(result);
 
-            System.out.println("Generated Report and Result for CuttingRing entrustment: " + entrustmentId);
+            System.out.println("[generateCuttingRingReportAndResult] 成功生成环刀法报告和结果，entrustmentId: " + entrustmentId);
         } catch (Exception e) {
+            System.err.println("[generateCuttingRingReportAndResult] 生成报告和结果时出错: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Error generating CuttingRing report/result: " + e.getMessage());
         }
@@ -1435,19 +1536,199 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             try {
                 Map<String, Object> existingJson = objectMapper.readValue(record.getDataJson(), Map.class);
                 if (existingJson != null) {
-                    recordData.putAll(existingJson);
+                    System.out.println("[prepareCuttingRingData] 记录表原始数据字段总数: " + existingJson.size());
+                    System.out.println("[prepareCuttingRingData] 记录表原始数据前10个字段: " + 
+                        existingJson.keySet().stream().limit(10).collect(java.util.stream.Collectors.toList()));
+                    
+                    // 检查是否有带页面后缀的字段（多页数据）
+                    boolean hasPageSuffix = false;
+                    int pageSuffixCount = 0;
+                    for (String key : existingJson.keySet()) {
+                        if (key.matches("^.+_page\\d+_\\d+$")) {
+                            hasPageSuffix = true;
+                            pageSuffixCount++;
+                        }
+                    }
+                    System.out.println("[prepareCuttingRingData] 是否有带 _page 后缀的字段: " + hasPageSuffix + ", 数量: " + pageSuffixCount);
+                    
+                    if (hasPageSuffix) {
+                        // 新格式：带页面后缀，需要合并所有页面的数据
+                        // 定义数据字段前缀
+                        String[] dataFieldPrefixes = {
+                            "sampleNo", "location", "status", "ringNo", "ringMass", "ringWetMass", "ringVolume",
+                            "boxNo1", "boxNo2", "boxMass1", "boxMass2", "boxWetMass1", "boxWetMass2",
+                            "boxDryMass1", "boxDryMass2", "moisture1", "moisture2", "avgMoisture",
+                            "wetDensity", "dryDensity", "avgDryDensity", "compaction"
+                        };
+                        
+                        // 收集所有带页面后缀的字段
+                        List<FieldEntry> pageFields = new ArrayList<>();
+                        int maxPageIndex = -1;
+                        for (String key : existingJson.keySet()) {
+                            java.util.regex.Pattern pagePattern = java.util.regex.Pattern.compile("^(.+?)_page(\\d+)_(\\d+)$");
+                            java.util.regex.Matcher pageMatcher = pagePattern.matcher(key);
+                            if (pageMatcher.matches()) {
+                                String baseFieldName = pageMatcher.group(1);
+                                int pageIndex = Integer.parseInt(pageMatcher.group(2));
+                                int fieldIndex = Integer.parseInt(pageMatcher.group(3));
+                                
+                                // 记录最大页面索引
+                                if (pageIndex > maxPageIndex) {
+                                    maxPageIndex = pageIndex;
+                                }
+                                
+                                // 检查是否是数据字段
+                                boolean isDataField = false;
+                                for (String prefix : dataFieldPrefixes) {
+                                    if (baseFieldName.equals(prefix) || baseFieldName.startsWith(prefix + "_")) {
+                                        isDataField = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (isDataField) {
+                                    // 找到匹配的前缀
+                                    String matchedPrefix = null;
+                                    for (String prefix : dataFieldPrefixes) {
+                                        if (baseFieldName.equals(prefix) || baseFieldName.startsWith(prefix + "_")) {
+                                            matchedPrefix = prefix;
+                                            break;
+                                        }
+                                    }
+                                    Object value = existingJson.get(key);
+                                    pageFields.add(new FieldEntry(key, baseFieldName, pageIndex, fieldIndex, matchedPrefix, value));
+                                    System.out.println("[prepareCuttingRingData] 收集到多页字段: " + key + " (页面" + pageIndex + ", 索引" + fieldIndex + ", 值: " + value + ")");
+                                }
+                            }
+                        }
+                        System.out.println("[prepareCuttingRingData] 收集到的多页字段总数: " + pageFields.size() + ", 最大页面索引: " + maxPageIndex);
+                        
+                        // 按页面索引和字段索引排序
+                        pageFields.sort((a, b) -> {
+                            int pageCompare = Integer.compare(a.pageIndex, b.pageIndex);
+                            if (pageCompare != 0) return pageCompare;
+                            return Integer.compare(a.fieldIndex, b.fieldIndex);
+                        });
+                        
+                        // 合并所有页面的数据，重新编号为连续的索引
+                        int samplesPerPage = 5;
+                        int mergedCount = 0;
+                        for (FieldEntry entry : pageFields) {
+                            // 计算新的连续索引：页面索引 * 每页样品数 + 字段索引
+                            int newIndex = entry.pageIndex * samplesPerPage + entry.fieldIndex;
+                            
+                            // 提取基础字段名
+                            String baseName = entry.baseFieldName;
+                            
+                            // 字段名映射：将记录表的字段名映射到报告/结果表的字段名
+                            String mappedFieldName = baseName;
+                            if ("sampleNo".equals(baseName)) {
+                                // 环刀法记录表：sampleNo -> 报告/结果表：sampleId
+                                mappedFieldName = "sampleId";
+                            } else if ("moisture1".equals(baseName)) {
+                                // 环刀法记录表：moisture1 -> 报告/结果表：moisture（第一行含水率）
+                                mappedFieldName = "moisture";
+                            }
+                            // 注意：moisture2 不需要映射，直接使用
+                            // avgMoisture 是平均含水率，不需要映射
+                            
+                            // 构建新字段名：mappedFieldName_newIndex
+                            String newKey = mappedFieldName + "_" + newIndex;
+                            recordData.put(newKey, entry.value);
+                            mergedCount++;
+                            
+                            if (mergedCount <= 20 || entry.pageIndex >= 1) {
+                                // 只打印前20个字段，或者所有第1页及以后的字段
+                                System.out.println("[prepareCuttingRingData] 多页字段合并: " + entry.originalKey + 
+                                    " (页面" + entry.pageIndex + ", 索引" + entry.fieldIndex + ") -> " + 
+                                    newKey + " (值: " + entry.value + ")");
+                            }
+                        }
+                        System.out.println("[prepareCuttingRingData] 成功合并 " + mergedCount + " 个多页字段到 recordData");
+                        
+                        // 调试：检查是否有第二页数据（索引 5-9）
+                        boolean hasPage1Data = false;
+                        for (int i = 5; i <= 9; i++) {
+                            if (recordData.containsKey("sampleId_" + i) || 
+                                recordData.containsKey("location_" + i) ||
+                                recordData.containsKey("moisture_" + i)) {
+                                Object val = recordData.get("sampleId_" + i);
+                                if (val != null && !val.toString().trim().isEmpty()) {
+                                    hasPage1Data = true;
+                                    System.out.println("[prepareCuttingRingData] 发现第二页数据，索引: " + i + ", 值: " + val);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasPage1Data) {
+                            System.out.println("[prepareCuttingRingData] 警告：未发现第二页数据（索引 5-9），可能记录表中只有第 0 页的数据");
+                        }
+                        
+                        // 检查原始数据中是否有 _page1_ 字段
+                        boolean hasPage1InSource = false;
+                        for (String key : existingJson.keySet()) {
+                            if (key.matches("^.+_page1_\\d+$")) {
+                                Object val = existingJson.get(key);
+                                if (val != null && !val.toString().trim().isEmpty()) {
+                                    hasPage1InSource = true;
+                                    System.out.println("[prepareCuttingRingData] 原始数据中发现 _page1_ 字段: " + key + " = " + val);
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasPage1InSource) {
+                            System.out.println("[prepareCuttingRingData] 警告：原始记录表中没有 _page1_ 字段，说明记录表中只有第 0 页的数据");
+                        }
+                        
+                        System.out.println("[prepareCuttingRingData] 合并后的数据字段总数: " + recordData.size());
+                        System.out.println("[prepareCuttingRingData] 原始数据中带 _page 后缀的字段数: " + pageFields.size());
+                        
+                        // 复制非数据字段（全局字段）
+                        for (Map.Entry<String, Object> entry : existingJson.entrySet()) {
+                            String key = entry.getKey();
+                            // 跳过带页面后缀的字段（已经处理过了）
+                            if (key.matches("^.+_page\\d+_\\d+$")) {
+                                continue;
+                            }
+                            // 跳过 totalPages 等管理字段
+                            if ("totalPages".equals(key)) {
+                                continue;
+                            }
+                            recordData.put(key, entry.getValue());
+                        }
+                    } else {
+                        // 旧格式：不带页面后缀，直接复制
+                        recordData.putAll(existingJson);
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
+                e.printStackTrace();
             }
         }
-        recordData.put("projectName", record.getProjectName());
-        recordData.put("commissionDate", record.getCommissionDate());
-        recordData.put("constructionPart", record.getConstructionPart());
-        recordData.put("testCategory", record.getTestCategory());
-        recordData.put("tester", record.getTester());
-        recordData.put("reviewer", record.getReviewer());
-        recordData.put("approver", record.getApprover());
+        
+        // 合并实体字段（优先级高于 JSON）
+        if (record.getProjectName() != null) {
+            recordData.put("projectName", record.getProjectName());
+        }
+        if (record.getCommissionDate() != null) {
+            recordData.put("commissionDate", record.getCommissionDate());
+        }
+        if (record.getConstructionPart() != null) {
+            recordData.put("constructionPart", record.getConstructionPart());
+        }
+        if (record.getTestCategory() != null) {
+            recordData.put("testCategory", record.getTestCategory());
+        }
+        if (record.getTester() != null) {
+            recordData.put("tester", record.getTester());
+        }
+        if (record.getReviewer() != null) {
+            recordData.put("reviewer", record.getReviewer());
+        }
+        if (record.getApprover() != null) {
+            recordData.put("approver", record.getApprover());
+        }
         return recordData;
     }
 

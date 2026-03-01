@@ -256,14 +256,15 @@
 
     <div class="disclaimer">
         声明：<br>
-        1. 对本检验报告的复印件未加盖公司检验检测专用章无效。 2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。
+        1. 对本检验报告的复印件未加盖公司检验检测专用章无效。<br>
+        2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。
     </div>
 
     <div class="company-info">
-        <div>公司名称：<input type="text" v-model="formData.companyName"   name="companyName" style="width: 70%; border-bottom: 1px solid black; text-align: left;" value="河北金涛建设工程质量检测有限公司"></div>
+        <div>公司名称：河北金涛建设工程质量检测有限公司</div>
         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-            <span>公司地址：<input type="text" v-model="formData.companyAddress"   name="companyAddress" style="width: 300px; border-bottom: 1px solid black; text-align: left;" value="石家庄高新区方亿科技工业园A区第2号楼。"></span>
-            <span>电话：<input type="text" v-model="formData.companyPhone"   name="companyPhone" style="width: 200px; border-bottom: 1px solid black;" value="0311—86107634  0311—67300616"></span>
+            <span>公司地址：石家庄高新区方亿科技工业园区A区第2号楼</span>
+            <span>电话：0311—86107634 67300616</span>
         </div>
     </div>
 

@@ -36,6 +36,14 @@ public interface SimpleDirectoryService {
     List<SimpleDirectory> getAllDirectories();
 
     /**
+     * 分页获取目录列表
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 目录分页列表
+     */
+    com.github.pagehelper.PageInfo<SimpleDirectory> getDirectoriesByPage(int pageNum, int pageSize);
+
+    /**
      * 删除目录
      * @param id 目录ID
      * @return 是否删除成功

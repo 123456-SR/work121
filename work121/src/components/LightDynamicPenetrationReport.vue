@@ -260,10 +260,10 @@
     </div>
 
     <div class="company-info" style="display: block; margin-top: 5px; font-size: 14px; font-weight: bold;">
-        <div>公司名称：<input type="text" v-model="formData.companyName"   name="companyName" style="width: 70%; border: none; text-align: left;" value="河北金涛建设工程质量检测有限公司"></div>
+        <div>公司名称：河北金涛建设工程质量检测有限公司</div>
         <div style="display: flex; justify-content: space-between; margin-top: 5px;">
-            <span>公司地址：<input type="text" v-model="formData.companyAddress"   name="companyAddress" style="width: 300px; border: none; text-align: left;" value="石家庄高新区方亿科技工业园A区第2号楼。"></span>
-            <span>电话：<input type="text" v-model="formData.companyPhone"   name="companyPhone" style="width: 200px; border: none;" value="0311—86107634  0311—67300616"></span>
+            <span>公司地址：石家庄高新区方亿科技工业园区A区第2号楼</span>
+            <span>电话：0311—86107634 67300616</span>
         </div>
     </div>
 
@@ -616,9 +616,7 @@ const loadData = async () => {
       formData.conclusion = data.conclusion || ''
       formData.status = data.status !== undefined ? data.status : 0
       formData.rejectReason = data.rejectReason || ''
-      formData.companyName = '河北金涛建设工程质量检测有限公司'
-      formData.companyAddress = '石家庄高新区方亿科技工业园A区第2号楼。'
-      formData.companyPhone = '0311—86107634  0311—67300616'
+      // 公司信息已写死在前端显示，不再需要从数据中设置
 
       // 1. Fallback: If basic info is missing, fetch from Entrustment (JC_CORE_WT_INFO)
       if (!formData.projectName || !formData.entrustingUnit || !data.entrustmentId) {

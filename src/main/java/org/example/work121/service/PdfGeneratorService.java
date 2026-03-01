@@ -692,21 +692,10 @@ public class PdfGeneratorService {
 
             document.add(footerTable);
 
-            // 声明 + 公司信息区
-            String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
-            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
-            String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
-
-            // 顶部粗横线（在“声明”之上）
-            PdfPTable topLineTable = new PdfPTable(1);
-            topLineTable.setWidthPercentage(100);
-            topLineTable.setSpacingBefore(10);
-            PdfPCell topLineCell = new PdfPCell(new Paragraph(" ", valueFont));
-            topLineCell.setBorder(Rectangle.BOTTOM);
-            topLineCell.setBorderWidthBottom(1.2f); // 略粗的横线
-            topLineCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            topLineTable.addCell(topLineCell);
-            document.add(topLineTable);
+            // 声明 + 公司信息区（写死固定值）
+            String companyName = "河北金涛建设工程质量检测有限公司";
+            String companyPhone = "0311—86107634 67300616";
+            String companyAddress = "石家庄高新区方亿科技工业园区A区第2号楼";
 
             // 声明行（无边框）
             PdfPTable statementTable = new PdfPTable(1);
@@ -757,14 +746,6 @@ public class PdfGeneratorService {
             addrValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
             addrValueCell.setColspan(3);
             companyTable.addCell(addrValueCell);
-
-            // 公司地址下方粗横线
-            PdfPCell bottomLineCell = new PdfPCell(new Paragraph(" ", valueFont));
-            bottomLineCell.setBorder(Rectangle.BOTTOM);
-            bottomLineCell.setBorderWidthBottom(1.2f);
-            bottomLineCell.setColspan(4);
-            bottomLineCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            companyTable.addCell(bottomLineCell);
 
             document.add(companyTable);
 
@@ -1021,9 +1002,10 @@ public class PdfGeneratorService {
 
             document.add(footerTable);
 
-            String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
-            String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
-            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
+            // 公司信息（写死固定值）
+            String companyName = "河北金涛建设工程质量检测有限公司";
+            String companyAddress = "石家庄高新区方亿科技工业园区A区第2号楼";
+            String companyPhone = "0311—86107634 67300616";
             Paragraph statement = new Paragraph("声明：\n1. 对本检测报告的复印件未加盖公司检验检测专用章无效。\n2. 对检测结果如有异议，应在收到报告之日起十五日之内向本公司提出。\n公司名称：" + companyName + "。\n公司地址：" + companyAddress + "    电话：" + companyPhone, smallFont);
             statement.setSpacingBefore(20);
             statement.setLeading(14f);
@@ -1946,21 +1928,10 @@ public class PdfGeneratorService {
 
             document.add(footerTable);
 
-            // 声明 + 公司信息区，使用带边框的表格，结构与页面相似，避免杂乱
-            String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
-            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
-            String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
-
-            // 顶部粗横线（在“声明”之上）
-            PdfPTable topLineTable = new PdfPTable(1);
-            topLineTable.setWidthPercentage(100);
-            topLineTable.setSpacingBefore(10);
-            PdfPCell topLineCell = new PdfPCell(new Paragraph(" ", valueFont));
-            topLineCell.setBorder(Rectangle.BOTTOM);
-            topLineCell.setBorderWidthBottom(1.2f); // 略粗的横线
-            topLineCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            topLineTable.addCell(topLineCell);
-            document.add(topLineTable);
+            // 声明 + 公司信息区，使用带边框的表格，结构与页面相似，避免杂乱（写死固定值）
+            String companyName = "河北金涛建设工程质量检测有限公司";
+            String companyPhone = "0311—86107634 67300616";
+            String companyAddress = "石家庄高新区方亿科技工业园区A区第2号楼";
 
             // 声明行（无边框）
             PdfPTable statementTable = new PdfPTable(1);
@@ -2011,14 +1982,6 @@ public class PdfGeneratorService {
             addrValueCell.setHorizontalAlignment(Element.ALIGN_LEFT);
             addrValueCell.setColspan(3);
             companyTable.addCell(addrValueCell);
-
-            // 公司地址下方粗横线
-            PdfPCell bottomLineCell = new PdfPCell(new Paragraph(" ", valueFont));
-            bottomLineCell.setBorder(Rectangle.BOTTOM);
-            bottomLineCell.setBorderWidthBottom(1.2f);
-            bottomLineCell.setColspan(4);
-            bottomLineCell.setHorizontalAlignment(Element.ALIGN_LEFT);
-            companyTable.addCell(bottomLineCell);
 
             PdfPCell pageCell = new PdfPCell(new Paragraph("第 1 页，共 1 页", valueFont));
             pageCell.setBorder(Rectangle.NO_BORDER);
@@ -3432,9 +3395,10 @@ public class PdfGeneratorService {
             companyTable.setSpacingBefore(20);
             companyTable.setSpacingAfter(10);
 
-            String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
-            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
-            String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
+            // 公司信息（写死固定值）
+            String companyName = "河北金涛建设工程质量检测有限公司";
+            String companyPhone = "0311—86107634 67300616";
+            String companyAddress = "石家庄高新区方亿科技工业园区A区第2号楼";
             String footerDate = request.getParameter("footerDate") != null ? request.getParameter("footerDate") : "";
 
             PdfPCell companyCell1 = new PdfPCell(new Paragraph("声明：1. 对本检测报告的复印件未加盖公司检验检测专用章无效。2. 对检验结果如有异议，应在收到报告之日起十五日之内向本公司提出。", smallFont));
@@ -3737,10 +3701,10 @@ public class PdfGeneratorService {
             statement.setSpacingAfter(10);
             document.add(statement);
 
-            // 公司信息
-            String companyName = request.getParameter("companyName") != null ? request.getParameter("companyName") : "";
-            String companyAddress = request.getParameter("companyAddress") != null ? request.getParameter("companyAddress") : "";
-            String companyPhone = request.getParameter("companyPhone") != null ? request.getParameter("companyPhone") : "";
+            // 公司信息（写死固定值）
+            String companyName = "河北金涛建设工程质量检测有限公司";
+            String companyAddress = "石家庄高新区方亿科技工业园区A区第2号楼";
+            String companyPhone = "0311—86107634 67300616";
 
             Paragraph companyNamePara = new Paragraph("公司名称：" + companyName, valueFont);
             companyNamePara.setSpacingBefore(5);

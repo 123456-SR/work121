@@ -1413,6 +1413,18 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     }
 
     @Override
+    public com.github.pagehelper.PageInfo<SimpleDirectory> getDirectoriesByPage(int pageNum, int pageSize) {
+        try {
+            com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
+            List<SimpleDirectory> list = simpleDirectoryMapper.selectAll();
+            return new com.github.pagehelper.PageInfo<>(list);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteDirectory(String id) {
         try {

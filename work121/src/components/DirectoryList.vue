@@ -16,8 +16,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in processes" :key="item.id">
-            <td>{{ index + 1 }}</td>
+          <tr v-if="loading">
+            <td colspan="4" class="text-center">加载中...</td>
+          </tr>
+          <tr v-else-if="processes.length === 0">
+            <td colspan="4" class="text-center">暂无数据</td>
+          </tr>
+          <tr v-else v-for="(item, index) in processes" :key="item.id">
+            <td>{{ (pageNum - 1) * pageSize + index + 1 }}</td>
             <td>{{ item.dirName }}</td>
             <td>
               <span :class="['status-badge', 'status-' + item.status]">
@@ -31,6 +37,13 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 分页控件 -->
+    <div class="pagination-container">
+      <button class="btn btn-secondary" :disabled="pageNum <= 1" @click="changePage(pageNum - 1)">上一页</button>
+      <span class="page-info">第 {{ pageNum }} 页 / 共 {{ Math.ceil(total / pageSize) || 1 }} 页 (共 {{ total }} 条)</span>
+      <button class="btn btn-secondary" :disabled="pageNum * pageSize >= total" @click="changePage(pageNum + 1)">下一页</button>
     </div>
 
     <!-- 增加/编辑流程弹窗 -->
@@ -212,6 +225,10 @@ const showModal = ref(false)
 const isEditing = ref(false)
 const userList = ref([])
 const saving = ref(false) // 防止重复点击保存
+const pageNum = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const loading = ref(false)
 
 // 选中的表单队列
 const selectedForms = ref([])
@@ -297,13 +314,29 @@ const loadUsers = async () => {
 
 const loadProcesses = async () => {
   try {
-    const response = await axios.post('/api/directory/getAll')
-    if (response.data.success) {
-      processes.value = response.data.data
+    loading.value = true
+    const response = await axios.get(`/api/directory/getAllByPage?pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
+    if (response.data.success && response.data.data) {
+      const pageData = response.data.data
+      processes.value = pageData.list || []
+      total.value = pageData.total || 0
+    } else {
+      processes.value = []
+      total.value = 0
     }
   } catch (error) {
     console.error('加载流程列表失败:', error)
+    processes.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
   }
+}
+
+// 翻页
+const changePage = (newPage) => {
+  pageNum.value = newPage
+  loadProcesses()
 }
 
 const openAddModal = () => {
@@ -814,5 +847,50 @@ tr:hover {
 .cancel-btn:hover {
   background-color: #f5f6fa;
   color: #2c3e50;
+}
+
+/* 分页样式 */
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 24px;
+  gap: 16px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:disabled {
+  background-color: #f7fafc;
+  color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #edf2f7;
+  color: #2d3748;
+}
+
+.page-info {
+  color: #718096;
+  font-size: 14px;
+}
+
+.text-center {
+  text-align: center;
 }
 </style>

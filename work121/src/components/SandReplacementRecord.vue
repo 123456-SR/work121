@@ -333,7 +333,13 @@ const formData = reactive({
 
 // Status Text Helper
 const getStatusText = (status) => {
+    if (status === null || status === undefined || status === '') {
+        return '草稿'
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '草稿'
+    }
     switch(s) {
         // 统一状态名称
         case 0: return '草稿'
@@ -361,7 +367,13 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
+    if (status === null || status === undefined || status === '') {
+        return '#6c757d' // secondary (草稿)
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '#6c757d' // secondary (草稿)
+    }
     switch(s) {
         // 记录表状态 (0-5)
         case 0: return '#6c757d' // secondary

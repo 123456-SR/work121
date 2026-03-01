@@ -144,6 +144,37 @@ public class SimpleDirectoryController {
     }
 
     /**
+     * 分页获取目录列表
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 响应结果
+     */
+    @GetMapping("/getAllByPage")
+    public Map<String, Object> getDirectoriesByPage(
+            @RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            com.github.pagehelper.PageInfo<SimpleDirectory> pageInfo = simpleDirectoryService.getDirectoriesByPage(pageNum, pageSize);
+
+            if (pageInfo != null) {
+                result.put("success", true);
+                result.put("data", pageInfo);
+            } else {
+                result.put("success", false);
+                result.put("message", "获取目录列表失败");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "查询异常: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
      * 根据目录名称（统一编号）获取目录
      * @param params 参数包含 dirName
      * @return 响应结果
