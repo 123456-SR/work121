@@ -54,6 +54,7 @@ public interface CuttingRingRecordMapper {
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
             "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=VARCHAR}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +

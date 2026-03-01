@@ -425,8 +425,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
                 // Get the actual entrustment ID from JC_CORE_WT_INFO
                 String actualEntrustmentId = dirName;
+                JcCoreWtInfo wtInfo = null;
                 try {
-                    JcCoreWtInfo wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
+                    wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
                     if (wtInfo != null) {
                         actualEntrustmentId = wtInfo.getId();
                     }
@@ -443,13 +444,22 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 
                 setDefaultValues(entity, directory, category);
                 
+                if (wtInfo != null) {
+                    copyFields(wtInfo, entity);
+                    populateVirtualData(entity);
+                    mergeEntrustmentDataToJson(entity, wtInfo);
+                } else {
+                    populateVirtualData(entity);
+                }
+                
                 lightDynamicPenetrationRecordMapper.insert(entity);
                 return id;
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "LIGHT_DYNAMIC_PENETRATION_REPORT", "轻型动力触探检测报告")) {
                 // Get the actual entrustment ID from JC_CORE_WT_INFO
                 String actualEntrustmentId = dirName;
+                JcCoreWtInfo wtInfo = null;
                 try {
-                    JcCoreWtInfo wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
+                    wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
                     if (wtInfo != null) {
                         actualEntrustmentId = wtInfo.getId();
                     }
@@ -465,6 +475,14 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 entity.setEntrustmentId(actualEntrustmentId);
                 
                 setDefaultValues(entity, directory, category);
+                
+                if (wtInfo != null) {
+                    copyFields(wtInfo, entity);
+                    populateVirtualData(entity);
+                    mergeEntrustmentDataToJson(entity, wtInfo);
+                } else {
+                    populateVirtualData(entity);
+                }
                 
                 lightDynamicPenetrationReportMapper.insert(entity);
                 return id;
@@ -601,14 +619,34 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 densityTestResultMapper.insert(entity);
                 return id;
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
+                // Get the actual entrustment ID from JC_CORE_WT_INFO
+                String actualEntrustmentId = dirName;
+                JcCoreWtInfo wtInfo = null;
+                try {
+                    wtInfo = jcCoreWtInfoService.getByWtNum(dirName);
+                    if (wtInfo != null) {
+                        actualEntrustmentId = wtInfo.getId();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to get entrustment ID for dirName: " + dirName);
+                }
+
                 LightDynamicPenetrationResult entity = new LightDynamicPenetrationResult();
                 entity.setId(id);
                 entity.setWtNum(dirName);
                 entity.setCreateBy(creator);
                 entity.setCreateTime(now);
-                entity.setEntrustmentId(dirName);
+                entity.setEntrustmentId(actualEntrustmentId);
                 
                 setDefaultValues(entity, directory, category);
+
+                if (wtInfo != null) {
+                    copyFields(wtInfo, entity);
+                    populateVirtualData(entity);
+                    mergeEntrustmentDataToJson(entity, wtInfo);
+                } else {
+                    populateVirtualData(entity);
+                }
                 
                 lightDynamicPenetrationResultMapper.insert(entity);
                 return id;
@@ -846,6 +884,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 // 轻型动力触探表使用 ENTRUSTMENT_ID 关联 JC_CORE_WT_INFO.WT_ID
                 target.setEntrustmentId(source.getId());
                 copyFields(source, target);
+                populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 lightDynamicPenetrationReportMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
@@ -854,6 +894,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 // 轻型动力触探表使用 ENTRUSTMENT_ID 关联 JC_CORE_WT_INFO.WT_ID
                 target.setEntrustmentId(source.getId());
                 copyFields(source, target);
+                populateVirtualData(target);
+                mergeEntrustmentDataToJson(target, source);
                 lightDynamicPenetrationResultMapper.updateById(target);
             }
         } else if (isTypeMatch(type, "BECKMAN_BEAM_RECORD", "路基路面回弹弯沉试验检测记录表")) {
@@ -1031,6 +1073,10 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 existingJson = ((BeckmanBeamRecord) target).getDataJson();
             } else if (target instanceof LightDynamicPenetrationRecord) {
                 existingJson = ((LightDynamicPenetrationRecord) target).getDataJson();
+            } else if (target instanceof LightDynamicPenetrationReport) {
+                existingJson = ((LightDynamicPenetrationReport) target).getDataJson();
+            } else if (target instanceof LightDynamicPenetrationResult) {
+                existingJson = ((LightDynamicPenetrationResult) target).getDataJson();
             } else if (target instanceof ReboundMethodRecord) {
                 existingJson = ((ReboundMethodRecord) target).getDataJson();
             } else if (target instanceof DensityTestRecord) {
@@ -1216,6 +1262,10 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 ((BeckmanBeamRecord) target).setDataJson(mergedJson);
             } else if (target instanceof LightDynamicPenetrationRecord) {
                 ((LightDynamicPenetrationRecord) target).setDataJson(mergedJson);
+            } else if (target instanceof LightDynamicPenetrationReport) {
+                ((LightDynamicPenetrationReport) target).setDataJson(mergedJson);
+            } else if (target instanceof LightDynamicPenetrationResult) {
+                ((LightDynamicPenetrationResult) target).setDataJson(mergedJson);
             } else if (target instanceof ReboundMethodRecord) {
                 ((ReboundMethodRecord) target).setDataJson(mergedJson);
             } else if (target instanceof DensityTestRecord) {
@@ -1308,6 +1358,24 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     data.put("soilProperty", "黏土");
                     ((LightDynamicPenetrationRecord) entity).setDataJson(objectMapper.writeValueAsString(data));
                 }
+            } else if (entity instanceof LightDynamicPenetrationReport) {
+                existingJson = ((LightDynamicPenetrationReport) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("blowCount", "5");
+                    data.put("depth", "30");
+                    data.put("soilProperty", "黏土");
+                    ((LightDynamicPenetrationReport) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
+            } else if (entity instanceof LightDynamicPenetrationResult) {
+                existingJson = ((LightDynamicPenetrationResult) entity).getDataJson();
+                if (existingJson == null || existingJson.isEmpty()) {
+                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+                    data.put("blowCount", "5");
+                    data.put("depth", "30");
+                    data.put("soilProperty", "黏土");
+                    ((LightDynamicPenetrationResult) entity).setDataJson(objectMapper.writeValueAsString(data));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1377,9 +1445,19 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 sandReplacementResultMapper.deleteByEntrustmentId(wtNum);
 
                 // Light Dynamic Penetration
-                lightDynamicPenetrationRecordMapper.deleteByEntrustmentId(wtNum);
-                lightDynamicPenetrationReportMapper.deleteByEntrustmentId(wtNum);
-                lightDynamicPenetrationResultMapper.deleteByEntrustmentId(wtNum);
+                // Fix: Light Dynamic Penetration uses UUID as ENTRUSTMENT_ID, not wtNum
+                String lightDynamicEntrustmentId = wtNum;
+                try {
+                    JcCoreWtInfo wtInfo = jcCoreWtInfoService.getByWtNum(wtNum);
+                    if (wtInfo != null) {
+                        lightDynamicEntrustmentId = wtInfo.getId();
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to get entrustment ID for delete: " + wtNum);
+                }
+                lightDynamicPenetrationRecordMapper.deleteByEntrustmentId(lightDynamicEntrustmentId);
+                lightDynamicPenetrationReportMapper.deleteByEntrustmentId(lightDynamicEntrustmentId);
+                lightDynamicPenetrationResultMapper.deleteByEntrustmentId(lightDynamicEntrustmentId);
 
                 // Beckman Beam
                 beckmanBeamRecordMapper.deleteByEntrustmentId(wtNum);
@@ -1402,12 +1480,42 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 waterReplacementResultMapper.deleteByEntrustmentId(wtNum);
             }
 
+            // 2.1 Delete specifically linked records by ID (Cascading delete for selected records)
+            deleteLinkedRecord(directory.getTable1Type(), directory.getTable1Id());
+            deleteLinkedRecord(directory.getTable2Type(), directory.getTable2Id());
+            deleteLinkedRecord(directory.getTable3Type(), directory.getTable3Id());
+            deleteLinkedRecord(directory.getTable4Type(), directory.getTable4Id());
+            deleteLinkedRecord(directory.getTable5Type(), directory.getTable5Id());
+            deleteLinkedRecord(directory.getTable6Type(), directory.getTable6Id());
+            deleteLinkedRecord(directory.getTable7Type(), directory.getTable7Id());
+            deleteLinkedRecord(directory.getTable8Type(), directory.getTable8Id());
+            deleteLinkedRecord(directory.getTable9Type(), directory.getTable9Id());
+            deleteLinkedRecord(directory.getTable10Type(), directory.getTable10Id());
+
             // 3. Delete the directory itself
             int result = simpleDirectoryMapper.deleteById(id);
             return result > 0;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to delete directory and related records", e);
+        }
+    }
+
+    private void deleteLinkedRecord(String type, String id) {
+        if (type == null || id == null || id.isEmpty()) {
+            return;
+        }
+
+        try {
+            if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
+                lightDynamicPenetrationRecordMapper.deleteById(id);
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_REPORT", "轻型动力触探检测报告")) {
+                lightDynamicPenetrationReportMapper.deleteById(id);
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
+                lightDynamicPenetrationResultMapper.deleteById(id);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

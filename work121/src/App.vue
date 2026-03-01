@@ -68,7 +68,7 @@ import BeckmanBeamRecord from './components/BeckmanBeamRecord.vue'
 import Signature from './components/Signature.vue'
 import DensityTestReport from './components/DensityTestReport.vue'
 import DensityTestResult from './components/DensityTestResult.vue'
-import LightDynamicPenetration from './components/LightDynamicPenetration.vue'
+import LightDynamicPenetrationReport from './components/LightDynamicPenetrationReport.vue'
 import LightDynamicPenetrationResult from './components/LightDynamicPenetrationResult.vue'
 import ReboundMethodReport from './components/ReboundMethodReport.vue'
 import BeckmanBeamReport from './components/BeckmanBeamReport.vue'
@@ -98,7 +98,7 @@ const components = {
   Signature,
   DensityTestReport,
   DensityTestResult,
-  LightDynamicPenetration,
+  LightDynamicPenetrationReport,
   LightDynamicPenetrationResult,
   ReboundMethodReport,
   BeckmanBeamReport,
@@ -174,7 +174,7 @@ const menuItems = {
       id: 'LightDynamicPenetrationReportList', 
       name: '轻型动力触探检测报告',
       component: 'GenericReportList', 
-      props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetration', dataType: 'report' }
+      props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationReport', dataType: 'report' }
     },
     { 
       id: 'LightDynamicPenetrationResultList', 

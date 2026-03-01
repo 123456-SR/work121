@@ -488,7 +488,7 @@ public class PdfGeneratorService {
             addCell(mainTable, "检测类别", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, testCategory, valueFont, Element.ALIGN_CENTER, 2);
 
-            // 明细表头：与前端 LightDynamicPenetration.vue 完全一致（左右各一组）
+            // 明细表头：与前端 LightDynamicPenetrationReport.vue 完全一致（左右各一组）
             addCell(mainTable, "测点位置", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "贯入深度(cm)", labelFont, Element.ALIGN_CENTER, 1);
             addCell(mainTable, "实测锤击数", labelFont, Element.ALIGN_CENTER, 1);

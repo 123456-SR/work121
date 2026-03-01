@@ -16,6 +16,9 @@ public interface NuclearDensityReportMapper {
             "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "TESTER as tester, " +
+            "REVIEWER as reviewer, " +
+            "APPROVER as approver, " +
             "CREATE_BY as createBy, " +
             "CREATE_TIME as createTime, " +
             "UPDATE_BY as updateBy, " +
@@ -24,8 +27,8 @@ public interface NuclearDensityReportMapper {
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     NuclearDensityReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_NUCLEAR_DENSITY (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
+    @Insert("INSERT INTO T_NUCLEAR_DENSITY (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(NuclearDensityReport report);
 
     @Update("UPDATE T_NUCLEAR_DENSITY SET " +
@@ -33,6 +36,9 @@ public interface NuclearDensityReportMapper {
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
@@ -45,6 +51,9 @@ public interface NuclearDensityReportMapper {
             "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "TESTER as tester, " +
+            "REVIEWER as reviewer, " +
+            "APPROVER as approver, " +
             "CREATE_BY as createBy, " +
             "CREATE_TIME as createTime, " +
             "UPDATE_BY as updateBy, " +
@@ -59,6 +68,9 @@ public interface NuclearDensityReportMapper {
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
+            "TESTER = #{tester}, " +
+            "REVIEWER = #{reviewer}, " +
+            "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +
             "WHERE ID = #{id}")

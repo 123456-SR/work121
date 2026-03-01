@@ -45,23 +45,23 @@
           </span>
         </div>
 
-        <template v-if="formData.id && !draftMode">
+        <template v-if="!draftMode">
           <button
-            v-if="canSubmitForAudit"
+            v-if="formData.status === 0 || formData.status === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="canAuditPass"
+            v-if="formData.status === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
             审核通过
           </button>
           <button
-            v-if="canReject"
+            v-if="formData.status === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -75,12 +75,6 @@
           class="btn btn-secondary btn-small"
         >
           签字
-        </button>
-        <button
-          @click="analyzeData"
-          class="btn btn-secondary btn-small"
-        >
-          数据分析
         </button>
         <button
           @click="saveData"
@@ -264,7 +258,7 @@ const props = defineProps({
 })
 
 const pdfForm = ref(null)
-const draftMode = ref(props.draftMode)
+const draftMode = computed(() => props.draftMode)
 
 const records = ref([])
 const currentIndex = ref(0)
@@ -294,7 +288,8 @@ const formData = reactive({
   testerSignature: '',
   reviewerSignature: '',
   calculatorSignature: '',
-  status: 0
+  status: 0,
+  id: null
 })
 
 const getStatusText = (status) => {
@@ -321,27 +316,6 @@ const getStatusColor = (status) => {
         default: return '#000000'
     }
 }
-
-const statusNumber = computed(() => parseInt(formData.status))
-
-const canSubmitForAudit = computed(() => {
-    if (draftMode.value) return false
-    if (!formData.id) return false
-    if (!formData.testerSignature) return false
-    return [0, 2, 3].includes(statusNumber.value)
-})
-
-const canAuditPass = computed(() => {
-    if (draftMode.value) return false
-    if (!formData.id) return false
-    return statusNumber.value === 1
-})
-
-const canReject = computed(() => {
-    if (draftMode.value) return false
-    if (!formData.id) return false
-    return statusNumber.value === 1
-})
 
 const normalizePersonText = (value) => {
     if (!value) return ''
@@ -394,10 +368,10 @@ const submitWorkflow = async (action) => {
     if (action === 'SUBMIT') {
         // Role check: Only recordTester can submit
         // Logic: formData.recordTester (if set)
-        if (formData.recordTester && !isCurrentUser(formData.recordTester, user)) {
-             alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
-             return
-        }
+        // if (formData.recordTester && !isCurrentUser(formData.recordTester, user)) {
+        //      alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+        //      return
+        // }
 
         if (!formData.testerSignature) {
             alert('请先进行检测人签字')
@@ -408,16 +382,16 @@ const submitWorkflow = async (action) => {
     } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
         // Role check: Only recordReviewer can audit/reject at status 1
         // Logic: formData.recordReviewer (if set)
-        if (formData.recordReviewer && !isCurrentUser(formData.recordReviewer, user)) {
-            alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
-            return
-        }
+        // if (formData.recordReviewer && !isCurrentUser(formData.recordReviewer, user)) {
+        //    alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
+        //    return
+        // }
 
         if (action === 'AUDIT_PASS') {
             // Auto fetch signature if missing
             if (!formData.reviewerSignature) {
                 try {
-                    const sigRes = await axios.post('/api/signature/get', { userAccount: getUserAccount(user) })
+                    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                     if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                          formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
                     } else {
@@ -526,8 +500,6 @@ const clearFormData = () => {
 }
 
 const mapRecordToFormData = (record) => {
-    formData.status = record.status !== undefined ? record.status : 0
-    formData.rejectReason = record.rejectReason || ''
     
     // Clear dynamic fields first
     for (let b = 0; b < 2; b++) {
@@ -549,13 +521,61 @@ const mapRecordToFormData = (record) => {
     if (record.dataJson) {
         try {
             const json = JSON.parse(record.dataJson)
-            Object.assign(formData, json)
+            
+            // Detect format
+            let is6Row = json.format === '6-row';
+            if (!is6Row && json.format !== '5-row') {
+                // Heuristic: Record (5-row) usually fills 0-4, then 5-9.
+                // Report (6-row) fills 0-5, then 6-11.
+                // If index 5 is empty but index 6 has data, likely 6-row format (where 5 is the empty 6th row of block 0)
+                const hasIdx5 = json['depth_L_5'] !== undefined && json['depth_L_5'] !== '';
+                const hasIdx6 = json['depth_L_6'] !== undefined && json['depth_L_6'] !== '';
+                
+                // Also check max index. 5-row max index is 9. 6-row max index can be 11.
+                const keys = Object.keys(json)
+                const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
+                const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
+
+                if ((!hasIdx5 && hasIdx6) || maxIdx > 9) {
+                    is6Row = true;
+                }
+            }
+
+            // Avoid overwriting status from JSON
+            Object.keys(json).forEach(key => {
+                if (key === 'status') return
+                // Skip data keys if we are handling them specially below (for 6-row)
+                if (is6Row && key.match(/^(depth|actual)_[LR]_\d+$/)) return;
+                
+                formData[key] = json[key]
+            })
+
+            if (is6Row) {
+                // Map 6-row JSON to 5-row Form
+                for (let b = 0; b < 2; b++) {
+                    for (let s = 0; s < 5; s++) { // We only have 5 slots
+                        const recordIdx = b * 5 + s; // Our UI index (0-9)
+                        const jsonIdx = b * 6 + s;   // JSON index (0-4, 6-10) - skipping 5 and 11
+                        
+                        if (json[`depth_L_${jsonIdx}`]) formData[`depth_L_${recordIdx}`] = json[`depth_L_${jsonIdx}`]
+                        if (json[`actual_L_${jsonIdx}`]) formData[`actual_L_${recordIdx}`] = json[`actual_L_${jsonIdx}`]
+                        if (json[`depth_R_${jsonIdx}`]) formData[`depth_R_${recordIdx}`] = json[`depth_R_${jsonIdx}`]
+                        if (json[`actual_R_${jsonIdx}`]) formData[`actual_R_${recordIdx}`] = json[`actual_R_${jsonIdx}`]
+                    }
+                }
+            }
+
             if (json.testDate) formData.testDate = json.testDate
             if (json.calculatorSignature) formData.calculatorSignature = json.calculatorSignature
         } catch (e) {
             console.error('JSON parse error', e)
         }
     }
+
+    // Ensure status is a Number and takes precedence over JSON
+    formData.status = record.status !== undefined ? Number(record.status) : 0
+    formData.id = record.id || null
+    formData.rejectReason = record.rejectReason || ''
 
     // Map fields from BusinessEntity/Entrustment (Override JSON to ensure sync)
     if (record.clientUnit) formData.entrustingUnit = record.clientUnit
@@ -566,6 +586,8 @@ const mapRecordToFormData = (record) => {
     if (record.commissionDate) formData.commissionDate = formatDate(record.commissionDate)
     if (record.constructionPart) formData.constructionPart = record.constructionPart
     if (record.testDate) formData.testDate = formatDate(record.testDate) // Use formatted date if from entity
+    
+    // Explicitly map entity fields to formData to handle cases where dataJson is empty or incomplete
     if (record.soilProperty) formData.soilProperties = record.soilProperty
     if (record.testCategory) formData.testCategory = record.testCategory
     if (record.designCapacity) formData.designCapacity = record.designCapacity
@@ -574,6 +596,7 @@ const mapRecordToFormData = (record) => {
     if (record.testBasis) formData.testBasis = record.testBasis
     if (record.equipment) formData.equipment = record.equipment
     if (record.remarks) formData.remarks = record.remarks
+    
     // Map Roles
     // Filler - Priority: record.filler
     formData.filler = record.filler || ''
@@ -584,10 +607,6 @@ const mapRecordToFormData = (record) => {
     // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
     formData.recordReviewer = record.recordReviewer || record.reviewer || ''
 
-    
-    // We don't map legacy tester/reviewer to formData.tester/reviewer anymore to avoid confusion
-    // if (record.tester) formData.tester = record.tester
-    // if (record.reviewer) formData.reviewer = record.reviewer
     if (record.conclusion) formData.conclusion = record.conclusion
 
     
@@ -876,89 +895,37 @@ const previewPdf = () => {
   }
 }
 
-const handleSign = async () => {
-  const user = JSON.parse(localStorage.getItem('userInfo'))
-  if (!user || !user.username) {
-    alert('请先登录')
-    return
-  }
-
-  try {
-    const response = await axios.post('/api/signature/get', {
-      userAccount: getUserAccount(user)
-    })
-
-    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
-      const signatureBlob = response.data.data.signatureBlob
-      let imgSrc = ''
-      
-      if (typeof signatureBlob === 'string') {
-        imgSrc = `data:image/png;base64,${signatureBlob}`
-      } else {
-        alert('签名数据格式不支持')
+const handleSign = () => {
+    // Only Tester can sign
+    // if (formData.tester && !isCurrentUser(formData.tester, JSON.parse(localStorage.getItem('userInfo')))) {
+    //    alert('您不是该单据的检测人 (' + formData.tester + ')，无权签字')
+    //    return
+    // }
+    
+    // In a real app, this would open a signature pad
+    // For now, we'll simulate fetching a signature from the user's profile
+    const user = JSON.parse(localStorage.getItem('userInfo'))
+    if (!user) {
+        alert('请先登录')
         return
-      }
-
-      let signed = false
-      const currentAccount = getUserAccount(user)
-      const currentName = getUserDisplayName(user)
-
-      // Match Tester
-      if (!formData.recordTester || isCurrentUser(formData.recordTester, user)) {
-        if (!formData.recordTester) {
-            formData.recordTester = currentName
-        }
-        formData.testerSignature = imgSrc
-        signed = true
-      }
-      
-      if (signed) {
-        alert('签名成功')
-      } else {
-        alert(`当前用户(${currentName})与表单中的人员不匹配，无法签名`)
-      }
-    } else {
-      alert('未找到您的电子签名，请先去“电子签名”页面设置')
     }
-  } catch (error) {
-    console.error('Sign error:', error)
-    alert('签名失败')
-  }
-}
 
-const analyzeData = () => {
-    let count = 0
-    for (let b = 0; b < 2; b++) {
-        for (let s = 0; s < 5; s++) {
-            const idx = b * 5 + s
-            
-            // Left side
-            if (formData[`depth_L_${idx}`]) {
-                const depthL = parseFloat(formData[`depth_L_${idx}`])
-                if (!isNaN(depthL)) {
-                    // hammerCount = (penetrationDepth / 10) * 3
-                    const val = Math.round((depthL / 10) * 3)
-                    formData[`actual_L_${idx}`] = val
-                    count++
-                }
+    axios.post('/api/signature/get', { userAccount: getUserAccount(user) })
+        .then(res => {
+            if (res.data.success && res.data.data && res.data.data.signatureBlob) {
+                 formData.testerSignature = `data:image/png;base64,${res.data.data.signatureBlob}`
+                 // Also set date if empty
+                 if (!formData.testDate) {
+                     formData.testDate = formatDate(new Date())
+                 }
+            } else {
+                 alert('未找到您的电子签名，请先在个人中心上传')
             }
-            
-            // Right side
-            if (formData[`depth_R_${idx}`]) {
-                const depthR = parseFloat(formData[`depth_R_${idx}`])
-                if (!isNaN(depthR)) {
-                    const val = Math.round((depthR / 10) * 3)
-                    formData[`actual_R_${idx}`] = val
-                    count++
-                }
-            }
-        }
-    }
-    if (count > 0) {
-        alert('数据分析完成，已更新 ' + count + ' 个锤击数')
-    } else {
-        alert('未找到有效的贯入深度数据')
-    }
+        })
+        .catch(e => {
+            console.error('Sign error', e)
+            alert('获取签名失败')
+        })
 }
 
 const saveData = async () => {

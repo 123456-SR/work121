@@ -11,14 +11,8 @@ public class LightDynamicPenetrationResult extends BusinessEntity {
     /** 数据JSON */
     private String dataJson;
 
-    /** 复核人签名照片 */
-    private String reviewSignaturePhoto;
-
-    /** 检测人签名照片 */
-    private String inspectSignaturePhoto;
-
-    /** 批准人签名照片 */
-    private String approveSignaturePhoto;
+    /** 备注 */
+    private String remarks;
 
     public String getEntrustmentId() {
         return entrustmentId;
@@ -36,27 +30,11 @@ public class LightDynamicPenetrationResult extends BusinessEntity {
         this.dataJson = dataJson;
     }
 
-    public String getReviewSignaturePhoto() {
-        return reviewSignaturePhoto;
+    public String getRemarks() {
+        return remarks;
     }
 
-    public void setReviewSignaturePhoto(String reviewSignaturePhoto) {
-        this.reviewSignaturePhoto = reviewSignaturePhoto;
-    }
-
-    public String getInspectSignaturePhoto() {
-        return inspectSignaturePhoto;
-    }
-
-    public void setInspectSignaturePhoto(String inspectSignaturePhoto) {
-        this.inspectSignaturePhoto = inspectSignaturePhoto;
-    }
-
-    public String getApproveSignaturePhoto() {
-        return approveSignaturePhoto;
-    }
-
-    public void setApproveSignaturePhoto(String approveSignaturePhoto) {
-        this.approveSignaturePhoto = approveSignaturePhoto;
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

@@ -123,4 +123,39 @@ public class LightDynamicPenetrationController {
         }
         return result;
     }
+
+    @GetMapping("/result/get-by-entrustment-id")
+    public Map<String, Object> getResultByEntrustmentId(@RequestParam String entrustmentId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            org.example.work121.entity.LightDynamicPenetrationResult entity = service.getResultByEntrustmentId(entrustmentId);
+            if (entity != null) {
+                result.put("success", true);
+                result.put("data", entity);
+            } else {
+                result.put("success", false);
+                result.put("message", "未找到结果记录");
+            }
+        } catch (Exception e) {
+            logger.error("查询结果失败", e);
+            result.put("success", false);
+            result.put("message", "查询结果失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @PostMapping("/result/save")
+    public Map<String, Object> saveResult(@RequestBody org.example.work121.entity.LightDynamicPenetrationResult entity) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            service.saveResult(entity);
+            result.put("success", true);
+            result.put("message", "结果保存成功");
+        } catch (Exception e) {
+            logger.error("结果保存失败", e);
+            result.put("success", false);
+            result.put("message", "结果保存失败: " + e.getMessage());
+        }
+        return result;
+    }
 }

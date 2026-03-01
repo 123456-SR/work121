@@ -161,7 +161,7 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN T_WATER_REPLACEMENT t_water ON t_water.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_CUTTING_RING t_cutting ON t_cutting.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_REBOUND_METHOD t_rebound ON t_rebound.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
+            "LEFT JOIN T_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_ID " +
             "<where>" +
             "<if test='wtNum != null and wtNum != \"\"'>" +
@@ -346,7 +346,7 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN T_WATER_REPLACEMENT t_water ON t_water.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_CUTTING_RING t_cutting ON t_cutting.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_REBOUND_METHOD t_rebound ON t_rebound.ENTRUSTMENT_ID = t2.WT_ID " +
-            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
+            "LEFT JOIN T_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_ID " +
             "<where>" +
             "<if test='categories != null'>" +
@@ -471,25 +471,23 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegRealName, " +
             // recordStatus：优先取各“记录表”自身的 STATUS，不受本查询 JOIN/人员过滤影响；
             // 实现方式：分别对各记录表按 WT_NUM/WT_ID 取最大 STATUS，然后按顺序 COALESCE，最后默认 '0'
-            // 为了兼容历史数据中 STATUS 存在中文等非数字值的情况，这里使用 REGEXP_LIKE 过滤，只保留纯数字状态；
-            // 非数字状态一律按 '0' 处理，避免前端 parseInt 得到 NaN 导致显示为“未知”。
             "NVL( " +
             "  COALESCE( " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(d.STATUS, '^[0-9]+$') THEN TO_CHAR(d.STATUS) ELSE '0' END) FROM T_DENSITY_TEST d " +
+            "    (SELECT MAX(TO_CHAR(d.STATUS)) FROM T_DENSITY_TEST d " +
             "      WHERE d.ENTRUSTMENT_ID = t2.WT_NUM OR d.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(n.STATUS, '^[0-9]+$') THEN TO_CHAR(n.STATUS) ELSE '0' END) FROM T_NUCLEAR_DENSITY n " +
+            "    (SELECT MAX(TO_CHAR(n.STATUS)) FROM T_NUCLEAR_DENSITY n " +
             "      WHERE n.ENTRUSTMENT_ID = t2.WT_NUM OR n.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(s.STATUS, '^[0-9]+$') THEN TO_CHAR(s.STATUS) ELSE '0' END) FROM T_SAND_REPLACEMENT s " +
+            "    (SELECT MAX(TO_CHAR(s.STATUS)) FROM T_SAND_REPLACEMENT s " +
             "      WHERE s.ENTRUSTMENT_ID = t2.WT_NUM OR s.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(w.STATUS, '^[0-9]+$') THEN TO_CHAR(w.STATUS) ELSE '0' END) FROM T_WATER_REPLACEMENT w " +
+            "    (SELECT MAX(TO_CHAR(w.STATUS)) FROM T_WATER_REPLACEMENT w " +
             "      WHERE w.ENTRUSTMENT_ID = t2.WT_NUM OR w.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(c.STATUS, '^[0-9]+$') THEN TO_CHAR(c.STATUS) ELSE '0' END) FROM T_CUTTING_RING c " +
+            "    (SELECT MAX(TO_CHAR(c.STATUS)) FROM T_CUTTING_RING c " +
             "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(r.STATUS, '^[0-9]+$') THEN TO_CHAR(r.STATUS) ELSE '0' END) FROM T_REBOUND_METHOD r " +
+            "    (SELECT MAX(TO_CHAR(r.STATUS)) FROM T_REBOUND_METHOD r " +
             "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(l.STATUS, '^[0-9]+$') THEN TO_CHAR(l.STATUS) ELSE '0' END) FROM JZS_LIGHT_DYNAMIC_PENETRATION l " +
+            "    (SELECT MAX(TO_CHAR(l.STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION l " +
             "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(b.STATUS, '^[0-9]+$') THEN TO_CHAR(b.STATUS) ELSE '0' END) FROM T_BECKMAN_BEAM b " +
+            "    (SELECT MAX(TO_CHAR(b.STATUS)) FROM T_BECKMAN_BEAM b " +
             "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID) " +
             "  ), " +
             "  '0' " +
@@ -569,7 +567,7 @@ public interface JcCoreWtInfoMapper {
             "LEFT JOIN T_CUTTING_RING t_cutting ON t_cutting.ENTRUSTMENT_ID = t2.WT_NUM " +
             "LEFT JOIN T_REBOUND_METHOD t_rebound ON t_rebound.ENTRUSTMENT_ID = t2.WT_NUM " +
             // 轻型动力触探表 JZS_LIGHT_DYNAMIC_PENETRATION 的 ENTRUSTMENT_ID 关联的是 JC_CORE_WT_INFO.WT_ID
-            "LEFT JOIN JZS_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
+            "LEFT JOIN T_LIGHT_DYNAMIC_PENETRATION t_light ON t_light.ENTRUSTMENT_ID = t2.WT_ID " +
             "LEFT JOIN T_BECKMAN_BEAM t_beckman ON t_beckman.ENTRUSTMENT_ID = t2.WT_NUM " +
             "<where>" +
             "<if test='categories != null'>" +

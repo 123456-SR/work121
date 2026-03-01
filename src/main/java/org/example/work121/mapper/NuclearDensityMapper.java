@@ -22,7 +22,6 @@ public interface NuclearDensityMapper {
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
-            "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -80,7 +79,6 @@ public interface NuclearDensityMapper {
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
-            "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +

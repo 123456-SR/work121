@@ -104,6 +104,9 @@ public class BusinessEntity extends BaseEntity {
     /** 记录表审核人签名 */
     private String recordReviewSign;
 
+    /** 记录表检测人签名 */
+    private String recordTesterSign;
+
     /** 承接人签名 (For Entrustment) */
     private String wtManSign;
 
@@ -141,6 +144,7 @@ public class BusinessEntity extends BaseEntity {
 
     /** 批准人签名照片 */
     private String approveSignaturePhoto;
+
 
     // ================== 人员真实姓名显示字段 ==================
     /** 检测人姓名 */
@@ -180,6 +184,7 @@ public class BusinessEntity extends BaseEntity {
     public void setApproveSignaturePhoto(String approveSignaturePhoto) {
         this.approveSignaturePhoto = approveSignaturePhoto;
     }
+
 
     public String getWtNum() {
         return wtNum;
@@ -459,6 +464,14 @@ public class BusinessEntity extends BaseEntity {
 
     public void setRecordReviewSign(String recordReviewSign) {
         this.recordReviewSign = recordReviewSign;
+    }
+
+    public String getRecordTesterSign() {
+        return recordTesterSign;
+    }
+
+    public void setRecordTesterSign(String recordTesterSign) {
+        this.recordTesterSign = recordTesterSign;
     }
 
     public String getWtManSign() {

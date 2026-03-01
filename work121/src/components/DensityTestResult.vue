@@ -475,6 +475,50 @@ const loadData = async () => {
              formData.filler = user.username
           }
 
+          // Auto-fill from Nuclear Density Record if applicable
+          if (eData.testCategory && eData.testCategory.includes('核子')) {
+             try {
+                const nuclearRes = await axios.get('/api/nuclear-density/get-by-entrustment-id', {
+                    params: { entrustmentId: key }
+                })
+                if (nuclearRes.data.success && nuclearRes.data.data && nuclearRes.data.data.length > 0) {
+                    const nRecord = nuclearRes.data.data[0]
+                    if (nRecord.dataJson) {
+                        const nParsed = JSON.parse(nRecord.dataJson)
+                        
+                        // Copy common fields (excluding row data)
+                        Object.keys(nParsed).forEach(key => {
+                            if (!key.match(/_\d+$/)) {
+                                formData[key] = nParsed[key]
+                            }
+                        })
+                        
+                        // Shift row data: index 8+ -> index 0+
+                        const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2']
+                        let resultIdx = 0
+                        for (let i = 8; i < 100; i++) {
+                            // Check if this row has data (check sampleId)
+                            if (nParsed['sampleId_' + i]) {
+                                rowFields.forEach(field => {
+                                    const val = nParsed[field + '_' + i]
+                                    if (val !== undefined) {
+                                        formData[field + '_' + resultIdx] = val
+                                    }
+                                })
+                                resultIdx++
+                            }
+                        }
+
+                        // Reset ID to ensure it is a new record
+                        formData.id = ''
+                        formData.entrustmentId = key
+                    }
+                }
+             } catch (e) {
+                console.error('Failed to auto-fill from Nuclear Record', e)
+             }
+          }
+
           newRecord.dataJson = JSON.stringify(formData)
         }
         

@@ -3,7 +3,10 @@ package org.example.work121.entity;
 /**
  * 轻型动力触探检测实体类
  */
-public class LightDynamicPenetration extends Entrustment {
+public class LightDynamicPenetration extends BusinessEntity {
+
+    /** 关联委托单ID */
+    private String entrustmentId;
 
     /** 岩土性状 */
     private String soilProperty;
@@ -20,8 +23,11 @@ public class LightDynamicPenetration extends Entrustment {
     /** 数据JSON */
     private String dataJson;
 
-    /** 委托单ID */
-    private String entrustmentId;
+    /** 数据块 */
+    private String dataBlocks;
+
+    /** 备注 */
+    private String remarks;
 
     public String getEntrustmentId() {
         return entrustmentId;
@@ -69,5 +75,21 @@ public class LightDynamicPenetration extends Entrustment {
 
     public void setDataJson(String dataJson) {
         this.dataJson = dataJson;
+    }
+
+    public String getDataBlocks() {
+        return dataBlocks;
+    }
+
+    public void setDataBlocks(String dataBlocks) {
+        this.dataBlocks = dataBlocks;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

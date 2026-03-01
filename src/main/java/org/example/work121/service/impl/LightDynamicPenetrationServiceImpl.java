@@ -6,6 +6,7 @@ import org.example.work121.entity.LightDynamicPenetrationResult;
 import org.example.work121.mapper.LightDynamicPenetrationMapper;
 import org.example.work121.mapper.LightDynamicPenetrationResultMapper;
 import org.example.work121.service.LightDynamicPenetrationService;
+import org.example.work121.service.TableGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,9 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
     @Autowired
     private org.example.work121.mapper.JcCoreWtInfoMapper jcCoreWtInfoMapper;
 
+    @Autowired
+    private TableGenerationService tableGenerationService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -42,11 +46,24 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
                 if (jsonData != null) {
                     if (jsonData.get("clientUnit") != null) entity.setClientUnit((String) jsonData.get("clientUnit"));
                     if (jsonData.get("projectName") != null) entity.setProjectName((String) jsonData.get("projectName"));
-                    if (jsonData.get("commissionDate") != null) entity.setCommissionDate((java.util.Date) jsonData.get("commissionDate"));
+                    if (jsonData.get("commissionDate") != null) {
+                        Object val = jsonData.get("commissionDate");
+                        if (val instanceof Long) entity.setCommissionDate(new java.util.Date((Long) val));
+                    }
                     if (jsonData.get("constructionPart") != null) entity.setConstructionPart((String) jsonData.get("constructionPart"));
-                    if (jsonData.get("testDate") != null) entity.setTestDate((java.util.Date) jsonData.get("testDate"));
-                    if (jsonData.get("soilProperty") != null) entity.setSoilProperty((String) jsonData.get("soilProperty"));
-                    if (jsonData.get("reportDate") != null) entity.setReportDate((java.util.Date) jsonData.get("reportDate"));
+                    if (jsonData.get("testDate") != null) {
+                        Object val = jsonData.get("testDate");
+                        if (val instanceof Long) entity.setTestDate(new java.util.Date((Long) val));
+                    }
+                    if (jsonData.get("soilProperty") != null) {
+                        entity.setSoilProperty((String) jsonData.get("soilProperty"));
+                    } else if (jsonData.get("soilProperties") != null) {
+                        entity.setSoilProperty((String) jsonData.get("soilProperties"));
+                    }
+                    if (jsonData.get("reportDate") != null) {
+                        Object val = jsonData.get("reportDate");
+                        if (val instanceof Long) entity.setReportDate(new java.util.Date((Long) val));
+                    }
                     if (jsonData.get("witnessUnit") != null) entity.setWitnessUnit((String) jsonData.get("witnessUnit"));
                     if (jsonData.get("witness") != null) entity.setWitness((String) jsonData.get("witness"));
                     if (jsonData.get("designCapacity") != null) entity.setDesignCapacity((String) jsonData.get("designCapacity"));
@@ -95,6 +112,13 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
                     Map<String, Object> existingJson = objectMapper.readValue(entity.getDataJson(), Map.class);
                     if (existingJson != null) {
                         recordData.putAll(existingJson);
+                        // Back-fill entity fields from JSON if missing
+                        if (entity.getSoilProperty() == null && existingJson.get("soilProperties") != null) {
+                            entity.setSoilProperty((String) existingJson.get("soilProperties"));
+                        }
+                        if (entity.getCommissionDate() == null && existingJson.get("entrustDate") != null) {
+                            // Date conversion might be tricky here, skipping for now or handle string dates
+                        }
                     }
                 } catch (Exception e) {
                     System.err.println("Error parsing record JSON: " + e.getMessage());
@@ -130,7 +154,7 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
                 mapper.insert(entity);
             } else {
                 if (mapper.countById(entity.getId()) > 0) {
-                    mapper.update(entity);
+                    mapper.updateById(entity);
                 } else {
                     mapper.insert(entity);
                 }
@@ -150,40 +174,52 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
     @Override
     public org.example.work121.entity.LightDynamicPenetrationReport getReportByEntrustmentId(String entrustmentId) {
         String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
-        return reportMapper.selectByEntrustmentId(resolvedId);
+        List<org.example.work121.entity.LightDynamicPenetrationReport> list = reportMapper.selectByEntrustmentId(resolvedId);
+        return (list != null && !list.isEmpty()) ? list.get(0) : null;
     }
 
     @Override
     @Transactional
     public void saveReport(org.example.work121.entity.LightDynamicPenetrationReport report) {
-        org.example.work121.entity.LightDynamicPenetrationReport existing = reportMapper.selectByEntrustmentId(report.getEntrustmentId());
-        if (existing != null) {
-            reportMapper.update(report);
+        if (report.getId() != null && !report.getId().trim().isEmpty()) {
+            reportMapper.updateById(report);
         } else {
-            if (report.getId() == null || report.getId().trim().isEmpty()) {
-                report.setId(UUID.randomUUID().toString());
+            List<org.example.work121.entity.LightDynamicPenetrationReport> existingList = reportMapper.selectByEntrustmentId(report.getEntrustmentId());
+            if (existingList != null && !existingList.isEmpty()) {
+                // If exists, update the first one (or all? Here we assume update by ID is preferred if we knew it, but here we update by EntrustmentId using update())
+                // Actually reportMapper.update() updates by entrustmentId.
+                reportMapper.update(report);
+            } else {
+                if (report.getId() == null || report.getId().trim().isEmpty()) {
+                    report.setId(UUID.randomUUID().toString());
+                }
+                reportMapper.insert(report);
             }
-            reportMapper.insert(report);
         }
     }
 
     @Override
     public LightDynamicPenetrationResult getResultByEntrustmentId(String entrustmentId) {
         String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
-        return resultMapper.selectByEntrustmentId(resolvedId);
+        List<LightDynamicPenetrationResult> list = resultMapper.selectByEntrustmentId(resolvedId);
+        return (list != null && !list.isEmpty()) ? list.get(0) : null;
     }
 
     @Override
     @Transactional
     public void saveResult(LightDynamicPenetrationResult result) {
-        LightDynamicPenetrationResult existing = resultMapper.selectByEntrustmentId(result.getEntrustmentId());
-        if (existing != null) {
-            resultMapper.update(result);
+        if (result.getId() != null && !result.getId().trim().isEmpty()) {
+            resultMapper.updateById(result);
         } else {
-            if (result.getId() == null || result.getId().trim().isEmpty()) {
-                result.setId(UUID.randomUUID().toString());
+            List<LightDynamicPenetrationResult> existingList = resultMapper.selectByEntrustmentId(result.getEntrustmentId());
+            if (existingList != null && !existingList.isEmpty()) {
+                resultMapper.update(result);
+            } else {
+                if (result.getId() == null || result.getId().trim().isEmpty()) {
+                    result.setId(UUID.randomUUID().toString());
+                }
+                resultMapper.insert(result);
             }
-            resultMapper.insert(result);
         }
     }
 
@@ -191,76 +227,8 @@ public class LightDynamicPenetrationServiceImpl implements LightDynamicPenetrati
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
         String resolvedId = resolveEntrustmentIdToWtId(entrustmentId);
-        List<LightDynamicPenetration> records = mapper.selectByEntrustmentId(resolvedId);
-        if (records == null || records.isEmpty()) {
-            System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
-            return;
-        }
-
-        LightDynamicPenetration record = records.get(0);
-
-        try {
-            // Prepare data map from record
-            Map<String, Object> recordData = new HashMap<>();
-            if (record.getDataJson() != null && !record.getDataJson().isEmpty()) {
-                try {
-                    Map<String, Object> existingJson = objectMapper.readValue(record.getDataJson(), Map.class);
-                    if (existingJson != null) {
-                        recordData.putAll(existingJson);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Error parsing record JSON: " + e.getMessage());
-                }
-            }
-
-            // Add specific fields to data map so they are available in Report/Result JSON
-            // Using both property names to ensure frontend compatibility
-            recordData.put("soilProperty", record.getSoilProperty());
-            recordData.put("soilProperties", record.getSoilProperty());
-            recordData.put("designCapacity", record.getDesignCapacity());
-            recordData.put("hammerWeight", record.getHammerWeight());
-            recordData.put("dropDistance", record.getDropDistance());
-            
-            // Add date fields nicely formatted if needed, or just as objects (Jackson handles dates)
-            if (record.getTestDate() != null) recordData.put("testDate", record.getTestDate());
-            if (record.getCommissionDate() != null) recordData.put("commissionDate", record.getCommissionDate());
-            
-            if (record.getConstructionPart() != null) recordData.put("constructionPart", record.getConstructionPart());
-            if (record.getTestCategory() != null) recordData.put("testCategory", record.getTestCategory());
-
-            String mergedJson = objectMapper.writeValueAsString(recordData);
-
-            // Update Report
-            LightDynamicPenetrationReport report = reportMapper.selectByEntrustmentId(resolvedId);
-            if (report != null) {
-                report.setDataJson(mergedJson);
-                // Copy standard fields
-                if (record.getProjectName() != null) report.setProjectName(record.getProjectName());
-                if (record.getCommissionDate() != null) report.setCommissionDate(record.getCommissionDate());
-                if (record.getTestDate() != null) report.setTestDate(record.getTestDate());
-                if (record.getConstructionPart() != null) report.setConstructionPart(record.getConstructionPart());
-                
-                reportMapper.update(report);
-            }
-
-            // Update Result
-            LightDynamicPenetrationResult result = resultMapper.selectByEntrustmentId(resolvedId);
-            if (result != null) {
-                result.setDataJson(mergedJson);
-                if (record.getProjectName() != null) result.setProjectName(record.getProjectName());
-                if (record.getCommissionDate() != null) result.setCommissionDate(record.getCommissionDate());
-                if (record.getTestDate() != null) result.setTestDate(record.getTestDate());
-                if (record.getConstructionPart() != null) result.setConstructionPart(record.getConstructionPart());
-                
-                resultMapper.update(result);
-            }
-
-            System.out.println("Generated Report and Result for LightDynamicPenetration entrustment: " + entrustmentId);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error generating report/result: " + e.getMessage());
-        }
+        // Delegate to TableGenerationService which has the complete logic including proper field mapping
+        tableGenerationService.generateReportAndResult("LIGHT_DYNAMIC_PENETRATION", resolvedId);
     }
 
     /**

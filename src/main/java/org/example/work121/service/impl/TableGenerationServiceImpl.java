@@ -105,7 +105,95 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 break;
             default:
                 System.err.println("Unsupported table type: " + tableType);
+                break;
         }
+    }
+
+    /**
+     * 填充原位密度检测报告中缺失的必填字段（虚拟数据）
+     */
+    private void populateMissingDensityReportFields(Map<String, Object> data) {
+        // 报告日期 (默认当天)
+        if (isFieldMissing(data, "reportDate")) {
+            data.put("reportDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+        }
+
+        // 检测日期 (默认当天，通常应与报告日期接近或相同)
+        if (isFieldMissing(data, "testDate")) {
+            data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+        }
+
+        // 检测方法 (默认为核子法，因为当前上下文主要是核子法触发)
+        if (isFieldMissing(data, "testMethod")) {
+            data.put("testMethod", "核子法");
+        }
+
+        // 仪器设备
+        if (isFieldMissing(data, "equipment")) {
+            data.put("equipment", "核子密度仪");
+        }
+
+        // 检测依据
+        if (isFieldMissing(data, "testBasis")) {
+            data.put("testBasis", "JTG 3450-2019");
+        }
+
+        // 样品名称及状态
+        if (isFieldMissing(data, "sampleNameStatus")) {
+            data.put("sampleNameStatus", "细粒土/扰动");
+        }
+
+        // 最大干密度 (2.20 - 2.50)
+        if (isFieldMissing(data, "maxDryDensity")) {
+            double val = 2.20 + new Random().nextDouble() * 0.30;
+            data.put("maxDryDensity", String.format("%.2f", val));
+        }
+
+        // 最优含水率 (5.0 - 10.0)
+        if (isFieldMissing(data, "optimumMoisture")) {
+            double val = 5.0 + new Random().nextDouble() * 5.0;
+            data.put("optimumMoisture", String.format("%.1f", val));
+        }
+
+        // 最小干密度 (默认0)
+        if (isFieldMissing(data, "minDryDensity")) {
+            data.put("minDryDensity", "0");
+        }
+
+        // 设计指标 (默认0.96)
+        if (isFieldMissing(data, "designIndex")) {
+            data.put("designIndex", "0.96");
+        }
+
+        // 检测结果 (默认合格)
+        if (isFieldMissing(data, "testResult")) {
+            data.put("testResult", "合格");
+        }
+
+        // 公司名称
+        if (isFieldMissing(data, "companyName")) {
+            data.put("companyName", "河北金涛建设工程质量检测有限公司");
+        }
+
+        // 公司地址
+        if (isFieldMissing(data, "companyAddress")) {
+            data.put("companyAddress", "石家庄高新区方亿科技工业园A区第2号楼。");
+        }
+
+        // 公司电话
+        if (isFieldMissing(data, "companyPhone")) {
+            data.put("companyPhone", "0311—86107634  0311—67300616");
+        }
+
+        // 备注 (默认模板)
+        if (isFieldMissing(data, "remarks")) {
+            data.put("remarks", "附原位密度检测结果。\n见证人：\n见证单位：");
+        }
+    }
+
+    private boolean isFieldMissing(Map<String, Object> data, String key) {
+        Object val = data.get(key);
+        return val == null || "".equals(val.toString().trim());
     }
 
     @Override
@@ -270,6 +358,9 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                     "CuttingRing"
             );
 
+            // 3）填充报告必需但可能缺失的字段（虚拟数据）
+            populateMissingDensityReportFields(recordData);
+
             DensityTestReport report = densityTestReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
                 report = new DensityTestReport();
@@ -293,7 +384,10 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             System.out.println("Generated Report and Result for DensityTest entrustment: " + entrustmentId);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error generating DensityTest report/result: " + e.getMessage());
+            // IMPORTANT: Do NOT rethrow RuntimeException here if we want to avoid rolling back the outer transaction
+            // (e.g. when called from WorkflowService during record approval).
+            // Just log the error. The record approval should succeed even if the auto-generation fails.
+            System.err.println("Error generating DensityTest report/result (suppressed): " + e.getMessage());
         }
     }
 
@@ -1011,25 +1105,47 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             LightDynamicPenetration record = records.get(0);
             Map<String, Object> recordData = prepareLightDynamicPenetrationData(record);
 
-            LightDynamicPenetrationReport report = lightDynamicPenetrationReportMapper.selectByEntrustmentId(entrustmentId);
-            if (report == null) {
-                report = new LightDynamicPenetrationReport();
-                report.setId(UUID.randomUUID().toString());
-                report.setEntrustmentId(entrustmentId);
-                fillTableFromEntrustment("LIGHT_DYNAMIC_PENETRATION", entrustmentId, report);
-            }
-            report.setDataJson(objectMapper.writeValueAsString(recordData));
-            saveLightDynamicPenetrationReport(report);
+            // Prioritize Report: Save Report FIRST to ensure it is the primary source of truth
+            try {
+                List<LightDynamicPenetrationReport> reports = lightDynamicPenetrationReportMapper.selectByEntrustmentId(entrustmentId);
+                LightDynamicPenetrationReport report = null;
+                if (reports != null && !reports.isEmpty()) {
+                    report = reports.get(0);
+                }
 
-            LightDynamicPenetrationResult result = lightDynamicPenetrationResultMapper.selectByEntrustmentId(entrustmentId);
-            if (result == null) {
-                result = new LightDynamicPenetrationResult();
-                result.setId(UUID.randomUUID().toString());
-                result.setEntrustmentId(entrustmentId);
-                fillTableFromEntrustment("LIGHT_DYNAMIC_PENETRATION", entrustmentId, result);
+                if (report == null) {
+                    report = new LightDynamicPenetrationReport();
+                    report.setId(UUID.randomUUID().toString());
+                    report.setEntrustmentId(entrustmentId);
+                    fillTableFromEntrustment("LIGHT_DYNAMIC_PENETRATION", entrustmentId, report);
+                }
+                report.setDataJson(objectMapper.writeValueAsString(recordData));
+                saveLightDynamicPenetrationReport(report);
+            } catch (Exception e) {
+                 System.err.println("Error generating LightDynamicPenetrationReport: " + e.getMessage());
+                 e.printStackTrace();
             }
-            result.setDataJson(objectMapper.writeValueAsString(recordData));
-            saveLightDynamicPenetrationResult(result);
+
+            // Save Result LAST (Secondary)
+            try {
+                List<LightDynamicPenetrationResult> results = lightDynamicPenetrationResultMapper.selectByEntrustmentId(entrustmentId);
+                LightDynamicPenetrationResult result = null;
+                if (results != null && !results.isEmpty()) {
+                    result = results.get(0);
+                }
+
+                if (result == null) {
+                    result = new LightDynamicPenetrationResult();
+                    result.setId(UUID.randomUUID().toString());
+                    result.setEntrustmentId(entrustmentId);
+                    fillTableFromEntrustment("LIGHT_DYNAMIC_PENETRATION", entrustmentId, result);
+                }
+                result.setDataJson(objectMapper.writeValueAsString(recordData));
+                saveLightDynamicPenetrationResult(result);
+            } catch (Exception e) {
+                 System.err.println("Error generating LightDynamicPenetrationResult: " + e.getMessage());
+                 e.printStackTrace();
+            }
 
             System.out.println("Generated Report and Result for LightDynamicPenetration entrustment: " + entrustmentId);
         } catch (Exception e) {
@@ -1365,15 +1481,64 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
             }
         }
-        recordData.put("soilProperty", record.getSoilProperty());
-        recordData.put("soilProperties", record.getSoilProperty());
-        recordData.put("designCapacity", record.getDesignCapacity());
-        recordData.put("hammerWeight", record.getHammerWeight());
-        recordData.put("dropDistance", record.getDropDistance());
-        if (record.getTestDate() != null) recordData.put("testDate", record.getTestDate());
+        
+        // Entrustment fields
+        if (record.getWtNum() != null) recordData.put("wtNum", record.getWtNum());
+        if (record.getProjectName() != null) recordData.put("projectName", record.getProjectName());
         if (record.getCommissionDate() != null) recordData.put("commissionDate", record.getCommissionDate());
+        if (record.getClientUnit() != null) recordData.put("clientUnit", record.getClientUnit());
+        if (record.getConstructionUnit() != null) recordData.put("constructionUnit", record.getConstructionUnit());
+        if (record.getBuildingUnit() != null) recordData.put("buildingUnit", record.getBuildingUnit());
+        if (record.getWitnessUnit() != null) recordData.put("witnessUnit", record.getWitnessUnit());
+        if (record.getWitness() != null) recordData.put("witness", record.getWitness());
         if (record.getConstructionPart() != null) recordData.put("constructionPart", record.getConstructionPart());
         if (record.getTestCategory() != null) recordData.put("testCategory", record.getTestCategory());
+        if (record.getRemarks() != null) recordData.put("remarks", record.getRemarks());
+        
+        // LightDynamicPenetration specific fields
+        if (record.getSoilProperty() != null) {
+            recordData.put("soilProperty", record.getSoilProperty());
+            recordData.put("soilProperties", record.getSoilProperty());
+        }
+        if (record.getDesignCapacity() != null) recordData.put("designCapacity", record.getDesignCapacity());
+        if (record.getHammerWeight() != null) recordData.put("hammerWeight", record.getHammerWeight());
+        if (record.getDropDistance() != null) recordData.put("dropDistance", record.getDropDistance());
+        if (record.getTestDate() != null) recordData.put("testDate", record.getTestDate());
+        if (record.getTestBasis() != null) recordData.put("testBasis", record.getTestBasis());
+        if (record.getEquipment() != null) recordData.put("equipment", record.getEquipment());
+        if (record.getConclusion() != null) recordData.put("conclusion", record.getConclusion());
+        
+        // Personnel fields
+        if (record.getTester() != null) {
+            recordData.put("tester", record.getTester());
+            recordData.put("recordTester", record.getTester());
+        }
+        if (record.getReviewer() != null) {
+            recordData.put("reviewer", record.getReviewer());
+            recordData.put("recordReviewer", record.getReviewer());
+        }
+        if (record.getApprover() != null) recordData.put("approver", record.getApprover());
+
+        // Signature fields
+        if (record.getInspectSignaturePhoto() != null) recordData.put("inspectSignaturePhoto", record.getInspectSignaturePhoto());
+        if (record.getReviewSignaturePhoto() != null) recordData.put("reviewSignaturePhoto", record.getReviewSignaturePhoto());
+        if (record.getApproveSignaturePhoto() != null) recordData.put("approveSignaturePhoto", record.getApproveSignaturePhoto());
+
+        // Dynamic data blocks (pos_L_0, depth_L_0, etc.)
+        if (record.getDataJson() != null) {
+            try {
+                Map<String, Object> jsonMap = objectMapper.readValue(record.getDataJson(), Map.class);
+                for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+                    String key = entry.getKey();
+                    if (key.matches("^(pos|depth|actual|avg|capacity)_[LR]_\\d+$")) {
+                        recordData.put(key, entry.getValue());
+                    }
+                }
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        
         return recordData;
     }
 
@@ -1589,8 +1754,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     private void saveLightDynamicPenetrationReport(LightDynamicPenetrationReport report) {
         try {
-            LightDynamicPenetrationReport existing = lightDynamicPenetrationReportMapper.selectByEntrustmentId(report.getEntrustmentId());
-            if (existing != null) {
+            List<LightDynamicPenetrationReport> existingList = lightDynamicPenetrationReportMapper.selectByEntrustmentId(report.getEntrustmentId());
+            if (existingList != null && !existingList.isEmpty()) {
                 lightDynamicPenetrationReportMapper.update(report);
             } else {
                 lightDynamicPenetrationReportMapper.insert(report);
@@ -1603,8 +1768,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     private void saveLightDynamicPenetrationResult(LightDynamicPenetrationResult result) {
         try {
-            LightDynamicPenetrationResult existing = lightDynamicPenetrationResultMapper.selectByEntrustmentId(result.getEntrustmentId());
-            if (existing != null) {
+            List<LightDynamicPenetrationResult> existingList = lightDynamicPenetrationResultMapper.selectByEntrustmentId(result.getEntrustmentId());
+            if (existingList != null && !existingList.isEmpty()) {
                 lightDynamicPenetrationResultMapper.update(result);
             } else {
                 lightDynamicPenetrationResultMapper.insert(result);

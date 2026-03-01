@@ -16,6 +16,9 @@ public interface SandReplacementReportMapper {
             "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "TESTER as tester, " +
+            "REVIEWER as reviewer, " +
+            "APPROVER as approver, " +
             "CREATE_BY as createBy, " +
             "CREATE_TIME as createTime, " +
             "UPDATE_BY as updateBy, " +
@@ -24,8 +27,8 @@ public interface SandReplacementReportMapper {
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     SandReplacementReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_SAND_REPLACEMENT (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+    @Insert("INSERT INTO T_SAND_REPLACEMENT (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(SandReplacementReport report);
 
     @Update("UPDATE T_SAND_REPLACEMENT SET " +
@@ -33,6 +36,9 @@ public interface SandReplacementReportMapper {
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
+            "TESTER = #{tester}, " +
+            "REVIEWER = #{reviewer}, " +
+            "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
@@ -45,6 +51,9 @@ public interface SandReplacementReportMapper {
             "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "TESTER as tester, " +
+            "REVIEWER as reviewer, " +
+            "APPROVER as approver, " +
             "CREATE_BY as createBy, " +
             "CREATE_TIME as createTime, " +
             "UPDATE_BY as updateBy, " +
@@ -59,6 +68,9 @@ public interface SandReplacementReportMapper {
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
+            "TESTER = #{tester}, " +
+            "REVIEWER = #{reviewer}, " +
+            "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +
             "WHERE ID = #{id}")

@@ -501,7 +501,7 @@ onMounted(() => {
   loadData()
 })
 
-const loadData = async () => {
+  const loadData = async () => {
   // 这里的 id 来自列表的 item.id（委托 WT_ID），wtNum 是统一编号 XT-2024-54301
   // 原位密度报告/结果的 ENTRUSTMENT_ID 我们现在统一用“统一编号”存，所以优先用 wtNum 作为 key
   const key = props.wtNum || props.id
@@ -617,6 +617,7 @@ const loadData = async () => {
           formData.client = eData.clientUnit || ''
           formData.commissionDate = eData.commissionDate || ''
           formData.constructionPart = eData.constructionPart || ''
+          formData.testCategory = eData.testCategory || ''
           formData.testDate = new Date().toISOString().split('T')[0]
           
           // Directory fallback logic
@@ -634,7 +635,7 @@ const loadData = async () => {
 
           try {
             const resultResponse = await axios.get('/api/density-test/get-by-entrustment-id', {
-              params: { entrustmentId: key }
+              params: { entrustmentId: formData.unifiedNumber }
             })
             if (resultResponse.data.success && resultResponse.data.data && resultResponse.data.data.length > 0) {
               const record = resultResponse.data.data[0]
@@ -726,6 +727,109 @@ const loadData = async () => {
                   console.error('density report auto-fill parse error', e)
                 }
               }
+            }
+            
+            // 无论是否有检测结果记录，如果是核子法，都尝试直接从核子法记录获取数据以确保完整性
+            if (formData.testCategory && formData.testCategory.includes('核子')) {
+                try {
+                  const nuclearRes = await axios.get('/api/nuclear-density/get-by-entrustment-id', {
+                     params: { entrustmentId: formData.unifiedNumber }
+                  })
+                  if (nuclearRes.data.success && nuclearRes.data.data && nuclearRes.data.data.length > 0) {
+                     const nRecord = nuclearRes.data.data[0]
+                     if (nRecord.dataJson) {
+                         const nParsed = JSON.parse(nRecord.dataJson)
+                         // 直接合并数据，核子法记录作为源头数据优先
+                         Object.assign(formData, nParsed)
+                         
+                         // 映射标准击实参数
+                         if (nParsed.maxDryDensity) formData.maxDryDensity = nParsed.maxDryDensity
+                         if (nParsed.optimumMoisture) formData.optimumMoisture = nParsed.optimumMoisture
+                         if (nParsed.minDryDensity) formData.minDryDensity = nParsed.minDryDensity
+                     }
+                  }
+                } catch (e) {
+                   console.error('Failed to auto-fill from Nuclear Record', e)
+                }
+            }
+
+            // 如果是灌砂法，尝试直接从灌砂法记录获取数据
+            if (formData.testCategory && formData.testCategory.includes('灌砂')) {
+                try {
+                  const sandRes = await axios.get('/api/sand-replacement/get-by-entrustment-id', {
+                     params: { entrustmentId: formData.unifiedNumber }
+                  })
+                  if (sandRes.data.success && sandRes.data.data && sandRes.data.data.length > 0) {
+                     const sRecord = sandRes.data.data[0]
+                     if (sRecord.dataJson) {
+                         const sParsed = JSON.parse(sRecord.dataJson)
+                         
+                         // 1. 基础字段合并
+                         // 注意：先不要直接 Object.assign 覆盖 dryDensity_X，因为灌砂法的 dryDensity_X 需要重排
+                         // 我们先提取非数组字段
+                         const { ...otherFields } = sParsed
+                         // 排除掉 dryDensity_X, wetDensity_X 等数组字段，避免直接覆盖导致错乱？
+                         // 其实直接 assign 也没关系，因为后面会重写。但是为了保险，我们可以先 assign。
+                         Object.assign(formData, sParsed)
+                         
+                         // 2. 映射特殊字段
+                         if (sParsed.optMoisture !== undefined) {
+                            formData.optimumMoisture = sParsed.optMoisture
+                         }
+
+                         // 3. 灌砂法专用重排逻辑：将 8 个平铺的密度值映射到 4 个检测点（每个点 2 个值）
+
+                         // 重排干密度
+                         for (let row = 0; row < 4; row++) {
+                            const idx1 = row * 2
+                            const idx2 = row * 2 + 1
+                            // 从 sParsed 中获取
+                            const v1 = sParsed['dryDensity_' + idx1]
+                            const v2 = sParsed['dryDensity_' + idx2]
+                            
+                            // 赋值给 formData 的 dryDensity_row 和 dryDensity2_row
+                            if (v1 !== undefined && v1 !== null && v1 !== '') {
+                                formData['dryDensity_' + row] = v1
+                            }
+                            if (v2 !== undefined && v2 !== null && v2 !== '') {
+                                formData['dryDensity2_' + row] = v2
+                            }
+                         }
+
+                         // 重排湿密度
+                         for (let row = 0; row < 4; row++) {
+                            const idx1 = row * 2
+                            const idx2 = row * 2 + 1
+                            const v1 = sParsed['wetDensity_' + idx1]
+                            const v2 = sParsed['wetDensity_' + idx2]
+                            
+                            if (v1 !== undefined && v1 !== null && v1 !== '') {
+                                formData['wetDensity_' + row] = v1
+                            }
+                            if (v2 !== undefined && v2 !== null && v2 !== '') {
+                                formData['wetDensity2_' + row] = v2
+                            }
+                         }
+                         
+                         // 重排含水率 (moisture)
+                         for (let row = 0; row < 4; row++) {
+                            const idx1 = row * 2
+                            const idx2 = row * 2 + 1
+                            const v1 = sParsed['moisture_' + idx1]
+                            const v2 = sParsed['moisture_' + idx2]
+                            
+                            if (v1 !== undefined && v1 !== null && v1 !== '') {
+                                formData['moisture_' + row] = v1
+                            }
+                            if (v2 !== undefined && v2 !== null && v2 !== '') {
+                                formData['moisture2_' + row] = v2
+                            }
+                         }
+                     }
+                  }
+                } catch (e) {
+                   console.error('Failed to auto-fill from Sand Replacement Record', e)
+                }
             }
           } catch (e) {
             console.error('density report auto-fill error', e)

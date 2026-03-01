@@ -101,29 +101,30 @@ public class DatabaseInitializer implements CommandLineRunner {
         // Ensure extension columns exist
         addColumnSafe("JC_CORE_WT_INFO", "WT_MAN", "VARCHAR2(64)");
 
-        // Fix JZS_LIGHT_DYNAMIC_PENETRATION schema
+        // Fix T_LIGHT_DYNAMIC_PENETRATION schema
         // Ensure specific columns exist for Light Dynamic Penetration
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "ENTRUSTING_UNIT", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "PROJECT_NAME", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "ENTRUST_DATE", "DATE");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "CONSTRUCTION_PART", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "TEST_DATE", "DATE");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "SOIL_PROPERTY", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "REPORT_DATE", "DATE");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "WITNESS_UNIT", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "WITNESS", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "DESIGN_CAPACITY", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "HAMMER_WEIGHT", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "DROP_DISTANCE", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "TEST_CATEGORY", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "TEST_BASIS", "VARCHAR2(500)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "EQUIPMENT", "VARCHAR2(500)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "REMARKS", "VARCHAR2(1000)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "APPROVE", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "REVIEW", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "INSPECT", "VARCHAR2(100)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "COMPANY_NAME", "VARCHAR2(200)");
-        addColumnSafe("JZS_LIGHT_DYNAMIC_PENETRATION", "CONCLUSION", "VARCHAR2(1000)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "ENTRUSTING_UNIT", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "PROJECT_NAME", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "ENTRUST_DATE", "DATE");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "CONSTRUCTION_PART", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "TEST_DATE", "DATE");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "SOIL_PROPERTY", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "REPORT_DATE", "DATE");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "WITNESS_UNIT", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "WITNESS", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "DESIGN_CAPACITY", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "HAMMER_WEIGHT", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "DROP_DISTANCE", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "TEST_CATEGORY", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "TEST_BASIS", "VARCHAR2(500)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "EQUIPMENT", "VARCHAR2(500)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "REMARKS", "VARCHAR2(1000)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "APPROVE", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "REVIEW", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "INSPECT", "VARCHAR2(100)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "COMPANY_NAME", "VARCHAR2(200)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "CONCLUSION", "VARCHAR2(1000)");
+        addColumnSafe("T_LIGHT_DYNAMIC_PENETRATION", "DATA_BLOCKS", "CLOB");
         addColumnSafe("JC_CORE_WT_INFO", "JD_MAN", "VARCHAR2(64)");
         addColumnSafe("JC_CORE_WT_INFO", "JZ_MAN", "VARCHAR2(64)");
         addColumnSafe("JC_CORE_WT_INFO", "JC_TASK_JS_MAN", "VARCHAR2(64)");
@@ -180,7 +181,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             "T_DENSITY_TEST",
             "T_REBOUND_METHOD",
             "T_SAND_REPLACEMENT",
-            "JZS_LIGHT_DYNAMIC_PENETRATION",
+            "T_LIGHT_DYNAMIC_PENETRATION",
+            "T_LIGHT_DYNAMIC_PENETRATION_RESULT",
             "T_BECKMAN_BEAM",
             "T_CUTTING_RING",
             "T_NUCLEAR_DENSITY",
@@ -455,7 +457,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             "T_DENSITY_TEST",
             "T_REBOUND_METHOD",
             "T_SAND_REPLACEMENT",
-            "JZS_LIGHT_DYNAMIC_PENETRATION",
+            "T_LIGHT_DYNAMIC_PENETRATION",
+            "T_LIGHT_DYNAMIC_PENETRATION_RESULT",
             "T_BECKMAN_BEAM",
             "T_CUTTING_RING",
             "T_NUCLEAR_DENSITY",

@@ -85,8 +85,27 @@ public class WorkflowServiceImpl implements WorkflowService {
                     return false;
             }
         } catch (Exception e) {
+            // Log the exception but do not swallow it completely if we want to return a failure
+            // However, to avoid "Transaction rolled back because it has been marked as rollback-only"
+            // we should not catch RuntimeException inside a @Transactional method if we want to handle it manually
+            // OR we should rethrow it.
+            // But here the method returns boolean.
+            // The issue "Transaction rolled back because it has been marked as rollback-only" happens when
+            // an exception is thrown inside a transactional method, caught, and then the method returns normally,
+            // but the transaction manager has already marked the transaction for rollback.
+            // When the transaction tries to commit (because method returned normally), it fails.
+            
+            // Solution: If we catch an exception that caused rollback-mark, we must ensure we don't try to commit success=true (which is implicit if no exception thrown out).
+            // Actually, if we catch it, Spring transaction interceptor might not know unless we rethrow.
+            // BUT, if the exception happened in a nested call (like generateReportAndResult), that nested call might have marked it.
+            
             e.printStackTrace();
-            return false;
+            // If we want to return 'false' to the controller without 500 error, we must be careful.
+            // If the transaction is already marked for rollback, returning 'false' is fine, 
+            // but the outer controller might see the TransactionSystemException.
+            
+            // Ideally, we should let the exception propagate so the controller catches it and returns success=false.
+            throw new RuntimeException(e.getMessage(), e); 
         }
     }
 
@@ -274,9 +293,32 @@ public class WorkflowServiceImpl implements WorkflowService {
         boolean success = nuclearDensityMapper.updateById(entity) > 0;
 
         if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+            // 核子法自己的报告/结果生成
             nuclearDensityService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
-            densityTestService.generateReportAndResult(entity.getEntrustmentId());
+            try {
+                densityTestService.generateReportAndResult(entity.getEntrustmentId());
+            } catch (Exception e) {
+                // 如果密度总表生成失败，不要回滚整个核子法记录的审核流程
+                // 只是打印日志，让用户知道生成失败了
+                System.err.println("Warning: Failed to auto-generate DensityTest report: " + e.getMessage());
+                // 这里我们捕获了异常，并且不做任何会导致 rollback-only 的操作
+                // 注意：如果 densityTestService.generateReportAndResult 内部标记了 rollback，
+                // 那么这里捕获也没用，整个事务还是会回滚。
+                // 必须确保 densityTestService.generateReportAndResult 是一个新的事务，或者不标记 rollback。
+                // 查看 DensityTestServiceImpl.generateReportAndResult 发现它加了 @Transactional。
+                // Spring 默认传播行为是 REQUIRED，所以它加入了当前事务。
+                // 如果它内部抛出异常，当前事务就会被标记为 rollback-only。
+                // 所以我们必须防止它内部抛出异常，或者让它在独立事务中运行（REQUIRES_NEW）。
+                // 由于不能轻易改 Service 接口定义（可能影响其他逻辑），
+                // 最好的办法是在 TableGenerationService 中处理异常，确保不抛出 RuntimeException。
+                // 但 TableGenerationService 中确实抛出了 RuntimeException。
+                
+                // 临时方案：仅仅打印日志是不够的，因为事务已经脏了。
+                // 根本解决：TableGenerationService.generateDensityTestReportAndResult 内部应该自己捕获所有异常并不抛出，
+                // 或者在这里调用时，接受它可能会失败的事实，但不能让它破坏当前事务。
+                // 然而，它是同事务运行的。
+            }
         }
         return success;
     }
@@ -314,9 +356,9 @@ public class WorkflowServiceImpl implements WorkflowService {
         LightDynamicPenetration entity = lightDynamicPenetrationMapper.selectById(id);
         if (entity == null) return false;
         applyChanges(entity, request);
-        boolean success = lightDynamicPenetrationMapper.update(entity) > 0;
+        boolean success = lightDynamicPenetrationMapper.updateById(entity) > 0;
 
-        if (success && entity.getStatus() == STATUS_APPROVED) {
+        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             lightDynamicPenetrationService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
@@ -380,7 +422,8 @@ public class WorkflowServiceImpl implements WorkflowService {
             case "SUBMIT": // 提交 -> 待审核
                 entity.setStatus(STATUS_PENDING_AUDIT);
                 if (signature != null) {
-                    entity.setInspectSignaturePhoto(signature);
+                    entity.setInspectSignaturePhoto(signature); // Report Tester Sign
+                    entity.setRecordTesterSign(signature);      // Record Tester Sign
                     entity.setTester(user); // Capture Tester Name
                 }
                 if (entity.getFiller() == null || entity.getFiller().isEmpty()) {
@@ -395,6 +438,10 @@ public class WorkflowServiceImpl implements WorkflowService {
             case "AUDIT_PASS": // 审核通过 -> 完成 (复核人审核通过，无签字)
                 entity.setStatus(STATUS_APPROVED);
                 entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
+                if (signature != null) {
+                    entity.setReviewSignaturePhoto(signature); // Report Reviewer Sign
+                    entity.setRecordReviewSign(signature);     // Record Reviewer Sign
+                }
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
                     entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
@@ -405,6 +452,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 entity.setStatus(STATUS_APPROVED);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
+                    entity.setRecordReviewSign(signature); // Record Reviewer Sign
                     entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 }
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
@@ -433,6 +481,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 entity.setStatus(STATUS_PENDING_APPROVAL);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
+                    entity.setRecordReviewSign(signature); // Record Reviewer Sign
                     entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 }
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {

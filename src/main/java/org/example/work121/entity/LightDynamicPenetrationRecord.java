@@ -11,14 +11,23 @@ public class LightDynamicPenetrationRecord extends BusinessEntity {
     /** 数据JSON */
     private String dataJson;
 
-    /** 复核人签名照片 */
-    private String reviewSignaturePhoto;
+    /** 备注 */
+    private String remarks;
 
-    /** 检测人签名照片 */
-    private String inspectSignaturePhoto;
+    /** 岩土性状 */
+    private String soilProperty;
 
-    /** 批准人签名照片 */
-    private String approveSignaturePhoto;
+    /** 设计承载力 (kPa) */
+    private String designCapacity;
+
+    /** 锤重量 (kg) */
+    private String hammerWeight;
+
+    /** 落距 (cm) */
+    private String dropDistance;
+
+    /** 数据块 */
+    private String dataBlocks;
 
     public String getEntrustmentId() {
         return entrustmentId;
@@ -36,27 +45,51 @@ public class LightDynamicPenetrationRecord extends BusinessEntity {
         this.dataJson = dataJson;
     }
 
-    public String getReviewSignaturePhoto() {
-        return reviewSignaturePhoto;
+    public String getRemarks() {
+        return remarks;
     }
 
-    public void setReviewSignaturePhoto(String reviewSignaturePhoto) {
-        this.reviewSignaturePhoto = reviewSignaturePhoto;
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
-    public String getInspectSignaturePhoto() {
-        return inspectSignaturePhoto;
+    public String getSoilProperty() {
+        return soilProperty;
     }
 
-    public void setInspectSignaturePhoto(String inspectSignaturePhoto) {
-        this.inspectSignaturePhoto = inspectSignaturePhoto;
+    public void setSoilProperty(String soilProperty) {
+        this.soilProperty = soilProperty;
     }
 
-    public String getApproveSignaturePhoto() {
-        return approveSignaturePhoto;
+    public String getDesignCapacity() {
+        return designCapacity;
     }
 
-    public void setApproveSignaturePhoto(String approveSignaturePhoto) {
-        this.approveSignaturePhoto = approveSignaturePhoto;
+    public void setDesignCapacity(String designCapacity) {
+        this.designCapacity = designCapacity;
+    }
+
+    public String getHammerWeight() {
+        return hammerWeight;
+    }
+
+    public void setHammerWeight(String hammerWeight) {
+        this.hammerWeight = hammerWeight;
+    }
+
+    public String getDropDistance() {
+        return dropDistance;
+    }
+
+    public void setDropDistance(String dropDistance) {
+        this.dropDistance = dropDistance;
+    }
+
+    public String getDataBlocks() {
+        return dataBlocks;
+    }
+
+    public void setDataBlocks(String dataBlocks) {
+        this.dataBlocks = dataBlocks;
     }
 }

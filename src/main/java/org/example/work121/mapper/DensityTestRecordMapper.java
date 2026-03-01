@@ -17,6 +17,7 @@ public interface DensityTestRecordMapper {
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
             "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
+            "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -48,6 +49,7 @@ public interface DensityTestRecordMapper {
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
             "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
+            "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -68,8 +70,8 @@ public interface DensityTestRecordMapper {
             "WHERE t2.ID = #{id}")
     DensityTestRecord selectById(@Param("id") String id);
 
-    @Insert("INSERT INTO T_DENSITY_TEST (ID, ENTRUSTMENT_ID, DATA_JSON, TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, #{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+    @Insert("INSERT INTO T_DENSITY_TEST (ID, ENTRUSTMENT_ID, DATA_JSON, TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, #{recordTesterSign}, #{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(DensityTestRecord record);
 
     @Update("UPDATE T_DENSITY_TEST SET " +
@@ -81,6 +83,7 @@ public interface DensityTestRecordMapper {
             "RECORD_TESTER = #{recordTester}, " +
             "RECORD_REVIEWER = #{recordReviewer}, " +
             "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
@@ -99,6 +102,7 @@ public interface DensityTestRecordMapper {
             "RECORD_TESTER = #{recordTester}, " +
             "RECORD_REVIEWER = #{recordReviewer}, " +
             "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +

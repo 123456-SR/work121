@@ -506,9 +506,9 @@ const addRecord = async () => {
     entrustingUnit: entrustmentData.clientUnit || '', // Map clientUnit to entrustingUnit
     // commissionDate: entrustmentData.commissionDate || '',
     // Initialize Roles
-    recordTester: '',
-    recordReviewer: '',
-    filler: '',
+    recordTester: entrustmentData.testerName || entrustmentData.tester || directory.jcTester || '',
+    recordReviewer: entrustmentData.reviewerName || entrustmentData.reviewer || directory.jcReviewer || '',
+    filler: directory.jcFiller || '',
     
     dataJson: '{}',
     status: 0 // Draft
@@ -616,18 +616,6 @@ const loadData = async (entrustmentId) => {
       await addRecord()
     }
   }
-  
-  // Process information loading removed to prevent auto-fill of tester/reviewer
-  /* 
-  try {
-    const wtNum = formData.entrustmentId || props.wtNum
-    if (wtNum) {
-       // ... code removed ...
-    }
-  } catch (error) {
-    console.error('Failed to load process information:', error)
-  }
-  */
 }
 
 onMounted(() => {

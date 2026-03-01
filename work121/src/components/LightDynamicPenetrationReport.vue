@@ -276,59 +276,69 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, defineProps, inject } from 'vue'
-import axios from 'axios'
+import { reactive, ref, onMounted, defineProps, inject } from 'vue';
+import axios from 'axios';
 
-const navigateTo = inject('navigateTo')
+const navigateTo = inject('navigateTo');
 
 const goToList = () => {
-  if (navigateTo) {
-    navigateTo('LightDynamicPenetrationReportList')
+  if (typeof navigateTo === 'function') {
+    navigateTo('LightDynamicPenetrationReportList');
   }
-}
+};
 
 const props = defineProps({
   id: String
 })
 
 const pdfForm = ref(null)
+const currentEntrustmentId = ref(null)
+const fullDataJson = ref({})
 
 const formData = reactive({
-  entrustingUnit: '',
   status: 0,
-  unifiedNumber: '',
-  projectName: '',
-  entrustDate: '',
-  constructionPart: '',
-  testDate: '',
-  soilProperty: '',
-  reportDate: '',
-  witnessUnit: '',
-  witness: '',
-  designCapacity: '',
-  hammerWeight: '',
-  dropDistance: '',
-  testCategory: '',
-  testBasis: '',
-  equipment: '',
-  remarks: '',
-  approver: '',
-  recordTester: '',
-  recordReviewer: '',
-  filler: '',
-  approverSignature: '',
-  reviewerSignature: '',
-  testerSignature: '',
-  companyName: '',
-  companyAddress: '',
-  companyPhone: '',
-  conclusion: '',
-  // 2 组测点，每组左/右各 6 行深度/锤击数
-  dataBlocks: [
-    { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' },
-    { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
-  ]
+  dataBlocks: Array.from({ length: 3 }, () => ({
+    pos_L: "",
+    depths: Array.from({ length: 6 }, () => ({ depth_L: "", actual_L: "" })),
+    avg_L: "",
+    capacity_L: "",
+    pos_R: "",
+    depths_R: Array.from({ length: 6 }, () => ({ depth_R: "", actual_R: "" })),
+    avg_R: "",
+    capacity_R: ""
+  }))
 })
+
+;[
+  "entrustingUnit",
+  "unifiedNumber",
+  "projectName",
+  "entrustDate",
+  "constructionPart",
+  "testDate",
+  "soilProperty",
+  "reportDate",
+  "witnessUnit",
+  "witness",
+  "designCapacity",
+  "hammerWeight",
+  "dropDistance",
+  "testCategory",
+  "testBasis",
+  "equipment",
+  "remarks",
+  "approver",
+  "recordTester",
+  "recordReviewer",
+  "filler",
+  "approverSignature",
+  "reviewerSignature",
+  "testerSignature",
+  "companyName",
+  "companyAddress",
+  "companyPhone",
+  "conclusion"
+].forEach((k) => (formData[k] = ""))
 
 const formatDate = (d) => {
     if (!d) return ''
@@ -337,6 +347,12 @@ const formatDate = (d) => {
     const month = ('0' + (date.getMonth() + 1)).slice(-2)
     const day = ('0' + date.getDate()).slice(-2)
     return `${year}-${month}-${day}`
+}
+
+const normalizeSignatureSrc = (src) => {
+  if (!src) return ''
+  if (src.startsWith('data:image')) return src
+  return `data:image/png;base64,${src}`
 }
 
 const getStatusText = (status) => {
@@ -371,8 +387,11 @@ const submitWorkflow = async (action) => {
     return
   }
 
-  const user = JSON.parse(localStorage.getItem('userInfo'))
-  if (!user || !user.username) {
+  const rawUser = localStorage.getItem('userInfo')
+  const user = rawUser ? JSON.parse(rawUser) : null
+  const currentAccount = user && (user.username || user.userAccount || user.userName)
+  const currentName = user && (user.fullName || user.userName || currentAccount)
+  if (!currentAccount) {
     alert('请先登录')
     return
   }
@@ -380,9 +399,7 @@ const submitWorkflow = async (action) => {
   let signatureData = null
 
   if (action === 'SUBMIT') {
-    // Role check: Only recordTester can submit
-    // Logic: formData.recordTester (if set) -> directory.tester -> directory.jcTester
-    if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+    if (formData.recordTester && currentAccount !== formData.recordTester && currentName !== formData.recordTester) {
         alert('您不是该单据的检测人 (' + formData.recordTester + ')，无权提交')
         return
     }
@@ -393,22 +410,19 @@ const submitWorkflow = async (action) => {
     }
     signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
   } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
-    // Role check: Only recordReviewer can audit/reject at status 1
-    // Logic: formData.recordReviewer (if set) -> directory.reviewer -> directory.jcReviewer
-    if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+    if (formData.recordReviewer && currentAccount !== formData.recordReviewer && currentName !== formData.recordReviewer) {
          alert('您不是该单据的复核人 (' + formData.recordReviewer + ')，无权操作')
          return
     }
     
     if (action === 'AUDIT_PASS') {
-        // Auto fetch signature if missing
         if (!formData.reviewerSignature) {
             try {
-                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                const sigRes = await axios.post('/api/signature/get', { userAccount: currentAccount })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
                      if (!formData.recordReviewer) {
-                        formData.recordReviewer = user.fullName || user.username
+                        formData.recordReviewer = currentName
                      }
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
@@ -423,28 +437,54 @@ const submitWorkflow = async (action) => {
         signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
     }
   } else if (action === 'SIGN_REVIEW') {
-    // Role check: Only recordReviewer can sign
-    if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+    if (formData.recordReviewer && currentAccount !== formData.recordReviewer && currentName !== formData.recordReviewer) {
         alert('您不是该单据的复核人 (' + formData.recordReviewer + ')，无权签字')
         return
     }
 
     if (!formData.reviewerSignature) {
-      alert('请先进行复核人签字')
-      return
+        try {
+            const sigRes = await axios.post('/api/signature/get', { userAccount: currentAccount })
+            if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                    formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                    if (!formData.recordReviewer) {
+                    formData.recordReviewer = currentName
+                    }
+            } else {
+                    alert('未找到您的电子签名，无法自动签名')
+                    return
+            }
+        } catch (e) {
+            console.error('Auto sign error', e)
+            alert('自动签名失败')
+            return
+        }
     }
     signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
   } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 4)) {
-    // Role check: Only approver can sign/reject at status 4
-    if (formData.approver && user.username !== formData.approver && user.fullName !== formData.approver) {
+    if (formData.approver && currentAccount !== formData.approver && currentName !== formData.approver) {
          alert('您不是该单据的批准人 (' + formData.approver + ')，无权操作')
          return
     }
 
     if (action === 'SIGN_APPROVE') {
         if (!formData.approverSignature) {
-            alert('请先进行批准人签字')
-            return
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: currentAccount })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                        formData.approverSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                        if (!formData.approver) {
+                        formData.approver = currentName
+                        }
+                } else {
+                        alert('未找到您的电子签名，无法自动签名')
+                        return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
         }
         signatureData = formData.approverSignature.replace(/^data:image\/\w+;base64,/, '')
     }
@@ -454,7 +494,7 @@ const submitWorkflow = async (action) => {
     tableType: 'LIGHT_DYNAMIC_PENETRATION',
     recordId: props.id,
     action: action,
-    userAccount: user.username,
+    userAccount: currentAccount,
     signatureData: signatureData,
     nextHandler: ''
   }
@@ -482,25 +522,45 @@ const submitWorkflow = async (action) => {
 const loadData = async () => {
   if (!props.id) return
   try {
-    const res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
-    if (res.data.success && res.data.data) {
-      const data = res.data.data
-      formData.entrustingUnit = data.clientUnit || ''
-      formData.unifiedNumber = data.wtNum || ''
-      formData.projectName = data.projectName || ''
-      formData.entrustDate = formatDate(data.commissionDate)
-      formData.constructionPart = data.constructionPart || ''
-      formData.soilProperty = data.soilProperty || ''
-      formData.reportDate = formatDate(data.reportDate)
-      formData.witnessUnit = data.witnessUnit || ''
-      formData.witness = data.witness || ''
-      formData.designCapacity = data.designCapacity || ''
-      formData.hammerWeight = data.hammerWeight || ''
-      formData.dropDistance = data.dropDistance || ''
-      formData.testCategory = data.testCategory || ''
-      formData.testBasis = data.testBasis || ''
-      formData.equipment = data.equipment || ''
-      formData.remarks = data.remarks || ''
+    let data = null;
+    let ent = null;
+
+    try {
+      const entRes = await axios.get(`/api/jc-core-wt-info/by-id?id=${props.id}`)
+      if (entRes.data && entRes.data.success && entRes.data.data) {
+        ent = entRes.data.data
+        currentEntrustmentId.value = ent.id
+        const repRes = await axios.get('/api/light-dynamic-penetration/report/get-by-entrustment-id', { params: { entrustmentId: ent.id } })
+        if (repRes.data && repRes.data.success && repRes.data.data) {
+          data = repRes.data.data
+        }
+      }
+    } catch (e) {}
+
+    if (!data) {
+      const res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
+      if (res.data.success && res.data.data) data = res.data.data
+    }
+
+    if (data) {
+      formData.entrustingUnit = data.clientUnit || (ent && (ent.client || ent.clientUnit)) || "";
+      formData.unifiedNumber = data.wtNum || (ent && ent.wtNum) || "";
+      formData.projectName = data.projectName || (ent && ent.projectName) || "";
+      formData.entrustDate = formatDate(data.commissionDate || (ent && (ent.commissionDate || ent.wtDate)));
+      formData.constructionPart = data.constructionPart || (ent && ent.constructionPart) || "";
+      formData.soilProperty = data.soilProperty || "";
+      formData.reportDate = formatDate(data.reportDate);
+      formData.witnessUnit = data.witnessUnit || (ent && (ent.witnessUnit || ent.supervisionUnit)) || "";
+      formData.witness = data.witness || (ent && ent.witness) || "";
+      formData.designCapacity = data.designCapacity || "";
+      formData.hammerWeight = data.hammerWeight || "";
+      formData.dropDistance = data.dropDistance || "";
+      formData.testCategory = data.testCategory || (ent && ent.testCategory) || "";
+      formData.testBasis = data.testBasis || "";
+      formData.equipment = data.equipment || "";
+      formData.remarks = data.remarks || "";
+      formData.status = (data.status !== undefined && data.status !== null) ? data.status : (ent && ent.status !== undefined ? ent.status : 0);
+
       
       // Load directory for fallback
       // const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
@@ -520,9 +580,9 @@ const loadData = async () => {
       // formData.approve = data.approver || ''
       // formData.review = data.reviewer || ''
       // formData.inspect = data.tester || ''
-      formData.approverSignature = data.approveSignaturePhoto || ''
-      formData.reviewerSignature = data.reviewSignaturePhoto || ''
-      formData.testerSignature = data.inspectSignaturePhoto || ''
+      formData.approverSignature = normalizeSignatureSrc(data.approveSignaturePhoto)
+      formData.reviewerSignature = normalizeSignatureSrc(data.reviewSignaturePhoto)
+      formData.testerSignature = normalizeSignatureSrc(data.inspectSignaturePhoto)
       formData.conclusion = data.conclusion || ''
       formData.status = data.status !== undefined ? data.status : 0
       formData.rejectReason = data.rejectReason || ''
@@ -530,51 +590,240 @@ const loadData = async () => {
       formData.companyAddress = '石家庄高新区方亿科技工业园A区第2号楼。'
       formData.companyPhone = '0311—86107634  0311—67300616'
 
-      let sourceJson = data.dataJson
+      // 1. Fallback: If basic info is missing, fetch from Entrustment (JC_CORE_WT_INFO)
+      if (!formData.projectName || !formData.entrustingUnit || !data.entrustmentId) {
+          let ent = null
+          try {
+              // Try by entrustmentId if available
+              if (data.entrustmentId) {
+                  const entRes = await axios.get(`/api/jc-core-wt-info/by-id?id=${data.entrustmentId}`)
+                  if (entRes.data.success) ent = entRes.data.data
+              } 
+              // If not found or no ID, try by wtNum
+              if (!ent && formData.unifiedNumber) {
+                  const entRes = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(formData.unifiedNumber)}`)
+                  if (entRes.data.success) ent = entRes.data.data
+              }
 
-      if (!sourceJson && data.entrustmentId) {
-        try {
-          const resultRes = await axios.get('/api/light-dynamic-penetration/get-by-entrustment-id', {
-            params: { entrustmentId: data.entrustmentId }
-          })
-          if (resultRes.data.success && resultRes.data.data && resultRes.data.data.length > 0) {
-            const record = resultRes.data.data[0]
-            if (record.dataJson) {
-              sourceJson = record.dataJson
-            }
+              if (ent) {
+                  if (!formData.entrustingUnit) formData.entrustingUnit = ent.client || ent.clientUnit || ''
+                  if (!formData.projectName) formData.projectName = ent.projectName || ''
+                  if (!formData.entrustDate) formData.entrustDate = formatDate(ent.commissionDate || ent.wtDate)
+                  if (!formData.constructionPart) formData.constructionPart = ent.constructionPart || ''
+                  if (!formData.testCategory) formData.testCategory = ent.testCategory || ''
+                  if (!formData.witnessUnit) formData.witnessUnit = ent.witnessUnit || ent.supervisionUnit || ''
+                  if (!formData.witness) formData.witness = ent.witness || ''
+                  
+                  // Critical: Update entrustmentId if missing, so we can find the Record
+                  if (!data.entrustmentId) {
+                      data.entrustmentId = ent.id
+                      currentEntrustmentId.value = ent.id
+                  }
+              }
+          } catch (e) {
+              console.warn('Failed to fetch entrustment info', e)
           }
-        } catch (e) {
-          console.error('light dynamic report autofill error', e)
-        }
       }
 
-          if (sourceJson) {
+      // Ensure currentEntrustmentId is set if data has it
+      if (data.entrustmentId && !currentEntrustmentId.value) {
+          currentEntrustmentId.value = data.entrustmentId
+      }
+
+      let sourceJson = data.dataJson
+      let isDataLoaded = false
+
+      // 1. Try to parse Report's own dataJson
+      if (sourceJson) {
         try {
           const json = JSON.parse(sourceJson)
+          fullDataJson.value = json
           if (json.testDate) formData.testDate = json.testDate
+          
+          // Map fields from JSON
+          if (json.soilProperty) formData.soilProperty = json.soilProperty
+          if (json.soilProperties && !formData.soilProperty) formData.soilProperty = json.soilProperties
+          if (json.designCapacity) formData.designCapacity = json.designCapacity
+          if (json.hammerWeight) formData.hammerWeight = json.hammerWeight
+          if (json.dropDistance) formData.dropDistance = json.dropDistance
+          if (json.testCategory) formData.testCategory = json.testCategory
+          if (json.testBasis) formData.testBasis = json.testBasis
+          if (json.equipment) formData.equipment = json.equipment
+          if (json.conclusion) formData.conclusion = json.conclusion
+          if (json.remarks) formData.remarks = json.remarks
+          if (json.constructionPart) formData.constructionPart = json.constructionPart
+          if (json.projectName) formData.projectName = json.projectName
+          if (json.clientUnit) formData.entrustingUnit = json.clientUnit
+          if (json.witnessUnit) formData.witnessUnit = json.witnessUnit
+          if (json.witness) formData.witness = json.witness
+          if (json.commissionDate) formData.entrustDate = formatDate(json.commissionDate)
 
-          for (let b = 0; b < 2; b++) {
-            formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
-            formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
-            formData.dataBlocks[b].capacity_L = json[`capacity_L_${b}`] || ''
+          // Detect format
+          const keys = Object.keys(json)
+          const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
+          const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
+          
+          // Check if we actually have data
+          if (maxIdx >= 0) {
+              let is6Row = json.format === '6-row';
+              if (!is6Row && json.format !== '5-row') {
+                  // Heuristic: Record (5-row) usually fills 0-4, then 5-9. Index 5 has data (Block 1 Row 0).
+                  // Report (6-row) maps 0-4 -> 0-4, 5-9 -> 6-10. Index 5 is usually empty (Block 0 Row 5).
+                  
+                  // If we see data at index 5, it's likely 5-row format (because that's the start of Block 1).
+                  // If we see data at index 6 but NOT index 5, it's likely 6-row format.
+                  const hasIdx5 = json['depth_L_5'] !== undefined && json['depth_L_5'] !== '';
+                  const hasIdx6 = json['depth_L_6'] !== undefined && json['depth_L_6'] !== '';
+                  const hasPos1 = json['pos_L_1'] !== undefined && json['pos_L_1'] !== '';
+                  
+                  if ((!hasIdx5 && hasIdx6) || maxIdx > 9) {
+                      is6Row = true;
+                  } else if (hasIdx5 && !hasPos1) {
+                      // Data at index 5, but no Block 1 header. Likely Block 0 Row 5 (6-row format).
+                      is6Row = true;
+                  }
+              }
+              
+              for (let b = 0; b < 3; b++) {
+                // Ensure block exists
+                if (!formData.dataBlocks[b]) {
+                    formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
+                }
+                formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
+                formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
+                formData.dataBlocks[b].capacity_L = json[`capacity_L_${b}`] || ''
 
-            formData.dataBlocks[b].pos_R = json[`pos_R_${b}`] || ''
-            formData.dataBlocks[b].avg_R = json[`avg_R_${b}`] || ''
-            formData.dataBlocks[b].capacity_R = json[`capacity_R_${b}`] || ''
+                formData.dataBlocks[b].pos_R = json[`pos_R_${b}`] || ''
+                formData.dataBlocks[b].avg_R = json[`avg_R_${b}`] || ''
+                formData.dataBlocks[b].capacity_R = json[`capacity_R_${b}`] || ''
 
-            for (let s = 0; s < 6; s++) {
-              const idx = b * 6 + s
-              formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${idx}`] || ''
-              formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${idx}`] || ''
+                if (is6Row) {
+                  for (let s = 0; s < 6; s++) {
+                    const idx = b * 6 + s
+                    formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${idx}`] || ''
+                    formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${idx}`] || ''
 
-              formData.dataBlocks[b].depths_R[s].depth_R = json[`depth_R_${idx}`] || ''
-              formData.dataBlocks[b].depths_R[s].actual_R = json[`actual_R_${idx}`] || ''
-            }
+                    formData.dataBlocks[b].depths_R[s].depth_R = json[`depth_R_${idx}`] || ''
+                    formData.dataBlocks[b].depths_R[s].actual_R = json[`actual_R_${idx}`] || ''
+                  }
+                } else {
+                  // 5-row logic conversion to 6-row UI
+                  // 5-row: Block 0 (0-4), Block 1 (5-9)
+                  // 6-row: Block 0 (0-4), Block 1 (6-10)
+                  for (let s = 0; s < 5; s++) {
+                    const sourceIdx = b * 5 + s
+                    
+                    formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${sourceIdx}`] || ''
+                    formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${sourceIdx}`] || ''
+
+                    formData.dataBlocks[b].depths_R[s].depth_R = json[`depth_R_${sourceIdx}`] || ''
+                    formData.dataBlocks[b].depths_R[s].actual_R = json[`actual_R_${sourceIdx}`] || ''
+                  }
+                }
+              }
+              isDataLoaded = true
           }
         } catch (e) {
           console.error('JSON parse error', e)
         }
       }
+
+      // 2. Fallback: only fetch from Record (report precedes result in flow)
+      if (!isDataLoaded || (fullDataJson.value && Object.keys(fullDataJson.value).length < 5)) {
+        const entrustmentId = currentEntrustmentId.value || data.entrustmentId;
+        
+        if (entrustmentId) {
+          try {
+            let fallbackData = null;
+            const recordRes = await axios.get('/api/light-dynamic-penetration/get-by-entrustment-id', {
+              params: { entrustmentId: entrustmentId }
+            })
+            if (recordRes.data.success && recordRes.data.data && recordRes.data.data.length > 0) {
+              const records = recordRes.data.data;
+              fallbackData = records.find(r => r.dataJson && r.dataJson.length > 2) || records[0];
+            }
+
+
+          if (fallbackData) {
+               // Map entity fields if empty in report
+               if (!formData.soilProperty && fallbackData.soilProperty) formData.soilProperty = fallbackData.soilProperty
+               // Also check for soilProperties (plural) which might be in the entity or JSON
+               if (!formData.soilProperty && fallbackData.soilProperties) formData.soilProperty = fallbackData.soilProperties
+
+               if (!formData.testCategory && fallbackData.testCategory) formData.testCategory = fallbackData.testCategory
+               if (!formData.designCapacity && fallbackData.designCapacity) formData.designCapacity = fallbackData.designCapacity
+               if (!formData.hammerWeight && fallbackData.hammerWeight) formData.hammerWeight = fallbackData.hammerWeight
+               if (!formData.dropDistance && fallbackData.dropDistance) formData.dropDistance = fallbackData.dropDistance
+               if (!formData.testBasis && fallbackData.testBasis) formData.testBasis = fallbackData.testBasis
+               if (!formData.equipment && fallbackData.equipment) formData.equipment = fallbackData.equipment
+               
+               if (!formData.testDate && fallbackData.testDate) formData.testDate = formatDate(fallbackData.testDate)
+
+               if (!formData.recordTester && (fallbackData.recordTester || fallbackData.tester)) formData.recordTester = fallbackData.recordTester || fallbackData.tester
+               if (!formData.recordReviewer && (fallbackData.recordReviewer || fallbackData.reviewer)) formData.recordReviewer = fallbackData.recordReviewer || fallbackData.reviewer
+               if (!formData.testerSignature && fallbackData.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(fallbackData.inspectSignaturePhoto)
+               if (!formData.reviewerSignature && fallbackData.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(fallbackData.reviewSignaturePhoto)
+          }
+
+          if (fallbackData && fallbackData.dataJson) {
+               try {
+                   const recordJson = JSON.parse(fallbackData.dataJson)
+                   fullDataJson.value = recordJson
+                   
+                   // Map specific fields from JSON if not already set
+                   if (!formData.soilProperty && recordJson.soilProperties) formData.soilProperty = recordJson.soilProperties
+                   if (!formData.soilProperty && recordJson.soilProperty) formData.soilProperty = recordJson.soilProperty
+                   
+
+                   let isFallback6Row = false;
+
+                   // Map Data Blocks
+                   for (let b = 0; b < 3; b++) {
+                      // Ensure block exists
+                      if (!formData.dataBlocks[b]) {
+                          formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 6 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 6 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
+                      }
+                      // Map Headers
+                      if (recordJson[`pos_L_${b}`]) formData.dataBlocks[b].pos_L = recordJson[`pos_L_${b}`]
+                      if (recordJson[`avg_L_${b}`]) formData.dataBlocks[b].avg_L = recordJson[`avg_L_${b}`]
+                      if (recordJson[`capacity_L_${b}`]) formData.dataBlocks[b].capacity_L = recordJson[`capacity_L_${b}`]
+                      
+                      if (recordJson[`pos_R_${b}`]) formData.dataBlocks[b].pos_R = recordJson[`pos_R_${b}`]
+                      if (recordJson[`avg_R_${b}`]) formData.dataBlocks[b].avg_R = recordJson[`avg_R_${b}`]
+                      if (recordJson[`capacity_R_${b}`]) formData.dataBlocks[b].capacity_R = recordJson[`capacity_R_${b}`]
+
+                      // Map Rows
+                      if (isFallback6Row) {
+                          for (let s = 0; s < 6; s++) {
+                            const idx = b * 6 + s
+                            if (recordJson[`depth_L_${idx}`]) formData.dataBlocks[b].depths[s].depth_L = recordJson[`depth_L_${idx}`]
+                            if (recordJson[`actual_L_${idx}`]) formData.dataBlocks[b].depths[s].actual_L = recordJson[`actual_L_${idx}`]
+                            
+                            if (recordJson[`depth_R_${idx}`]) formData.dataBlocks[b].depths_R[s].depth_R = recordJson[`depth_R_${idx}`]
+                            if (recordJson[`actual_R_${idx}`]) formData.dataBlocks[b].depths_R[s].actual_R = recordJson[`actual_R_${idx}`]
+                          }
+                      } else {
+                          // 5-row fallback -> 6-row UI
+                          for (let s = 0; s < 5; s++) {
+                              const rIdx = b * 5 + s
+                              
+                              if (recordJson[`depth_L_${rIdx}`]) formData.dataBlocks[b].depths[s].depth_L = recordJson[`depth_L_${rIdx}`]
+                              if (recordJson[`actual_L_${rIdx}`]) formData.dataBlocks[b].depths[s].actual_L = recordJson[`actual_L_${rIdx}`]
+                              
+                              if (recordJson[`depth_R_${rIdx}`]) formData.dataBlocks[b].depths_R[s].depth_R = recordJson[`depth_R_${rIdx}`]
+                              if (recordJson[`actual_R_${rIdx}`]) formData.dataBlocks[b].depths_R[s].actual_R = recordJson[`actual_R_${rIdx}`]
+                          }
+                      }
+                   }
+               } catch (e) {
+                   console.error('Error parsing fallback json', e)
+               }
+            }
+        } catch (e) {
+          console.error('light dynamic report autofill error', e)
+        }
+      }
+    }
     }
   } catch (e) {
     console.error('Load error', e)
@@ -586,15 +835,18 @@ onMounted(() => {
 })
 
 const handleSign = async () => {
-  const user = JSON.parse(localStorage.getItem('userInfo'))
-  if (!user || !user.userAccount) {
+  const rawUser = localStorage.getItem('userInfo')
+  const user = rawUser ? JSON.parse(rawUser) : null
+  const currentAccount = user && (user.username || user.userAccount || user.userName)
+  const currentName = user && (user.fullName || user.userName || currentAccount)
+  if (!currentAccount) {
     alert('请先登录')
     return
   }
 
   try {
     const response = await axios.post('/api/signature/get', {
-      userAccount: user.username
+      userAccount: currentAccount
     })
 
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
@@ -609,10 +861,7 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.fullName || user.username
-
-      // Match Tester
-      if (!formData.recordTester || formData.recordTester === user.username || formData.recordTester === currentName) {
+      if (!formData.recordTester || formData.recordTester === currentAccount || formData.recordTester === currentName) {
         if (!formData.recordTester) formData.recordTester = currentName
         formData.testerSignature = imgSrc
         signed = true
@@ -660,12 +909,16 @@ const submitForm = async () => {
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
     
-    // Convert dataBlocks to flat keys
-    const dynamicData = {}
-    if (formData.testDate) dynamicData.testDate = formData.testDate
+    // Always use 6-row format for Report Table to avoid index ambiguity and data loss
+    const use6Row = true;
 
-    for (let b = 0; b < 2; b++) {
+    // Convert dataBlocks to flat keys, starting with preserved full data
+    const dynamicData = { ...fullDataJson.value, format: '6-row' }
+    if (formData.testDate) dynamicData.testDate = formData.testDate
+    
+    for (let b = 0; b < 3; b++) {
         const block = formData.dataBlocks[b]
+        if (!block) continue; // Skip if block doesn't exist (shouldn't happen with 3 initialized)
         if (block.pos_L) dynamicData[`pos_L_${b}`] = block.pos_L
         if (block.avg_L) dynamicData[`avg_L_${b}`] = block.avg_L
         if (block.capacity_L) dynamicData[`capacity_L_${b}`] = block.capacity_L
@@ -674,8 +927,10 @@ const submitForm = async () => {
         if (block.avg_R) dynamicData[`avg_R_${b}`] = block.avg_R
         if (block.capacity_R) dynamicData[`capacity_R_${b}`] = block.capacity_R
 
+        // Always loop 6 rows
         for (let s = 0; s < 6; s++) {
-            const idx = b * 6 + s
+            const idx = b * 6 + s;
+            
             if (block.depths[s].depth_L) dynamicData[`depth_L_${idx}`] = block.depths[s].depth_L
             if (block.depths[s].actual_L) dynamicData[`actual_L_${idx}`] = block.depths[s].actual_L
             

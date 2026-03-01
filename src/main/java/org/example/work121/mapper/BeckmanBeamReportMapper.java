@@ -31,11 +31,11 @@ public interface BeckmanBeamReportMapper {
     BeckmanBeamReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO T_BECKMAN_BEAM (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(BeckmanBeamReport report);
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "DATA_JSON = #{dataJson}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
@@ -67,7 +67,7 @@ public interface BeckmanBeamReportMapper {
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "DATA_JSON = #{dataJson}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +

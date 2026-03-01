@@ -302,6 +302,8 @@ const props = defineProps({
 })
 
 const pdfForm = ref(null)
+const resultId = ref(null)
+const currentEntrustmentId = ref(null)
 
 const formData = reactive({
   entrustingUnit: '',
@@ -506,16 +508,40 @@ const formatDate = (d) => {
 const loadData = async () => {
     if (!props.id) return
     try {
-        const res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
-        if (res.data.success && res.data.data) {
-            const data = res.data.data
+        let data = null
+        // 1. Try to get by ID (assuming props.id is Record ID)
+        let res = await axios.get(`/api/light-dynamic-penetration/${props.id}`)
+        
+        // 2. If not found, assume props.id might be Entrustment ID and try get-by-entrustment-id
+        if (!res.data.success || !res.data.data) {
+             try {
+                const listRes = await axios.get(`/api/light-dynamic-penetration/get-by-entrustment-id`, {
+                    params: { entrustmentId: props.id }
+                })
+                if (listRes.data.success && listRes.data.data && listRes.data.data.length > 0) {
+                    data = listRes.data.data[0]
+                }
+             } catch (e) {
+                console.error('Failed to fetch by entrustmentId', e)
+             }
+        } else {
+            data = res.data.data
+        }
+
+        if (data) {
+            currentEntrustmentId.value = data.entrustmentId
+            // 1. Initial population from Result entity fields
             formData.entrustingUnit = data.clientUnit || ''
             formData.unifiedNumber = data.wtNum || ''
             formData.projectName = data.projectName || ''
             formData.entrustDate = formatDate(data.commissionDate)
             formData.constructionPart = data.constructionPart || ''
+            formData.testDate = data.testDate ? formatDate(data.testDate) : ''
             formData.soilProperty = data.soilProperty || ''
-            formData.reportDate = formatDate(data.reportDate)
+            
+            // Default reportDate to today if missing
+            formData.reportDate = data.reportDate ? formatDate(data.reportDate) : formatDate(new Date())
+            
             formData.witnessUnit = data.witnessUnit || ''
             formData.witness = data.witness || ''
             formData.designCapacity = data.designCapacity || ''
@@ -528,8 +554,8 @@ const loadData = async () => {
             
             // Map roles
             formData.approver = data.approver || ''
-            formData.recordReviewer = data.reviewer || ''
-            formData.recordTester = data.tester || ''
+            formData.recordReviewer = data.recordReviewer || data.reviewer || ''
+            formData.recordTester = data.recordTester || data.tester || ''
             formData.filler = data.filler || ''
             
             formData.conclusion = data.conclusion || ''
@@ -539,34 +565,132 @@ const loadData = async () => {
             formData.inspectSignature = data.inspectSignaturePhoto || ''
             formData.status = data.status || 0
             formData.rejectReason = data.rejectReason || ''
-            
+
+            // 2. Parse dataJson if available and merge
             if (data.dataJson) {
                 try {
                     const json = JSON.parse(data.dataJson)
-                    Object.assign(formData, json)
-                    if (json.testDate) formData.testDate = json.testDate
+                    // Detect format: explicit flag OR heuristic (indices > 14 imply 6-row format for 3 blocks? No, Record has max 14 (idx 0-14). Result has max 17 (idx 0-17).
+                    // Record (3 blocks * 5 rows): indices 0-4, 5-9, 10-14. Max 14.
+                    // Result (3 blocks * 6 rows): indices 0-5, 6-11, 12-17. Max 17.
+                    const keys = Object.keys(json)
+                    const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
+                    const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
+                    const is6Row = json.format === '6-row' || maxIdx > 14
+
+                    // Merge but verify fields
+                    if (json.soilProperties && !formData.soilProperty) formData.soilProperty = json.soilProperties
+                    if (json.soilProperty && !formData.soilProperty) formData.soilProperty = json.soilProperty
+                    
+                    if (json.designCapacity) formData.designCapacity = json.designCapacity
+                    if (json.hammerWeight) formData.hammerWeight = json.hammerWeight
+                    if (json.dropDistance) formData.dropDistance = json.dropDistance
+                    
+                    if (json.commissionDate && !formData.entrustDate) formData.entrustDate = formatDate(json.commissionDate)
+                    if (json.testDate && !formData.testDate) formData.testDate = json.testDate
+                    if (json.reportDate) formData.reportDate = json.reportDate
+                    
+                    if (json.testBasis && !formData.testBasis) formData.testBasis = json.testBasis
+                    if (json.equipment && !formData.equipment) formData.equipment = json.equipment
+                    if (json.conclusion && !formData.conclusion) formData.conclusion = json.conclusion
+
+                    // Map roles from JSON if missing
+                    if (json.tester && !formData.recordTester) formData.recordTester = json.tester
+                    if (json.reviewer && !formData.recordReviewer) formData.recordReviewer = json.reviewer
+                    
+                    // Merge specific data blocks
+                    for (let b = 0; b < 3; b++) {
+                         if (json[`pos_L_${b}`]) formData[`pos_L_${b}`] = json[`pos_L_${b}`]
+                         if (json[`avg_L_${b}`]) formData[`avg_L_${b}`] = json[`avg_L_${b}`]
+                         if (json[`capacity_L_${b}`]) formData[`capacity_L_${b}`] = json[`capacity_L_${b}`]
+                         
+                         if (json[`pos_R_${b}`]) formData[`pos_R_${b}`] = json[`pos_R_${b}`]
+                         if (json[`avg_R_${b}`]) formData[`avg_R_${b}`] = json[`avg_R_${b}`]
+                         if (json[`capacity_R_${b}`]) formData[`capacity_R_${b}`] = json[`capacity_R_${b}`]
+
+                         if (is6Row) {
+                             for (let s = 0; s < 6; s++) {
+                                const idx = b * 6 + s
+                                if (json[`depth_L_${idx}`]) formData[`depth_L_${idx}`] = json[`depth_L_${idx}`]
+                                if (json[`actual_L_${idx}`]) formData[`actual_L_${idx}`] = json[`actual_L_${idx}`]
+                                
+                                if (json[`depth_R_${idx}`]) formData[`depth_R_${idx}`] = json[`depth_R_${idx}`]
+                                if (json[`actual_R_${idx}`]) formData[`actual_R_${idx}`] = json[`actual_R_${idx}`]
+                             }
+                         } else {
+                             // 5-row logic
+                             for (let s = 0; s < 5; s++) {
+                                const sourceIdx = b * 5 + s
+                                const targetIdx = b * 6 + s
+                                
+                                if (json[`depth_L_${sourceIdx}`]) formData[`depth_L_${targetIdx}`] = json[`depth_L_${sourceIdx}`]
+                                if (json[`actual_L_${sourceIdx}`]) formData[`actual_L_${targetIdx}`] = json[`actual_L_${sourceIdx}`]
+                                
+                                if (json[`depth_R_${sourceIdx}`]) formData[`depth_R_${targetIdx}`] = json[`depth_R_${sourceIdx}`]
+                                if (json[`actual_R_${sourceIdx}`]) formData[`actual_R_${targetIdx}`] = json[`actual_R_${sourceIdx}`]
+                             }
+                         }
+                    }
                 } catch (e) {
                     console.error('JSON parse error', e)
                 }
             }
-            
-            // Directory Fallback - REMOVED
-            // const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
-            // const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
-            
-            // Filler
-            // if (!formData.filler) {
-            //      formData.filler = directory.filler || directory.jcFiller || user.username || ''
-            // }
-            
-            // Record Tester
-            formData.recordTester = data.recordTester || data.tester || ''
-            
-            // Record Reviewer
-            formData.recordReviewer = data.recordReviewer || data.reviewer || ''
-            
-            // Approver
-            formData.approver = data.approver || ''
+
+            // 3. Fallback: Fetch from Entrustment if basic info is missing
+            // If we successfully loaded 'data', it likely contains basic info. 
+            // But if 'data' was a bare-bones record, we might need more from Entrustment.
+            let ent = null
+            if (formData.unifiedNumber) {
+                 try {
+                    const entRes = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(formData.unifiedNumber)}`)
+                    if (entRes.data.success) ent = entRes.data.data
+                 } catch (e) {}
+            } else if (props.id) {
+                 // Try to fetch entrustment by ID (if props.id is entrustment id)
+                 try {
+                     const entRes = await axios.get(`/api/jc-core-wt-info/detail?id=${props.id}`)
+                     if (entRes.data.success) ent = entRes.data.data
+                 } catch (e) {}
+            }
+
+            if (ent) {
+                if (!formData.entrustingUnit) formData.entrustingUnit = ent.client || ent.clientUnit || ''
+                if (!formData.projectName) formData.projectName = ent.projectName || ''
+                if (!formData.entrustDate) formData.entrustDate = formatDate(ent.commissionDate || ent.wtDate)
+                if (!formData.constructionPart) formData.constructionPart = ent.constructionPart || ''
+                if (!formData.testCategory) formData.testCategory = ent.testCategory || ''
+                if (!formData.witnessUnit) formData.witnessUnit = ent.witnessUnit || ent.supervisionUnit || ''
+                if (!formData.witness) formData.witness = ent.witness || ''
+            }
+
+            // 4. Try to fetch Result using entrustmentId (Override Record data if Result exists)
+            if (currentEntrustmentId.value) {
+                try {
+                    const resultRes = await axios.get(`/api/light-dynamic-penetration/result/get-by-entrustment-id?entrustmentId=${currentEntrustmentId.value}`)
+                    if (resultRes.data.success && resultRes.data.data) {
+                        const result = resultRes.data.data
+                        resultId.value = result.id
+                        // Override formData with Result JSON
+                        if (result.dataJson) {
+                            const json = JSON.parse(result.dataJson)
+                            Object.assign(formData, json)
+                            if (json.testDate) formData.testDate = json.testDate
+                            if (json.reportDate) formData.reportDate = json.reportDate
+                        }
+                        // Restore status and other fields from Result entity
+                        if (result.status !== undefined) formData.status = result.status
+                        if (result.rejectReason) formData.rejectReason = result.rejectReason
+                        if (result.approveSignaturePhoto) formData.approveSignature = result.approveSignaturePhoto
+                        if (result.reviewSignaturePhoto) formData.reviewSignature = result.reviewSignaturePhoto
+                        if (result.inspectSignaturePhoto) formData.inspectSignature = result.inspectSignaturePhoto
+                        if (result.recordTester) formData.recordTester = result.recordTester
+                        if (result.recordReviewer) formData.recordReviewer = result.recordReviewer
+                        if (result.approver) formData.approver = result.approver
+                    }
+                } catch (e) {
+                    console.log('No result found, using record as template')
+                }
+            }
         }
     } catch (e) {
         console.error('Load error', e)
@@ -623,7 +747,7 @@ const handleSign = async () => {
 }
 
 const saveData = async () => {
-    if (!props.id) {
+    if (!props.id && !currentEntrustmentId.value) {
         alert('无效的委托单ID')
         return
     }
@@ -638,13 +762,14 @@ const saveData = async () => {
         }
         
         // Update dataJson with current formData, but exclude legacy/redundant fields
-        const dataJsonObj = { ...formData }
+        const dataJsonObj = { ...formData, format: '6-row' }
         delete dataJsonObj.tester
         delete dataJsonObj.reviewer
         const dataJsonStr = JSON.stringify(dataJsonObj)
 
         const payload = {
-            id: props.id,
+            id: resultId.value,
+            entrustmentId: currentEntrustmentId.value || props.id,
             soilProperty: formData.soilProperty,
             designCapacity: formData.designCapacity,
             hammerWeight: formData.hammerWeight,
@@ -654,6 +779,8 @@ const saveData = async () => {
             equipment: formData.equipment,
             remarks: formData.remarks,
             conclusion: formData.conclusion,
+            testDate: formData.testDate,
+            reportDate: formData.reportDate,
             dataJson: dataJsonStr,
             approveSignaturePhoto: formData.approveSignature,
             reviewSignaturePhoto: formData.reviewSignature,
@@ -667,9 +794,12 @@ const saveData = async () => {
             // approver: formData.approver
         }
 
-        const res = await axios.post('/api/light-dynamic-penetration/save', payload)
+        const res = await axios.post('/api/light-dynamic-penetration/result/save', payload)
         if (res.data.success) {
             alert('保存成功')
+            if (res.data.data && res.data.data.id) {
+                resultId.value = res.data.data.id
+            }
         } else {
             alert('保存失败: ' + (res.data.message || '未知错误'))
         }
