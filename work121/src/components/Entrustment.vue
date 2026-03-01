@@ -499,8 +499,16 @@ const autoFillTestCategoryFromDirectory = (directory) => {
 const mapDataToForm = (data) => {
   console.log('Mapping data keys:', Object.keys(data))
   currentId.value = data.id
+  // 统一编号：优先使用 wtNum（真正的统一编号），而不是 id（WT_ID）
   formData.unifiedNumber = data.wtNum || data.unifiedNumber || ''
-  formData.sampleNumber = data.wtNum || data.sampleNumber || '' 
+  // 样品编号：只使用后端返回的 sampleNumber 字段（T_ENTRUSTMENT.SAMPLE_NUMBER）
+  // 如果后端返回的 sampleNumber 为空、null 或等于统一编号，则保持为空，不自动填充
+  if (data.sampleNumber && data.sampleNumber.trim() !== '' && data.sampleNumber !== data.wtNum) {
+    formData.sampleNumber = data.sampleNumber
+  } else {
+    formData.sampleNumber = '' // 明确设置为空，不自动填充
+  }
+  console.log('[mapDataToForm] unifiedNumber:', formData.unifiedNumber, 'sampleNumber:', formData.sampleNumber, 'data.sampleNumber:', data.sampleNumber) 
   formData.clientUnit = data.clientUnit || ''
   formData.clientDate = data.commissionDate ? formatDate(data.commissionDate, 'YYYY-MM-DD') : ''
   formData.constructionUnit = data.constructionUnit || ''
@@ -577,7 +585,7 @@ const loadDataByWtNum = async (wtNum) => {
     
     // 始终填写统一编号，作为关键主键
     formData.unifiedNumber = wtNum
-    formData.sampleNumber = wtNum
+    // 样品编号不使用统一编号自动填充，只使用后端返回的 sampleNumber 字段
 
     if (response.data.success && response.data.data) {
        console.log('Mapping data to form:', response.data.data)
@@ -827,6 +835,7 @@ const saveForm = async (silent = false) => {
     
     // New fields
     sampleName: formData.sampleName,
+    sampleNumber: formData.sampleNumber, // 样品编号字段
     spec: formData.spec,
     manufacturer: formData.manufacturer,
     sampleQuantity: formData.sampleQuantity,

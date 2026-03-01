@@ -46,7 +46,8 @@
           </span>
         </div>
 
-        <template v-if="formData.id && !draftMode">
+        <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
+        <template v-if="!draftMode">
           <button
             v-if="formData.status === 0 || formData.status === 2"
             @click="submitWorkflow('SUBMIT')"
@@ -59,7 +60,7 @@
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
-            升级为已审核
+            审核通过
           </button>
           <button
             v-if="formData.status === 1"
@@ -325,7 +326,14 @@ const formData = reactive({
 })
 
 const getStatusText = (status) => {
+    // 处理 null、undefined、空字符串、NaN 等情况
+    if (status === null || status === undefined || status === '' || status === 'null' || status === 'undefined') {
+        return '草稿'
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '草稿'
+    }
     switch(s) {
         case 0: return '草稿'
         case 1: return '待审核'
@@ -337,14 +345,21 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
+    // 处理 null、undefined、空字符串、NaN 等情况
+    if (status === null || status === undefined || status === '' || status === 'null' || status === 'undefined') {
+        return '#9E9E9E' // Grey
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '#9E9E9E' // Grey
+    }
     switch(s) {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
         case 3: return '#FF9800' // Orange
         case 5: return '#4CAF50' // Green
-        default: return '#000000'
+        default: return '#9E9E9E' // Grey
     }
 }
 
@@ -356,7 +371,11 @@ const normalizeSignatureSrc = (value) => {
 }
 
 const submitWorkflow = async (action) => {
-    if (!formData.id) {
+    console.log('submitWorkflow - formData.id:', formData.id, 'type:', typeof formData.id)
+    console.log('submitWorkflow - formData:', formData)
+    // 检查 ID：空字符串、null、undefined 都视为无效
+    if (!formData.id || formData.id.trim() === '') {
+        console.warn('提交审核失败：formData.id 为空', formData.id)
         alert('请先保存记录')
         return
     }
@@ -450,9 +469,36 @@ const submitWorkflow = async (action) => {
         if (response.data.success) {
             alert('操作成功')
             // Refresh data - 重新加载数据以获取最新状态
+            // 保存当前记录的 ID，确保重新加载后能定位到正确的记录
+            const currentRecordId = formData.id
             const entrustmentId = formData.entrustmentId || formData.unifiedNumber
+            
+            // 重新加载数据
             await loadData(entrustmentId)
-            console.log('After workflow reload, formData.status:', formData.status)
+            
+            // 如果重新加载后找到了当前记录，切换到该记录
+            if (currentRecordId) {
+                const foundIndex = records.value.findIndex(r => r.id === currentRecordId)
+                if (foundIndex !== -1) {
+                    currentIndex.value = foundIndex
+                    mapRecordToFormData(records.value[foundIndex])
+                    console.log('After workflow reload, found record at index:', foundIndex, 'formData.status:', formData.status, 'formData.id:', formData.id)
+                } else {
+                    console.warn('After workflow reload, record not found with id:', currentRecordId, 'total records:', records.value.length)
+                    // 如果找不到记录，可能是记录被删除了，或者查询返回了不同的记录
+                    // 不要自动切换到其他记录，保持当前状态，避免误操作
+                    if (records.value.length > 0) {
+                        console.warn('Warning: Current record not found, but other records exist. Keeping current state to avoid accidental operations.')
+                        // 不自动切换，让用户手动选择
+                    } else {
+                        // 如果没有任何记录，清空表单
+                        formData.id = ''
+                        currentIndex.value = -1
+                    }
+                }
+            } else {
+                console.log('After workflow reload, no currentRecordId, formData.status:', formData.status)
+            }
         } else {
             alert('操作失败: ' + response.data.message)
         }
@@ -493,16 +539,49 @@ onMounted(() => {
     formData.entrustmentId = props.id
     formData.unifiedNumber = props.id
     loadData(props.id)
+  } else {
+    // 如果没有提供任何 ID，初始化空记录列表
+    records.value = []
+    currentIndex.value = -1
   }
 })
 
 const mapRecordToFormData = (record) => {
+  if (!record) {
+    console.warn('mapRecordToFormData: record is null or undefined')
+    return
+  }
+  
   initDynamicFields()
   
-  formData.id = record.id || ''
+  // 只有当 record.id 存在且不为空时，才更新 formData.id
+  // 这样可以避免在保存后调用 mapRecordToFormData 时覆盖已设置的 ID
+  if (record.id && typeof record.id === 'string' && record.id.trim() !== '') {
+    const oldId = formData.id
+    formData.id = record.id
+    // 如果 ID 被覆盖，记录警告（但这是正常的，因为我们在切换记录）
+    if (oldId && oldId !== record.id) {
+      console.log('mapRecordToFormData: ID changed from', oldId, 'to', record.id)
+    }
+  } else {
+    // 如果 record.id 不存在或为空字符串，清空 formData.id
+    // 这样可以避免在切换记录时，formData.id 保留之前记录的值，导致误操作
+    const oldId = formData.id
+    formData.id = ''
+    if (oldId) {
+      console.warn('mapRecordToFormData: Record has no id, cleared formData.id from', oldId)
+    }
+  }
+  
   formData.entrustmentId = record.entrustmentId || formData.unifiedNumber
   // 状态统一转成数字，避免后端返回字符串导致严格等于判断失效（影响按钮显示）
-  formData.status = record.status !== undefined ? Number(record.status) : 0
+  // 处理 null、undefined、空字符串、'null'、'undefined' 等情况
+  if (record.status === null || record.status === undefined || record.status === '' || record.status === 'null' || record.status === 'undefined') {
+    formData.status = 0
+  } else {
+    const statusNum = Number(record.status)
+    formData.status = isNaN(statusNum) ? 0 : statusNum
+  }
   console.log('mapRecordToFormData - record.status:', record.status, 'formData.status:', formData.status)
   
   // Map signature photos
@@ -550,8 +629,10 @@ const mapRecordToFormData = (record) => {
       // Merge json into formData
       Object.assign(formData, json)
       // 确保实体字段的状态优先于 JSON 中的状态
-      if (record.status !== undefined) {
-        formData.status = Number(record.status)
+      // 处理 null、undefined、空字符串、'null'、'undefined' 等情况
+      if (record.status !== null && record.status !== undefined && record.status !== '' && record.status !== 'null' && record.status !== 'undefined') {
+        const statusNum = Number(record.status)
+        formData.status = isNaN(statusNum) ? currentStatus : statusNum
       } else {
         formData.status = currentStatus
       }
@@ -620,11 +701,17 @@ const loadData = async (entrustmentId) => {
   try {
     const response = await axios.get(`/api/reboundMethod/get-by-entrustment-id?entrustmentId=${entrustmentId}`)
     if (response.data.success) {
-      records.value = response.data.data
+      records.value = response.data.data || []
       
       if (records.value.length === 0) {
-        // Create a new default record
-        await addRecord()
+        // 如果后端返回空数组，不自动创建记录，让用户手动创建
+        // 这样可以避免在刷新页面或重新加载时自动创建多条记录
+        console.log('未找到记录，等待用户手动创建')
+        // 清空表单，但不创建新记录
+        formData.id = ''
+        formData.entrustmentId = entrustmentId
+        formData.unifiedNumber = entrustmentId
+        currentIndex.value = -1
       } else {
         // Find record by ID if props.id is provided and it's not the entrustmentId
         let foundIndex = 0
@@ -633,21 +720,42 @@ const loadData = async (entrustmentId) => {
              if (idx !== -1) foundIndex = idx
         }
         currentIndex.value = foundIndex
-        mapRecordToFormData(records.value[foundIndex])
+        // 确保 record 存在且有 id 才映射，避免误操作
+        if (records.value[foundIndex] && records.value[foundIndex].id) {
+          mapRecordToFormData(records.value[foundIndex])
+        } else {
+          console.warn('loadData: Record at index', foundIndex, 'has no id, skipping mapRecordToFormData')
+        }
       }
     } else {
       console.error('Failed to load records:', response.data.message)
-      // Fallback: Create new record
-      await addRecord()
+      // 加载失败时，不自动创建记录，避免重复创建
+      records.value = []
+      currentIndex.value = -1
     }
   } catch (error) {
     console.error('Failed to load data:', error)
-    await addRecord()
+    // 发生错误时，不自动创建记录，避免重复创建
+    records.value = []
+    currentIndex.value = -1
   }
 }
 
 const addRecord = async () => {
   saveCurrentRecordState()
+  
+  // 检查是否已经存在未保存的记录（id 为空或未定义）
+  const hasUnsavedRecord = records.value.some(r => !r.id || r.id.trim() === '')
+  if (hasUnsavedRecord) {
+    // 如果已有未保存的记录，切换到第一条未保存的记录
+    const unsavedIndex = records.value.findIndex(r => !r.id || r.id.trim() === '')
+    if (unsavedIndex !== -1) {
+      currentIndex.value = unsavedIndex
+      mapRecordToFormData(records.value[unsavedIndex])
+      alert('已有未保存的记录，请先保存或删除后再创建新记录')
+      return
+    }
+  }
   
   // Fetch Entrustment Info if available
   let entrustmentData = {}
@@ -772,7 +880,9 @@ const submitForm = async () => {
 
     // 构建提交数据 based on current formData
     const submitData = {
-      id: formData.id || '', // Use formData.id (might be empty for new record)
+      // 只有当 id 存在且不为空字符串时，才传递 id（用于更新）
+      // 如果 id 为空或空字符串，不传递 id，让后端自动生成新的 UUID
+      ...(formData.id && formData.id.trim() !== '' ? { id: formData.id } : {}),
       entrustmentId: formData.entrustmentId || formData.unifiedNumber,
       // Map entity fields
       structurePart: formData.structurePart,
@@ -820,10 +930,62 @@ const submitForm = async () => {
     if (response.data.success) {
       alert('保存成功');
       // Update the current record with the saved data (especially ID)
+      console.log('保存响应数据:', response.data)
       if (response.data.data) {
         const savedRecord = response.data.data
-        records.value[currentIndex.value] = savedRecord
-        mapRecordToFormData(savedRecord)
+        console.log('保存后的记录数据:', savedRecord)
+        console.log('保存后的记录 ID:', savedRecord.id, 'type:', typeof savedRecord.id)
+        console.log('保存前的 formData.id:', formData.id)
+        
+        // 确保 ID 被正确设置（优先使用 savedRecord.id）
+        if (savedRecord.id) {
+          formData.id = savedRecord.id
+          console.log('直接设置 formData.id =', formData.id)
+        } else {
+          console.warn('警告：savedRecord.id 不存在或为空！', savedRecord)
+        }
+        
+        // 更新 records 数组，确保 ID 被正确设置
+        if (records.value[currentIndex.value]) {
+          // 合并数据，但确保 savedRecord.id 优先（如果存在）
+          const mergedRecord = { ...records.value[currentIndex.value], ...savedRecord }
+          // 如果 savedRecord.id 存在，确保它被设置
+          if (savedRecord.id) {
+            mergedRecord.id = savedRecord.id
+          }
+          records.value[currentIndex.value] = mergedRecord
+        } else {
+          records.value[currentIndex.value] = savedRecord
+        }
+        
+        // 确保 records 中的 ID 被正确设置
+        if (savedRecord.id && records.value[currentIndex.value]) {
+          records.value[currentIndex.value].id = savedRecord.id
+        }
+        
+        console.log('更新后的 records[currentIndex].id:', records.value[currentIndex.value]?.id)
+        
+        // 重新映射表单数据，确保所有字段（包括 ID）都被正确更新
+        const idBeforeMap = formData.id
+        mapRecordToFormData(records.value[currentIndex.value])
+        console.log('保存成功，mapRecordToFormData 前的 formData.id:', idBeforeMap)
+        console.log('保存成功，mapRecordToFormData 后的 formData.id:', formData.id)
+        console.log('mapRecordToFormData 接收的 record.id:', records.value[currentIndex.value]?.id)
+        
+        // 如果 mapRecordToFormData 覆盖了 ID，重新设置
+        if (savedRecord.id && formData.id !== savedRecord.id) {
+          console.warn('警告：mapRecordToFormData 覆盖了 ID，重新设置')
+          formData.id = savedRecord.id
+        }
+        
+        console.log('最终 formData.id:', formData.id)
+      } else {
+        // 如果后端没有返回数据，尝试重新查询
+        console.warn('后端未返回保存的数据，尝试重新查询...')
+        const entrustmentId = formData.entrustmentId || formData.unifiedNumber
+        if (entrustmentId) {
+          await loadData(entrustmentId)
+        }
       }
     } else {
       alert('保存失败: ' + response.data.message);

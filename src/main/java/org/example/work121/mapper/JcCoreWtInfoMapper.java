@@ -69,6 +69,7 @@ public interface JcCoreWtInfoMapper {
             "t1.WT_MAN_SIGN as wtManSign, " +
             "t1.WT_REVIEWER as wtReviewer, " +
             "t1.WT_REVIEW_SIGN as wtReviewSign, " +
+            "t1.SAMPLE_NUMBER as sampleNumber, " +
             "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " +
             "FROM JC_CORE_WT_INFO t2 " +
             "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
@@ -703,6 +704,7 @@ public interface JcCoreWtInfoMapper {
             "t1.WT_MAN_SIGN as wtManSign, " +
             "t1.WT_REVIEWER as wtReviewer, " +
             "t1.WT_REVIEW_SIGN as wtReviewSign, " +
+            "t1.SAMPLE_NUMBER as sampleNumber, " +
             "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " +
             "FROM JC_CORE_WT_INFO t2 " +
             "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
@@ -741,7 +743,7 @@ public interface JcCoreWtInfoMapper {
             "#{constructionUnit, jdbcType=VARCHAR}, #{buildingUnit, jdbcType=VARCHAR}, #{supervisionUnit, jdbcType=VARCHAR}, #{witnessUnit, jdbcType=VARCHAR}, #{witness, jdbcType=VARCHAR}, " +
             "#{testCategory, jdbcType=VARCHAR}, #{remarks, jdbcType=VARCHAR}, #{sampleName, jdbcType=VARCHAR}, #{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=TIMESTAMP}, #{updateBy, jdbcType=VARCHAR}, #{updateTime, jdbcType=TIMESTAMP}, " +
             "#{tester, jdbcType=VARCHAR}, #{reviewer, jdbcType=VARCHAR}, #{approver, jdbcType=VARCHAR}, #{constructionPart, jdbcType=VARCHAR}, #{status, jdbcType=VARCHAR}, #{nextHandler, jdbcType=VARCHAR}, #{rejectReason, jdbcType=VARCHAR}, " +
-            "#{wtNum, jdbcType=VARCHAR}, #{spec, jdbcType=VARCHAR}, #{manufacturer, jdbcType=VARCHAR}, #{sampleQuantity, jdbcType=VARCHAR}, #{representativeBatch, jdbcType=VARCHAR}, #{batchNumber, jdbcType=VARCHAR}, " +
+            "#{sampleNumber, jdbcType=VARCHAR}, #{spec, jdbcType=VARCHAR}, #{manufacturer, jdbcType=VARCHAR}, #{sampleQuantity, jdbcType=VARCHAR}, #{representativeBatch, jdbcType=VARCHAR}, #{batchNumber, jdbcType=VARCHAR}, " +
             "#{clientAddressPhone, jdbcType=VARCHAR}, #{reportSendMode, jdbcType=VARCHAR}, #{sampleDisposal, jdbcType=VARCHAR}, #{deliveryMode, jdbcType=VARCHAR}, #{deliveryDate, jdbcType=VARCHAR}, " +
             "#{fee, jdbcType=VARCHAR}, #{sampleHistory, jdbcType=VARCHAR}, #{sampleStatus, jdbcType=VARCHAR}, #{testItems, jdbcType=VARCHAR}, #{witnessIdCard, jdbcType=VARCHAR}, #{samplingManIdCard, jdbcType=VARCHAR}, " +
             "#{reviewSignaturePhoto, jdbcType=VARCHAR}, #{inspectSignaturePhoto, jdbcType=VARCHAR}, #{approveSignaturePhoto, jdbcType=VARCHAR}, " +
@@ -773,7 +775,7 @@ public interface JcCoreWtInfoMapper {
             "STATUS = #{status, jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler, jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason, jdbcType=VARCHAR}, " +
-            "SAMPLE_NUMBER = #{wtNum, jdbcType=VARCHAR}, " +
+            "SAMPLE_NUMBER = #{sampleNumber, jdbcType=VARCHAR}, " +
             "SPEC = #{spec, jdbcType=VARCHAR}, " +
             "MANUFACTURER = #{manufacturer, jdbcType=VARCHAR}, " +
             "SAMPLE_QUANTITY = #{sampleQuantity, jdbcType=VARCHAR}, " +

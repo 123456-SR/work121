@@ -149,6 +149,8 @@ public class Entrustment extends BusinessEntity {
     private String constructionUnitSub;
     /** 旧机构（OLD_ORG） */
     private String oldOrg;
+    /** 样品编号（SAMPLE_NUMBER）- 独立的样品编号字段，不同于统一编号（WT_NUM） */
+    private String sampleNumber;
     /** 规格/型号（GC_GCPQ） */
     private String spec;
     /** 项目监理（GC_XMJL） */
@@ -410,9 +412,9 @@ public class Entrustment extends BusinessEntity {
     public String getUnifiedNumber() { return getId(); }
     public void setUnifiedNumber(String unifiedNumber) { setId(unifiedNumber); }
 
-    // 兼容性方法：sampleNumber -> wtNum
-    public String getSampleNumber() { return getWtNum(); }
-    public void setSampleNumber(String sampleNumber) { setWtNum(sampleNumber); }
+    // 样品编号：独立的字段，对应 T_ENTRUSTMENT.SAMPLE_NUMBER
+    public String getSampleNumber() { return sampleNumber; }
+    public void setSampleNumber(String sampleNumber) { this.sampleNumber = sampleNumber; }
 
     public String getCustomerId() { return customerId; }
     public void setCustomerId(String customerId) { this.customerId = customerId; }
