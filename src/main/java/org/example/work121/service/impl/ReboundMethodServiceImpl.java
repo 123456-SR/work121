@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -41,14 +42,30 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
                 return false;
             }
 
-            if (reboundMethod.getId() != null && mapper.selectById(reboundMethod.getId()) != null) {
+            // 检查记录是否存在：优先通过 ID 查找，如果找不到，再通过 entrustmentId 查找
+            ReboundMethod existing = null;
+            if (reboundMethod.getId() != null && !reboundMethod.getId().trim().isEmpty()) {
+                existing = mapper.selectById(reboundMethod.getId());
+            }
+            
+            // 如果通过 ID 找不到记录，尝试通过 entrustmentId 查找（避免误创建新记录）
+            if (existing == null) {
+                List<ReboundMethod> recordsByEntrustment = mapper.selectByEntrustmentId(reboundMethod.getEntrustmentId());
+                if (recordsByEntrustment != null && !recordsByEntrustment.isEmpty()) {
+                    // 如果找到了记录，使用第一条记录的 ID（同一个 entrustmentId 可能有多条记录，这里使用第一条）
+                    existing = recordsByEntrustment.get(0);
+                    // 更新传入的对象的 ID，确保后续更新操作正确
+                    reboundMethod.setId(existing.getId());
+                    System.out.println("Warning: Record ID not found or invalid, but found existing record by entrustmentId: " + existing.getId() + ", will update instead of creating new one");
+                }
+            }
+            
+            if (existing != null) {
                 // 更新现有记录
                 mapper.updateById(reboundMethod);
             } else {
-                // 插入新记录
-                if (reboundMethod.getId() == null) {
-                    reboundMethod.setId(UUID.randomUUID().toString());
-                }
+                // 插入新记录：只有当确实没有记录时才创建
+                reboundMethod.setId(UUID.randomUUID().toString());
                 mapper.insert(reboundMethod);
             }
             return true;

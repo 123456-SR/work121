@@ -262,7 +262,20 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (list != null && !list.isEmpty()) {
                 JcCoreWtInfo info = list.get(0);
                 Map<String, Object> data = new HashMap<>();
-                data.put("wtNum", info.getWtNum());
+                // 统一编号：对应 WT_NUM（wtNum），这是用户可见的统一编号
+                String wtNum = info.getWtNum();
+                String sampleNumber = info.getSampleNumber();
+                System.out.println("[getEntrustmentData] wtNum=" + wtNum + ", sampleNumber=" + sampleNumber);
+                data.put("unifiedNumber", wtNum);
+                // 样品编号：对应 T_ENTRUSTMENT.SAMPLE_NUMBER，这是独立的样品编号字段
+                // 如果 sampleNumber 为空或等于 wtNum，则不返回，让前端保持为空
+                if (sampleNumber != null && !sampleNumber.trim().isEmpty() && !sampleNumber.equals(wtNum)) {
+                    data.put("sampleNumber", sampleNumber);
+                } else {
+                    data.put("sampleNumber", null); // 明确返回 null，避免前端自动填充
+                }
+                data.put("wtNum", wtNum);
+                data.put("id", info.getId()); // 也返回 id，供其他用途使用
                 data.put("projectName", info.getProjectName());
                 data.put("clientUnit", info.getClientUnit());
                 data.put("commissionDate", info.getCommissionDate());

@@ -28,7 +28,7 @@ public interface ReboundMethodMapper {
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
+            "CASE WHEN t2.STATUS IS NULL THEN '0' WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
             "t2.CREATE_BY as createBy, " +
@@ -73,7 +73,7 @@ public interface ReboundMethodMapper {
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
+            "CASE WHEN t2.STATUS IS NULL THEN '0' WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
             "t2.CREATE_BY as createBy, " +
