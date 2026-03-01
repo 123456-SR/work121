@@ -7,6 +7,7 @@ import org.example.work121.mapper.NuclearDensityMapper;
 import org.example.work121.mapper.SimpleDirectoryMapper;
 import org.example.work121.service.JcCoreWtInfoService;
 import org.example.work121.service.NuclearDensityService;
+import org.example.work121.service.TableGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,9 @@ public class NuclearDensityServiceImpl implements NuclearDensityService {
 
     @Autowired
     private JcCoreWtInfoService jcCoreWtInfoService;
+
+    @Autowired
+    private TableGenerationService tableGenerationService;
 
     @Override
     public List<NuclearDensity> getByEntrustmentId(String entrustmentId) {
@@ -172,11 +176,12 @@ public class NuclearDensityServiceImpl implements NuclearDensityService {
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
+        // 与其它试验方法保持一致：先确保存在记录，然后交由 TableGenerationService 统一生成
         java.util.List<NuclearDensity> records = mapper.selectByEntrustmentId(entrustmentId);
         if (records == null || records.isEmpty()) {
-            System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
-        } else {
-            System.out.println("Generated Report and Result for NuclearDensity entrustment: " + entrustmentId);
+            throw new RuntimeException("Cannot generate NuclearDensity report/result: Record not found for entrustmentId " + entrustmentId);
         }
+
+        tableGenerationService.generateReportAndResult("NUCLEAR_DENSITY", entrustmentId);
     }
 }

@@ -402,6 +402,23 @@ const loadData = async (id) => {
             // Legacy mapping
             if (jsonData.tester && !formData.recordTester) formData.recordTester = jsonData.tester
             if (jsonData.reviewer && !formData.recordReviewer) formData.recordReviewer = jsonData.reviewer
+            // 见证人字段映射：witness -> witnessPerson
+            if (jsonData.witness && !formData.witnessPerson) {
+                formData.witnessPerson = jsonData.witness
+            }
+            if (jsonData.witnessUnit && !formData.witnessUnit) {
+                formData.witnessUnit = jsonData.witnessUnit
+            }
+            // 样品编号字段映射：兼容 sampleNumber / sampleNo / sampleName
+            if (!formData.sampleNumber) {
+                if (jsonData.sampleNumber) {
+                    formData.sampleNumber = jsonData.sampleNumber
+                } else if (jsonData.sampleNo) {
+                    formData.sampleNumber = jsonData.sampleNo
+                } else if (jsonData.sampleName) {
+                    formData.sampleNumber = jsonData.sampleName
+                }
+            }
         } catch (e) {
             console.error('Failed to parse dataJson', e)
         }

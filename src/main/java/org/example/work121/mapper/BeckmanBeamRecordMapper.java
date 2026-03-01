@@ -20,6 +20,9 @@ public interface BeckmanBeamRecordMapper {
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
+            "t2.REJECT_REASON as rejectReason, " +
+            "t2.NEXT_HANDLER as nextHandler, " +
             "t2.CREATE_BY as createBy, " +
             "t2.CREATE_TIME as createTime, " +
             "t2.UPDATE_BY as updateBy, " +
@@ -76,6 +79,9 @@ public interface BeckmanBeamRecordMapper {
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
+            "t2.REJECT_REASON as rejectReason, " +
+            "t2.NEXT_HANDLER as nextHandler, " +
             "t2.CREATE_BY as createBy, " +
             "t2.CREATE_TIME as createTime, " +
             "t2.UPDATE_BY as updateBy, " +
@@ -110,6 +116,9 @@ public interface BeckmanBeamRecordMapper {
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
             "WHERE ID = #{id}")

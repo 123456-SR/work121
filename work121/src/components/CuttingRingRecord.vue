@@ -279,26 +279,40 @@ const formData = reactive({
     })
 
 const getStatusText = (status) => {
+    if (status === null || status === undefined || status === '') {
+        return '草稿'
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '草稿'
+    }
     switch(s) {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
         case 3: return '待签字'
+        case 4: return '待批准'
         case 5: return '已通过'
         default: return '未知'
     }
 }
 
 const getStatusColor = (status) => {
+    if (status === null || status === undefined || status === '') {
+        return '#9E9E9E' // Grey (草稿)
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '#9E9E9E' // Grey (草稿)
+    }
     switch(s) {
-        case 0: return '#9E9E9E' // Grey
-        case 1: return '#2196F3' // Blue
-        case 2: return '#F44336' // Red
-        case 3: return '#FF9800' // Orange
-        case 5: return '#4CAF50' // Green
-        default: return '#000000'
+        case 0: return '#9E9E9E' // Grey (草稿)
+        case 1: return '#2196F3' // Blue (待审核)
+        case 2: return '#F44336' // Red (已打回)
+        case 3: return '#FF9800' // Orange (待签字)
+        case 4: return '#17a2b8' // Info (待批准)
+        case 5: return '#4CAF50' // Green (已通过)
+        default: return '#9E9E9E' // Grey (默认草稿)
     }
 }
 
@@ -473,16 +487,41 @@ const mapRecordToFormData = (record) => {
   
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || props.id
-  formData.status = record.status !== undefined ? record.status : 0
+  // 状态统一转成数字，避免后端返回字符串或null导致显示"未知"
+  if (record.status !== undefined && record.status !== null && record.status !== '') {
+    const statusNum = Number(record.status)
+    formData.status = isNaN(statusNum) ? 0 : statusNum
+  } else {
+    formData.status = 0
+  }
   formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
   formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
 
   if (record.dataJson) {
     try {
       const parsed = JSON.parse(record.dataJson)
+      // 定义基础字段列表（这些字段应该优先从委托单获取，JSON 中的空值不应该覆盖）
+      const basicFields = ['entrustingUnit', 'projectName', 'unifiedNumber', 'constructionLocation', 
+                          'testType', 'standard', 'entrustmentId']
+      
       // Merge parsed data into formData
       Object.keys(parsed).forEach(key => {
-        formData[key] = parsed[key]
+        // 跳过 status 字段，使用数据库中的 status
+        if (key === 'status') return
+        
+        const value = parsed[key]
+        // 对于基础字段，如果 JSON 中是空值，不覆盖已有的委托单数据
+        if (basicFields.includes(key)) {
+          if (value !== undefined && value !== null && value !== '') {
+            formData[key] = value
+          }
+          // 如果 JSON 中是空值，保留 formData 中已有的值（来自委托单）
+        } else {
+          // 对于其他字段（数据行字段等），直接合并
+          if (value !== undefined && value !== null) {
+            formData[key] = value
+          }
+        }
       })
       
       // Legacy mapping
@@ -494,15 +533,19 @@ const mapRecordToFormData = (record) => {
   }
 
   // Map fields from BusinessEntity/Entrustment (Override JSON to ensure sync)
+  // 基础字段：优先使用 record 中的值，如果没有则保留 formData 中已有的值（可能来自委托单）
+  // 这样即使记录表中没有这些字段，也能从委托单自动填充
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
   if (record.projectName) formData.projectName = record.projectName
   if (record.wtNum) formData.unifiedNumber = record.wtNum
-  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId // Fallback
+  if (record.entrustmentId && !formData.unifiedNumber) formData.unifiedNumber = record.entrustmentId // Fallback
 
   if (record.constructionPart) formData.constructionLocation = record.constructionPart
   if (record.testCategory) formData.testType = record.testCategory
-  if (record.standard) formData.standard = record.standard
+  if (record.standard || record.testBasis) formData.standard = record.standard || record.testBasis
   if (record.testDate) formData.testDate = formatDate(record.testDate)
+  
+  // 这些字段通常不在委托单中，只在记录表的 JSON 中
   if (record.maxDryDensity) formData.maxDryDensity = record.maxDryDensity
   if (record.optMoisture) formData.optMoisture = record.optMoisture
   if (record.designCompaction) formData.designCompaction = record.designCompaction
@@ -613,8 +656,42 @@ const loadData = async (paramId) => {
   const idOrWtNum = paramId || props.wtNum || props.id
   if (idOrWtNum) {
     try {
-      // 1. Try to fetch existing records (List)
-      // Note: We use idOrWtNum as entrustmentId. The backend should support querying by wtNum if it's stored as such
+      // 1. First, always load entrustment info to fill basic fields
+      let entrustmentData = null
+      try {
+        const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
+          params: { unifiedNumber: idOrWtNum }
+        })
+        // If not found by unifiedNumber, try by ID
+        if (!entrustmentResponse.data.success || !entrustmentResponse.data.data) {
+          const byIdResponse = await axios.get('/api/jc-core-wt-info/by-id', {
+            params: { id: idOrWtNum }
+          })
+          if (byIdResponse.data.success && byIdResponse.data.data) {
+            entrustmentData = byIdResponse.data.data
+          }
+        } else {
+          entrustmentData = entrustmentResponse.data.data
+        }
+      } catch (e) {
+        console.warn('Failed to load entrustment info:', e)
+      }
+      
+      // 2. Fill basic fields from entrustment
+      if (entrustmentData) {
+        formData.entrustmentId = idOrWtNum
+        formData.unifiedNumber = entrustmentData.wtNum || idOrWtNum
+        formData.entrustingUnit = entrustmentData.clientUnit || ''
+        formData.projectName = entrustmentData.projectName || ''
+        formData.constructionLocation = entrustmentData.constructionPart || ''
+        formData.testType = entrustmentData.testCategory || ''
+        formData.standard = entrustmentData.testBasis || entrustmentData.standard || ''
+        if (!formData.testDate) {
+          formData.testDate = new Date().toISOString().split('T')[0]
+        }
+      }
+      
+      // 3. Try to fetch existing records (List)
       const response = await axios.get('/api/cutting-ring/get-by-entrustment-id', {
         params: { entrustmentId: idOrWtNum }
       })
@@ -624,35 +701,11 @@ const loadData = async (paramId) => {
         currentIndex.value = 0
         mapRecordToFormData(records.value[0])
       } else {
-        // 2. If no record, create one and fetch entrustment info
-        // Try fetching by unifiedNumber (wtNum)
-        const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
-          params: { unifiedNumber: idOrWtNum }
-        })
-        
+        // 4. If no record, create one
         const newRecord = {
           id: '',
           entrustmentId: idOrWtNum,
-          dataJson: '{}'
-        }
-        
-        if (entrustmentResponse.data.success) {
-          const eData = entrustmentResponse.data.data
-          // Pre-fill some data into formData then save to newRecord
-          formData.entrustmentId = idOrWtNum
-          formData.constructionLocation = eData.constructionPart || ''
-          formData.testDate = new Date().toISOString().split('T')[0]
-          // Add other fields
-          formData.testType = eData.testCategory || ''
-          formData.standard = eData.standard || ''
-          
-          // Auto-fill roles from directory (Removed)
-          // const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
-          formData.recordTester = ''
-          formData.recordReviewer = ''
-          // formData.approver = ''
-          
-          newRecord.dataJson = JSON.stringify(formData)
+          dataJson: JSON.stringify(formData)
         }
         
         records.value = [newRecord]

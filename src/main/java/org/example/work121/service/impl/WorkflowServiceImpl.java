@@ -3,6 +3,7 @@ package org.example.work121.service.impl;
 import org.example.work121.dto.WorkflowRequest;
 import org.example.work121.entity.*;
 import org.example.work121.mapper.*;
+import org.example.work121.entity.ReboundMethodRecord;
 import org.example.work121.service.BeckmanBeamService;
 import org.example.work121.service.WorkflowService;
 import org.example.work121.service.WaterReplacementService;
@@ -28,6 +29,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Autowired private SimpleDirectoryMapper simpleDirectoryMapper;
     @Autowired private DensityTestMapper densityTestMapper;
     @Autowired private ReboundMethodMapper reboundMethodMapper;
+    @Autowired private ReboundMethodRecordMapper reboundMethodRecordMapper;
     @Autowired private SandReplacementMapper sandReplacementMapper;
     @Autowired private WaterReplacementMapper waterReplacementMapper;
     @Autowired private NuclearDensityMapper nuclearDensityMapper;
@@ -185,6 +187,32 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private boolean handleReboundMethod(String id, WorkflowRequest request) {
+        // 先尝试用 ReboundMethodRecordMapper 查询（记录表）
+        ReboundMethodRecord recordEntity = reboundMethodRecordMapper.selectById(id);
+        if (recordEntity != null) {
+            String oldStatus = recordEntity.getStatus();
+            // 确保状态字段不为空，如果为空则设置为草稿状态
+            if (oldStatus == null || oldStatus.trim().isEmpty() || !oldStatus.matches("^[0-9]+$")) {
+                oldStatus = STATUS_DRAFT;
+                recordEntity.setStatus(STATUS_DRAFT);
+            }
+            applyChanges(recordEntity, request);
+            String newStatus = recordEntity.getStatus();
+            System.out.println("ReboundMethodRecord workflow: id=" + id + ", action=" + request.getAction() + 
+                    ", oldStatus=" + oldStatus + ", newStatus=" + newStatus);
+            boolean success = reboundMethodRecordMapper.updateById(recordEntity) > 0;
+            System.out.println("ReboundMethodRecord update result: " + success);
+
+            if (success && STATUS_APPROVED.equals(recordEntity.getStatus())) {
+                reboundMethodService.generateReportAndResult(recordEntity.getEntrustmentId());
+                // 回弹法记录表审核通过时，检查贝克曼梁法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
+                // （generateBeckmanBeamReportAndResult 内部会检查双检验是否都通过）
+                beckmanBeamService.generateReportAndResult(recordEntity.getEntrustmentId());
+            }
+            return success;
+        }
+
+        // 如果记录表查不到，尝试用 ReboundMethodMapper 查询（兼容旧数据）
         ReboundMethod entity = reboundMethodMapper.selectById(id);
         if (entity == null) return false;
         
@@ -193,6 +221,9 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             reboundMethodService.generateReportAndResult(entity.getEntrustmentId());
+            // 回弹法记录表审核通过时，检查贝克曼梁法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
+            // （generateBeckmanBeamReportAndResult 内部会检查双检验是否都通过）
+            beckmanBeamService.generateReportAndResult(entity.getEntrustmentId());
         }
         return success;
     }
@@ -212,11 +243,21 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private boolean handleWaterReplacement(String id, WorkflowRequest request) {
+        // 先尝试用 ID 查询（UUID）
         WaterReplacement entity = waterReplacementMapper.selectById(id);
-        if (entity == null) return false;
+        // 如果查不到，可能是前端传的是 ENTRUSTMENT_ID（统一编号），尝试用统一编号查询
+        if (entity == null) {
+            List<WaterReplacement> records = waterReplacementMapper.selectByEntrustmentId(id);
+            if (records != null && !records.isEmpty()) {
+                entity = records.get(0);
+            }
+        }
+        if (entity == null)
+            return false;
         
         applyChanges(entity, request);
-        boolean success = waterReplacementMapper.updateById(entity) > 0;
+        // 工作流这里只需要更新状态/签名等流程字段，避免误改 DATA_JSON
+        boolean success = waterReplacementMapper.updateWorkflowFields(entity) > 0;
         
         if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             waterReplacementService.generateReportAndResult(entity.getEntrustmentId());
@@ -263,6 +304,8 @@ public class WorkflowServiceImpl implements WorkflowService {
         
         if (success && STATUS_APPROVED.equals(entity.getStatus())) {
             beckmanBeamService.generateReportAndResult(entity.getEntrustmentId());
+            // 贝克曼梁法记录表审核通过时，检查回弹法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
+            // （generateBeckmanBeamReportAndResult 内部会检查双检验是否都通过）
         }
         return success;
     }

@@ -19,7 +19,7 @@ public interface BeckmanBeamMapper {
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "t2.STATUS as status, " +
+            "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
             "t2.CREATE_BY as createBy, " +
@@ -74,7 +74,7 @@ public interface BeckmanBeamMapper {
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "t2.STATUS as status, " +
+            "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
             "t2.CREATE_BY as createBy, " +

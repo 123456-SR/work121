@@ -449,9 +449,10 @@ const submitWorkflow = async (action) => {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            // Refresh data
+            // Refresh data - 重新加载数据以获取最新状态
             const entrustmentId = formData.entrustmentId || formData.unifiedNumber
-            loadData(entrustmentId)
+            await loadData(entrustmentId)
+            console.log('After workflow reload, formData.status:', formData.status)
         } else {
             alert('操作失败: ' + response.data.message)
         }
@@ -500,6 +501,9 @@ const mapRecordToFormData = (record) => {
   
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || formData.unifiedNumber
+  // 状态统一转成数字，避免后端返回字符串导致严格等于判断失效（影响按钮显示）
+  formData.status = record.status !== undefined ? Number(record.status) : 0
+  console.log('mapRecordToFormData - record.status:', record.status, 'formData.status:', formData.status)
   
   // Map signature photos
   formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
@@ -516,9 +520,8 @@ const mapRecordToFormData = (record) => {
   if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
   if (record.wtNum && !formData.unifiedNumber) formData.unifiedNumber = record.wtNum
   
-  // Map fields from BusinessEntity/Entrustment
+  // Map fields from BusinessEntity/Entrustment（先映射除样品编号以外的）
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
-  if (record.sampleName) formData.sampleNo = record.sampleName
   if (record.projectName) formData.projectName = record.projectName
   if (record.commissionDate) formData.commissionDate = record.commissionDate
   if (record.testCategory) formData.testCategory = record.testCategory
@@ -542,8 +545,26 @@ const mapRecordToFormData = (record) => {
   if (record.dataJson) {
     try {
       const json = JSON.parse(record.dataJson)
+      // 保存当前状态，避免被 JSON 覆盖
+      const currentStatus = formData.status
       // Merge json into formData
       Object.assign(formData, json)
+      // 确保实体字段的状态优先于 JSON 中的状态
+      if (record.status !== undefined) {
+        formData.status = Number(record.status)
+      } else {
+        formData.status = currentStatus
+      }
+      // 样品编号兼容：优先使用 JSON 中的各种可能字段
+      if (!formData.sampleNo) {
+        if (json.sampleNo) {
+          formData.sampleNo = json.sampleNo
+        } else if (json.sampleNumber) {
+          formData.sampleNo = json.sampleNumber
+        } else if (json.sampleName) {
+          formData.sampleNo = json.sampleName
+        }
+      }
       
       // Map legacy fields
       if (json.tester && !formData.recordTester) formData.recordTester = json.tester
@@ -560,6 +581,15 @@ const mapRecordToFormData = (record) => {
       if (record.filler) formData.filler = record.filler
     } catch (e) {
       console.error('JSON parse error', e)
+    }
+  }
+
+  // 样品编号兜底：如果上面都没有填到，就用委托单上的字段
+  if (!formData.sampleNo) {
+    if (record.sampleName) {
+      formData.sampleNo = record.sampleName
+    } else if (record.sampleNumber) {
+      formData.sampleNo = record.sampleNumber
     }
   }
 }

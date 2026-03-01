@@ -71,11 +71,40 @@ public class BeckmanBeamController {
     public Map<String, Object> getReportByEntrustmentId(@RequestParam String entrustmentId) {
         Map<String, Object> result = new HashMap<>();
         try {
+            logger.info("=== DEBUG: 查询贝克曼梁法报告，entrustmentId: {}", entrustmentId);
             org.example.work121.entity.BeckmanBeamReport entity = service.getReportByEntrustmentId(entrustmentId);
             if (entity != null) {
+                logger.info("=== DEBUG: 找到报告，ID: {}, entrustmentId: {}", entity.getId(), entity.getEntrustmentId());
+                if (entity.getDataJson() != null && !entity.getDataJson().isEmpty()) {
+                    logger.info("=== DEBUG: DATA_JSON 长度: {}", entity.getDataJson().length());
+                    logger.info("=== DEBUG: DATA_JSON 包含 station_1: {}", entity.getDataJson().contains("\"station_1\""));
+                    // 尝试解析并提取 station_1 的值
+                    try {
+                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                        Map<String, Object> jsonMap = mapper.readValue(entity.getDataJson(), Map.class);
+                        if (jsonMap.containsKey("station_1")) {
+                            logger.info("=== DEBUG: station_1 的值: {}", jsonMap.get("station_1"));
+                        } else {
+                            logger.warn("=== DEBUG: DATA_JSON 中不包含 station_1 字段");
+                            // 列出前10个字段名用于调试
+                            int count = 0;
+                            for (String key : jsonMap.keySet()) {
+                                if (count < 10) {
+                                    logger.info("=== DEBUG: 字段名示例: {}", key);
+                                    count++;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        logger.error("=== DEBUG: 解析 DATA_JSON 失败", e);
+                    }
+                } else {
+                    logger.warn("=== DEBUG: DATA_JSON 为空或 null");
+                }
                 result.put("success", true);
                 result.put("data", entity);
             } else {
+                logger.warn("=== DEBUG: 未找到报告记录，entrustmentId: {}", entrustmentId);
                 result.put("success", false);
                 result.put("message", "未找到报告记录");
             }

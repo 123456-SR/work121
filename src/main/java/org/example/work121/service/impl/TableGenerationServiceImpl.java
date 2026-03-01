@@ -156,7 +156,21 @@ public class TableGenerationServiceImpl implements TableGenerationService {
     @Override
     public Map<String, Object> getEntrustmentData(String entrustmentId) {
         try {
+            // 兼容两种用法：
+            // 1）entrustmentId 传入统一编号（WT_NUM）
+            // 2）entrustmentId 传入委托主键 ID（WT_ID）
             List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByWtNum(entrustmentId);
+            if (list == null || list.isEmpty()) {
+                try {
+                    // 如果按 WT_NUM 查不到，再尝试按 ID 查
+                    JcCoreWtInfo byId = jcCoreWtInfoMapper.selectById(entrustmentId);
+                    if (byId != null) {
+                        list = java.util.Collections.singletonList(byId);
+                    }
+                } catch (Exception ignore) {
+                    // 按 ID 查询失败不影响整体流程，继续返回 null
+                }
+            }
             if (list != null && !list.isEmpty()) {
                 JcCoreWtInfo info = list.get(0);
                 Map<String, Object> data = new HashMap<>();
@@ -173,6 +187,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 data.put("testBasis", info.getTestBasis());
                 data.put("equipment", info.getEquipment());
                 data.put("remarks", info.getRemarks());
+                data.put("witness", info.getWitness());
+                data.put("witnessUnit", info.getWitnessUnit());
                 return data;
             }
         } catch (Exception e) {
@@ -220,7 +236,12 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             // 1）先塞委托表的数据
             Map<String, Object> entrustmentData = getEntrustmentData(wtNum);
             if (entrustmentData != null) {
-                recordData.putAll(entrustmentData);
+                // 只用非空值覆盖，避免把记录表中已有的数据覆盖成 null
+                for (Map.Entry<String, Object> e : entrustmentData.entrySet()) {
+                    if (e.getValue() != null) {
+                        recordData.put(e.getKey(), e.getValue());
+                    }
+                }
             }
 
             // 2）再把四种密度记录表的 DATA_JSON 合并进来（有就合并，没有就跳过）
@@ -278,7 +299,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     /**
      * 将某一类密度记录表中所有记录的 DATA_JSON 合并到 recordData 里。
-     * 如果 JSON 字段重复，后出现的会覆盖先前的，同一大类一般字段含义一致，可以接受。
+     * 对于数据字段（如 sampleId_0, dryDensity_1 等），会智能重新编号以避免覆盖。
+     * 对于非数据字段（如 projectName, testCategory 等），后出现的会覆盖先前的。
      */
     private <T> void mergeDensityRecordJson(List<T> records,
                                             Map<String, Object> recordData,
@@ -287,16 +309,166 @@ public class TableGenerationServiceImpl implements TableGenerationService {
         if (records == null || records.isEmpty()) {
             return;
         }
+        
+        // 定义数据字段的前缀模式（用于识别需要重新编号的字段）
+        String[] dataFieldPrefixes = {
+            "sampleId_", "location_", "date_", "wetDensity_", "dryDensity_", 
+            "moisture_", "compaction_", "remarks_",
+            "wetDensity2_", "dryDensity2_", "moisture2_",
+            "samplingLocation_", "avgMeasuredDryDensity_", "relativeDensity_",
+            // 环刀法特有的字段前缀（需要映射到标准字段）
+            "sampleNo_", "moisture1_"
+        };
+        
         for (T be : records) {
             String json = dataJsonGetter.apply(be);
             if (json != null && !json.isEmpty()) {
                 try {
                     Map<String, Object> m = objectMapper.readValue(json, Map.class);
                     if (m != null) {
-                        recordData.putAll(m);
+                        // 1. 先找出当前 recordData 中数据字段的最大索引
+                        // 注意：recordData 中可能已经有映射后的字段名（sampleId_, moisture_）
+                        int maxExistingIndex = -1;
+                        for (String key : recordData.keySet()) {
+                            for (String prefix : dataFieldPrefixes) {
+                                if (key.startsWith(prefix)) {
+                                    try {
+                                        String suffix = key.substring(prefix.length());
+                                        int idx = Integer.parseInt(suffix);
+                                        if (idx > maxExistingIndex) {
+                                            maxExistingIndex = idx;
+                                        }
+                                    } catch (NumberFormatException ignored) {
+                                        // 不是数字后缀，忽略
+                                    }
+                                }
+                            }
+                            // 也检查映射后的字段名（sampleId_, moisture_）
+                            if (key.startsWith("sampleId_") || key.startsWith("moisture_")) {
+                                try {
+                                    String suffix = key.substring(key.lastIndexOf("_") + 1);
+                                    int idx = Integer.parseInt(suffix);
+                                    if (idx > maxExistingIndex) {
+                                        maxExistingIndex = idx;
+                                    }
+                                } catch (NumberFormatException ignored) {
+                                }
+                            }
+                        }
+                        
+                        // 2. 找出新记录中数据字段的最大索引（考虑字段映射）
+                        int maxNewIndex = -1;
+                        for (String key : m.keySet()) {
+                            for (String prefix : dataFieldPrefixes) {
+                                if (key.startsWith(prefix)) {
+                                    try {
+                                        String suffix = key.substring(prefix.length());
+                                        int idx = Integer.parseInt(suffix);
+                                        if (idx > maxNewIndex) {
+                                            maxNewIndex = idx;
+                                        }
+                                    } catch (NumberFormatException ignored) {
+                                        // 不是数字后缀，忽略
+                                    }
+                                }
+                            }
+                            // 也检查环刀法的特有字段（需要映射的）
+                            if (key.startsWith("sampleNo_") || key.startsWith("moisture1_")) {
+                                try {
+                                    String suffix = key.substring(key.lastIndexOf("_") + 1);
+                                    int idx = Integer.parseInt(suffix);
+                                    if (idx > maxNewIndex) {
+                                        maxNewIndex = idx;
+                                    }
+                                } catch (NumberFormatException ignored) {
+                                    // 不是数字后缀，忽略
+                                }
+                            }
+                        }
+                        
+                        // 3. 合并数据：数据字段重新编号，非数据字段直接合并（后覆盖前）
+                        int offset = maxExistingIndex + 1; // 新记录的起始索引
+                        for (Map.Entry<String, Object> entry : m.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+                            
+                            boolean isDataField = false;
+                            String matchedPrefix = null;
+                            String suffix = null;
+                            
+                            // 检查是否是数据字段
+                            for (String prefix : dataFieldPrefixes) {
+                                if (key.startsWith(prefix)) {
+                                    try {
+                                        suffix = key.substring(prefix.length());
+                                        Integer.parseInt(suffix); // 验证是数字
+                                        isDataField = true;
+                                        matchedPrefix = prefix;
+                                        break;
+                                    } catch (NumberFormatException ignored) {
+                                        // 不是数字后缀，不是数据字段
+                                    }
+                                }
+                            }
+                            // 特殊处理：环刀法的特有字段（即使不在标准前缀列表中，也需要识别为数据字段）
+                            if (!isDataField) {
+                                if (key.startsWith("sampleNo_")) {
+                                    try {
+                                        suffix = key.substring("sampleNo_".length());
+                                        Integer.parseInt(suffix);
+                                        isDataField = true;
+                                        matchedPrefix = "sampleNo_";
+                                    } catch (NumberFormatException ignored) {
+                                    }
+                                } else if (key.startsWith("moisture1_")) {
+                                    try {
+                                        suffix = key.substring("moisture1_".length());
+                                        Integer.parseInt(suffix);
+                                        isDataField = true;
+                                        matchedPrefix = "moisture1_";
+                                    } catch (NumberFormatException ignored) {
+                                    }
+                                }
+                            }
+                            
+                            if (isDataField && matchedPrefix != null && suffix != null) {
+                                // 数据字段：重新编号
+                                int oldIndex = Integer.parseInt(suffix);
+                                int newIndex = offset + oldIndex;
+                                
+                                // 字段名映射：将不同记录表的字段名统一映射到报告表的字段名
+                                String mappedPrefix = matchedPrefix;
+                                if ("sampleNo_".equals(matchedPrefix)) {
+                                    // 环刀法：sampleNo_ -> sampleId_
+                                    mappedPrefix = "sampleId_";
+                                    System.out.println("[mergeDensityRecordJson] 字段映射: " + key + " -> " + mappedPrefix + newIndex + " (值: " + value + ")");
+                                } else if ("moisture1_".equals(matchedPrefix)) {
+                                    // 环刀法：moisture1_ -> moisture_（第一行含水率）
+                                    mappedPrefix = "moisture_";
+                                    System.out.println("[mergeDensityRecordJson] 字段映射: " + key + " -> " + mappedPrefix + newIndex + " (值: " + value + ")");
+                                }
+                                // 注意：moisture2_ 不需要映射，直接使用
+                                // avgMoisture_ 是平均含水率，不应该映射到报告表
+                                
+                                String newKey = mappedPrefix + newIndex;
+                                recordData.put(newKey, value);
+                            } else {
+                                // 非数据字段：直接合并（后覆盖前）
+                                recordData.put(key, value);
+                            }
+                        }
+
+                        // 4. 针对不同试验方法做额外的字段规范化映射
+                        if ("WaterReplacement".equals(debugLabel)) {
+                            // 灌水法：将记录表里的 samplingLocation_0 / avgMeasuredDryDensity_0 / relativeDensity_0 等
+                            // 规范映射到通用的 location_0 / dryDensity_0 / compaction_0 / moisture_0，
+                            // 便于"原位密度检测报告/结果"自动填充。
+                            normalizeWaterReplacementJson(recordData, m);
+                        }
                     }
                 } catch (Exception e) {
                     System.err.println("Error parsing " + debugLabel + " record JSON: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         }
@@ -396,7 +568,23 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             ReboundMethod record = records.get(0);
-            Map<String, Object> recordData = prepareReboundMethodData(record);
+            Map<String, Object> recordData = new HashMap<>();
+
+            // 1）先合并委托单数据（委托级别的工程名称、委托单位、施工部位、检测类别等）
+            Map<String, Object> entrustmentData = getEntrustmentData(entrustmentId);
+            if (entrustmentData != null) {
+                for (Map.Entry<String, Object> e : entrustmentData.entrySet()) {
+                    if (e.getValue() != null) {
+                        recordData.put(e.getKey(), e.getValue());
+                    }
+                }
+            }
+
+            // 2）再合并回弹法记录表自身的 JSON + 显式字段（记录表填写的内容优先）
+            Map<String, Object> fromRecord = prepareReboundMethodData(record);
+            if (fromRecord != null) {
+                recordData.putAll(fromRecord);
+            }
 
             ReboundMethodReport report = reboundMethodReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -579,14 +767,180 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     private void generateBeckmanBeamReportAndResult(String entrustmentId) {
         try {
-            List<BeckmanBeam> records = beckmanBeamMapper.selectByEntrustmentId(entrustmentId);
-            if (records == null || records.isEmpty()) {
-                System.err.println("Warning: Record not found for entrustmentId " + entrustmentId);
+            // 检查双检验是否都通过：回弹法记录表和贝克曼梁法记录表都必须审核通过
+            List<ReboundMethod> reboundRecords = reboundMethodMapper.selectByEntrustmentId(entrustmentId);
+            boolean reboundApproved = false;
+            if (reboundRecords != null && !reboundRecords.isEmpty()) {
+                ReboundMethod reboundRecord = reboundRecords.get(0);
+                String reboundStatus = reboundRecord.getStatus();
+                if (reboundStatus != null && "5".equals(reboundStatus.toString())) {
+                    reboundApproved = true;
+                }
+            }
+
+            List<BeckmanBeam> beckmanRecords = beckmanBeamMapper.selectByEntrustmentId(entrustmentId);
+            boolean beckmanApproved = false;
+            if (beckmanRecords != null && !beckmanRecords.isEmpty()) {
+                BeckmanBeam beckmanRecord = beckmanRecords.get(0);
+                String beckmanStatus = beckmanRecord.getStatus();
+                if (beckmanStatus != null && "5".equals(beckmanStatus.toString())) {
+                    beckmanApproved = true;
+                }
+            }
+
+            if (!reboundApproved || !beckmanApproved) {
+                System.out.println("Skip BeckmanBeamReport generation: ReboundMethod approved=" + reboundApproved + ", BeckmanBeam approved=" + beckmanApproved + " for entrustmentId " + entrustmentId);
                 return;
             }
 
-            BeckmanBeam record = records.get(0);
-            Map<String, Object> recordData = prepareBeckmanBeamData(record);
+            // 双检验都通过，开始生成报告
+            Map<String, Object> reportData = new HashMap<>();
+
+            // 1）先合并委托单数据（委托级别的工程名称、委托单位、施工部位、检测类别等）
+            Map<String, Object> entrustmentData = getEntrustmentData(entrustmentId);
+            if (entrustmentData != null) {
+                for (Map.Entry<String, Object> e : entrustmentData.entrySet()) {
+                    if (e.getValue() != null) {
+                        reportData.put(e.getKey(), e.getValue());
+                    }
+                }
+            }
+
+            // 2）再合并回弹法报告单的数据（回弹法报告单已经包含了委托单+记录表的数据）
+            ReboundMethodReport reboundReport = reboundMethodReportMapper.selectByEntrustmentId(entrustmentId);
+            if (reboundReport != null && reboundReport.getDataJson() != null && !reboundReport.getDataJson().isEmpty()) {
+                try {
+                    Map<String, Object> reboundReportData = objectMapper.readValue(reboundReport.getDataJson(), Map.class);
+                    if (reboundReportData != null) {
+                        // 合并回弹法报告单的数据，回弹法报告单的数据优先（覆盖委托单数据）
+                        // 只合并非空值，避免覆盖已有数据
+                        for (Map.Entry<String, Object> e : reboundReportData.entrySet()) {
+                            Object value = e.getValue();
+                            if (value != null && !value.toString().trim().isEmpty()) {
+                                reportData.put(e.getKey(), value);
+                            }
+                        }
+                        
+                        // 特殊字段映射：回弹法报告单的 conclusion -> 贝克曼梁法报告的 testConclusion
+                        if (reboundReportData.get("conclusion") != null && (reportData.get("testConclusion") == null || reportData.get("testConclusion").toString().trim().isEmpty())) {
+                            reportData.put("testConclusion", reboundReportData.get("conclusion"));
+                        }
+                        // 回弹法报告单的 reportDate -> 贝克曼梁法报告的 reportDate（如果贝克曼梁法记录表没有）
+                        if (reboundReportData.get("reportDate") != null && (reportData.get("reportDate") == null || reportData.get("reportDate").toString().trim().isEmpty())) {
+                            reportData.put("reportDate", reboundReportData.get("reportDate"));
+                        }
+                        // 回弹法报告单的 standard -> 贝克曼梁法报告的 standard（如果贝克曼梁法记录表没有）
+                        if (reboundReportData.get("standard") != null && (reportData.get("standard") == null || reportData.get("standard").toString().trim().isEmpty())) {
+                            reportData.put("standard", reboundReportData.get("standard"));
+                        }
+                        // 回弹法报告单的 equipment -> 贝克曼梁法报告的 equipmentCode（如果贝克曼梁法记录表没有）
+                        if (reboundReportData.get("equipment") != null && (reportData.get("equipmentCode") == null || reportData.get("equipmentCode").toString().trim().isEmpty())) {
+                            reportData.put("equipmentCode", reboundReportData.get("equipment"));
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error parsing ReboundMethodReport JSON: " + e.getMessage());
+                }
+            }
+
+            // 3）最后合并贝克曼梁法记录表的数据（记录表填写的内容优先）
+            BeckmanBeam record = beckmanRecords.get(0);
+            Map<String, Object> beckmanRecordData = prepareBeckmanBeamData(record);
+            if (beckmanRecordData != null) {
+                System.out.println("BeckmanBeam record data size: " + beckmanRecordData.size());
+                System.out.println("BeckmanBeam record contains station_1: " + beckmanRecordData.containsKey("station_1"));
+                if (beckmanRecordData.containsKey("station_1")) {
+                    System.out.println("BeckmanBeam record station_1 value: " + beckmanRecordData.get("station_1"));
+                }
+                
+                // 贝克曼梁法记录表的数据优先（覆盖回弹法报告单和委托单的数据）
+                // 合并所有字段，包括空字符串（因为记录表中可能确实有这些字段，只是值为空）
+                // 但对于明确的基础字段（如 projectName, commissionDate 等），只合并非空值
+                for (Map.Entry<String, Object> e : beckmanRecordData.entrySet()) {
+                    String key = e.getKey();
+                    Object value = e.getValue();
+                    
+                    // 基础字段（委托单字段）：只合并非空值，避免覆盖
+                    if (key.equals("projectName") || key.equals("commissionDate") || 
+                        key.equals("constructionPart") || key.equals("testCategory") ||
+                        key.equals("entrustingUnit") || key.equals("unifiedNumber") ||
+                        key.equals("witnessUnit") || key.equals("witness")) {
+                        if (value != null && !value.toString().trim().isEmpty()) {
+                            reportData.put(key, value);
+                        }
+                    } else {
+                        // 其他字段（测点数据、统计字段等）：全部合并，包括空字符串
+                        // 这样可以确保所有字段都被填充，即使值为空
+                        reportData.put(key, value);
+                    }
+                }
+                
+                System.out.println("After merging BeckmanBeam record data, reportData contains station_1: " + reportData.containsKey("station_1"));
+                if (reportData.containsKey("station_1")) {
+                    System.out.println("After merging, reportData station_1 value: " + reportData.get("station_1"));
+                }
+                
+                // 字段名映射：记录表 -> 报告
+                // tempCorrectionK -> tempCorrection（前端报告页面使用 tempCorrection）
+                if (beckmanRecordData.containsKey("tempCorrectionK")) {
+                    reportData.put("tempCorrection", beckmanRecordData.get("tempCorrectionK"));
+                }
+                // tempCorrectedAvg -> avgDeflection（前端报告页面使用 avgDeflection）
+                if (beckmanRecordData.containsKey("tempCorrectedAvg")) {
+                    reportData.put("avgDeflection", beckmanRecordData.get("tempCorrectedAvg"));
+                }
+                // sampleNameStatus -> sampleStatus（前端报告页面使用 sampleStatus）
+                if (beckmanRecordData.containsKey("sampleNameStatus")) {
+                    reportData.put("sampleStatus", beckmanRecordData.get("sampleNameStatus"));
+                }
+            }
+            
+            // 4）设置固定值和默认值
+            // 检测方法固定为"贝克曼梁法"
+            if (reportData.get("testMethod") == null || reportData.get("testMethod").toString().trim().isEmpty()) {
+                reportData.put("testMethod", "贝克曼梁法");
+            }
+            
+            // 如果报告日期为空，使用当前日期
+            if (reportData.get("reportDate") == null || reportData.get("reportDate").toString().trim().isEmpty()) {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                reportData.put("reportDate", sdf.format(new java.util.Date()));
+            }
+            
+            // 如果样品名称及状态为空，尝试从 sampleName 和 sampleStatus 拼接
+            if ((reportData.get("sampleStatus") == null || reportData.get("sampleStatus").toString().trim().isEmpty()) 
+                    && reportData.get("sampleName") != null) {
+                String sampleName = reportData.get("sampleName").toString();
+                String sampleStatusStr = reportData.get("sampleStatus") != null ? reportData.get("sampleStatus").toString() : "";
+                if (sampleStatusStr != null && !sampleStatusStr.trim().isEmpty()) {
+                    reportData.put("sampleStatus", sampleName + " / " + sampleStatusStr);
+                } else {
+                    reportData.put("sampleStatus", sampleName);
+                }
+            }
+            
+            // 5）从回弹法报告单获取更多字段（如果贝克曼梁法记录表没有）
+            if (reboundReport != null && reboundReport.getDataJson() != null && !reboundReport.getDataJson().isEmpty()) {
+                try {
+                    Map<String, Object> reboundReportData = objectMapper.readValue(reboundReport.getDataJson(), Map.class);
+                    if (reboundReportData != null) {
+                        // 回弹法报告单的 testDate -> 贝克曼梁法报告的 testDate（如果贝克曼梁法记录表没有）
+                        if (reboundReportData.get("testDate") != null && (reportData.get("testDate") == null || reportData.get("testDate").toString().trim().isEmpty())) {
+                            reportData.put("testDate", reboundReportData.get("testDate"));
+                        }
+                        // 回弹法报告单的 structurePart -> 贝克曼梁法报告的 constructionPart（如果贝克曼梁法记录表没有）
+                        if (reboundReportData.get("structurePart") != null && (reportData.get("constructionPart") == null || reportData.get("constructionPart").toString().trim().isEmpty())) {
+                            reportData.put("constructionPart", reboundReportData.get("structurePart"));
+                        }
+                        // 回弹法报告单的 remarks -> 贝克曼梁法报告的 reportDesc（如果贝克曼梁法记录表没有）
+                        if (reboundReportData.get("remarks") != null && (reportData.get("reportDesc") == null || reportData.get("reportDesc").toString().trim().isEmpty())) {
+                            reportData.put("reportDesc", reboundReportData.get("remarks"));
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error parsing ReboundMethodReport JSON for additional fields: " + e.getMessage());
+                }
+            }
 
             BeckmanBeamReport report = beckmanBeamReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -595,8 +949,39 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 report.setEntrustmentId(entrustmentId);
                 fillTableFromEntrustment("BECKMAN_BEAM", entrustmentId, report);
             }
-            report.setDataJson(objectMapper.writeValueAsString(recordData));
+            String reportDataJson = objectMapper.writeValueAsString(reportData);
+            System.out.println("=== [BeckmanBeamReport生成] JSON长度: " + reportDataJson.length());
+            System.out.println("=== [BeckmanBeamReport生成] 包含 station_1: " + reportDataJson.contains("\"station_1\""));
+            System.out.println("=== [BeckmanBeamReport生成] reportData 总字段数: " + reportData.size());
+            
+            // 检查关键字段
+            String[] keyFields = {"station_1", "lane_1", "leftDeflection_1", "rightDeflection_1", 
+                                   "leftInitial_1", "leftFinal_1", "rightInitial_1", "rightFinal_1",
+                                   "tempCorrectionK", "tempCorrection", "sampleNameStatus", "sampleStatus"};
+            for (String field : keyFields) {
+                if (reportData.containsKey(field)) {
+                    System.out.println("=== [BeckmanBeamReport生成] " + field + " = " + reportData.get(field));
+                } else {
+                    System.out.println("=== [BeckmanBeamReport生成] 缺少字段: " + field);
+                }
+            }
+            
+            if (reportDataJson.contains("\"station_1\"")) {
+                // 提取 station_1 的值用于调试
+                try {
+                    Map<String, Object> debugMap = objectMapper.readValue(reportDataJson, Map.class);
+                    if (debugMap.containsKey("station_1")) {
+                        System.out.println("=== [BeckmanBeamReport生成] 最终 station_1 值: " + debugMap.get("station_1"));
+                    }
+                } catch (Exception e) {
+                    System.err.println("=== [BeckmanBeamReport生成] 解析 reportData 失败: " + e.getMessage());
+                }
+            }
+            
+            report.setDataJson(reportDataJson);
+            System.out.println("=== [BeckmanBeamReport生成] 准备保存报告，entrustmentId: " + entrustmentId);
             saveBeckmanBeamReport(report);
+            System.out.println("=== [BeckmanBeamReport生成] 报告保存完成");
 
             BeckmanBeamResult result = beckmanBeamResultMapper.selectByEntrustmentId(entrustmentId);
             if (result == null) {
@@ -605,10 +990,10 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 result.setEntrustmentId(entrustmentId);
                 fillTableFromEntrustment("BECKMAN_BEAM", entrustmentId, result);
             }
-            result.setDataJson(objectMapper.writeValueAsString(recordData));
+            result.setDataJson(objectMapper.writeValueAsString(reportData));
             saveBeckmanBeamResult(result);
 
-            System.out.println("Generated Report and Result for BeckmanBeam entrustment: " + entrustmentId);
+            System.out.println("Generated Report and Result for BeckmanBeam (with ReboundMethod report) entrustment: " + entrustmentId);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error generating BeckmanBeam report/result: " + e.getMessage());
@@ -716,13 +1101,28 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
             }
         }
-        recordData.put("projectName", record.getProjectName());
-        recordData.put("commissionDate", record.getCommissionDate());
-        recordData.put("constructionPart", record.getConstructionPart());
-        recordData.put("testCategory", record.getTestCategory());
-        recordData.put("tester", record.getTester());
-        recordData.put("reviewer", record.getReviewer());
-        recordData.put("approver", record.getApprover());
+        // 只在实体字段非空时，才覆盖/补充 JSON 中的数据，避免把已有值覆盖成 null
+        if (record.getProjectName() != null) {
+            recordData.put("projectName", record.getProjectName());
+        }
+        if (record.getCommissionDate() != null) {
+            recordData.put("commissionDate", record.getCommissionDate());
+        }
+        if (record.getConstructionPart() != null) {
+            recordData.put("constructionPart", record.getConstructionPart());
+        }
+        if (record.getTestCategory() != null) {
+            recordData.put("testCategory", record.getTestCategory());
+        }
+        if (record.getTester() != null) {
+            recordData.put("tester", record.getTester());
+        }
+        if (record.getReviewer() != null) {
+            recordData.put("reviewer", record.getReviewer());
+        }
+        if (record.getApprover() != null) {
+            recordData.put("approver", record.getApprover());
+        }
         return recordData;
     }
 
@@ -738,13 +1138,28 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
             }
         }
-        recordData.put("projectName", record.getProjectName());
-        recordData.put("commissionDate", record.getCommissionDate());
-        recordData.put("constructionPart", record.getConstructionPart());
-        recordData.put("testCategory", record.getTestCategory());
-        recordData.put("tester", record.getTester());
-        recordData.put("reviewer", record.getReviewer());
-        recordData.put("approver", record.getApprover());
+        // 只在记录表实体字段非空时，才用它们补充/覆盖 JSON 中的数据，避免把 JSON 里已有值覆盖为 null
+        if (record.getProjectName() != null) {
+            recordData.put("projectName", record.getProjectName());
+        }
+        if (record.getCommissionDate() != null) {
+            recordData.put("commissionDate", record.getCommissionDate());
+        }
+        if (record.getConstructionPart() != null) {
+            recordData.put("constructionPart", record.getConstructionPart());
+        }
+        if (record.getTestCategory() != null) {
+            recordData.put("testCategory", record.getTestCategory());
+        }
+        if (record.getTester() != null) {
+            recordData.put("tester", record.getTester());
+        }
+        if (record.getReviewer() != null) {
+            recordData.put("reviewer", record.getReviewer());
+        }
+        if (record.getApprover() != null) {
+            recordData.put("approver", record.getApprover());
+        }
         return recordData;
     }
 
@@ -755,19 +1170,106 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 Map<String, Object> existingJson = objectMapper.readValue(record.getDataJson(), Map.class);
                 if (existingJson != null) {
                     recordData.putAll(existingJson);
+                    // 灌水法专用：同时把 JSON 中的字段规范化一份到通用键名，
+                    // 便于灌水法专用报告以及“原位密度检测报告/结果”自动填充。
+                    normalizeWaterReplacementJson(recordData, existingJson);
                 }
             } catch (Exception e) {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
             }
         }
-        recordData.put("projectName", record.getProjectName());
-        recordData.put("commissionDate", record.getCommissionDate());
-        recordData.put("constructionPart", record.getConstructionPart());
-        recordData.put("testCategory", record.getTestCategory());
-        recordData.put("tester", record.getTester());
-        recordData.put("reviewer", record.getReviewer());
-        recordData.put("approver", record.getApprover());
+        // 注意：这里的委托信息字段可能为 null，不能直接覆盖 JSON 里已经有值的键，
+        // 否则会把记录表里手工填写的工程部位 / 检测类别等清掉。
+        if (record.getProjectName() != null) {
+            recordData.put("projectName", record.getProjectName());
+        }
+        if (record.getCommissionDate() != null) {
+            recordData.put("commissionDate", record.getCommissionDate());
+        }
+        if (record.getConstructionPart() != null) {
+            recordData.put("constructionPart", record.getConstructionPart());
+        }
+        if (record.getTestCategory() != null) {
+            recordData.put("testCategory", record.getTestCategory());
+        }
+        if (record.getTester() != null) {
+            recordData.put("tester", record.getTester());
+        }
+        if (record.getReviewer() != null) {
+            recordData.put("reviewer", record.getReviewer());
+        }
+        if (record.getApprover() != null) {
+            recordData.put("approver", record.getApprover());
+        }
         return recordData;
+    }
+
+    /**
+     * 灌水法记录表字段 -> 通用密度报告字段 的规范化映射：
+     * - 取样位置: samplingLocation_i -> location_i
+     * - 平均实测干密度: avgMeasuredDryDensity_i -> dryDensity_i
+     * - 相对密度: relativeDensity_i -> compaction_i
+     * - 平均含水率: avgMoisture_i -> moisture_i
+     * - 设计参数: optMoisture -> optimumMoisture
+     *
+     * 说明：
+     * - 这里不会覆盖已经存在的通用字段（例如其它方法已经写入 dryDensity_i），除非通用字段当前为空。
+     */
+    @SuppressWarnings("unchecked")
+    private void normalizeWaterReplacementJson(Map<String, Object> target, Map<String, Object> source) {
+        if (source == null || target == null) return;
+
+        // 设计参数：最优含水率
+        Object optMoisture = source.get("optMoisture");
+        if (optMoisture != null && target.get("optimumMoisture") == null) {
+            target.put("optimumMoisture", optMoisture);
+        }
+
+        // 检测依据：记录表里用 standard 字段，这里映射到通用的 testBasis
+        Object standard = source.get("standard");
+        if (standard != null && target.get("testBasis") == null) {
+            target.put("testBasis", standard);
+        }
+
+        // 工程部位：记录表里 constructionPart 直接映射到通用 constructionPart
+        Object constructionPart = source.get("constructionPart");
+        if (constructionPart != null && target.get("constructionPart") == null) {
+            target.put("constructionPart", constructionPart);
+        }
+
+        // 检测类别：记录表里 testCategory 直接映射到通用 testCategory
+        Object testCategory = source.get("testCategory");
+        if (testCategory != null && target.get("testCategory") == null) {
+            target.put("testCategory", testCategory);
+        }
+
+        // 行数据：这里约定最多 4 组检测点（与灌水法记录表中的“取样位置”数量一致）
+        for (int i = 0; i < 4; i++) {
+            String idx = String.valueOf(i);
+
+            Object loc = source.get("samplingLocation_" + idx);
+            if (loc != null && target.get("location_" + idx) == null) {
+                target.put("location_" + idx, loc);
+            }
+
+            // 平均实测干密度 -> 干密度
+            Object avgDry = source.get("avgMeasuredDryDensity_" + idx);
+            if (avgDry != null && target.get("dryDensity_" + idx) == null) {
+                target.put("dryDensity_" + idx, avgDry);
+            }
+
+            // 相对密度 -> 压实度%
+            Object relDensity = source.get("relativeDensity_" + idx);
+            if (relDensity != null && target.get("compaction_" + idx) == null) {
+                target.put("compaction_" + idx, relDensity);
+            }
+
+            // 平均含水率 -> 含水率
+            Object avgMoist = source.get("avgMoisture_" + idx);
+            if (avgMoist != null && target.get("moisture_" + idx) == null) {
+                target.put("moisture_" + idx, avgMoist);
+            }
+        }
     }
 
     private Map<String, Object> prepareNuclearDensityData(NuclearDensity record) {
@@ -826,13 +1328,28 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 System.err.println("Error parsing record JSON: " + e.getMessage());
             }
         }
-        recordData.put("projectName", record.getProjectName());
-        recordData.put("commissionDate", record.getCommissionDate());
-        recordData.put("constructionPart", record.getConstructionPart());
-        recordData.put("testCategory", record.getTestCategory());
-        recordData.put("tester", record.getTester());
-        recordData.put("reviewer", record.getReviewer());
-        recordData.put("approver", record.getApprover());
+        // 只在实体字段非空时，才覆盖/补充 JSON 中的数据，避免把已有值覆盖成 null
+        if (record.getProjectName() != null) {
+            recordData.put("projectName", record.getProjectName());
+        }
+        if (record.getCommissionDate() != null) {
+            recordData.put("commissionDate", record.getCommissionDate());
+        }
+        if (record.getConstructionPart() != null) {
+            recordData.put("constructionPart", record.getConstructionPart());
+        }
+        if (record.getTestCategory() != null) {
+            recordData.put("testCategory", record.getTestCategory());
+        }
+        if (record.getTester() != null) {
+            recordData.put("tester", record.getTester());
+        }
+        if (record.getReviewer() != null) {
+            recordData.put("reviewer", record.getReviewer());
+        }
+        if (record.getApprover() != null) {
+            recordData.put("approver", record.getApprover());
+        }
         return recordData;
     }
 
@@ -1032,12 +1549,26 @@ public class TableGenerationServiceImpl implements TableGenerationService {
         try {
             BeckmanBeamReport existing = beckmanBeamReportMapper.selectByEntrustmentId(report.getEntrustmentId());
             if (existing != null) {
-                beckmanBeamReportMapper.update(report);
+                System.out.println("=== [保存BeckmanBeamReport] 更新现有报告，ID: " + existing.getId());
+                System.out.println("=== [保存BeckmanBeamReport] 更新前 DATA_JSON 长度: " + (existing.getDataJson() != null ? existing.getDataJson().length() : 0));
+                System.out.println("=== [保存BeckmanBeamReport] 更新后 DATA_JSON 长度: " + (report.getDataJson() != null ? report.getDataJson().length() : 0));
+                int updateResult = beckmanBeamReportMapper.update(report);
+                System.out.println("=== [保存BeckmanBeamReport] 更新结果: " + updateResult + " 行受影响");
             } else {
-                beckmanBeamReportMapper.insert(report);
+                System.out.println("=== [保存BeckmanBeamReport] 插入新报告，ID: " + report.getId());
+                System.out.println("=== [保存BeckmanBeamReport] DATA_JSON 长度: " + (report.getDataJson() != null ? report.getDataJson().length() : 0));
+                int insertResult = beckmanBeamReportMapper.insert(report);
+                System.out.println("=== [保存BeckmanBeamReport] 插入结果: " + insertResult + " 行受影响");
+            }
+            
+            // 验证保存后的数据
+            BeckmanBeamReport saved = beckmanBeamReportMapper.selectByEntrustmentId(report.getEntrustmentId());
+            if (saved != null && saved.getDataJson() != null) {
+                System.out.println("=== [保存BeckmanBeamReport] 验证：保存后 DATA_JSON 长度: " + saved.getDataJson().length());
+                System.out.println("=== [保存BeckmanBeamReport] 验证：保存后包含 station_1: " + saved.getDataJson().contains("\"station_1\""));
             }
         } catch (Exception e) {
-            System.err.println("Error saving/updating BeckmanBeamReport: " + e.getMessage());
+            System.err.println("=== [保存BeckmanBeamReport] 错误: " + e.getMessage());
             e.printStackTrace();
         }
     }

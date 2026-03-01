@@ -361,8 +361,8 @@ onMounted(() => {
   }
 
   // Initialize dynamic fields for loop variable 'i_idx'
-  // Please verify the loop count match the template
-  for (let i_idx = 0; i_idx < 5; i_idx++) {
+  // 模板中使用的是 (i_idx + 1)，所以这里应该从 1 开始到 5
+  for (let i_idx = 1; i_idx <= 5; i_idx++) {
     formData['lane_' + i_idx] = ''
     formData['station_' + i_idx] = ''
     formData['leftDeflection_' + i_idx] = ''
@@ -595,10 +595,30 @@ const loadData = async (entrustmentId) => {
     if (sourceJson) {
       try {
         const parsedData = JSON.parse(sourceJson)
+        console.log('BeckmanBeamReport loadData - parsedData keys:', Object.keys(parsedData).filter(k => k.startsWith('station_') || k.startsWith('lane_') || k.startsWith('leftDeflection_') || k.startsWith('rightDeflection_')))
+        
         // Map legacy fields
         if (parsedData.tester && !parsedData.recordTester) parsedData.recordTester = parsedData.tester
         if (parsedData.reviewer && !parsedData.recordReviewer) parsedData.recordReviewer = parsedData.reviewer
+        
+        // 字段名映射：后端 -> 前端
+        // tempCorrectionK -> tempCorrection
+        if (parsedData.tempCorrectionK && !parsedData.tempCorrection) {
+          parsedData.tempCorrection = parsedData.tempCorrectionK
+        }
+        // tempCorrectedAvg -> avgDeflection
+        if (parsedData.tempCorrectedAvg && !parsedData.avgDeflection) {
+          parsedData.avgDeflection = parsedData.tempCorrectedAvg
+        }
+        // sampleNameStatus -> sampleStatus
+        if (parsedData.sampleNameStatus && !parsedData.sampleStatus) {
+          parsedData.sampleStatus = parsedData.sampleNameStatus
+        }
+        
+        // 合并所有字段，包括测点数据
         Object.assign(formData, parsedData)
+        
+        console.log('BeckmanBeamReport loadData - after assign, formData station_1:', formData.station_1, 'lane_1:', formData.lane_1, 'leftDeflection_1:', formData.leftDeflection_1)
       } catch (e) {
         console.error('beckman report autofill parse error', e)
       }

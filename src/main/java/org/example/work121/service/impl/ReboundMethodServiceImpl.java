@@ -1,10 +1,13 @@
 package org.example.work121.service.impl;
 
+import org.example.work121.entity.JcCoreWtInfo;
 import org.example.work121.entity.ReboundMethod;
 import org.example.work121.entity.ReboundMethodReport;
+import org.example.work121.mapper.JcCoreWtInfoMapper;
 import org.example.work121.mapper.ReboundMethodMapper;
 import org.example.work121.mapper.ReboundMethodReportMapper;
 import org.example.work121.service.ReboundMethodService;
+import org.example.work121.service.TableGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,12 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
 
     @Autowired
     private ReboundMethodReportMapper reportMapper;
+
+    @Autowired
+    private TableGenerationService tableGenerationService;
+
+    @Autowired
+    private JcCoreWtInfoMapper jcCoreWtInfoMapper;
 
     @Override
     @Transactional
@@ -62,7 +71,22 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
 
     @Override
     public ReboundMethodReport getReportByEntrustmentId(String entrustmentId) {
-        return reportMapper.selectByEntrustmentId(entrustmentId);
+        // 兼容两种用法：
+        // 1）entrustmentId 传入统一编号（WT_NUM），直接查询
+        // 2）entrustmentId 传入委托主键 ID（WT_ID），先查委托单获取统一编号，再用统一编号查询报告
+        ReboundMethodReport report = reportMapper.selectByEntrustmentId(entrustmentId);
+        if (report == null && entrustmentId != null && entrustmentId.length() > 20) {
+            // 如果查不到且 entrustmentId 看起来像UUID（长度>20），尝试按委托单ID查询统一编号
+            try {
+                JcCoreWtInfo entrustment = jcCoreWtInfoMapper.selectById(entrustmentId);
+                if (entrustment != null && entrustment.getWtNum() != null) {
+                    report = reportMapper.selectByEntrustmentId(entrustment.getWtNum());
+                }
+            } catch (Exception e) {
+                System.err.println("Error looking up entrustment by ID " + entrustmentId + ": " + e.getMessage());
+            }
+        }
+        return report;
     }
 
     @Override
@@ -88,11 +112,13 @@ public class ReboundMethodServiceImpl implements ReboundMethodService {
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
+        // 这里不再自己拼装报告，而是统一委托给 TableGenerationService，
+        // 和灌水法、核子法等保持同一套“委托单 + 记录表 -> 报告/结果”的生成逻辑。
         java.util.List<ReboundMethod> records = mapper.selectByEntrustmentId(entrustmentId);
         if (records == null || records.isEmpty()) {
-            System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
-        } else {
-            System.out.println("Generated Report and Result for ReboundMethod entrustment: " + entrustmentId);
+            throw new RuntimeException("Cannot generate ReboundMethod report/result: Record not found for entrustmentId " + entrustmentId);
         }
+
+        tableGenerationService.generateReportAndResult("REBOUND_METHOD", entrustmentId);
     }
 }

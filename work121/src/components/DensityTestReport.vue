@@ -520,6 +520,10 @@ const loadData = async () => {
           // Map legacy fields to new record fields
           if (!formData.recordTester && parsed.tester) formData.recordTester = parsed.tester
           if (!formData.recordReviewer && parsed.reviewer) formData.recordReviewer = parsed.reviewer
+          // 统一编号：recordData 里用 wtNum 存储，这里回填到 unifiedNumber
+          if (!formData.unifiedNumber && parsed.wtNum) {
+            formData.unifiedNumber = parsed.wtNum
+          }
           
           // 兼容旧数据：如果 JSON 里只有 entrustingUnit 或 clientUnit，就统一回填到 clientUnit，用于“委托单位”显示
           if (!formData.clientUnit && parsed.entrustingUnit) {
@@ -533,6 +537,19 @@ const loadData = async () => {
           // 1）最优含水率：记录表使用 optMoisture，这里需要填到 optimumMoisture
           if (!formData.optimumMoisture && parsed.optMoisture !== undefined) {
             formData.optimumMoisture = parsed.optMoisture
+          }
+          
+          // 2）环刀法字段映射：sampleNo_ -> sampleId_, moisture1_ -> moisture_
+          for (let i = 0; i < 20; i++) {
+            // 样品编号映射
+            if (!formData['sampleId_' + i] && parsed['sampleNo_' + i] !== undefined && parsed['sampleNo_' + i] !== null && parsed['sampleNo_' + i] !== '') {
+              formData['sampleId_' + i] = parsed['sampleNo_' + i]
+            }
+            // 含水率映射（环刀法使用 moisture1_ 作为第一行含水率，报告表使用 moisture_）
+            // moisture2_ 不需要映射，直接使用
+            if (!formData['moisture_' + i] && parsed['moisture1_' + i] !== undefined && parsed['moisture1_' + i] !== null && parsed['moisture1_' + i] !== '') {
+              formData['moisture_' + i] = parsed['moisture1_' + i]
+            }
           }
           // 2）干密度和湿密度：如果 DATA_JSON 里是原始结构（有 avgDryDensity_i 但没有 dryDensity2_i），需要重排
           const hasAvgDry = Object.keys(parsed).some(k => k.startsWith('avgDryDensity_'))

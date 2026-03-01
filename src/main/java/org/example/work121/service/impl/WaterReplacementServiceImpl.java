@@ -51,8 +51,19 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
         }
 
         // 如果传了有效的 ID 且数据库中已存在，则执行更新
-        if (id != null && mapper.selectById(id) != null) {
+        if (id != null) {
+            WaterReplacement existing = mapper.selectById(id);
+            if (existing != null) {
+                // 防止前端未传 dataJson / entrustmentId 时把已有值覆盖为 null
+                if (waterReplacement.getDataJson() == null) {
+                    waterReplacement.setDataJson(existing.getDataJson());
+                }
+                if (waterReplacement.getEntrustmentId() == null) {
+                    waterReplacement.setEntrustmentId(existing.getEntrustmentId());
+                }
             mapper.updateById(waterReplacement);
+                return;
+            }
         } else {
             // 否则视为新增，补充生成主键 ID
             if (waterReplacement.getId() == null || waterReplacement.getId().trim().isEmpty()) {
@@ -107,7 +118,7 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
         if (records == null || records.isEmpty()) {
             throw new RuntimeException("Cannot generate WaterReplacement report/result: Record not found for entrustmentId " + entrustmentId);
         }
-
+        
         // 委托 + 灌水法记录表状态校验以及具体字段映射，集中在 TableGenerationServiceImpl.generateWaterReplacementReportAndResult 中处理
         // 这里仅负责触发统一的报表生成服务
         tableGenerationService.generateReportAndResult("WATER_REPLACEMENT", entrustmentId);

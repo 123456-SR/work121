@@ -41,7 +41,7 @@ public interface WaterReplacementMapper {
 
     @Update("UPDATE T_WATER_REPLACEMENT SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
@@ -52,6 +52,22 @@ public interface WaterReplacementMapper {
             "UPDATE_TIME = #{updateTime} " +
             "WHERE ID = #{id}")
     int updateById(WaterReplacement waterReplacement);
+
+    /**
+     * 工作流专用更新：只更新状态、签名、下一处理人等流程字段，不动 DATA_JSON 和 ENTRUSTMENT_ID。
+     * 避免在审核通过时因为实体字段为 null 而把已有的 JSON 数据覆盖掉。
+     */
+    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
+            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
+            "STATUS = #{status}, " +
+            "REJECT_REASON = #{rejectReason}, " +
+            "NEXT_HANDLER = #{nextHandler}, " +
+            "UPDATE_BY = #{updateBy}, " +
+            "UPDATE_TIME = #{updateTime} " +
+            "WHERE ID = #{id}")
+    int updateWorkflowFields(WaterReplacement waterReplacement);
 
     @Select("SELECT " +
             "t2.ID as id, " +

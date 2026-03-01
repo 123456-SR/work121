@@ -45,7 +45,8 @@
           </span>
         </div>
 
-        <template v-if="formData.id && !draftMode">
+        <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
+        <template v-if="!draftMode">
           <button
             v-if="formData.status === 0 || formData.status === 2"
             @click="submitWorkflow('SUBMIT')"
@@ -58,7 +59,7 @@
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
-            升级为已审核
+            审核通过
           </button>
           <button
             v-if="formData.status === 1"
@@ -142,7 +143,7 @@
         </tr>
         <tr>
             <td class="label">样品名称及状态</td>
-            <td><input type="text" v-model="formData.sampleStatus"   name="sampleStatus"></td>
+            <td><input type="text" :value="sampleNameStatusDisplay" @input="handleSampleNameStatusInput"   name="sampleStatus"></td>
             <td class="label">检测方法</td>
             <td>贝克曼梁法</td>
         </tr>
@@ -385,7 +386,9 @@ const formData = reactive({
   testDate: '',
   equipmentCode: '',
   testCategory: '',
-  sampleStatus: '',
+  sampleName: '', // 样品名称（从委托单获取）
+  sampleStatus: '', // 样品状态（从委托单获取）
+  sampleNameStatus: '', // 拼接后的样品名称及状态
   standard: '',
   designDeflection: '',
   tempCorrectionK: '',
@@ -447,6 +450,25 @@ const getStatusColor = (status) => {
     }
 }
 
+// 计算属性：拼接样品名称和状态
+const sampleNameStatusDisplay = computed(() => {
+    const name = formData.sampleName || ''
+    const status = formData.sampleStatus || ''
+    if (name && status) {
+        return `${name} / ${status}`
+    } else if (name) {
+        return name
+    } else if (status) {
+        return status
+    }
+    return formData.sampleNameStatus || ''
+})
+
+// 处理输入：当用户编辑时，更新 sampleNameStatus（保存时使用）
+const handleSampleNameStatusInput = (event) => {
+    formData.sampleNameStatus = event.target.value
+}
+
 const normalizeSignatureSrc = (value) => {
   if (!value) return ''
   if (typeof value !== 'string') return ''
@@ -470,16 +492,49 @@ const submitWorkflow = async (action) => {
     
     if (action === 'SUBMIT') {
         // Role check: Only recordTester can submit
-        // Priority: formData.recordTester
         if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
             alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
             return
         }
+
         if (!formData.testerSignature) {
             alert('请先进行检测人签字')
             return
         }
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'AUDIT_PASS') {
+        // Role check: Only recordReviewer can audit
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
+
+        // Auto fetch signature if missing
+        if (!formData.reviewerSignature) {
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordReviewer) {
+                        formData.recordReviewer = user.fullName || user.username
+                     }
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
+        }
+        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'REJECT') {
+        // Role check: Only recordReviewer can reject
+        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+            alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
+            return
+        }
     }
 
     const request = {
@@ -487,7 +542,7 @@ const submitWorkflow = async (action) => {
         recordId: formData.id,
         action: action,
         userAccount: user.username,
-        signatureData: signatureData,
+        signatureData: signatureData ? signatureData.replace(/^data:image\/\w+;base64,/, '') : null,
         nextHandler: ''
     }
 
@@ -497,53 +552,38 @@ const submitWorkflow = async (action) => {
         request.rejectReason = reason
     }
 
-    if (action === 'AUDIT_PASS') {
-        // Role check: Only recordReviewer can audit
-        // Priority: formData.recordReviewer
-        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
-             alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
-             return
-        }
-
-        if (!formData.reviewerSignature) {
-            // Auto-fetch signature for reviewer
-            try {
-                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
-                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
-                     const signatureBlob = sigRes.data.data.signatureBlob
-                     if (typeof signatureBlob === 'string') {
-                         formData.reviewerSignature = `data:image/png;base64,${signatureBlob}`
-                     }
-                } else {
-                    alert('请先去“电子签名”页面设置您的签名')
-                    return
-                }
-            } catch (e) {
-                console.error('Failed to fetch signature', e)
-                alert('无法获取您的电子签名')
-                return
-            }
-        }
-        
-        if (!formData.reviewerSignature) {
-            alert('请先进行校核人签字')
-            return
-        }
-        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
-        request.signatureData = signatureData
-    } else if (action === 'REJECT' && formData.status === 1) {
-         // Role check: Only recordReviewer can reject
-         if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
-             alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
-             return
-         }
-    }
-
     try {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            loadData()
+            // 重新按委托号加载一次，刷新最新的 STATUS（例如从 0 -> 1）
+            const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
+            if (reloadId) {
+                await loadData(reloadId)
+            } else if (formData.id) {
+                // 如果没有委托号，尝试通过记录ID重新加载
+                try {
+                    const reloadRes = await axios.get('/api/beckman-beam/get-by-entrustment-id', {
+                        params: { entrustmentId: formData.entrustmentId || formData.unifiedNumber }
+                    })
+                    if (reloadRes.data.success && reloadRes.data.data && reloadRes.data.data.length > 0) {
+                        const foundRecord = reloadRes.data.data.find(r => r.id === formData.id)
+                        if (foundRecord) {
+                            const foundIndex = reloadRes.data.data.indexOf(foundRecord)
+                            records.value = reloadRes.data.data
+                            currentIndex.value = foundIndex
+                            mapRecordToFormData(foundRecord)
+                        } else {
+                            // 如果找不到，重新加载第一条记录
+                            records.value = reloadRes.data.data
+                            currentIndex.value = 0
+                            mapRecordToFormData(reloadRes.data.data[0])
+                        }
+                    }
+                } catch (reloadError) {
+                    console.error('Failed to reload data after workflow', reloadError)
+                }
+            }
         } else {
             alert('操作失败: ' + response.data.message)
         }
@@ -599,7 +639,8 @@ const mapRecordToFormData = (record) => {
   
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || formData.unifiedNumber
-  formData.status = record.status !== undefined ? record.status : 0
+  // 状态统一转成数字，避免后端返回字符串导致严格等于判断失效（影响按钮显示）
+  formData.status = record.status !== undefined ? Number(record.status) : 0
   
   // Map signature photos
   formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
@@ -615,6 +656,16 @@ const mapRecordToFormData = (record) => {
       const json = JSON.parse(record.dataJson)
       // Merge json into formData
       Object.assign(formData, json)
+      // 如果 JSON 中有 sampleNameStatus，优先使用；否则从 sampleName 和 sampleStatus 拼接
+      if (!json.sampleNameStatus && (json.sampleName || json.sampleStatus)) {
+        if (json.sampleName && json.sampleStatus) {
+          formData.sampleNameStatus = `${json.sampleName} / ${json.sampleStatus}`
+        } else if (json.sampleName) {
+          formData.sampleNameStatus = json.sampleName
+        } else if (json.sampleStatus) {
+          formData.sampleNameStatus = json.sampleStatus
+        }
+      }
     } catch (e) {
       console.error('JSON parse error', e)
     }
@@ -627,6 +678,15 @@ const mapRecordToFormData = (record) => {
   if (record.commissionDate) formData.commissionDate = formatDate(record.commissionDate)
   if (record.constructionPart) formData.constructionPart = record.constructionPart
   if (record.testCategory) formData.testCategory = record.testCategory
+  if (record.sampleName) formData.sampleName = record.sampleName
+  // 拼接样品名称和状态（实体字段优先）
+  if (formData.sampleName && formData.sampleStatus) {
+    formData.sampleNameStatus = `${formData.sampleName} / ${formData.sampleStatus}`
+  } else if (formData.sampleName && !formData.sampleNameStatus) {
+    formData.sampleNameStatus = formData.sampleName
+  } else if (formData.sampleStatus && !formData.sampleNameStatus) {
+    formData.sampleNameStatus = formData.sampleStatus
+  }
 
   // Map Roles
   // Load defaults from directory if available
@@ -797,7 +857,16 @@ const loadData = async (identifier) => {
         formData.commissionDate = formatDate(wtInfo.commissionDate)
         formData.constructionPart = wtInfo.constructionPart || ''
         formData.testCategory = wtInfo.testCategory || ''
+        formData.sampleName = wtInfo.sampleName || ''
         formData.sampleStatus = wtInfo.sampleStatus || ''
+        // 拼接样品名称和状态
+        if (formData.sampleName && formData.sampleStatus) {
+            formData.sampleNameStatus = `${formData.sampleName} / ${formData.sampleStatus}`
+        } else if (formData.sampleName) {
+            formData.sampleNameStatus = formData.sampleName
+        } else if (formData.sampleStatus) {
+            formData.sampleNameStatus = formData.sampleStatus
+        }
         // Tester/Reviewer might be pre-filled from task assignment if available
         if (wtInfo.tester) formData.recordTester = wtInfo.tester
         if (wtInfo.reviewer) formData.recordReviewer = wtInfo.reviewer

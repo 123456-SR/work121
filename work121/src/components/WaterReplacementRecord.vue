@@ -112,7 +112,7 @@
     <h2>相对密度试验记录表（灌水法）</h2>
 
     <div class="header-info">
-        <span>工程部位：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>工程部位：<input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
     </div>
     <div class="header-info">
@@ -322,6 +322,7 @@ const formData = reactive({
   id: '',
   entrustmentId: '',
   projectName: '',
+  constructionPart: '',
   testDate: '',
   standard: '',
   maxDryDensity: '',
@@ -496,7 +497,8 @@ onMounted(async () => {
       const res = await axios.get('/api/jc-core-wt-info/by-wt-num', { params: { wtNum: wtNumParam } })
       if (res.data && res.data.success && res.data.data) {
         const wt = res.data.data
-        formData.entrustmentId = wt.id || wtNumParam
+        // 灌水法这里约定：ENTRUSTMENT_ID 专门存统一编号（短串），方便直接关联和展示
+        formData.entrustmentId = wt.sampleNumber || wtNumParam
         formData.unifiedNumber = wt.sampleNumber || wtNumParam
         loadData(formData.entrustmentId)
         return
@@ -513,8 +515,9 @@ onMounted(async () => {
       const res = await axios.get('/api/jc-core-wt-info/by-id', { params: { id: idParam } })
       if (res.data && res.data.success && res.data.data) {
         const wt = res.data.data
-        formData.entrustmentId = wt.id || idParam
-        formData.unifiedNumber = wt.sampleNumber || formData.unifiedNumber
+        // 详情页如果是通过 ID 打开的，也把统一编号当作 entrustmentId 使用
+        formData.entrustmentId = wt.sampleNumber || idParam
+        formData.unifiedNumber = wt.sampleNumber || formData.unifiedNumber || idParam
         loadData(formData.entrustmentId)
         return
       }
@@ -572,8 +575,14 @@ const mapRecordToFormData = (record) => {
 
   // Added mappings
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
-  if (record.constructionPart) formData.constructionPart = record.constructionPart
-  if (record.testCategory) formData.testCategory = record.testCategory
+  // 注意：constructionPart 和 testCategory 应该优先从 dataJson 读取（已经在上面解析过了）
+  // 只有当 dataJson 里没有值，且委托表里有值时才使用委托表的值
+  if (!formData.constructionPart && record.constructionPart) {
+    formData.constructionPart = record.constructionPart
+  }
+  if (!formData.testCategory && record.testCategory) {
+    formData.testCategory = record.testCategory
+  }
   if (record.equipment) formData.equipment = record.equipment
   if (record.testBasis) formData.standard = record.testBasis
   if (record.commissionDate && !formData.testDate) formData.testDate = record.commissionDate // Fallback if testDate empty
@@ -584,6 +593,12 @@ const mapRecordToFormData = (record) => {
       formData.status = Number(record.status)
   } else {
       formData.status = 0 // Default to Draft if not present
+  }
+
+  // 兼容旧数据：之前“工程部位”错误绑定到了 projectName 上，
+  // 如果现在 constructionPart 还是空，但 projectName 里有值，则回填一份到 constructionPart。
+  if (!formData.constructionPart && formData.projectName) {
+      formData.constructionPart = formData.projectName
   }
 
   // Map Roles
@@ -611,7 +626,7 @@ const getCleanDataJson = () => {
   
   // Static fields to include in JSON
   const staticFields = [
-    'projectName', 'testDate', 'standard', 'maxDryDensity', 'minDryDensity', 
+    'projectName', 'constructionPart', 'testDate', 'standard', 'maxDryDensity', 'minDryDensity', 
     'optMoisture', 'relativeDensity', 'waterDensity', 'equipment', 
     'designCompaction', 'testCategory', 'remarks'
   ]
@@ -719,6 +734,7 @@ const loadData = async (entrustmentId) => {
         // Create new record
         const newRecord = {
             id: '',
+            // 这里传进来的 entrustmentId 已经是统一编号
             entrustmentId: entrustmentId,
             dataJson: '{}'
         }
@@ -726,17 +742,17 @@ const loadData = async (entrustmentId) => {
         // Fetch entrustment info to pre-fill
         try {
             let eData = null
-            const byIdRes = await axios.get('/api/jc-core-wt-info/by-id', { params: { id: entrustmentId } })
-            if (byIdRes.data && byIdRes.data.success && byIdRes.data.data) {
-              eData = byIdRes.data.data
-            } else {
+            // 灌水法统一使用统一编号作为 key，直接按 unifiedNumber 查
               const detailRes = await axios.get('/api/jc-core-wt-info/detail', { params: { unifiedNumber: entrustmentId } })
               if (detailRes.data && detailRes.data.success) eData = detailRes.data.data
-            }
+            
             if (eData) {
-              formData.entrustmentId = eData.id || entrustmentId
+              formData.entrustmentId = eData.sampleNumber || entrustmentId
               formData.unifiedNumber = eData.sampleNumber || formData.unifiedNumber || entrustmentId
-              formData.projectName = eData.projectName || ''
+              // 灌水法记录表“工程部位”应对应委托单的施工部位字段
+              formData.constructionPart = eData.constructionPart || ''
+              // 检测类别从委托单的 testCategory 预填，避免在流程中被清空
+              formData.testCategory = eData.testCategory || formData.testCategory || ''
               formData.recordTester = ''
               formData.recordReviewer = ''
               formData.filler = ''

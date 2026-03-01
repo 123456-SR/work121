@@ -471,23 +471,25 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegRealName, " +
             // recordStatus：优先取各“记录表”自身的 STATUS，不受本查询 JOIN/人员过滤影响；
             // 实现方式：分别对各记录表按 WT_NUM/WT_ID 取最大 STATUS，然后按顺序 COALESCE，最后默认 '0'
+            // 为了兼容历史数据中 STATUS 存在中文等非数字值的情况，这里使用 REGEXP_LIKE 过滤，只保留纯数字状态；
+            // 非数字状态一律按 '0' 处理，避免前端 parseInt 得到 NaN 导致显示为“未知”。
             "NVL( " +
             "  COALESCE( " +
-            "    (SELECT MAX(TO_CHAR(d.STATUS)) FROM T_DENSITY_TEST d " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(d.STATUS, '^[0-9]+$') THEN TO_CHAR(d.STATUS) ELSE '0' END) FROM T_DENSITY_TEST d " +
             "      WHERE d.ENTRUSTMENT_ID = t2.WT_NUM OR d.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(n.STATUS)) FROM T_NUCLEAR_DENSITY n " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(n.STATUS, '^[0-9]+$') THEN TO_CHAR(n.STATUS) ELSE '0' END) FROM T_NUCLEAR_DENSITY n " +
             "      WHERE n.ENTRUSTMENT_ID = t2.WT_NUM OR n.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(s.STATUS)) FROM T_SAND_REPLACEMENT s " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(s.STATUS, '^[0-9]+$') THEN TO_CHAR(s.STATUS) ELSE '0' END) FROM T_SAND_REPLACEMENT s " +
             "      WHERE s.ENTRUSTMENT_ID = t2.WT_NUM OR s.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(w.STATUS)) FROM T_WATER_REPLACEMENT w " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(w.STATUS, '^[0-9]+$') THEN TO_CHAR(w.STATUS) ELSE '0' END) FROM T_WATER_REPLACEMENT w " +
             "      WHERE w.ENTRUSTMENT_ID = t2.WT_NUM OR w.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(c.STATUS)) FROM T_CUTTING_RING c " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(c.STATUS, '^[0-9]+$') THEN TO_CHAR(c.STATUS) ELSE '0' END) FROM T_CUTTING_RING c " +
             "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(r.STATUS)) FROM T_REBOUND_METHOD r " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(r.STATUS, '^[0-9]+$') THEN TO_CHAR(r.STATUS) ELSE '0' END) FROM T_REBOUND_METHOD r " +
             "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(l.STATUS)) FROM JZS_LIGHT_DYNAMIC_PENETRATION l " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(l.STATUS, '^[0-9]+$') THEN TO_CHAR(l.STATUS) ELSE '0' END) FROM JZS_LIGHT_DYNAMIC_PENETRATION l " +
             "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(b.STATUS)) FROM T_BECKMAN_BEAM b " +
+            "    (SELECT MAX(CASE WHEN REGEXP_LIKE(b.STATUS, '^[0-9]+$') THEN TO_CHAR(b.STATUS) ELSE '0' END) FROM T_BECKMAN_BEAM b " +
             "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID) " +
             "  ), " +
             "  '0' " +

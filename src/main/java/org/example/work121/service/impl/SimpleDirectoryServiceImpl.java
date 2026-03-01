@@ -1247,35 +1247,10 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
             } else if (entity instanceof ReboundMethodRecord) {
                 ReboundMethodRecord record = (ReboundMethodRecord) entity;
                 existingJson = record.getDataJson();
-                if (existingJson == null || existingJson.isEmpty()) {
-                    data.put("structurePart", "墙体");
-                    data.put("testDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
-                    data.put("designIndex", "C30");
-                    data.put("testAngle", "0");
-                    data.put("pourDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
-                    data.put("sampleStatus", "正常");
-                    data.put("aggregateSize", "20");
-                    data.put("equipment", "回弹仪");
-                    data.put("standard", "JGJ/T 23-2011");
-                    data.put("calibrationBefore", "80");
-                    data.put("calibrationAfter", "80");
-                    data.put("avgStrength", "32.5");
-                    data.put("stdDev", "2.1");
-                    data.put("coefVariation", "0.06");
-                    data.put("compEstimatedStrength", "30.0");
-                    data.put("conclusion", "符合要求");
-                    // Add random rebound values
-                    for (int i = 1; i <= 10; i++) {
-                        for (int j = 1; j <= 16; j++) {
-                            data.put("reboundValue_" + i + "_" + j, String.valueOf(30 + (int)(Math.random() * 20)));
-                        }
-                        data.put("avgRebound_" + i, "40");
-                        data.put("carbonDepth_" + i, "1.0");
-                        data.put("estimatedStrength_" + i, "35.0");
-                        data.put("correctedStrength_" + i, "32.0");
-                    }
-                    record.setDataJson(objectMapper.writeValueAsString(data));
-                }
+                // 不再自动填充假数据，保持 dataJson 为空，由用户手动填写
+                // if (existingJson == null || existingJson.isEmpty()) {
+                //     // 已移除自动填充假数据的逻辑
+                // }
             } else if (entity instanceof SandReplacementRecord) {
                 existingJson = ((SandReplacementRecord) entity).getDataJson();
                 if (existingJson == null || existingJson.isEmpty()) {
