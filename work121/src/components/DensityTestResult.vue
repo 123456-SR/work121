@@ -181,22 +181,22 @@
     </table>
 
     <div class="footer-info">
-        <span class="signature-box">
-          批准：
-          <span class="signature-line">{{ formData.approver }}</span>
-          <img v-if="formData.approverSignature" :src="formData.approverSignature" class="signature-img" alt="批准人签名" />
-        </span>
-        <span class="signature-box">
-          审核：
-          <span class="signature-line">{{ formData.recordReviewer }}</span>
-          <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" class="signature-img" alt="审核人签名" />
-        </span>
-        <span class="signature-box">
-          检测：
-          <span class="signature-line">{{ formData.recordTester }}</span>
-          <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
-        </span>
-    </div>
+            <div class="signature-box">
+                批准：
+                <span class="signature-line"></span>
+                <img v-if="formData.approverSignature" :src="formData.approverSignature" class="signature-img" alt="批准人签名" />
+            </div>
+            <div class="signature-box">
+                审核：
+                <span class="signature-line"></span>
+                <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" class="signature-img" alt="审核人签名" />
+            </div>
+            <div class="signature-box">
+                检验：
+                <span class="signature-line"></span>
+                <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
+            </div>
+        </div>
 
     <!-- 隐藏字段：将检测方法/类别同步给后端 PDF，用于判断核子法版式 -->
     <input type="hidden" name="testMethod" :value="formData.testMethod || formData.testCategory" />
@@ -482,37 +482,109 @@ const loadData = async () => {
                     params: { entrustmentId: key }
                 })
                 if (nuclearRes.data.success && nuclearRes.data.data && nuclearRes.data.data.length > 0) {
-                    const nRecord = nuclearRes.data.data[0]
-                    if (nRecord.dataJson) {
-                        const nParsed = JSON.parse(nRecord.dataJson)
-                        
-                        // Copy common fields (excluding row data)
-                        Object.keys(nParsed).forEach(key => {
-                            if (!key.match(/_\d+$/)) {
-                                formData[key] = nParsed[key]
+                    const nuclearRecords = nuclearRes.data.data
+                    
+                    // 收集所有核子法记录表的数据
+                    const allRowData = []
+                    const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2', 'remarks']
+                    
+                    // 遍历所有核子法记录表页面
+                    nuclearRecords.forEach((nRecord, pageIndex) => {
+                        if (nRecord.dataJson) {
+                            const nParsed = JSON.parse(nRecord.dataJson)
+                            
+                            // 第一页：只取第8-19行（12行）
+                            if (pageIndex === 0) {
+                                for (let i = 8; i < 20; i++) {
+                                    const rowData = {}
+                                    rowFields.forEach(field => {
+                                        const val = nParsed[field + '_' + i]
+                                        if (val !== undefined) {
+                                            rowData[field] = val
+                                        }
+                                    })
+                                    allRowData.push(rowData)
+                                }
+                            } else {
+                                // 第二页及以后：取所有20行
+                                for (let i = 0; i < 20; i++) {
+                                    const rowData = {}
+                                    rowFields.forEach(field => {
+                                        const val = nParsed[field + '_' + i]
+                                        if (val !== undefined) {
+                                            rowData[field] = val
+                                        }
+                                    })
+                                    allRowData.push(rowData)
+                                }
                             }
-                        })
-                        
-                        // Shift row data: index 8+ -> index 0+
-                        const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2']
-                        let resultIdx = 0
-                        for (let i = 8; i < 100; i++) {
-                            // Check if this row has data (check sampleId)
-                            if (nParsed['sampleId_' + i]) {
-                                rowFields.forEach(field => {
-                                    const val = nParsed[field + '_' + i]
-                                    if (val !== undefined) {
-                                        formData[field + '_' + resultIdx] = val
+                            
+                            // 复制第一页的通用字段（只复制一次）
+                            if (pageIndex === 0) {
+                                Object.keys(nParsed).forEach(key => {
+                                    if (!key.match(/_\d+$/)) {
+                                        formData[key] = nParsed[key]
                                     }
                                 })
-                                resultIdx++
                             }
                         }
-
-                        // Reset ID to ensure it is a new record
-                        formData.id = ''
-                        formData.entrustmentId = key
+                    })
+                    
+                    // 将收集到的数据按每页20行分页到结果表
+                    const pageSize = 20
+                    const totalPages = Math.ceil(allRowData.length / pageSize)
+                    
+                    // 清空现有记录
+                    records.value = []
+                    
+                    // 创建分页记录
+                    for (let page = 0; page < totalPages; page++) {
+                        const startIdx = page * pageSize
+                        const endIdx = Math.min(startIdx + pageSize, allRowData.length)
+                        const pageData = allRowData.slice(startIdx, endIdx)
+                        
+                        const pageRecord = {
+                            id: '',
+                            entrustmentId: key,
+                            dataJson: '{}'
+                        }
+                        
+                        // 创建页面数据
+                        const pageFormData = { ...formData }
+                        // 清除行数据
+                        for (let i = 0; i < 20; i++) {
+                            rowFields.forEach(field => {
+                                delete pageFormData[field + '_' + i]
+                            })
+                        }
+                        
+                        // 填充当前页的行数据
+                        pageData.forEach((rowData, idx) => {
+                            rowFields.forEach(field => {
+                                if (rowData[field] !== undefined) {
+                                    pageFormData[field + '_' + idx] = rowData[field]
+                                }
+                            })
+                        })
+                        
+                        // 保存页面数据
+                        pageRecord.dataJson = JSON.stringify(pageFormData)
+                        records.value.push(pageRecord)
                     }
+                    
+                    // 如果没有数据，创建一个空记录
+                    if (records.value.length === 0) {
+                        const emptyRecord = {
+                            id: '',
+                            entrustmentId: key,
+                            dataJson: JSON.stringify(formData)
+                        }
+                        records.value.push(emptyRecord)
+                    }
+                    
+                    // 映射第一条记录到表单
+                    currentIndex.value = 0
+                    mapRecordToFormData(records.value[0])
                 }
              } catch (e) {
                 console.error('Failed to auto-fill from Nuclear Record', e)
@@ -541,21 +613,27 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
-    // 报告表状态 (10-15)
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
+    // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过'
-    // 结果表状态 (20-25)
+    case 15: return '审核通过待批准'
+    case 16: return '已批准'
+    case 17: return '驳回'
+    // 结果表状态 (20-27)
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过'
+    case 25: return '审核通过待批准'
+    case 26: return '已批准'
+    case 27: return '驳回'
     default: return '未知'
   }
 }
@@ -569,52 +647,72 @@ const getStatusColor = (status) => {
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
-    case 5: return '#28a745' // success
-    // 报告表状态 (10-15)
+    case 5: return '#ff8c00' // orange
+    case 6: return '#28a745' // success
+    case 7: return '#dc3545' // danger
+    // 报告表状态 (10-17)
     case 10: return '#6c757d' // secondary
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
     case 13: return '#ffc107' // warning
     case 14: return '#17a2b8' // info
-    case 15: return '#28a745' // success
-    // 结果表状态 (20-25)
+    case 15: return '#ff8c00' // orange
+    case 16: return '#28a745' // success
+    case 17: return '#dc3545' // danger
+    // 结果表状态 (20-27)
     case 20: return '#6c757d' // secondary
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
     case 23: return '#ffc107' // warning
     case 24: return '#17a2b8' // info
-    case 25: return '#28a745' // success
+    case 25: return '#ff8c00' // orange
+    case 26: return '#28a745' // success
+    case 27: return '#dc3545' // danger
     default: return '#6c757d'
   }
 }
 
 const saveData = async () => {
   try {
-    const dataToSave = {
-      id: formData.id,
-      entrustmentId: formData.entrustmentId || props.wtNum || props.id,
-      dataJson: JSON.stringify(formData),
-      reviewSignaturePhoto: formData.reviewerSignature,
-      inspectSignaturePhoto: formData.testerSignature,
-      approveSignaturePhoto: formData.approverSignature,
-      recordTester: formData.recordTester,
-      recordReviewer: formData.recordReviewer,
-      filler: formData.filler,
-      approver: formData.approver
+    // 保存当前页的数据
+    saveCurrentRecordState()
+    
+    // 遍历所有页的数据并保存
+    let successCount = 0
+    for (let i = 0; i < records.value.length; i++) {
+      const record = records.value[i]
+      const recordData = JSON.parse(record.dataJson || '{}')
+      
+      const dataToSave = {
+        id: record.id,
+        entrustmentId: record.entrustmentId || props.wtNum || props.id,
+        dataJson: record.dataJson,
+        reviewSignaturePhoto: record.reviewSignaturePhoto || recordData.reviewerSignature,
+        inspectSignaturePhoto: record.inspectSignaturePhoto || recordData.testerSignature,
+        approveSignaturePhoto: record.approveSignaturePhoto || recordData.approverSignature,
+        recordTester: record.recordTester || recordData.recordTester,
+        recordReviewer: record.recordReviewer || recordData.recordReviewer,
+        filler: record.filler || recordData.filler,
+        approver: record.approver || recordData.approver
+      }
+      
+      const response = await axios.post('/api/density-test/save', dataToSave)
+      if (response.data.success) {
+        successCount++
+        if (response.data.data && response.data.data.id) {
+           record.id = response.data.data.id
+           // 更新当前页的id
+           if (i === currentIndex.value) {
+               formData.id = response.data.data.id
+           }
+        }
+      }
     }
     
-    const response = await axios.post('/api/density-test/save', dataToSave)
-    if (response.data.success) {
-      alert('保存成功')
-      if (response.data.data && response.data.data.id) {
-         formData.id = response.data.data.id
-         // Update current record in list
-         if (records.value[currentIndex.value]) {
-             records.value[currentIndex.value].id = formData.id
-         }
-      }
+    if (successCount > 0) {
+      alert(`保存成功，共保存了 ${successCount} 页数据`)
     } else {
-      alert('保存失败: ' + response.data.message)
+      alert('保存失败: 没有可保存的数据')
     }
   } catch (error) {
     console.error('Save error:', error)

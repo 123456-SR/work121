@@ -588,6 +588,17 @@ const submitWorkflow = async (action) => {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
+            
+            // 如果是审核通过，生成报告表和结果表
+            if (action === 'AUDIT_PASS') {
+                try {
+                    await generateReportAndResult()
+                } catch (genError) {
+                    console.error('生成报告表和结果表失败', genError)
+                    alert('审核通过，但生成报告表和结果表失败，请手动生成')
+                }
+            }
+            
             // 重新按委托号加载一次，刷新最新的 STATUS（例如从 0 -> 1）
             const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
             if (reloadId) {
@@ -623,6 +634,21 @@ const submitWorkflow = async (action) => {
         console.error('Workflow error', e)
         alert('操作异常')
     }
+}
+
+const generateReportAndResult = async () => {
+  try {
+    const response = await axios.post('/api/beckman-beam/generate-report-result', {
+      recordId: formData.id,
+      entrustmentId: formData.entrustmentId
+    });
+    if (!response.data.success) {
+      throw new Error('生成报告表和结果表失败');
+    }
+  } catch (error) {
+    console.error('Generate report and result error', error);
+    throw error;
+  }
 }
 
 // Initialize dynamic fields
@@ -974,39 +1000,58 @@ const submitForm = async () => {
         return
     }
     
-    try {
-        const payload = {
-            id: formData.id || null, 
-            entrustmentId: formData.entrustmentId,
-            dataJson: getCleanDataJson(),
-            // Roles
-            recordTester: formData.recordTester,
-            recordReviewer: formData.recordReviewer,
-            filler: formData.filler,
-            // Sync legacy fields for backward compatibility
-            tester: formData.recordTester,
-            reviewer: formData.recordReviewer,
-            // Map signatures to columns
-            inspectSignaturePhoto: formData.testerSignature,
-            reviewSignaturePhoto: formData.reviewerSignature,
-            // Map some fields to columns if needed by backend for searching/indexing
-            subgradeType: formData.pavementType,
-            deflectometerType: formData.equipmentCode
-        }
+     try {
+        // 1. 保存当前页数据到records数组
+        saveCurrentRecordState()
         
-        const response = await axios.post('/api/beckman-beam/save', payload)
+        // 2. 保存所有页数据
+        let successCount = 0
+        let totalCount = records.value.length
         
-        if (response.data.success) {
-            alert('保存成功')
-            if (response.data.data && response.data.data.id) {
-                formData.id = response.data.data.id
-                // Update current record in list
-                if (records.value[currentIndex.value]) {
-                    records.value[currentIndex.value].id = formData.id
+        for (let i = 0; i < records.value.length; i++) {
+            // 构建当前页的payload
+            const currentRecord = records.value[i]
+            const currentFormData = JSON.parse(currentRecord.dataJson)
+            
+            const payload = {
+                id: currentRecord.id || null, 
+                entrustmentId: formData.entrustmentId,
+                dataJson: JSON.stringify(currentFormData),
+                // Roles
+                recordTester: currentFormData.recordTester,
+                recordReviewer: currentFormData.recordReviewer,
+                filler: currentFormData.filler,
+                // Sync legacy fields for backward compatibility
+                tester: currentFormData.recordTester,
+                reviewer: currentFormData.recordReviewer,
+                // Map signatures to columns
+                inspectSignaturePhoto: currentFormData.testerSignature,
+                reviewSignaturePhoto: currentFormData.reviewerSignature,
+                // Map some fields to columns if needed by backend for searching/indexing
+                subgradeType: currentFormData.pavementType,
+                deflectometerType: currentFormData.equipmentCode
+            }
+            
+            const response = await axios.post('/api/beckman-beam/save', payload)
+            
+            if (response.data.success) {
+                successCount++
+                if (response.data.data && response.data.data.id) {
+                    // 更新记录ID
+                    records.value[i].id = response.data.data.id
+                    // 如果是当前页，更新formData.id
+                    if (i === currentIndex.value) {
+                        formData.id = response.data.data.id
+                    }
                 }
             }
+        }
+        
+        // 3. 显示保存结果
+        if (successCount === totalCount) {
+            alert(`保存成功，共保存 ${successCount} 页数据`)
         } else {
-            alert('保存失败: ' + response.data.message)
+            alert(`保存完成，成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
         }
     } catch (e) {
         console.error('Save error', e)

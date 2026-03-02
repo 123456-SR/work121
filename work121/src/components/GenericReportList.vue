@@ -181,21 +181,27 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过'
-    // 报告表状态 (10-15)
+    case 5: return '审核通过待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
+    // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过'
-    // 结果表状态 (20-25)
+    case 15: return '审核通过待批准'
+    case 16: return '已批准'
+    case 17: return '驳回'
+    // 结果表状态 (20-27)
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过'
+    case 25: return '审核通过待批准'
+    case 26: return '已批准'
+    case 27: return '驳回'
     default: return '未知'
   }
 }
@@ -209,22 +215,28 @@ const getStatusClass = (status) => {
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
-    case 5: return 'status-completed'
-    // 报告表状态 (10-15)
+    case 5: return 'status-approving'
+    case 6: return 'status-completed'
+    case 7: return 'status-rejected'
+    // 报告表状态 (10-17)
     case 10: return 'status-draft'
     case 11: return 'status-pending'
     case 12: return 'status-rejected'
     case 13: return 'status-signing'
     case 14: return 'status-approving'
-    case 15: return 'status-completed'
-    // 结果表状态 (20-25)
+    case 15: return 'status-approving'
+    case 16: return 'status-completed'
+    case 17: return 'status-rejected'
+    // 结果表状态 (20-27)
     case 20: return 'status-draft'
     case 21: return 'status-pending'
     case 22: return 'status-rejected'
     case 23: return 'status-signing'
     case 24: return 'status-approving'
-    case 25: return 'status-completed'
-    default: return ''
+    case 25: return 'status-approving'
+    case 26: return 'status-completed'
+    case 27: return 'status-rejected'
+    default: return 'status-unknown'
   }
 }
 
