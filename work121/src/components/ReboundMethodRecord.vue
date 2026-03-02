@@ -869,6 +869,11 @@ const previewPdf = () => {
 
 const submitForm = async () => {
   try {
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+      formData.status = 3
+    }
+    
     saveCurrentRecordState()
     
     // 获取当前登录用户信息
@@ -884,6 +889,7 @@ const submitForm = async () => {
       // 如果 id 为空或空字符串，不传递 id，让后端自动生成新的 UUID
       ...(formData.id && formData.id.trim() !== '' ? { id: formData.id } : {}),
       entrustmentId: formData.entrustmentId || formData.unifiedNumber,
+      status: formData.status, // 传递状态字段给后端
       // Map entity fields
       structurePart: formData.structurePart,
       testResult: formData.conclusion,
@@ -987,6 +993,10 @@ const submitForm = async () => {
           await loadData(entrustmentId)
         }
       }
+      // 保存成功后返回列表页面，确保列表显示更新后的状态
+      if (navigateTo) {
+        navigateTo('ReboundMethodRecordList')
+      }
     } else {
       alert('保存失败: ' + response.data.message);
     }
@@ -1030,7 +1040,10 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库并更新状态为已签字待提交
+        await submitForm()
+        formData.status = 4
+        alert('签名成功并已保存，状态已更新为已签字待提交')
       } else {
         alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)
       }

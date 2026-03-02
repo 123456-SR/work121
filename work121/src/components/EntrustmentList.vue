@@ -93,22 +93,34 @@ const getCurrentUser = () => {
 }
 
 const getStatusText = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return '草稿'
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return '草稿'
+  }
   switch (s) {
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过待批准'
+    case 5: return '审核通过'
     case 6: return '已批准'
     case 7: return '驳回'
-    default: return '未知'
+    default: return '未知/历史'
   }
 }
 
 const getStatusClass = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return 'status-draft'
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return 'status-draft'
+  }
   switch (s) {
     case 0: return 'status-draft'
     case 1: return 'status-pending'

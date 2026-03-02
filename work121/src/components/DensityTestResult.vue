@@ -91,6 +91,13 @@
           批准
         </button>
         <button
+          v-if="formData.status === 5"
+          @click="submitWorkflow('REJECT')"
+          class="btn btn-danger btn-small"
+        >
+          驳回
+        </button>
+        <button
           @click="printDocument"
           class="btn btn-secondary btn-small"
         >
@@ -674,6 +681,11 @@ const getStatusColor = (status) => {
 
 const saveData = async () => {
   try {
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+      formData.status = 3
+    }
+    
     // 保存当前页的数据
     saveCurrentRecordState()
     
@@ -683,9 +695,14 @@ const saveData = async () => {
       const record = records.value[i]
       const recordData = JSON.parse(record.dataJson || '{}')
       
+      // 确保recordData也有正确的状态
+      recordData.status = formData.status
+      record.dataJson = JSON.stringify(recordData)
+      
       const dataToSave = {
         id: record.id,
         entrustmentId: record.entrustmentId || props.wtNum || props.id,
+        status: formData.status, // 传递状态字段给后端
         dataJson: record.dataJson,
         reviewSignaturePhoto: record.reviewSignaturePhoto || recordData.reviewerSignature,
         inspectSignaturePhoto: record.inspectSignaturePhoto || recordData.testerSignature,
@@ -710,7 +727,11 @@ const saveData = async () => {
     }
     
     if (successCount > 0) {
-      alert(`保存成功，共保存了 ${successCount} 页数据`)
+      alert(`保存成功，共保存了 ${successCount} 页数据，状态已更新为待签字`)
+      // 保存成功后返回列表页面，确保列表显示更新后的状态
+      if (navigateTo) {
+        navigateTo('DensityTestResultList')
+      }
     } else {
       alert('保存失败: 没有可保存的数据')
     }
@@ -841,6 +862,10 @@ const submitWorkflow = async (action) => {
   try {
     const response = await axios.post('/api/workflow/handle', request)
     if (response.data.success) {
+      // 如果是批准操作，保存签名到数据库
+      if (action === 'SIGN_APPROVE') {
+        await saveData()
+      }
       alert('操作成功')
       // Refresh data
       // For result list, we might need to reload current record
@@ -891,7 +916,9 @@ const handleSign = async () => {
       }
       
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库
+        await saveData()
+        alert('签名成功并已保存')
       } else {
         alert(`当前用户(${currentName})与表单中的检测人员(${formData.recordTester})不匹配，无法签名`)
       }

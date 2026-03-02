@@ -80,6 +80,13 @@
         >
           批准签字
         </button>
+        <button
+          v-if="formData.status === 4"
+          @click="submitWorkflow('REJECT')"
+          class="btn btn-danger btn-small"
+        >
+          驳回
+        </button>
 
         <button
           @click="printDocument"
@@ -550,6 +557,10 @@ const submitWorkflow = async (action) => {
   try {
     const response = await axios.post('/api/workflow/handle', request)
     if (response.data.success) {
+      // 如果是批准操作，保存签名到数据库
+      if (action === 'SIGN_APPROVE') {
+        await submitForm()
+      }
       alert('操作成功')
       loadData()
     } else {
@@ -916,7 +927,9 @@ const handleSign = async () => {
       }
       
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库
+        await submitForm()
+        alert('签名成功并已保存')
       } else {
         alert(`当前用户(${currentName})与表单中的检测人员(${formData.recordTester})不匹配，无法签名`)
       }
@@ -953,6 +966,11 @@ const previewPdf = () => {
 
 const submitForm = async () => {
   try {
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+      formData.status = 3
+    }
+    
     // 获取当前登录用户信息
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};
@@ -991,6 +1009,7 @@ const submitForm = async () => {
     const submitData = {
       id: props.id, // Ensure ID is passed
       unifiedNumber: formData.unifiedNumber, // These might be ignored if using ID, but good to have
+      status: formData.status, // 传递状态字段给后端
       entrustingUnit: formData.entrustingUnit,
       projectName: formData.projectName,
       // entrustDate: formData.entrustDate, // Read-only usually
@@ -1025,9 +1044,13 @@ const submitForm = async () => {
     const response = await axios.post('/api/light-dynamic-penetration/save', submitData);
     
     if (response.data.success) {
-      alert('提交成功');
+      alert('保存成功，状态已更新为待签字');
+      // 保存成功后返回列表页面，确保列表显示更新后的状态
+      if (navigateTo) {
+        navigateTo('LightDynamicPenetrationReportList');
+      }
     } else {
-      alert('提交失败: ' + response.data.message);
+      alert('保存失败: ' + response.data.message);
     }
   } catch (error) {
     console.error('提交错误:', error);

@@ -442,14 +442,14 @@ const getStatusText = (status) => {
         case 12: return '已打回'
         case 13: return '待签字'
         case 14: return '已签字待提交'
-        case 15: return '审核通过'
+        case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
         case 24: return '已签字待提交'
-        case 25: return '审核通过'
+        case 25: return '审核通过待批准'
         default: return '未知'
     }
 }
@@ -1004,6 +1004,11 @@ const submitForm = async () => {
         // 1. 保存当前页数据到records数组
         saveCurrentRecordState()
         
+        // 如果状态是草稿(0)，保存后改为待签字(3)
+        if (formData.status === 0) {
+            formData.status = 3
+        }
+        
         // 2. 保存所有页数据
         let successCount = 0
         let totalCount = records.value.length
@@ -1013,9 +1018,13 @@ const submitForm = async () => {
             const currentRecord = records.value[i]
             const currentFormData = JSON.parse(currentRecord.dataJson)
             
+            // 更新状态为待签字
+            currentFormData.status = 3
+            
             const payload = {
                 id: currentRecord.id || null, 
                 entrustmentId: formData.entrustmentId,
+                status: currentFormData.status, // 传递状态字段给后端
                 dataJson: JSON.stringify(currentFormData),
                 // Roles
                 recordTester: currentFormData.recordTester,
@@ -1049,7 +1058,11 @@ const submitForm = async () => {
         
         // 3. 显示保存结果
         if (successCount === totalCount) {
-            alert(`保存成功，共保存 ${successCount} 页数据`)
+            alert(`保存成功，共保存 ${successCount} 页数据，状态已更新为待签字`)
+            // 保存成功后返回列表页面，确保列表显示更新后的状态
+            if (navigateTo) {
+                navigateTo('BeckmanBeamRecordList')
+            }
         } else {
             alert(`保存完成，成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
         }
@@ -1095,7 +1108,10 @@ const handleSign = async () => {
       // Reviewer signature is handled in AUDIT_PASS action
       
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库并更新状态为已签字待提交
+        await saveData()
+        formData.status = 4
+        alert('签名成功并已保存，状态已更新为已签字待提交')
       } else {
         alert(`当前用户(${currentName})不是该单据的记录检测人，无法签字`)
       }

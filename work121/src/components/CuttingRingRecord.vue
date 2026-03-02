@@ -154,7 +154,7 @@
             </tr>
         </thead>
         <tbody>
-            <template v-for="(n, i_idx) in 5" :key="i_idx">
+            <template v-for="(n, i_idx) in 4" :key="i_idx">
             <tr>
                 <td rowspan="2"><input type="text" :name="'sampleNo_page' + currentPage + '_' + i_idx" v-model="formData['sampleNo_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'location_page' + currentPage + '_' + i_idx" v-model="formData['location_page' + currentPage + '_' + i_idx]"></td>
@@ -306,14 +306,14 @@ const getStatusText = (status) => {
         case 12: return '已打回'
         case 13: return '待签字'
         case 14: return '已签字待提交'
-        case 15: return '审核通过'
+        case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
         case 24: return '已签字待提交'
-        case 25: return '审核通过'
+        case 25: return '审核通过待批准'
         default: return '未知'
     }
 }
@@ -1039,6 +1039,11 @@ const saveData = async () => {
     saveCurrentPageData()
     saveCurrentRecordState()
     
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+      formData.status = 3
+    }
+    
     const dataJsonObj = { ...formData }
     delete dataJsonObj.tester
     delete dataJsonObj.reviewer
@@ -1048,6 +1053,7 @@ const saveData = async () => {
     const dataToSave = {
       id: formData.id,
       entrustmentId: formData.entrustmentId || props.id,
+      status: formData.status, // 传递状态字段给后端
       dataJson: JSON.stringify(dataJsonObj),
       // Roles
       recordTester: formData.recordTester,
@@ -1063,13 +1069,17 @@ const saveData = async () => {
     
     const response = await axios.post('/api/cutting-ring/save', dataToSave)
     if (response.data.success) {
-      alert('保存成功')
+      alert('保存成功，状态已更新为待签字')
       // If new record, update ID
       if (!formData.id && response.data.data && response.data.data.id) {
         formData.id = response.data.data.id
         if (currentRecord.value) {
           currentRecord.value.id = response.data.data.id
         }
+      }
+      // 保存成功后返回列表页面，确保列表显示更新后的状态
+      if (navigateTo) {
+        navigateTo('CuttingRingRecordList')
       }
     } else {
       alert('保存失败: ' + response.data.message)
@@ -1117,7 +1127,10 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库并更新状态为已签字待提交
+        await saveData()
+        formData.status = 4
+        alert('签名成功并已保存，状态已更新为已签字待提交')
       } else {
         alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
       }
