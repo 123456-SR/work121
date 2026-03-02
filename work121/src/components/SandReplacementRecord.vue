@@ -108,6 +108,9 @@
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
+    <!-- 电子签名隐藏字段 -->
+    <input type="hidden" v-model="formData.testerSignature" name="testerSignature">
+    <input type="hidden" v-model="formData.reviewerSignature" name="reviewerSignature">
     <h2>原位密度检测记录表（灌砂法）</h2>
 
     <div class="header-info">

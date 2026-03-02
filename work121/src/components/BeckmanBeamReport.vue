@@ -109,6 +109,10 @@
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
+    <!-- 电子签名隐藏字段 -->
+    <input type="hidden" v-model="formData.testerSignature" name="testerSignature">
+    <input type="hidden" v-model="formData.reviewerSignature" name="reviewerSignature">
+    <input type="hidden" v-model="formData.approverSignature" name="approverSignature">
     <h1>路基路面回弹弯沉（回弹模量）检测报告</h1>
 
     <div class="header-info">

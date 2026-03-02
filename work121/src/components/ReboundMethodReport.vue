@@ -112,6 +112,10 @@
     <h2>回弹法检测混凝土抗压强度报告</h2>
 
     <form id="pdfForm" ref="pdfForm" method="post">
+    <!-- 电子签名隐藏字段 -->
+    <input type="hidden" v-model="formData.testerSignature" name="testerSignature">
+    <input type="hidden" v-model="formData.reviewerSignature" name="reviewerSignature">
+    <input type="hidden" v-model="formData.approverSignature" name="approverSignature">
     <div class="header-top">
         <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
