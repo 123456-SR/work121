@@ -759,6 +759,8 @@ const handleSign = async () => {
       if (signed) {
         // 保存签名到数据库
         await submitForm()
+        // 调用工作流处理，将状态从待签字(3)变为已签字待提交(4)
+        await submitWorkflow('SIGN_TEST')
         alert('签名成功并已保存')
       } else {
         alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)

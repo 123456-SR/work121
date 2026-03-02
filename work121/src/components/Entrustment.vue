@@ -103,22 +103,20 @@
         <!-- Row 3 -->
         <tr>
             <td class="label">工程名称：</td>
-            <td colspan="2"><input type="text" v-model="formData.projectName"   name="projectName"></td>
-            <td style="width: 150px;">
-                <span class="label">施工 (使用) 部位：</span><br>
-                <input type="text" v-model="formData.constructionPart"   name="constructionPart">
-            </td>
+            <td><input type="text" v-model="formData.projectName"   name="projectName"></td>
+            <td class="label">施工 (使用) 部位：</td>
+            <td><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
         </tr>
         <!-- Row 4 -->
         <tr>
             <td colspan="4" style="padding: 0;">
                 <table style="width: 100%; border: none; margin: -1px; border-collapse: collapse;">
                     <tr>
-                        <td class="label" style="width: 15%; border: none; border-right: 1px solid black; padding: 5px;">样品名称：</td>
-                        <td style="width: 18%; border: none; border-right: 1px solid black; padding: 5px;"><input type="text" v-model="formData.sampleName"   name="sampleName"></td>
-                        <td class="label" style="width: 15%; border: none; border-right: 1px solid black; padding: 5px;">规格/型号：</td>
-                        <td style="width: 18%; border: none; border-right: 1px solid black; padding: 5px;"><input type="text" v-model="formData.spec"   name="spec"></td>
-                        <td class="label" style="width: 15%; border: none; border-right: 1px solid black; padding: 5px;">生产厂家<br>或产地</td>
+                        <td class="label" style="width: 15%; border: none; padding: 5px;">样品名称：</td>
+                        <td style="width: 18%; border: none; padding: 5px;"><input type="text" v-model="formData.sampleName"   name="sampleName"></td>
+                        <td class="label" style="width: 15%; border: none; padding: 5px;">规格/型号：</td>
+                        <td style="width: 18%; border: none; padding: 5px;"><input type="text" v-model="formData.spec"   name="spec"></td>
+                        <td class="label" style="width: 15%; border: none; padding: 5px;">生产厂家<br>或产地</td>
                         <td style="width: 19%; border: none; padding: 5px;"><input type="text" v-model="formData.manufacturer"   name="manufacturer"></td>
                     </tr>
                 </table>
@@ -129,22 +127,29 @@
             <td colspan="4" style="padding: 0;">
                 <table style="width: 100%; border: none; margin: -1px;">
                     <tr>
-                        <td style="border: none; border-right: 1px solid black; width: 25%;">
-                            <div class="center-text label">样品<br>数量：</div>
-                            <input type="text" v-model="formData.sampleQuantity"   name="sampleQuantity" class="center-text">
-                        </td>
-                        <td style="border: none; border-right: 1px solid black; width: 25%;">
-                            <div class="center-text label">代表<br>批量：</div>
-                            <input type="text" v-model="formData.representativeBatch"   name="representativeBatch" class="center-text">
-                        </td>
-                        <td style="border: none; border-right: 1px solid black; width: 25%;">
-                            <div class="center-text label">批号：</div>
-                            <input type="text" v-model="formData.batchNumber"   name="batchNumber" class="center-text">
+                        <td style="border: none; width: 25%;">
+                            <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
+                                <span class="label" style="margin-right: 5px;">样品数量：</span>
+                                <input type="text" v-model="formData.sampleQuantity"   name="sampleQuantity" style="width: 100px;">
+                            </div>
                         </td>
                         <td style="border: none; width: 25%;">
-                            <div class="center-text label">检测(验)<br>类别：</div>
-                            <!-- 不再在界面上显示/编辑检测类别，保持空白，仅保留隐藏字段随表单提交 -->
-                            <div class="center-text" style="height: 24px;"></div>
+                            <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
+                                <span class="label" style="margin-right: 5px;">代表批量：</span>
+                                <input type="text" v-model="formData.representativeBatch"   name="representativeBatch" style="width: 100px;">
+                            </div>
+                        </td>
+                        <td style="border: none; width: 25%;">
+                            <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
+                                <span class="label" style="margin-right: 5px;">批号：</span>
+                                <input type="text" v-model="formData.batchNumber"   name="batchNumber" style="width: 100px;">
+                            </div>
+                        </td>
+                        <td style="border: none; width: 25%;">
+                            <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
+                                <span class="label" style="margin-right: 5px;">检测类别：</span>
+                                <input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 100px;">
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -206,15 +211,18 @@
             <td>
                 <div class="checkbox-group">
                     <div style="margin-bottom: 5px;">
-                        <label><input type="radio" v-model="formData.deliveryMode"   name="deliveryMode" value="1">可以为:</label>
+                        <label><input type="checkbox" :checked="formData.deliveryMode.includes('1')" @change="handleDeliveryModeChange('1', $event.target.checked)">可以为:</label>
                         <input type="text" v-model="formData.deliveryDate1"   name="deliveryDate1" style="width: 120px; border-bottom: 1px solid black;">
+                        <input type="hidden" name="deliveryMode_1" :value="formData.deliveryMode.includes('1') ? '1' : ''">
                     </div>
                     <div style="margin-bottom: 5px;">
-                        <label><input type="radio" v-model="formData.deliveryMode"   name="deliveryMode" value="2">严格限定为:</label>
+                        <label><input type="checkbox" :checked="formData.deliveryMode.includes('2')" @change="handleDeliveryModeChange('2', $event.target.checked)">严格限定为:</label>
                         <input type="text" v-model="formData.deliveryDate2"   name="deliveryDate2" style="width: 120px; border-bottom: 1px solid black;">
+                        <input type="hidden" name="deliveryMode_2" :value="formData.deliveryMode.includes('2') ? '1' : ''">
                     </div>
                     <div>
-                        <label><input type="radio" v-model="formData.deliveryMode"   name="deliveryMode" value="3" checked>不要求</label>
+                        <label><input type="checkbox" :checked="formData.deliveryMode.includes('3')" @change="handleDeliveryModeChange('3', $event.target.checked)">不要求</label>
+                        <input type="hidden" name="deliveryMode_3" :value="formData.deliveryMode.includes('3') ? '1' : ''">
                     </div>
                 </div>
             </td>
@@ -240,9 +248,6 @@
             </td>
         </tr>
     </table>
-
-    <!-- 隐藏字段：检测类别不在页面展示，但仍然随表单和 PDF 提交到后端 -->
-    <input type="hidden" name="testCategory" v-model="formData.testCategory" />
 
     <div class="footer-info">
         <span>委托(送样)人：<input type="text" v-model="formData.client" style="width: 150px; border-bottom: 1px solid black;"></span>
@@ -415,7 +420,7 @@ const formData = reactive({
   sampleDisposal: [],
   witness: '',
   witnessUnit: '',
-  deliveryMode: '',
+  deliveryMode: ['3'], // 默认选中"不要求"选项
   deliveryDate1: '',
   deliveryDate2: '',
   fee: '',
@@ -528,11 +533,11 @@ const mapDataToForm = (data) => {
   formData.clientAddressPhone = data.clientAddressPhone || data.clientUnitTel || ''
   formData.reportSend = data.reportSendMode ? data.reportSendMode.split(',') : []
   formData.sampleDisposal = data.sampleDisposal ? data.sampleDisposal.split(',') : []
-  formData.deliveryMode = data.deliveryMode || '3'
+  formData.deliveryMode = data.deliveryMode ? data.deliveryMode.split(',') : []
   if (data.deliveryDate) {
-      if (formData.deliveryMode === '1') {
+      if (formData.deliveryMode.includes('1')) {
           formData.deliveryDate1 = data.deliveryDate
-      } else if (formData.deliveryMode === '2') {
+      } else if (formData.deliveryMode.includes('2')) {
           formData.deliveryDate2 = data.deliveryDate
       }
   }
@@ -858,9 +863,9 @@ const saveForm = async (silent = false) => {
     clientAddressPhone: formData.clientAddressPhone,
     reportSendMode: formData.reportSend ? formData.reportSend.join(',') : '',
     sampleDisposal: formData.sampleDisposal ? formData.sampleDisposal.join(',') : '',
-    deliveryMode: formData.deliveryMode,
-    deliveryDate: (formData.deliveryMode === '1' && formData.deliveryDate1) ? formData.deliveryDate1 : 
-                  (formData.deliveryMode === '2' && formData.deliveryDate2) ? formData.deliveryDate2 : '',
+    deliveryMode: formData.deliveryMode ? formData.deliveryMode.join(',') : '',
+    deliveryDate: (formData.deliveryMode.includes('1') && formData.deliveryDate1) ? formData.deliveryDate1 : 
+                  (formData.deliveryMode.includes('2') && formData.deliveryDate2) ? formData.deliveryDate2 : '',
     testItems: formData.testItems
   }
   
@@ -1323,6 +1328,20 @@ const previewPdf = () => {
     pdfForm.value.action = '/api/pdf/preview'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
+  }
+}
+
+// 处理交付日期复选框的状态变化
+const handleDeliveryModeChange = (value, checked) => {
+  if (checked) {
+    if (!formData.deliveryMode.includes(value)) {
+      formData.deliveryMode.push(value)
+    }
+  } else {
+    const index = formData.deliveryMode.indexOf(value)
+    if (index > -1) {
+      formData.deliveryMode.splice(index, 1)
+    }
   }
 }
 

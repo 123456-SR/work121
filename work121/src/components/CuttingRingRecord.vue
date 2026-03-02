@@ -179,8 +179,8 @@
                 <td rowspan="2"><input type="text" :name="'avgMoisture1_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture1_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'wetDensity1_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity1_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'dryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity1_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'avgDryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity1_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'compaction1_page' + currentPage + '_' + i_idx" v-model="formData['compaction1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="4"><input type="text" :name="'avgDryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="4"><input type="text" :name="'compaction1_page' + currentPage + '_' + i_idx" v-model="formData['compaction1_page' + currentPage + '_' + i_idx]"></td>
             </tr>
             <tr>
                 <!-- Moisture Box 2 -->
@@ -207,13 +207,7 @@
                 <td rowspan="2"><input type="text" :name="'avgMoisture2_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture2_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'wetDensity2_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity2_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'dryDensity2_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'avgDryDensity2_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'compaction2_page' + currentPage + '_' + i_idx" v-model="formData['compaction2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'dryDensity_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'avgDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'compaction_page' + currentPage + '_' + i_idx" v-model="formData['compaction_page' + currentPage + '_' + i_idx]"></td>
+
             </tr>
             <tr>
                 <!-- Moisture Box 4 -->
@@ -1139,7 +1133,9 @@ const saveData = async () => {
     
     const response = await axios.post('/api/cutting-ring/save', dataToSave)
     if (response.data.success) {
-      alert('保存成功')
+      // 更新状态为待签字
+      formData.status = 3
+      alert('保存成功，状态已更新为待签字')
       // If new record, update ID
       if (!formData.id && response.data.data && response.data.data.id) {
         formData.id = response.data.data.id
@@ -1193,7 +1189,11 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        alert('签名成功')
+        // 保存签名
+        await saveData()
+        // 调用工作流处理，将状态从待签字(3)变为已签字待提交(4)
+        await submitWorkflow('SIGN_TEST')
+        alert('签名成功并已保存')
       } else {
         alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
       }
@@ -1212,6 +1212,8 @@ const printDocument = () => {
 
 const generatePdf = () => {
   if (pdfForm.value) {
+    // 确保当前页面的数据和委托人数据被包含在表单中
+    includeCurrentPageData()
     pdfForm.value.action = '/api/pdf/cutting_ring_record/generate'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
@@ -1220,9 +1222,106 @@ const generatePdf = () => {
 
 const previewPdf = () => {
   if (pdfForm.value) {
+    // 确保当前页面的数据和委托人数据被包含在表单中
+    includeCurrentPageData()
     pdfForm.value.action = '/api/pdf/cutting_ring_record/preview'
     pdfForm.value.target = '_blank'
     pdfForm.value.submit()
+  }
+}
+
+// 将当前页面的数据和委托人数据添加到表单中
+const includeCurrentPageData = () => {
+  // 首先移除所有现有的隐藏字段
+  const existingHiddenFields = pdfForm.value.querySelectorAll('input[type="hidden"]')
+  existingHiddenFields.forEach(field => field.remove())
+  
+  // 只包含当前页面的数据
+  const pageIndex = currentPage.value
+  for (let i_idx = 0; i_idx < 4; i_idx++) {
+    const pagePrefix = '_page' + pageIndex + '_' + i_idx
+    const fieldNames = [
+      'sampleNo', 'location', 'status', 'ringNo', 'ringMass', 'ringWetMass', 'ringVolume',
+      'boxNo1', 'boxMass1', 'boxWetMass1', 'boxDryMass1', 'moisture1',
+      'boxNo2', 'boxMass2', 'boxWetMass2', 'boxDryMass2', 'moisture2',
+      'boxNo3', 'boxMass3', 'boxWetMass3', 'boxDryMass3', 'moisture3',
+      'boxNo4', 'boxMass4', 'boxWetMass4', 'boxDryMass4', 'moisture4',
+      'avgMoisture1', 'wetDensity1', 'dryDensity1',
+      'avgMoisture2', 'wetDensity2', 'dryDensity2',
+      'avgDryDensity1', 'compaction1',
+      'ringNo2', 'ringMass2', 'ringWetMass2', 'ringVolume2'
+    ]
+    
+    fieldNames.forEach(fieldName => {
+      const fieldKey = fieldName + pagePrefix
+      if (formData[fieldKey] !== undefined && formData[fieldKey] !== null) {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = fieldKey
+        input.value = formData[fieldKey]
+        pdfForm.value.appendChild(input)
+      }
+    })
+  }
+  
+  // 添加当前页面索引
+  const currentPageInput = document.createElement('input')
+  currentPageInput.type = 'hidden'
+  currentPageInput.name = 'currentPage'
+  currentPageInput.value = currentPage.value
+  pdfForm.value.appendChild(currentPageInput)
+  
+  // 添加总页数信息
+  const totalPagesInput = document.createElement('input')
+  totalPagesInput.type = 'hidden'
+  totalPagesInput.name = 'totalPages'
+  totalPagesInput.value = formData.totalPages
+  pdfForm.value.appendChild(totalPagesInput)
+  
+  // 添加委托人数据
+  const clientDataFields = ['entrustingUnit', 'projectName', 'unifiedNumber', 'constructionLocation', 'testType', 'standard']
+  clientDataFields.forEach(fieldName => {
+    if (formData[fieldName] !== undefined && formData[fieldName] !== null) {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = fieldName
+      input.value = formData[fieldName]
+      pdfForm.value.appendChild(input)
+    }
+  })
+  
+  // 添加承接人的电子签名
+  if (formData.testerSignature) {
+    const testerSignatureInput = document.createElement('input')
+    testerSignatureInput.type = 'hidden'
+    testerSignatureInput.name = 'testerSignature'
+    testerSignatureInput.value = formData.testerSignature
+    pdfForm.value.appendChild(testerSignatureInput)
+  }
+  
+  if (formData.reviewerSignature) {
+    const reviewerSignatureInput = document.createElement('input')
+    reviewerSignatureInput.type = 'hidden'
+    reviewerSignatureInput.name = 'reviewerSignature'
+    reviewerSignatureInput.value = formData.reviewerSignature
+    pdfForm.value.appendChild(reviewerSignatureInput)
+  }
+  
+  // 添加承接人信息
+  if (formData.recordTester) {
+    const testerInput = document.createElement('input')
+    testerInput.type = 'hidden'
+    testerInput.name = 'recordTester'
+    testerInput.value = formData.recordTester
+    pdfForm.value.appendChild(testerInput)
+  }
+  
+  if (formData.recordReviewer) {
+    const reviewerInput = document.createElement('input')
+    reviewerInput.type = 'hidden'
+    reviewerInput.name = 'recordReviewer'
+    reviewerInput.value = formData.recordReviewer
+    pdfForm.value.appendChild(reviewerInput)
   }
 }
 </script>
