@@ -537,7 +537,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                         }
                         
                         // 4. 计算每页的样品数量（假设每页5个样品）
-                        int samplesPerPage = 5;
+                        // 环刀法记录表：现在每页 4 个样品
+                        int samplesPerPage = 4;
                         int offset = maxExistingIndex + 1;
                         
                         for (FieldEntry entry : pageFields) {
@@ -1630,7 +1631,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                         });
                         
                         // 合并所有页面的数据，重新编号为连续的索引
-                        int samplesPerPage = 5;
+                        // 环刀法记录表：现在每页 4 个样品
+                        int samplesPerPage = 4;
                         int mergedCount = 0;
                         for (FieldEntry entry : pageFields) {
                             // 计算新的连续索引：页面索引 * 每页样品数 + 字段索引

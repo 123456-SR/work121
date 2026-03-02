@@ -154,11 +154,14 @@
             </tr>
         </thead>
         <tbody>
-            <template v-for="(n, i_idx) in 5" :key="i_idx">
+            <template v-for="(n, i_idx) in 4" :key="i_idx">
+            <!-- 含水率测定改为 4 行结构 -->
             <tr>
-                <td rowspan="2"><input type="text" :name="'sampleNo_page' + currentPage + '_' + i_idx" v-model="formData['sampleNo_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'location_page' + currentPage + '_' + i_idx" v-model="formData['location_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'status_page' + currentPage + '_' + i_idx" v-model="formData['status_page' + currentPage + '_' + i_idx]"></td>
+                <!-- 样品基本信息列：首行展示 -->
+                <td rowspan="4"><input type="text" :name="'sampleNo_page' + currentPage + '_' + i_idx" v-model="formData['sampleNo_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="4"><input type="text" :name="'location_page' + currentPage + '_' + i_idx" v-model="formData['location_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="4"><input type="text" :name="'status_page' + currentPage + '_' + i_idx" v-model="formData['status_page' + currentPage + '_' + i_idx]"></td>
+                <!-- 环刀相关：第一把环刀（上 2 行一格） -->
                 <td rowspan="2"><input type="text" :name="'ringNo_page' + currentPage + '_' + i_idx" v-model="formData['ringNo_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'ringMass_page' + currentPage + '_' + i_idx" v-model="formData['ringMass_page' + currentPage + '_' + i_idx]"></td>
                 <td rowspan="2"><input type="text" :name="'ringWetMass_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass_page' + currentPage + '_' + i_idx]"></td>
@@ -171,11 +174,12 @@
                 <td><input type="text" :name="'boxDryMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass1_page' + currentPage + '_' + i_idx]"></td>
                 <td><input type="text" :name="'moisture1_page' + currentPage + '_' + i_idx" v-model="formData['moisture1_page' + currentPage + '_' + i_idx]"></td>
 
-                <td rowspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'dryDensity_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'avgDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'compaction_page' + currentPage + '_' + i_idx" v-model="formData['compaction_page' + currentPage + '_' + i_idx]"></td>
+                <!-- 结果列：第一把环刀对应的数据（行 1-2） -->
+                <td rowspan="2"><input type="text" :name="'avgMoisture1_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'wetDensity1_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'dryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgDryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'compaction1_page' + currentPage + '_' + i_idx" v-model="formData['compaction1_page' + currentPage + '_' + i_idx]"></td>
             </tr>
             <tr>
                 <!-- Moisture Box 2 -->
@@ -184,6 +188,39 @@
                 <td><input type="text" :name="'boxWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass2_page' + currentPage + '_' + i_idx]"></td>
                 <td><input type="text" :name="'boxDryMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass2_page' + currentPage + '_' + i_idx]"></td>
                 <td><input type="text" :name="'moisture2_page' + currentPage + '_' + i_idx" v-model="formData['moisture2_page' + currentPage + '_' + i_idx]"></td>
+            </tr>
+            <tr>
+                <!-- 第二把环刀（下 2 行一格），使用独立字段 ringNo2_* 等。
+                     注意：必须先画环刀列，再画含水率列，才能保证列与表头对齐。 -->
+                <td rowspan="2"><input type="text" :name="'ringNo2_page' + currentPage + '_' + i_idx" v-model="formData['ringNo2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringMass2_page' + currentPage + '_' + i_idx" v-model="formData['ringMass2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringVolume2_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume2_page' + currentPage + '_' + i_idx]"></td>
+                <!-- Moisture Box 3 -->
+                <td><input type="text" :name="'boxNo3_page' + currentPage + '_' + i_idx" v-model="formData['boxNo3_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxMass3_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxWetMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass3_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxDryMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass3_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'moisture3_page' + currentPage + '_' + i_idx" v-model="formData['moisture3_page' + currentPage + '_' + i_idx]"></td>
+                <!-- 结果列：第二把环刀对应的数据（行 3-4） -->
+                <td rowspan="2"><input type="text" :name="'avgMoisture2_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'wetDensity2_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'dryDensity2_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgDryDensity2_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'compaction2_page' + currentPage + '_' + i_idx" v-model="formData['compaction2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'dryDensity_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'compaction_page' + currentPage + '_' + i_idx" v-model="formData['compaction_page' + currentPage + '_' + i_idx]"></td>
+            </tr>
+            <tr>
+                <!-- Moisture Box 4 -->
+                <td><input type="text" :name="'boxNo4_page' + currentPage + '_' + i_idx" v-model="formData['boxNo4_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxMass4_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxWetMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass4_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxDryMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass4_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'moisture4_page' + currentPage + '_' + i_idx" v-model="formData['moisture4_page' + currentPage + '_' + i_idx]"></td>
             </tr>
             </template>
             <!-- Empty rows to fill space if needed, or just these 5 sample blocks (10 rows) -->
@@ -484,16 +521,20 @@ const submitWorkflow = async (action) => {
 
 // 初始化指定页面的动态字段
 const initDynamicFieldsForPage = (pageIndex) => {
-  for (let i_idx = 0; i_idx < 5; i_idx++) {
+  for (let i_idx = 0; i_idx < 4; i_idx++) {
     const pagePrefix = '_page' + pageIndex + '_' + i_idx
     formData['location' + pagePrefix] = ''
     formData['boxMass2' + pagePrefix] = ''
     formData['boxWetMass2' + pagePrefix] = ''
     formData['ringWetMass' + pagePrefix] = ''
     formData['ringMass' + pagePrefix] = ''
+    // 第二把环刀相关字段
+    formData['ringWetMass2' + pagePrefix] = ''
+    formData['ringMass2' + pagePrefix] = ''
     formData['boxDryMass2' + pagePrefix] = ''
     formData['moisture1' + pagePrefix] = ''
     formData['ringNo' + pagePrefix] = ''
+    formData['ringNo2' + pagePrefix] = ''
     formData['compaction' + pagePrefix] = ''
     formData['boxWetMass1' + pagePrefix] = ''
     formData['boxNo2' + pagePrefix] = ''
@@ -504,10 +545,33 @@ const initDynamicFieldsForPage = (pageIndex) => {
     formData['dryDensity' + pagePrefix] = ''
     formData['avgDryDensity' + pagePrefix] = ''
     formData['ringVolume' + pagePrefix] = ''
+    formData['ringVolume2' + pagePrefix] = ''
     formData['avgMoisture' + pagePrefix] = ''
     formData['boxMass1' + pagePrefix] = ''
     formData['moisture2' + pagePrefix] = ''
     formData['status' + pagePrefix] = ''
+    // 结果字段：为每把环刀分别初始化（1=第一把环刀，2=第二把环刀）
+    formData['avgMoisture1' + pagePrefix] = ''
+    formData['avgMoisture2' + pagePrefix] = ''
+    formData['wetDensity1' + pagePrefix] = ''
+    formData['wetDensity2' + pagePrefix] = ''
+    formData['dryDensity1' + pagePrefix] = ''
+    formData['dryDensity2' + pagePrefix] = ''
+    formData['avgDryDensity1' + pagePrefix] = ''
+    formData['avgDryDensity2' + pagePrefix] = ''
+    formData['compaction1' + pagePrefix] = ''
+    formData['compaction2' + pagePrefix] = ''
+    // 新增含水率盒 3、4 相关字段
+    formData['boxNo3' + pagePrefix] = ''
+    formData['boxMass3' + pagePrefix] = ''
+    formData['boxWetMass3' + pagePrefix] = ''
+    formData['boxDryMass3' + pagePrefix] = ''
+    formData['moisture3' + pagePrefix] = ''
+    formData['boxNo4' + pagePrefix] = ''
+    formData['boxMass4' + pagePrefix] = ''
+    formData['boxWetMass4' + pagePrefix] = ''
+    formData['boxDryMass4' + pagePrefix] = ''
+    formData['moisture4' + pagePrefix] = ''
   }
 }
 
@@ -558,14 +622,25 @@ const loadPageData = (pageIndex, parsedJson = null) => {
   initDynamicFieldsForPage(pageIndex)
   
   // 从 JSON 中加载该页面的数据
-  for (let i_idx = 0; i_idx < 5; i_idx++) {
+  for (let i_idx = 0; i_idx < 4; i_idx++) {
     const pagePrefix = '_page' + pageIndex + '_' + i_idx
     const fieldNames = [
       'location', 'boxMass2', 'boxWetMass2', 'ringWetMass', 'ringMass', 
       'boxDryMass2', 'moisture1', 'ringNo', 'compaction', 'boxWetMass1',
       'boxNo2', 'boxDryMass1', 'sampleNo', 'wetDensity', 'boxNo1',
       'dryDensity', 'avgDryDensity', 'ringVolume', 'avgMoisture', 
-      'boxMass1', 'moisture2', 'status'
+      'boxMass1', 'moisture2', 'status',
+      // 第一、第二把环刀的结果字段
+      'avgMoisture1', 'avgMoisture2',
+      'wetDensity1', 'wetDensity2',
+      'dryDensity1', 'dryDensity2',
+      'avgDryDensity1', 'avgDryDensity2',
+      'compaction1', 'compaction2',
+      // 第二把环刀相关字段
+      'ringNo2', 'ringMass2', 'ringWetMass2', 'ringVolume2',
+      // 新增含水率盒 3、4 字段
+      'boxNo3', 'boxMass3', 'boxWetMass3', 'boxDryMass3', 'moisture3',
+      'boxNo4', 'boxMass4', 'boxWetMass4', 'boxDryMass4', 'moisture4'
     ]
     
     fieldNames.forEach(fieldName => {
@@ -689,8 +764,8 @@ const mapRecordToFormData = (record) => {
             }
           })
           
-          // 计算页数：每页5个样品
-          const samplesPerPage = 5
+          // 计算页数：每页4个样品
+          const samplesPerPage = 4
           formData.totalPages = maxIndex >= 0 ? Math.ceil((maxIndex + 1) / samplesPerPage) : 1
           
           // 将旧格式数据转换为新格式（添加 _page0_ 后缀）
@@ -718,7 +793,7 @@ const mapRecordToFormData = (record) => {
             }
             
             if (isDataField && matchedPrefix && suffix !== null) {
-              // 计算应该属于哪一页和哪个位置
+              // 计算应该属于哪一页和哪个位置（每页 4 个样品）
               const fieldIndex = parseInt(suffix)
               const pageIndex = Math.floor(fieldIndex / samplesPerPage)
               const positionInPage = fieldIndex % samplesPerPage
