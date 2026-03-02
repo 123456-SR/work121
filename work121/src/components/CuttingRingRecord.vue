@@ -120,8 +120,9 @@
         <span>施工部位：<input type="text" v-model="formData.constructionLocation"   name="constructionLocation" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
         <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>检测类别：<input type="text" v-model="formData.testType"   name="testType" style="width: 100px; border-bottom: 1px solid black;"></span>
     </div>
+    <!-- 隐藏字段：检测类别不在页面上展示，但仍随表单提交 -->
+    <input type="hidden" v-model="formData.testType" name="testType" />
     <div class="header-info">
         <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;"></span>

@@ -143,7 +143,8 @@
                         </td>
                         <td style="border: none; width: 25%;">
                             <div class="center-text label">检测(验)<br>类别：</div>
-                            <input type="text" v-model="formData.testCategory"   name="testCategory" class="center-text">
+                            <!-- 不再在界面上显示/编辑检测类别，保持空白，仅保留隐藏字段随表单提交 -->
+                            <div class="center-text" style="height: 24px;"></div>
                         </td>
                     </tr>
                 </table>
@@ -239,6 +240,9 @@
             </td>
         </tr>
     </table>
+
+    <!-- 隐藏字段：检测类别不在页面展示，但仍然随表单和 PDF 提交到后端 -->
+    <input type="hidden" name="testCategory" v-model="formData.testCategory" />
 
     <div class="footer-info">
         <span>委托(送样)人：<input type="text" v-model="formData.client" style="width: 150px; border-bottom: 1px solid black;"></span>
