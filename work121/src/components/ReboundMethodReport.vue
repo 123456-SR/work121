@@ -80,6 +80,13 @@
         >
           批准签字
         </button>
+        <button
+          v-if="formData.status === 4"
+          @click="submitWorkflow('REJECT')"
+          class="btn btn-danger btn-small"
+        >
+          驳回
+        </button>
 
         <button
           @click="printDocument"
@@ -657,6 +664,10 @@ const submitWorkflow = async (action) => {
   try {
     const response = await axios.post('/api/workflow/handle', request)
     if (response.data.success) {
+      // 如果是批准操作，保存签名到数据库
+      if (action === 'SIGN_APPROVE') {
+        await submitForm()
+      }
       alert('操作成功')
       loadData(props.id)
     } else {
@@ -670,6 +681,11 @@ const submitWorkflow = async (action) => {
 
 const submitForm = async () => {
   try {
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+      formData.status = 3
+    }
+    
     // 构建提交数据
     const submitData = {
       entrustmentId: props.id || formData.unifiedNumber, // Use props.id as entrustmentId
@@ -693,7 +709,11 @@ const submitForm = async () => {
     const response = await axios.post('/api/reboundMethod/report/save', submitData);
 
     if (response.data.success) {
-      alert('保存成功');
+      alert('保存成功，状态已更新为待签字');
+      // 保存成功后返回列表页面，确保列表显示更新后的状态
+      if (navigateTo) {
+        navigateTo('ReboundMethodReportList');
+      }
     } else {
       alert('保存失败: ' + response.data.message);
     }
@@ -737,7 +757,9 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库
+        await submitForm()
+        alert('签名成功并已保存')
       } else {
         alert(`当前用户(${currentName})与表单中的检测人员不匹配，无法签名`)
       }

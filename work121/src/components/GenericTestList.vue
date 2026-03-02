@@ -120,13 +120,8 @@ const apiEndpoint = computed(() => {
 })
 
 // 计算当前行应显示的状态：
-// - 所有“记录表”列表：优先使用后端返回的 recordStatus（各记录表自己的 STATUS）
-// - 其他列表（委托单 / 报告等）：保持原有行为，使用 status（委托状态）
+// - 所有列表：使用 status 字段，与详情页面保持一致
 const getEffectiveStatus = (item) => {
-  // 只对“记录”类列表启用 recordStatus
-  if (props.dataType === 'record' && item && item.recordStatus !== undefined && item.recordStatus !== null) {
-    return item.recordStatus
-  }
   return item?.status
 }
 
@@ -199,7 +194,13 @@ const formatDate = (dateStr) => {
 
 // 状态文本
 const getStatusText = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return '草稿'
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return '草稿'
+  }
   switch(s) {
     // 统一状态名称
     case 0: return '草稿'
@@ -207,9 +208,7 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过待批准'
-    case 6: return '已批准'
-    case 7: return '驳回'
+    case 5: return '审核通过'
     // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
@@ -228,12 +227,18 @@ const getStatusText = (status) => {
     case 25: return '审核通过待批准'
     case 26: return '已批准'
     case 27: return '驳回'
-    default: return '未知'
+    default: return '未知/历史'
   }
 }
 
 const getStatusClass = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return 'status-draft'
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return 'status-draft'
+  }
   switch(s) {
     // 记录表状态 (0-5)
     case 0: return 'status-draft'

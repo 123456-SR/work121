@@ -79,6 +79,13 @@
         >
           批准签字
         </button>
+        <button
+          v-if="formData.status === 4"
+          @click="submitWorkflow('REJECT')"
+          class="btn btn-danger btn-small"
+        >
+          驳回
+        </button>
 
         <button
           @click="printDocument"
@@ -565,6 +572,10 @@ const submitWorkflow = async (action) => {
   try {
     const response = await axios.post('/api/workflow/handle', request)
     if (response.data.success) {
+      // 如果是批准操作，保存签名到数据库
+      if (action === 'SIGN_APPROVE') {
+        await saveData()
+      }
       alert('操作成功')
       loadData(formData.entrustmentId || props.id)
     } else {
@@ -700,6 +711,11 @@ const loadData = async (entrustmentId) => {
 
 const saveData = async () => {
     try {
+        // 如果状态是草稿(0)，保存后改为待签字(3)
+        if (formData.status === 0) {
+            formData.status = 3
+        }
+        
         const dataJsonObj = { ...formData }
         // Remove legacy fields from JSON
         delete dataJsonObj.tester
@@ -708,6 +724,7 @@ const saveData = async () => {
         const dataToSave = {
             id: formData.id,
             entrustmentId: formData.entrustmentId || props.id,
+            status: formData.status, // 传递状态字段给后端
             dataJson: JSON.stringify(dataJsonObj),
             reviewSignaturePhoto: formData.reviewerSignature,
             inspectSignaturePhoto: formData.testerSignature,
@@ -726,10 +743,14 @@ const saveData = async () => {
         
         const response = await axios.post('/api/beckman-beam/report/save', dataToSave)
         if (response.data.success) {
-            alert('保存成功')
+            alert('保存成功，状态已更新为待签字')
             // If new record, update id
             if (!formData.id && response.data.data && response.data.data.id) {
                  formData.id = response.data.data.id
+            }
+            // 保存成功后返回列表页面，确保列表显示更新后的状态
+            if (navigateTo) {
+                navigateTo('BeckmanBeamReportList')
             }
         } else {
             alert('保存失败: ' + response.data.message)
@@ -771,7 +792,9 @@ const handleSign = async () => {
                 formData.recordTester = currentName
             }
 
-            alert('检测人签名成功')
+            // 保存签名到数据库
+            await saveData()
+            alert('检测人签名成功并已保存')
         } else {
             alert('未找到您的电子签名，请先去“电子签名”页面设置')
         }

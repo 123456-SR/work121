@@ -441,7 +441,7 @@ const isSameTesterReviewer = computed(() => {
 })
 
 const showSubmitButton = computed(() => {
-  return (formData.status == 0 || formData.status == 2 || formData.status > 5) && !isSameTesterReviewer.value
+  return (formData.status == 0 || formData.status == 2 || formData.status == 4 || formData.status > 5) && !isSameTesterReviewer.value
 })
 
 const showAuditButtons = computed(() => {
@@ -778,7 +778,15 @@ const handleSign = async () => {
       // }
       
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库
+        const saved = await saveForm(true)
+        if (saved) {
+          // 调用工作流处理，将状态从待签字(3)变为已签字待提交(4)
+          await submitWorkflow('SIGN_TEST')
+          alert('签名成功并已保存')
+        } else {
+          alert('签名成功，但保存失败')
+        }
       } else {
         alert(`当前用户(${currentAccount}/${currentRealName})与表单中的人员(${formData.tester})不匹配，无法签名`)
       }
@@ -856,8 +864,8 @@ const saveForm = async (silent = false) => {
     testItems: formData.testItems
   }
   
-  // If sampleStatus is empty, default to '1' (Draft)
-  if (!payload.sampleStatus) payload.sampleStatus = '1'
+  // If sampleStatus is empty or draft, set to '3' (Pending Sign)
+  if (!payload.sampleStatus || formData.status === 0) payload.sampleStatus = '3'
 
   try {
     const response = await axios.post('/api/entrustment/save', payload)
@@ -866,7 +874,9 @@ const saveForm = async (silent = false) => {
         currentId.value = response.data.id
         // Also update the route or props if possible, but currentId is reactive
       }
-      if (!silent) alert('保存成功')
+      // Update local status to Pending Sign
+      formData.status = 3
+      if (!silent) alert('保存成功，状态已更新为待签字')
       return true
     } else {
       if (!silent) alert('保存失败: ' + response.data.message)
@@ -887,9 +897,7 @@ const getStatusText = (status) => {
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过待批准'
-    case 6: return '已批准'
-    case 7: return '驳回'
+    case 5: return '审核通过'
     default: return '未知/历史'
   }
 }
@@ -902,9 +910,7 @@ const getStatusColor = (status) => {
     case 2: return '#F44336' // Red
     case 3: return '#FF9800' // Orange
     case 4: return '#9C27B0' // Purple
-    case 5: return '#FF8C00' // orange
-    case 6: return '#4CAF50' // Green
-    case 7: return '#F44336' // Red
+    case 5: return '#4CAF50' // Green
     default: return '#000000'
   }
 }
@@ -954,6 +960,13 @@ const submitWorkflow = async (action) => {
         }
 
         // Check signature
+        if (!formData.testerSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+    } else if (action === 'SIGN_TEST') {
+        // Handle test sign action
         if (!formData.testerSignature) {
             alert('请先进行检测人签字')
             return

@@ -967,7 +967,7 @@ const previewPdf = () => {
   }
 }
 
-const handleSign = () => {
+const handleSign = async () => {
     // Only Tester can sign
     // if (formData.tester && !isCurrentUser(formData.tester, JSON.parse(localStorage.getItem('userInfo')))) {
     //    alert('您不是该单据的检测人 (' + formData.tester + ')，无权签字')
@@ -982,37 +982,50 @@ const handleSign = () => {
         return
     }
 
-    axios.post('/api/signature/get', { userAccount: getUserAccount(user) })
-        .then(res => {
-            if (res.data.success && res.data.data && res.data.data.signatureBlob) {
-                 formData.testerSignature = `data:image/png;base64,${res.data.data.signatureBlob}`
-                 // Also set date if empty
-                 if (!formData.testDate) {
-                     formData.testDate = formatDate(new Date())
-                 }
-            } else {
-                 alert('未找到您的电子签名，请先在个人中心上传')
-            }
-        })
-        .catch(e => {
-            console.error('Sign error', e)
-            alert('获取签名失败')
-        })
+    try {
+        const res = await axios.post('/api/signature/get', { userAccount: getUserAccount(user) })
+        if (res.data.success && res.data.data && res.data.data.signatureBlob) {
+             formData.testerSignature = `data:image/png;base64,${res.data.data.signatureBlob}`
+             // Also set date if empty
+             if (!formData.testDate) {
+                 formData.testDate = formatDate(new Date())
+             }
+             // 保存签名到数据库
+             await saveData()
+             alert('签名成功并已保存')
+        } else {
+             alert('未找到您的电子签名，请先在个人中心上传')
+        }
+    } catch (e) {
+        console.error('Sign error', e)
+        alert('获取签名失败')
+    }
 }
 
 const saveData = async () => {
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+        formData.status = 3
+    }
+    
     saveCurrentToState()
     const record = records.value[currentIndex.value]
+    // 确保状态字段被传递给后端
+    record.status = formData.status
     
     try {
         const res = await axios.post('/api/light-dynamic-penetration/save', record)
         if (res.data.success) {
-            alert('保存成功')
+            alert('保存成功，状态已更新为待签字')
             // Update record with returned data (especially ID)
             if (res.data.data) {
                 records.value[currentIndex.value] = res.data.data
                 // Update formData in case backend normalized something
                 mapRecordToFormData(records.value[currentIndex.value])
+            }
+            // 保存成功后返回列表页面，确保列表显示更新后的状态
+            if (navigateTo) {
+                navigateTo('LightDynamicPenetrationRecordList')
             }
         } else {
             alert('保存失败: ' + (res.data.message || '未知错误'))

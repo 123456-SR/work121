@@ -821,7 +821,9 @@ const handleSign = async () => {
       }
       
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库
+        await saveData()
+        alert('签名成功并已保存')
       } else {
         alert(`当前用户(${currentRealName})与表单中的检测人员(${formData.recordTester})不匹配，无法签名`)
       }

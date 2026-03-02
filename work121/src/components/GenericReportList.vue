@@ -164,26 +164,27 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString()
 }
 
-// 报告列表状态：优先使用 recordStatus（报告表自身的 STATUS），否则退回 status（委托状态）
+// 报告列表状态：使用 status 字段，与详情页面保持一致
 const getEffectiveStatus = (item) => {
-  if (item && item.recordStatus !== undefined && item.recordStatus !== null) {
-    return item.recordStatus
-  }
   return item?.status
 }
 
 const getStatusText = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return '草稿'
+  }
   const s = parseInt(status)
-  switch(s) {
+  if (isNaN(s)) {
+    return '草稿'
+  }
+  switch (s) {
     // 统一状态名称
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
-    case 5: return '审核通过待批准'
-    case 6: return '已批准'
-    case 7: return '驳回'
+    case 5: return '审核通过'
     // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
@@ -202,12 +203,18 @@ const getStatusText = (status) => {
     case 25: return '审核通过待批准'
     case 26: return '已批准'
     case 27: return '驳回'
-    default: return '未知'
+    default: return '未知/历史'
   }
 }
 
 const getStatusClass = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return 'status-draft'
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return 'status-draft'
+  }
   switch (s) {
     // 记录表状态 (0-5)
     case 0: return 'status-draft'

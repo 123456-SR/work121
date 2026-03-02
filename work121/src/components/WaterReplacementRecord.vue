@@ -360,14 +360,14 @@ const getStatusText = (status) => {
         case 12: return '已打回'
         case 13: return '待签字'
         case 14: return '已签字待提交'
-        case 15: return '审核通过'
+        case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
         case 24: return '已签字待提交'
-        case 25: return '审核通过'
+        case 25: return '审核通过待批准'
         default: return '未知'
     }
 }
@@ -810,9 +810,15 @@ const loadData = async (entrustmentId) => {
 
 const submitForm = async () => {
   try {
+    // 如果状态是草稿(0)，保存后改为待签字(3)
+    if (formData.status === 0) {
+      formData.status = 3
+    }
+    
     const submitData = {
       id: formData.id,
       entrustmentId: formData.entrustmentId || formData.unifiedNumber,
+      status: formData.status, // 传递状态字段给后端
       dataJson: getCleanDataJson(),
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature,
@@ -824,13 +830,17 @@ const submitForm = async () => {
     
     const response = await axios.post('/api/water-replacement/save', submitData)
     if (response.data.success) {
-      alert('保存成功')
+      alert('保存成功，状态已更新为待签字')
       if (response.data.data && response.data.data.id) {
          formData.id = response.data.data.id
          // Update current record in list
          if (records.value[currentIndex.value]) {
              records.value[currentIndex.value].id = formData.id
          }
+      }
+      // 保存成功后返回列表页面，确保列表显示更新后的状态
+      if (navigateTo) {
+        navigateTo('WaterReplacementRecordList')
       }
     } else {
       alert('保存失败: ' + response.data.message)
@@ -879,7 +889,10 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        alert('签名成功')
+        // 保存签名到数据库并更新状态为已签字待提交
+        await submitForm()
+        formData.status = 4
+        alert('签名成功并已保存，状态已更新为已签字待提交')
       } else {
         alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
       }
