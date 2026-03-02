@@ -324,7 +324,13 @@ const isNuclearMethod = computed(() => {
 })
 
 const getStatusText = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return '草稿'
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return '草稿'
+  }
   switch(s) {
     // 统一状态名称
     case 0: return '草稿'
@@ -352,7 +358,13 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
+  if (status === null || status === undefined || status === '') {
+    return '#6c757d' // secondary (草稿)
+  }
   const s = parseInt(status)
+  if (isNaN(s)) {
+    return '#6c757d' // secondary (草稿)
+  }
   switch(s) {
     case 0: return '#6c757d' // secondary
     case 1: return '#007bff' // primary
@@ -611,6 +623,77 @@ onMounted(() => {
               if (v1 !== undefined) formData['wetDensity_' + row] = v1
               if (v2 !== undefined) formData['wetDensity2_' + row] = v2
             }
+          }
+          
+          // 3）处理新格式的多页数据（带 _page 后缀的字段）
+          const hasPageData = Object.keys(parsed).some(k => k.includes('_page'))
+          if (hasPageData) {
+            // 收集所有页面的样品数据
+            const pageData = []
+            let sampleIndex = 0
+            
+            // 遍历所有页面
+            const pageIndices = new Set()
+            Object.keys(parsed).forEach(key => {
+              const match = key.match(/_page(\d+)_/)
+              if (match) {
+                pageIndices.add(parseInt(match[1]))
+              }
+            })
+            
+            // 按页面顺序处理
+            const sortedPages = Array.from(pageIndices).sort((a, b) => a - b)
+            sortedPages.forEach(pageIndex => {
+              // 处理每页的5个样品
+              for (let i = 0; i < 5; i++) {
+                if (sampleIndex >= 8) break // 报告表最多显示8个样品
+                
+                const pagePrefix = '_page' + pageIndex + '_' + i
+                
+                // 样品编号
+                const sampleNoKey = 'sampleNo' + pagePrefix
+                if (parsed[sampleNoKey] !== undefined && parsed[sampleNoKey] !== null && parsed[sampleNoKey] !== '') {
+                  formData['sampleId_' + sampleIndex] = parsed[sampleNoKey]
+                }
+                
+                // 检测部位
+                const locationKey = 'location' + pagePrefix
+                if (parsed[locationKey] !== undefined && parsed[locationKey] !== null && parsed[locationKey] !== '') {
+                  formData['location_' + sampleIndex] = parsed[locationKey]
+                }
+                
+                // 湿密度
+                const wetDensityKey = 'wetDensity' + pagePrefix
+                if (parsed[wetDensityKey] !== undefined && parsed[wetDensityKey] !== null && parsed[wetDensityKey] !== '') {
+                  formData['wetDensity_' + sampleIndex] = parsed[wetDensityKey]
+                }
+                
+                // 干密度
+                const dryDensityKey = 'dryDensity' + pagePrefix
+                if (parsed[dryDensityKey] !== undefined && parsed[dryDensityKey] !== null && parsed[dryDensityKey] !== '') {
+                  formData['dryDensity_' + sampleIndex] = parsed[dryDensityKey]
+                }
+                
+                // 含水率
+                const moistureKey = 'moisture1' + pagePrefix
+                if (parsed[moistureKey] !== undefined && parsed[moistureKey] !== null && parsed[moistureKey] !== '') {
+                  formData['moisture_' + sampleIndex] = parsed[moistureKey]
+                }
+                
+                // 压实度
+                const compactionKey = 'compaction' + pagePrefix
+                if (parsed[compactionKey] !== undefined && parsed[compactionKey] !== null && parsed[compactionKey] !== '') {
+                  formData['compaction_' + sampleIndex] = parsed[compactionKey]
+                }
+                
+                // 检测日期
+                if (parsed.testDate) {
+                  formData['date_' + sampleIndex] = parsed.testDate
+                }
+                
+                sampleIndex++
+              }
+            })
           }
         }
         formData.id = data.id

@@ -441,6 +441,15 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 try {
                     Map<String, Object> m = objectMapper.readValue(json, Map.class);
                     if (m != null) {
+                        // 调试日志：打印所有字段名，检查是否包含 _page 后缀
+                        System.out.println("[" + debugLabel + "] 记录表 DATA_JSON 字段数: " + m.size());
+                        int pageFieldCount = 0;
+                        for (String key : m.keySet()) {
+                            if (key.contains("_page")) {
+                                pageFieldCount++;
+                            }
+                        }
+                        System.out.println("[" + debugLabel + "] 包含 _page 后缀的字段数: " + pageFieldCount);
                         // 1. 先找出当前 recordData 中数据字段的最大索引
                         int maxExistingIndex = -1;
                         for (String key : recordData.keySet()) {
@@ -516,6 +525,16 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                             if (pageCompare != 0) return pageCompare;
                             return Integer.compare(a.fieldIndex, b.fieldIndex);
                         });
+                        
+                        // 调试日志：打印识别的多页字段
+                        System.out.println("[" + debugLabel + "] 识别的多页字段数: " + pageFields.size());
+                        if (pageFields.size() > 0 && "CuttingRing".equals(debugLabel)) {
+                            System.out.println("[" + debugLabel + "] 前5个多页字段:");
+                            for (int i = 0; i < Math.min(5, pageFields.size()); i++) {
+                                FieldEntry entry = pageFields.get(i);
+                                System.out.println("  - " + entry.originalKey + " -> " + entry.matchedPrefix + " (页面" + entry.pageIndex + ", 索引" + entry.fieldIndex + ")");
+                            }
+                        }
                         
                         // 4. 计算每页的样品数量（假设每页5个样品）
                         int samplesPerPage = 5;
