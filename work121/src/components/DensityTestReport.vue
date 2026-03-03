@@ -765,6 +765,14 @@ onMounted(() => {
           formData.commissionDate = eData.commissionDate || ''
           formData.constructionPart = eData.constructionPart || ''
           formData.testCategory = eData.testCategory || ''
+          // 样品名称及状态：从委托单 sampleName + sampleStatus 拼接，中间用顿号隔开
+          const eSampleName = eData.sampleName || ''
+          const eSampleStatus = eData.sampleStatus || ''
+          if (eSampleName || eSampleStatus) {
+            formData.sampleNameStatus = eSampleName && eSampleStatus
+              ? `${eSampleName}，${eSampleStatus}`
+              : (eSampleName || eSampleStatus || '')
+          }
           formData.testDate = new Date().toISOString().split('T')[0]
           
           // Directory fallback logic
