@@ -212,18 +212,18 @@
             <td>
                 <div class="checkbox-group">
                     <div style="margin-bottom: 5px;">
-                        <label><input type="checkbox" :checked="formData.deliveryMode.includes('1')" @change="handleDeliveryModeChange('1', $event.target.checked)">可以为:</label>
+                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="1">可以为:</label>
                         <input type="text" v-model="formData.deliveryDate1"   name="deliveryDate1" style="width: 120px; border-bottom: 1px solid black;">
-                        <input type="hidden" name="deliveryMode_1" :value="formData.deliveryMode.includes('1') ? '1' : ''">
+                        <input type="hidden" name="deliveryMode_1" :value="formData.deliveryMode === '1' ? '1' : ''">
                     </div>
                     <div style="margin-bottom: 5px;">
-                        <label><input type="checkbox" :checked="formData.deliveryMode.includes('2')" @change="handleDeliveryModeChange('2', $event.target.checked)">严格限定为:</label>
+                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="2">严格限定为:</label>
                         <input type="text" v-model="formData.deliveryDate2"   name="deliveryDate2" style="width: 120px; border-bottom: 1px solid black;">
-                        <input type="hidden" name="deliveryMode_2" :value="formData.deliveryMode.includes('2') ? '1' : ''">
+                        <input type="hidden" name="deliveryMode_2" :value="formData.deliveryMode === '2' ? '1' : ''">
                     </div>
                     <div>
-                        <label><input type="checkbox" :checked="formData.deliveryMode.includes('3')" @change="handleDeliveryModeChange('3', $event.target.checked)">不要求</label>
-                        <input type="hidden" name="deliveryMode_3" :value="formData.deliveryMode.includes('3') ? '1' : ''">
+                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="3">不要求</label>
+                        <input type="hidden" name="deliveryMode_3" :value="formData.deliveryMode === '3' ? '1' : ''">
                     </div>
                 </div>
             </td>
@@ -254,7 +254,7 @@
     <input type="hidden" name="testCategory" v-model="formData.testCategory" />
 
     <div class="footer-info">
-        <span>委托(送样)人：<input type="text" v-model="formData.client" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托(送样)人：<input type="text" v-model="formData.client" name="client" style="width: 150px; border-bottom: 1px solid black;"></span>
         <div style="position: relative; display: inline-block; margin-left: 20px;">
             <span>承接(收样)人：
                 <div style="display: inline-block; width: 150px; border-bottom: 1px solid black; height: 30px; vertical-align: bottom; position: relative;">
@@ -262,7 +262,10 @@
                 </div>
             </span>
         </div>
-
+        <!-- 电子签名隐藏字段 -->
+        <input type="hidden" name="testerSignature" :value="formData.testerSignature">
+        <input type="hidden" name="reviewerSignature" :value="formData.reviewerSignature">
+        <input type="hidden" name="approverSignature" :value="formData.approverSignature">
     </div>
 
     </form>
@@ -424,7 +427,7 @@ const formData = reactive({
   sampleDisposal: [],
   witness: '',
   witnessUnit: '',
-  deliveryMode: ['3'], // 默认选中"不要求"选项
+  deliveryMode: '3', // 默认选中"不要求"选项
   deliveryDate1: '',
   deliveryDate2: '',
   fee: '',
@@ -537,11 +540,11 @@ const mapDataToForm = (data) => {
   formData.clientAddressPhone = data.clientAddressPhone || data.clientUnitTel || ''
   formData.reportSend = data.reportSendMode ? data.reportSendMode.split(',') : []
   formData.sampleDisposal = data.sampleDisposal ? data.sampleDisposal.split(',') : []
-  formData.deliveryMode = data.deliveryMode ? data.deliveryMode.split(',') : []
+  formData.deliveryMode = data.deliveryMode || '3'
   if (data.deliveryDate) {
-      if (formData.deliveryMode.includes('1')) {
+      if (formData.deliveryMode === '1') {
           formData.deliveryDate1 = data.deliveryDate
-      } else if (formData.deliveryMode.includes('2')) {
+      } else if (formData.deliveryMode === '2') {
           formData.deliveryDate2 = data.deliveryDate
       }
   }
@@ -872,9 +875,9 @@ const saveForm = async (silent = false) => {
     clientAddressPhone: formData.clientAddressPhone,
     reportSendMode: formData.reportSend ? formData.reportSend.join(',') : '',
     sampleDisposal: formData.sampleDisposal ? formData.sampleDisposal.join(',') : '',
-    deliveryMode: formData.deliveryMode ? formData.deliveryMode.join(',') : '',
-    deliveryDate: (formData.deliveryMode.includes('1') && formData.deliveryDate1) ? formData.deliveryDate1 : 
-                  (formData.deliveryMode.includes('2') && formData.deliveryDate2) ? formData.deliveryDate2 : '',
+    deliveryMode: formData.deliveryMode || '3',
+    deliveryDate: (formData.deliveryMode === '1' && formData.deliveryDate1) ? formData.deliveryDate1 : 
+                  (formData.deliveryMode === '2' && formData.deliveryDate2) ? formData.deliveryDate2 : '',
     testItems: formData.testItems
   }
   
@@ -1339,19 +1342,7 @@ const previewPdf = () => {
   }
 }
 
-// 处理交付日期复选框的状态变化
-const handleDeliveryModeChange = (value, checked) => {
-  if (checked) {
-    if (!formData.deliveryMode.includes(value)) {
-      formData.deliveryMode.push(value)
-    }
-  } else {
-    const index = formData.deliveryMode.indexOf(value)
-    if (index > -1) {
-      formData.deliveryMode.splice(index, 1)
-    }
-  }
-}
+
 
 
 // 返回列表

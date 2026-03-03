@@ -240,6 +240,10 @@
             <img v-if="formData.testerSignature" :src="formData.testerSignature" class="signature-img" alt="检测人签名" />
         </span>
     </div>
+    <!-- 电子签名隐藏字段 -->
+    <input type="hidden" name="testerSignature" :value="formData.testerSignature">
+    <input type="hidden" name="reviewerSignature" :value="formData.reviewerSignature">
+    <input type="hidden" name="approverSignature" :value="formData.approverSignature">
 
     <div class="statement">
         声明：<br>
