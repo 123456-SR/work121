@@ -121,8 +121,18 @@ const apiEndpoint = computed(() => {
 
 // 计算当前行应显示的状态：
 // - 记录表列表：优先使用 recordStatus 字段（记录表状态），如果不存在则使用 status 字段（委托单状态）
+// - 报告表列表：优先使用 reportStatus 字段（报告表状态），如果不存在则使用 status 字段（委托单状态）
+// - 结果表列表：优先使用 resultStatus 字段（结果表状态），如果不存在则使用 status 字段（委托单状态）
 const getEffectiveStatus = (item) => {
-  return item?.recordStatus || item?.status
+  switch (props.dataType) {
+    case 'report':
+      return item?.reportStatus || item?.status
+    case 'result':
+      return item?.resultStatus || item?.status
+    case 'record':
+    default:
+      return item?.recordStatus || item?.status
+  }
 }
 
 // 获取当前登录用户
@@ -252,7 +262,7 @@ const getStatusClass = (status) => {
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
-    case 5: return 'status-approving'
+    case 5: return 'status-completed'
     case 6: return 'status-completed'
     case 7: return 'status-rejected'
     // 报告表状态 (10-17)

@@ -45,7 +45,7 @@ public interface NuclearDensityMapper {
             "t1.WITNESS as witness, " +
             "t1.BEIZHU as remarks " +
             "FROM T_NUCLEAR_DENSITY t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.WT_NUM " +
             "WHERE t2.ID = #{id}")
     NuclearDensity selectById(@Param("id") String id);
 
@@ -64,6 +64,11 @@ public interface NuclearDensityMapper {
             "STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "PROJECT_NAME = #{projectName,jdbcType=VARCHAR}, " +
+            "COMMISSION_DATE = #{commissionDate,jdbcType=TIMESTAMP}, " +
+            "CONSTRUCTION_PART = #{constructionPart,jdbcType=VARCHAR}, " +
+            "TEST_CATEGORY = #{testCategory,jdbcType=VARCHAR}, " +
+            "CLIENT_UNIT = #{clientUnit,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
             "WHERE ID = #{id}")
@@ -102,7 +107,7 @@ public interface NuclearDensityMapper {
             "t1.WITNESS as witness, " +
             "t1.BEIZHU as remarks " +
             "FROM T_NUCLEAR_DENSITY t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.WT_NUM " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     List<NuclearDensity> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
@@ -112,6 +117,7 @@ public interface NuclearDensityMapper {
             "FILLER, RECORD_TESTER, RECORD_REVIEWER, " +
             "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
+            "PROJECT_NAME, COMMISSION_DATE, CONSTRUCTION_PART, TEST_CATEGORY, CLIENT_UNIT, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, " +
@@ -119,6 +125,7 @@ public interface NuclearDensityMapper {
             "#{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, " +
             "#{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "TO_CHAR(#{status,jdbcType=INTEGER}), #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{projectName,jdbcType=VARCHAR}, #{commissionDate,jdbcType=TIMESTAMP}, #{constructionPart,jdbcType=VARCHAR}, #{testCategory,jdbcType=VARCHAR}, #{clientUnit,jdbcType=VARCHAR}, " +
             "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(NuclearDensity nuclearDensity);
 }

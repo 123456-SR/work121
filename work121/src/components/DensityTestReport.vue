@@ -594,6 +594,13 @@ onMounted(() => {
             formData.unifiedNumber = parsed.wtNum
           }
           
+          // 从record对象中获取字段值，优先于dataJson
+          if (data.projectName) formData.projectName = data.projectName
+          if (data.commissionDate) formData.commissionDate = data.commissionDate
+          if (data.constructionPart) formData.constructionPart = data.constructionPart
+          if (data.testCategory) formData.testCategory = data.testCategory
+          if (data.clientUnit) formData.clientUnit = data.clientUnit
+          
           // 兼容旧数据：如果 JSON 里只有 entrustingUnit 或 clientUnit，就统一回填到 clientUnit，用于“委托单位”显示
           if (!formData.clientUnit && parsed.entrustingUnit) {
             formData.clientUnit = parsed.entrustingUnit

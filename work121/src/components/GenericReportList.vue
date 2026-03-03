@@ -222,7 +222,7 @@ const getStatusClass = (status) => {
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
-    case 5: return 'status-approving'
+    case 5: return 'status-completed'
     case 6: return 'status-completed'
     case 7: return 'status-rejected'
     // 报告表状态 (10-17)
