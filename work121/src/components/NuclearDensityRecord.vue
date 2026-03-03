@@ -305,6 +305,7 @@ const submitWorkflow = async (action) => {
             filler: formData.filler,
             nuclearModel: formData.equipment,
             clientUnit: formData.entrustingUnit,
+            projectName: formData.projectName,
             commissionDate: formData.commissionDate,
             constructionPart: formData.constructionPart,
             testCategory: formData.testCategory
@@ -430,18 +431,6 @@ const initDynamicFields = () => {
 }
 
 const mapRecordToFormData = (record) => {
-  // Clear existing dynamic fields
-  for (let i = 0; i < 20; i++) {
-    formData[`sampleId_${i}`] = ''
-    formData[`location_${i}`] = ''
-    formData[`date_${i}`] = ''
-    formData[`wetDensity_${i}`] = ''
-    formData[`dryDensity_${i}`] = ''
-    formData[`moisture_${i}`] = ''
-    formData[`compaction_${i}`] = ''
-    formData[`remarks_${i}`] = ''
-  }
-
   // Basic fields
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || props.id
@@ -467,56 +456,41 @@ const mapRecordToFormData = (record) => {
   // Record Reviewer - Priority: record.recordReviewer -> record.reviewer
   formData.recordReviewer = record.recordReviewer || record.reviewer || ''
 
-  // Map fields from BusinessEntity/Entrustment (Always map these first as defaults)
-  if (record.clientUnit) formData.entrustingUnit = record.clientUnit
-  if (record.wtNum) formData.unifiedNumber = record.wtNum
-  if (record.projectName) formData.projectName = record.projectName
-  if (record.commissionDate) formData.commissionDate = record.commissionDate
-  if (record.constructionPart) formData.constructionPart = record.constructionPart
-  if (record.testCategory) formData.testCategory = record.testCategory
-  if (record.equipment) formData.equipment = record.equipment
-  if (record.sampleName) formData.sampleNameStatus = record.sampleName
-  if (record.testBasis) formData.standard = record.testBasis
-  if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId // Ensure entrustmentId also maps
-
-  // Parse JSON data if available
+  // Parse JSON data if available first, so we have the most up-to-date values
+  let jsonData = {}
   if (record.dataJson) {
     try {
-      const parsed = JSON.parse(record.dataJson)
-      // Merge parsed data into formData
-      // 注意：永远不要让 JSON 里的 status 覆盖数据库里的 status
-      Object.keys(parsed).forEach(key => {
-        if (key === 'status') return
-        formData[key] = parsed[key]
-      })
-
-      // Ensure specific fields are set if they exist in parsed
-      if (parsed.entrustingUnit) formData.entrustingUnit = parsed.entrustingUnit
-      if (parsed.unifiedNumber) formData.unifiedNumber = parsed.unifiedNumber
-      if (parsed.projectName) formData.projectName = parsed.projectName
-      if (parsed.commissionDate) formData.commissionDate = parsed.commissionDate
-      if (parsed.constructionPart) formData.constructionPart = parsed.constructionPart
-      if (parsed.testCategory) formData.testCategory = parsed.testCategory
-      if (parsed.equipment) formData.equipment = parsed.equipment
-      if (parsed.sampleNameStatus) formData.sampleNameStatus = parsed.sampleNameStatus
-      if (parsed.standard) formData.standard = parsed.standard
-      if (parsed.designCompaction) formData.designCompaction = parsed.designCompaction
-      if (parsed.maxDryDensity) formData.maxDryDensity = parsed.maxDryDensity
-      if (parsed.optimumMoisture) formData.optimumMoisture = parsed.optimumMoisture
-      if (parsed.minDryDensity) formData.minDryDensity = parsed.minDryDensity
+      jsonData = JSON.parse(record.dataJson)
     } catch (e) {
       console.error('JSON parse error', e)
     }
-  } else {
-    // If no JSON data, try to set defaults from entrustment info (if available on record)
-    // But usually record should have dataJson. If new record, we set defaults in addRecord/loadData
-    if (record.wtNum) formData.unifiedNumber = record.wtNum
-    if (record.clientUnit) formData.entrustingUnit = record.clientUnit
-    if (record.projectName) formData.projectName = record.projectName
-    if (record.commissionDate) formData.commissionDate = record.commissionDate
-    if (record.constructionPart) formData.constructionPart = record.constructionPart
-    if (record.testCategory) formData.testCategory = record.testCategory
-    if (record.sampleName) formData.sampleNameStatus = record.sampleName
+  }
+
+  // Map fields with priority: JSON data > record fields
+  formData.entrustingUnit = jsonData.entrustingUnit || record.clientUnit || ''
+  formData.unifiedNumber = jsonData.unifiedNumber || record.wtNum || record.entrustmentId || ''
+  formData.projectName = jsonData.projectName || record.projectName || ''
+  formData.commissionDate = jsonData.commissionDate || record.commissionDate || ''
+  formData.constructionPart = jsonData.constructionPart || record.constructionPart || ''
+  formData.testCategory = jsonData.testCategory || record.testCategory || ''
+  formData.equipment = jsonData.equipment || record.equipment || ''
+  formData.sampleNameStatus = jsonData.sampleNameStatus || record.sampleName || ''
+  formData.standard = jsonData.standard || record.testBasis || ''
+  formData.designCompaction = jsonData.designCompaction || ''
+  formData.maxDryDensity = jsonData.maxDryDensity || ''
+  formData.optimumMoisture = jsonData.optimumMoisture || ''
+  formData.minDryDensity = jsonData.minDryDensity || ''
+
+  // Map dynamic fields
+  for (let i = 0; i < 20; i++) {
+    formData[`sampleId_${i}`] = jsonData[`sampleId_${i}`] || ''
+    formData[`location_${i}`] = jsonData[`location_${i}`] || ''
+    formData[`date_${i}`] = jsonData[`date_${i}`] || ''
+    formData[`wetDensity_${i}`] = jsonData[`wetDensity_${i}`] || ''
+    formData[`dryDensity_${i}`] = jsonData[`dryDensity_${i}`] || ''
+    formData[`moisture_${i}`] = jsonData[`moisture_${i}`] || ''
+    formData[`compaction_${i}`] = jsonData[`compaction_${i}`] || ''
+    formData[`remarks_${i}`] = jsonData[`remarks_${i}`] || ''
   }
 }
 
