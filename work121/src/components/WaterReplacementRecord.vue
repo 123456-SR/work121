@@ -841,10 +841,6 @@ const submitForm = async () => {
              records.value[currentIndex.value].id = formData.id
          }
       }
-      // 保存成功后返回列表页面，确保列表显示更新后的状态
-      if (navigateTo) {
-        navigateTo('WaterReplacementRecordList')
-      }
     } else {
       alert('保存失败: ' + response.data.message)
     }
@@ -879,25 +875,42 @@ const handleSign = async () => {
       }
 
       let signed = false
+      let signType = ''
       const currentAccount = user.username
       const currentName = user.fullName || user.nickName || currentAccount
 
-      // Match Tester
-      if (formData.recordTester === currentName || formData.recordTester === currentAccount || !formData.recordTester) {
+      // Match Tester (记录检测人)
+      if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
           if (!formData.recordTester) {
               formData.recordTester = currentName
           }
           formData.testerSignature = imgSrc
           signed = true
+          signType = '检测人'
+      }
+      
+      // Match Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
+      if (!signed && (!formData.recordReviewer || formData.recordReviewer === currentName || formData.recordReviewer === currentAccount)) {
+          if (!formData.recordReviewer) {
+              formData.recordReviewer = currentName
+          }
+          formData.reviewerSignature = imgSrc
+          signed = true
+          signType = '审核人'
       }
 
       if (signed) {
-        // 保存签名到数据库并更新状态为已签字待提交
+        // 保存签名到数据库
         await submitForm()
-        formData.status = 4
-        alert('签名成功并已保存，状态已更新为已签字待提交')
+        // 如果两个人都签了，状态更新为已签字待提交
+        if (formData.testerSignature && formData.reviewerSignature) {
+          formData.status = 4
+          alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
+        } else {
+          alert(`签名成功并已保存，您以${signType}身份签字`)
+        }
       } else {
-        alert(`当前用户(${currentName})与表单中的试验人员不匹配，无法签名`)
+        alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

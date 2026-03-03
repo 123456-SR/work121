@@ -1059,10 +1059,6 @@ const submitForm = async () => {
         // 3. 显示保存结果
         if (successCount === totalCount) {
             alert(`保存成功，共保存 ${successCount} 页数据，状态已更新为待签字`)
-            // 保存成功后返回列表页面，确保列表显示更新后的状态
-            if (navigateTo) {
-                navigateTo('BeckmanBeamRecordList')
-            }
         } else {
             alert(`保存完成，成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
         }
@@ -1096,24 +1092,36 @@ const handleSign = async () => {
       }
 
       let signed = false
+      let signType = ''
       const currentAccount = user.username
       const currentName = user.fullName || user.nickName || currentAccount
 
-      // Match Tester - Only Tester can use this button
-      if (formData.recordTester === currentName || formData.recordTester === currentAccount || !formData.recordTester) {
+      // Match Record Tester (记录检测人)
+      if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
         formData.testerSignature = imgSrc
         signed = true
+        signType = '检测人'
       }
       
-      // Reviewer signature is handled in AUDIT_PASS action
+      // Match Record Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
+      if (!signed && (!formData.recordReviewer || formData.recordReviewer === currentName || formData.recordReviewer === currentAccount)) {
+        formData.reviewerSignature = imgSrc
+        signed = true
+        signType = '审核人'
+      }
       
       if (signed) {
-        // 保存签名到数据库并更新状态为已签字待提交
+        // 保存签名到数据库
         await saveData()
-        formData.status = 4
-        alert('签名成功并已保存，状态已更新为已签字待提交')
+        // 如果两个人都签了，状态更新为已签字待提交
+        if (formData.testerSignature && formData.reviewerSignature) {
+          formData.status = 4
+          alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
+        } else {
+          alert(`签名成功并已保存，您以${signType}身份签字`)
+        }
       } else {
-        alert(`当前用户(${currentName})不是该单据的记录检测人，无法签字`)
+        alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签字`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')
