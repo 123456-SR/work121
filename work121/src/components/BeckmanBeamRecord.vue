@@ -487,7 +487,7 @@ const sampleNameStatusDisplay = computed(() => {
     const name = formData.sampleName || ''
     const status = formData.sampleStatus || ''
     if (name && status) {
-        return `${name} / ${status}`
+        return `${name}，${status}`
     } else if (name) {
         return name
     } else if (status) {
@@ -715,9 +715,9 @@ const mapRecordToFormData = (record) => {
       // Merge json into formData
       Object.assign(formData, json)
       // 如果 JSON 中有 sampleNameStatus，优先使用；否则从 sampleName 和 sampleStatus 拼接
-      if (!json.sampleNameStatus && (json.sampleName || json.sampleStatus)) {
+  if (!json.sampleNameStatus && (json.sampleName || json.sampleStatus)) {
         if (json.sampleName && json.sampleStatus) {
-          formData.sampleNameStatus = `${json.sampleName} / ${json.sampleStatus}`
+          formData.sampleNameStatus = `${json.sampleName}，${json.sampleStatus}`
         } else if (json.sampleName) {
           formData.sampleNameStatus = json.sampleName
         } else if (json.sampleStatus) {
@@ -739,7 +739,7 @@ const mapRecordToFormData = (record) => {
   if (record.sampleName) formData.sampleName = record.sampleName
   // 拼接样品名称和状态（实体字段优先）
   if (formData.sampleName && formData.sampleStatus) {
-    formData.sampleNameStatus = `${formData.sampleName} / ${formData.sampleStatus}`
+    formData.sampleNameStatus = `${formData.sampleName}，${formData.sampleStatus}`
   } else if (formData.sampleName && !formData.sampleNameStatus) {
     formData.sampleNameStatus = formData.sampleName
   } else if (formData.sampleStatus && !formData.sampleNameStatus) {
@@ -921,7 +921,7 @@ const loadData = async (identifier) => {
             formData.sampleStatus = wtInfo.sampleStatus || ''
             // 拼接样品名称和状态
             if (formData.sampleName && formData.sampleStatus) {
-                formData.sampleNameStatus = `${formData.sampleName} / ${formData.sampleStatus}`
+            formData.sampleNameStatus = `${formData.sampleName}，${formData.sampleStatus}`
             } else if (formData.sampleName) {
                 formData.sampleNameStatus = formData.sampleName
             } else if (formData.sampleStatus) {

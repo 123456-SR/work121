@@ -73,7 +73,8 @@
             <td class="label">施工部位</td>
             <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
             <td class="label">检测类别</td>
-            <td colspan="2"><input type="text" v-model="formData.testCategory"   name="testCategory"></td>
+            <!-- 需求：检测类别固定展示为“委托”，不再自动填充/保存后台数据 -->
+            <td colspan="2">委托</td>
         </tr>
         <tr>
             <td class="label">仪器设备</td>
@@ -210,6 +211,26 @@ const formData = reactive({
   testerSignature: '',
   status: 0
 })
+
+// 统一日期格式化为 YYYY-MM-DD，避免显示完整时间串
+const formatDate = (dateVal) => {
+  if (!dateVal) return ''
+  const d = new Date(dateVal)
+  if (isNaN(d.getTime())) return ''
+  const year = d.getFullYear()
+  const month = ('0' + (d.getMonth() + 1)).slice(-2)
+  const day = ('0' + d.getDate()).slice(-2)
+  return `${year}-${month}-${day}`
+}
+
+// 过滤误用为流程状态码的“样品状态”（例如 0-7 这些数字），只保留真正的文字描述
+const cleanSampleStatus = (val) => {
+  if (val === null || val === undefined) return ''
+  const s = String(val).trim()
+  // 常见流程状态码：0-7、10-27，都不认为是样品状态
+  if (/^\d+$/.test(s)) return ''
+  return s
+}
 
 const getStatusText = (status) => {
     const s = parseInt(status)
@@ -423,11 +444,15 @@ const mapRecordToFormData = (record) => {
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
   if (record.wtNum) formData.unifiedNumber = record.wtNum
   if (record.projectName) formData.projectName = record.projectName
-  if (record.commissionDate) formData.commissionDate = record.commissionDate
+  if (record.commissionDate) formData.commissionDate = formatDate(record.commissionDate)
   if (record.constructionPart) formData.constructionPart = record.constructionPart
-  if (record.testCategory) formData.testCategory = record.testCategory
   if (record.equipment) formData.equipment = record.equipment
-  if (record.sampleName) formData.sampleNameStatus = record.sampleName
+  // 样品名称及状态：优先用实体字段拼接；样品状态会先过滤掉纯数字的流程状态码（0-7、10-27 等）
+  if (record.sampleName || record.sampleStatus) {
+    const name = record.sampleName ? String(record.sampleName).trim() : ''
+    const status = cleanSampleStatus(record.sampleStatus)
+    formData.sampleNameStatus = name && status ? `${name}，${status}` : (name || status || '')
+  }
   if (record.testBasis) formData.standard = record.testBasis
   if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId // Ensure entrustmentId also maps
 
@@ -446,9 +471,8 @@ const mapRecordToFormData = (record) => {
       if (parsed.entrustingUnit) formData.entrustingUnit = parsed.entrustingUnit
       if (parsed.unifiedNumber) formData.unifiedNumber = parsed.unifiedNumber
       if (parsed.projectName) formData.projectName = parsed.projectName
-      if (parsed.commissionDate) formData.commissionDate = parsed.commissionDate
+      if (parsed.commissionDate) formData.commissionDate = formatDate(parsed.commissionDate)
       if (parsed.constructionPart) formData.constructionPart = parsed.constructionPart
-      if (parsed.testCategory) formData.testCategory = parsed.testCategory
       if (parsed.equipment) formData.equipment = parsed.equipment
       if (parsed.sampleNameStatus) formData.sampleNameStatus = parsed.sampleNameStatus
       if (parsed.standard) formData.standard = parsed.standard
@@ -465,10 +489,13 @@ const mapRecordToFormData = (record) => {
     if (record.wtNum) formData.unifiedNumber = record.wtNum
     if (record.clientUnit) formData.entrustingUnit = record.clientUnit
     if (record.projectName) formData.projectName = record.projectName
-    if (record.commissionDate) formData.commissionDate = record.commissionDate
+    if (record.commissionDate) formData.commissionDate = formatDate(record.commissionDate)
     if (record.constructionPart) formData.constructionPart = record.constructionPart
-    if (record.testCategory) formData.testCategory = record.testCategory
-    if (record.sampleName) formData.sampleNameStatus = record.sampleName
+    if (record.sampleName || record.sampleStatus) {
+      const name = record.sampleName ? String(record.sampleName).trim() : ''
+      const status = cleanSampleStatus(record.sampleStatus)
+      formData.sampleNameStatus = name && status ? `${name}，${status}` : (name || status || '')
+    }
   }
 }
 
@@ -521,8 +548,9 @@ const addRecord = async () => {
           const res = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(wtNum)}`)
           if (res.data.success && res.data.data) {
               entrustmentData = res.data.data
-              // 检查委托单状态是否为审核通过（状态值为5）
-              isEntrustmentApproved = entrustmentData.status === 5
+              // 检查委托单状态是否为审核通过（状态值为5，后端可能返回字符串或数字，这里统一转成数字判断）
+              const statusNum = Number(entrustmentData.status)
+              isEntrustmentApproved = !isNaN(statusNum) && statusNum === 5
           }
       } catch (e) {
           console.error('Failed to fetch entrustment info', e)
@@ -536,9 +564,13 @@ const addRecord = async () => {
     entrustmentId: wtNum,
     constructionPart: isEntrustmentApproved ? (entrustmentData.constructionPart || '') : '',
     projectName: isEntrustmentApproved ? (entrustmentData.projectName || '') : '',
-    testCategory: isEntrustmentApproved ? (entrustmentData.testCategory || '') : '',
-    entrustingUnit: isEntrustmentApproved ? (entrustmentData.clientUnit || '') : '', // Map clientUnit to entrustingUnit
-    // commissionDate: entrustmentData.commissionDate || '',
+    // 为了兼容 mapRecordToFormData，这里同时带上 clientUnit 和 commissionDate 字段
+    entrustingUnit: isEntrustmentApproved ? (entrustmentData.clientUnit || '') : '', // 直接用于表单显示
+    clientUnit: isEntrustmentApproved ? (entrustmentData.clientUnit || '') : '',      // 供 mapRecordToFormData 使用
+    commissionDate: isEntrustmentApproved ? formatDate(entrustmentData.commissionDate || entrustmentData.clientDate || '') : '',
+    // 样品名称及状态：从委托单 sampleName + sampleStatus 带到记录实体上，由 mapRecordToFormData 统一拼接
+    sampleName: isEntrustmentApproved ? (entrustmentData.sampleName || '') : '',
+    sampleStatus: isEntrustmentApproved ? cleanSampleStatus(entrustmentData.sampleStatus || '') : '',
     // Initialize Roles
     recordTester: isEntrustmentApproved ? (entrustmentData.testerName || entrustmentData.tester || directory.jcTester || '') : (directory.jcTester || ''),
     recordReviewer: isEntrustmentApproved ? (entrustmentData.reviewerName || entrustmentData.reviewer || directory.jcReviewer || '') : (directory.jcReviewer || ''),

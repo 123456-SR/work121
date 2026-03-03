@@ -148,7 +148,8 @@
                         <td style="border: none; width: 25%;">
                             <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
                                 <span class="label" style="margin-right: 5px;">检测类别：</span>
-                                <input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 100px;">
+                                <!-- 前端固定展示为“委托”，不再从数据中自动填充 -->
+                                <span style="display:inline-block; width: 100px; border-bottom: 1px solid transparent; text-align: center;">委托</span>
                             </div>
                         </td>
                     </tr>
@@ -248,6 +249,9 @@
             </td>
         </tr>
     </table>
+
+    <!-- 隐藏字段：检测类别不在页面展示，但仍然随表单和 PDF 提交到后端 -->
+    <input type="hidden" name="testCategory" v-model="formData.testCategory" />
 
     <div class="footer-info">
         <span>委托(送样)人：<input type="text" v-model="formData.client" style="width: 150px; border-bottom: 1px solid black;"></span>
@@ -577,7 +581,13 @@ const mapDataToForm = (data) => {
   formData.manufacturer = data.manufacturer || ''
   formData.batchNumber = data.batchNumber || ''
   formData.testCategory = data.testCategory || ''
-  formData.sampleStatus = data.sampleStatus || ''
+  // 样品状态：该字段用于人工填写描述，不再从数值状态中自动回填
+  // 如果后端返回的是 0/1/2/3/4/5 这类流程状态码，则忽略，保持为空，交由用户手动填写
+  if (data.sampleStatus && !['0','1','2','3','4','5'].includes(String(data.sampleStatus))) {
+    formData.sampleStatus = data.sampleStatus
+  } else {
+    formData.sampleStatus = ''
+  }
   formData.testItems = data.testItems || ''
   formData.remarks = data.remarks || ''
   formData.reportSendUser = data.reportSendUser || ''
@@ -705,8 +715,7 @@ const validateForm = () => {
     { field: 'spec', value: '未填写', label: '规格/型号' },
     { field: 'manufacturer', value: '未填写', label: '生产厂家' },
     { field: 'clientAddressPhone', value: '未填写', label: '委托单位地址及电话' },
-    { field: 'clientAddressPhone', value: '未填写地址', label: '委托单位地址及电话' }, // Check both variants if unsure
-    { field: 'testCategory', value: '未填写', label: '检测类别' }
+    { field: 'clientAddressPhone', value: '未填写地址', label: '委托单位地址及电话' } // Check both variants if unsure
   ]
   
   for (const item of defaults) {
@@ -869,8 +878,7 @@ const saveForm = async (silent = false) => {
     testItems: formData.testItems
   }
   
-  // If sampleStatus is empty or draft, set to '3' (Pending Sign)
-  if (!payload.sampleStatus || formData.status === 0) payload.sampleStatus = '3'
+  // sampleStatus 仅用于“样品状态”文本描述，不再强制写入流程状态码
 
   try {
     const response = await axios.post('/api/entrustment/save', payload)
