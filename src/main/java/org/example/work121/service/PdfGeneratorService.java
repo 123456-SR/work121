@@ -235,21 +235,15 @@ public class PdfGeneratorService {
         
         // Option 1
         pDates.add(new Chunk(check1 + " 可以为：    ", valueFont));
-        String y1 = request.getParameter("deliveryDate1_y") != null ? request.getParameter("deliveryDate1_y") : "";
-        String m1 = request.getParameter("deliveryDate1_m") != null ? request.getParameter("deliveryDate1_m") : "";
-        String d1 = request.getParameter("deliveryDate1_d") != null ? request.getParameter("deliveryDate1_d") : "";
-        pDates.add(new Chunk((y1.isEmpty() ? "    " : y1) + "  年  ", valueFont));
-        pDates.add(new Chunk((m1.isEmpty() ? "  " : m1) + "  月  ", valueFont));
-        pDates.add(new Chunk((d1.isEmpty() ? "  " : d1) + "  日\n", valueFont));
+        String deliveryDate1 = request.getParameter("deliveryDate1") != null ? request.getParameter("deliveryDate1") : "";
+        pDates.add(new Chunk(deliveryDate1.isEmpty() ? "            " : deliveryDate1, valueFont));
+        pDates.add(new Chunk("\n", valueFont));
         
         // Option 2
         pDates.add(new Chunk(check2 + " 严格限定为：", valueFont));
-        String y2 = request.getParameter("deliveryDate2_y") != null ? request.getParameter("deliveryDate2_y") : "";
-        String m2 = request.getParameter("deliveryDate2_m") != null ? request.getParameter("deliveryDate2_m") : "";
-        String d2 = request.getParameter("deliveryDate2_d") != null ? request.getParameter("deliveryDate2_d") : "";
-        pDates.add(new Chunk((y2.isEmpty() ? "    " : y2) + "  年  ", valueFont));
-        pDates.add(new Chunk((m2.isEmpty() ? "  " : m2) + "  月  ", valueFont));
-        pDates.add(new Chunk((d2.isEmpty() ? "  " : d2) + "  日\n", valueFont));
+        String deliveryDate2 = request.getParameter("deliveryDate2") != null ? request.getParameter("deliveryDate2") : "";
+        pDates.add(new Chunk(deliveryDate2.isEmpty() ? "            " : deliveryDate2, valueFont));
+        pDates.add(new Chunk("\n", valueFont));
         
         // Option 3
         pDates.add(new Chunk(check3 + " 不要求", valueFont));
@@ -312,17 +306,40 @@ public class PdfGeneratorService {
         footerTable.setWidthPercentage(100);
         footerTable.setSpacingBefore(10);
 
-        String clientPerson = request.getParameter("clientPerson") != null ? request.getParameter("clientPerson") : "";
-        String receiverPerson = request.getParameter("receiverPerson") != null ? request.getParameter("receiverPerson") : "";
+        String clientPerson = request.getParameter("client") != null ? request.getParameter("client") : "";
+        String receiverPerson = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+        String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-        PdfPCell footerCell1 = new PdfPCell(new Paragraph("委托(送样)人：" + clientPerson, valueFont));
+        // 委托(送样)人
+        PdfPCell footerCell1 = new PdfPCell();
         footerCell1.setBorder(Rectangle.NO_BORDER);
         footerCell1.setHorizontalAlignment(Element.ALIGN_LEFT);
+        Paragraph clientPara = new Paragraph("委托(送样)人：" + clientPerson, valueFont);
+        footerCell1.addElement(clientPara);
         footerTable.addCell(footerCell1);
 
-        PdfPCell footerCell2 = new PdfPCell(new Paragraph("承接(收样)人：" + receiverPerson, valueFont));
+        // 承接(收样)人
+        PdfPCell footerCell2 = new PdfPCell();
         footerCell2.setBorder(Rectangle.NO_BORDER);
         footerCell2.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        Paragraph testerPara = new Paragraph("承接(收样)人：" + receiverPerson, valueFont);
+        footerCell2.addElement(testerPara);
+        
+        // 添加签名图片
+        if (!testerSignature.isEmpty()) {
+            try {
+                // 移除Base64前缀
+                String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                image.scaleToFit(100, 50);
+                image.setAlignment(Element.ALIGN_RIGHT);
+                footerCell2.addElement(image);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        
         footerTable.addCell(footerCell2);
 
         document.add(footerTable);
@@ -674,20 +691,65 @@ public class PdfGeneratorService {
             String approval = request.getParameter("approval") != null ? request.getParameter("approval") : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String approvalSignature = request.getParameter("approvalSignature") != null ? request.getParameter("approvalSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approval, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approvalPara = new Paragraph("批准：" + approval, valueFont);
+            footerCell1.addElement(approvalPara);
+            if (!approvalSignature.isEmpty()) {
+                try {
+                    String base64Image = approvalSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检验：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检验：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -971,20 +1033,65 @@ public class PdfGeneratorService {
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
             String reportDateFooter = request.getParameter("reportDate") != null ? request.getParameter("reportDate") : "";
+            String approvalSignature = request.getParameter("approvalSignature") != null ? request.getParameter("approvalSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approval, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approvalPara = new Paragraph("批准：" + approval, valueFont);
+            footerCell1.addElement(approvalPara);
+            if (!approvalSignature.isEmpty()) {
+                try {
+                    String base64Image = approvalSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检验：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检验：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             PdfPCell footerCell4 = new PdfPCell();
@@ -1243,23 +1350,68 @@ public class PdfGeneratorService {
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String calculator = request.getParameter("calculator") != null ? request.getParameter("calculator") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String calculatorSignature = request.getParameter("calculatorSignature") != null ? request.getParameter("calculatorSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
             String year = request.getParameter("year") != null ? request.getParameter("year") : "";
             String month = request.getParameter("month") != null ? request.getParameter("month") : "";
             String day = request.getParameter("day") != null ? request.getParameter("day") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell1.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("计算：" + calculator, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph calculatorPara = new Paragraph("计算：" + calculator, valueFont);
+            footerCell2.addElement(calculatorPara);
+            if (!calculatorSignature.isEmpty()) {
+                try {
+                    String base64Image = calculatorSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             PdfPCell footerCell4 = new PdfPCell();
@@ -1426,20 +1578,65 @@ public class PdfGeneratorService {
             String year = request.getParameter("year") != null ? request.getParameter("year") : "";
             String month = request.getParameter("month") != null ? request.getParameter("month") : "";
             String day = request.getParameter("day") != null ? request.getParameter("day") : "";
+            String calculatorSignature = request.getParameter("calculatorSignature") != null ? request.getParameter("calculatorSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("计算：" + calculator, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph calculatorPara = new Paragraph("计算：" + calculator, valueFont);
+            footerCell1.addElement(calculatorPara);
+            if (!calculatorSignature.isEmpty()) {
+                try {
+                    String base64Image = calculatorSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell2.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("复核：" + reviewer, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("复核：" + reviewer, valueFont);
+            footerCell3.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -1614,23 +1811,68 @@ public class PdfGeneratorService {
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String calculator = request.getParameter("calculator") != null ? request.getParameter("calculator") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String calculatorSignature = request.getParameter("calculatorSignature") != null ? request.getParameter("calculatorSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
             String year = request.getParameter("year") != null ? request.getParameter("year") : "";
             String month = request.getParameter("month") != null ? request.getParameter("month") : "";
             String day = request.getParameter("day") != null ? request.getParameter("day") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell1.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("计算：" + calculator, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph calculatorPara = new Paragraph("计算：" + calculator, valueFont);
+            footerCell2.addElement(calculatorPara);
+            if (!calculatorSignature.isEmpty()) {
+                try {
+                    String base64Image = calculatorSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -1910,20 +2152,65 @@ public class PdfGeneratorService {
             String approval = approvalParam != null ? approvalParam : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String approvalSignature = request.getParameter("approvalSignature") != null ? request.getParameter("approvalSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：        " + approval, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approvalPara = new Paragraph("批准：        " + approval, valueFont);
+            footerCell1.addElement(approvalPara);
+            if (!approvalSignature.isEmpty()) {
+                try {
+                    String base64Image = approvalSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：        " + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：        " + reviewer, valueFont);
+            footerCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：        " + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：        " + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -2439,20 +2726,65 @@ public class PdfGeneratorService {
             String approver = request.getParameter("approver") != null ? request.getParameter("approver") : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String approverSignature = request.getParameter("approverSignature") != null ? request.getParameter("approverSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approver, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approverPara = new Paragraph("批准：" + approver, valueFont);
+            footerCell1.addElement(approverPara);
+            if (!approverSignature.isEmpty()) {
+                try {
+                    String base64Image = approverSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -2631,20 +2963,65 @@ public class PdfGeneratorService {
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String calculator = request.getParameter("calculator") != null ? request.getParameter("calculator") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String calculatorSignature = request.getParameter("calculatorSignature") != null ? request.getParameter("calculatorSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell1.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("计算：" + calculator, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph calculatorPara = new Paragraph("计算：" + calculator, valueFont);
+            footerCell2.addElement(calculatorPara);
+            if (!calculatorSignature.isEmpty()) {
+                try {
+                    String base64Image = calculatorSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -2825,20 +3202,65 @@ public class PdfGeneratorService {
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String calculator = request.getParameter("calculator") != null ? request.getParameter("calculator") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String calculatorSignature = request.getParameter("calculatorSignature") != null ? request.getParameter("calculatorSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell1.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("计算：" + calculator, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph calculatorPara = new Paragraph("计算：" + calculator, valueFont);
+            footerCell2.addElement(calculatorPara);
+            if (!calculatorSignature.isEmpty()) {
+                try {
+                    String base64Image = calculatorSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -2965,9 +3387,81 @@ public class PdfGeneratorService {
 
             document.add(dataTable);
 
+            // 添加签字区
+            PdfPTable signatureTable = new PdfPTable(3);
+            signatureTable.setWidthPercentage(100);
+            signatureTable.setSpacingBefore(20);
+            signatureTable.setWidths(new float[]{1, 1, 1});
+
+            String approval = request.getParameter("approval") != null ? request.getParameter("approval") : "";
+            String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
+            String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String approvalSignature = request.getParameter("approvalSignature") != null ? request.getParameter("approvalSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
+
+            PdfPCell signatureCell1 = new PdfPCell();
+            signatureCell1.setBorder(Rectangle.NO_BORDER);
+            signatureCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approvalPara = new Paragraph("批准：" + approval, valueFont);
+            signatureCell1.addElement(approvalPara);
+            if (!approvalSignature.isEmpty()) {
+                try {
+                    String base64Image = approvalSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    signatureCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            signatureTable.addCell(signatureCell1);
+
+            PdfPCell signatureCell2 = new PdfPCell();
+            signatureCell2.setBorder(Rectangle.NO_BORDER);
+            signatureCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            signatureCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    signatureCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            signatureTable.addCell(signatureCell2);
+
+            PdfPCell signatureCell3 = new PdfPCell();
+            signatureCell3.setBorder(Rectangle.NO_BORDER);
+            signatureCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            signatureCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    signatureCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            signatureTable.addCell(signatureCell3);
+
+            document.add(signatureTable);
+
             PdfPTable footerTable = new PdfPTable(2);
             footerTable.setWidthPercentage(100);
-            footerTable.setSpacingBefore(20);
+            footerTable.setSpacingBefore(10);
             footerTable.setWidths(new float[]{1, 1});
 
             String year = request.getParameter("year") != null ? request.getParameter("year") : "";
@@ -3141,23 +3635,68 @@ public class PdfGeneratorService {
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String calculator = request.getParameter("calculator") != null ? request.getParameter("calculator") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String calculatorSignature = request.getParameter("calculatorSignature") != null ? request.getParameter("calculatorSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
             String year = request.getParameter("year") != null ? request.getParameter("year") : "";
             String month = request.getParameter("month") != null ? request.getParameter("month") : "";
             String day = request.getParameter("day") != null ? request.getParameter("day") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell1.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("计算：" + calculator, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph calculatorPara = new Paragraph("计算：" + calculator, valueFont);
+            footerCell2.addElement(calculatorPara);
+            if (!calculatorSignature.isEmpty()) {
+                try {
+                    String base64Image = calculatorSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             PdfPCell footerCell4 = new PdfPCell();
@@ -3372,20 +3911,65 @@ public class PdfGeneratorService {
             String approval = request.getParameter("approval") != null ? request.getParameter("approval") : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String approvalSignature = request.getParameter("approvalSignature") != null ? request.getParameter("approvalSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approval, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approvalPara = new Paragraph("批准：" + approval, valueFont);
+            footerCell1.addElement(approvalPara);
+            if (!approvalSignature.isEmpty()) {
+                try {
+                    String base64Image = approvalSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检测：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检测：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);
@@ -3676,20 +4260,65 @@ public class PdfGeneratorService {
             String approver = request.getParameter("approver") != null ? request.getParameter("approver") : "";
             String reviewer = request.getParameter("reviewer") != null ? request.getParameter("reviewer") : "";
             String tester = request.getParameter("tester") != null ? request.getParameter("tester") : "";
+            String approverSignature = request.getParameter("approverSignature") != null ? request.getParameter("approverSignature") : "";
+            String reviewerSignature = request.getParameter("reviewerSignature") != null ? request.getParameter("reviewerSignature") : "";
+            String testerSignature = request.getParameter("testerSignature") != null ? request.getParameter("testerSignature") : "";
 
-            PdfPCell footerCell1 = new PdfPCell(new Paragraph("批准：" + approver, valueFont));
+            PdfPCell footerCell1 = new PdfPCell();
             footerCell1.setBorder(Rectangle.NO_BORDER);
             footerCell1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph approverPara = new Paragraph("批准：" + approver, valueFont);
+            footerCell1.addElement(approverPara);
+            if (!approverSignature.isEmpty()) {
+                try {
+                    String base64Image = approverSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell1.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell1);
 
-            PdfPCell footerCell2 = new PdfPCell(new Paragraph("审核：" + reviewer, valueFont));
+            PdfPCell footerCell2 = new PdfPCell();
             footerCell2.setBorder(Rectangle.NO_BORDER);
             footerCell2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph reviewerPara = new Paragraph("审核：" + reviewer, valueFont);
+            footerCell2.addElement(reviewerPara);
+            if (!reviewerSignature.isEmpty()) {
+                try {
+                    String base64Image = reviewerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell2.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell2);
 
-            PdfPCell footerCell3 = new PdfPCell(new Paragraph("检验：" + tester, valueFont));
+            PdfPCell footerCell3 = new PdfPCell();
             footerCell3.setBorder(Rectangle.NO_BORDER);
             footerCell3.setHorizontalAlignment(Element.ALIGN_CENTER);
+            Paragraph testerPara = new Paragraph("检验：" + tester, valueFont);
+            footerCell3.addElement(testerPara);
+            if (!testerSignature.isEmpty()) {
+                try {
+                    String base64Image = testerSignature.replaceAll("^data:image/[^;]+;base64,", "");
+                    byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+                    com.lowagie.text.Image image = com.lowagie.text.Image.getInstance(imageBytes);
+                    image.scaleToFit(80, 40);
+                    image.setAlignment(Element.ALIGN_CENTER);
+                    footerCell3.addElement(image);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             footerTable.addCell(footerCell3);
 
             document.add(footerTable);

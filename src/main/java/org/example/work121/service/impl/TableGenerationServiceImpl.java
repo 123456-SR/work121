@@ -300,9 +300,18 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
     private void generateDensityTestReportAndResult(String entrustmentId) {
         try {
-            // 这里的 entrustmentId 实际上传进来的是“统一编号”（例如 XT-2024-54301），
-            // 各密度记录表的 ENTRUSTMENT_ID 也是存的统一编号，所以直接当 wtNum 用。
-            String wtNum = entrustmentId;
+            // 先获取委托信息，确定正确的WT_NUM
+            Map<String, Object> entrustmentData = getEntrustmentData(entrustmentId);
+            if (entrustmentData == null) {
+                System.out.println("Skip DensityTest report/result generation: no entrustment data found for " + entrustmentId);
+                return;
+            }
+            
+            String wtNum = (String) entrustmentData.get("wtNum");
+            if (wtNum == null || wtNum.isEmpty()) {
+                System.out.println("Skip DensityTest report/result generation: no wtNum found for " + entrustmentId);
+                return;
+            }
 
             // 条件一：对应统一编号的委托单必须已通过（STATUS=5）
             JcCoreWtInfo core = null;
@@ -322,7 +331,7 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
             // 条件二：该统一编号下所有“密度类记录表”（核子法、灌砂法、灌水法、环刀法）状态全部为 5，
             // 且至少存在一条密度类记录（避免仅有回弹法之类时生成报告）
-            if (!areAllDensityRecordsApproved(entrustmentId, wtNum)) {
+            if (!areAllDensityRecordsApproved(wtNum, wtNum)) {
                 System.out.println("Skip DensityTest report/result generation: not all density records approved for wtNum " + wtNum);
                 return;
             }
@@ -335,7 +344,7 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             Map<String, Object> recordData = new HashMap<>();
 
             // 1）先塞委托表的数据
-            Map<String, Object> entrustmentData = getEntrustmentData(wtNum);
+            // 已经在前面获取过entrustmentData，直接使用
             if (entrustmentData != null) {
                 // 只用非空值覆盖，避免把记录表中已有的数据覆盖成 null
                 for (Map.Entry<String, Object> e : entrustmentData.entrySet()) {
@@ -347,25 +356,25 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
             // 2）再把四种密度记录表的 DATA_JSON 合并进来（有就合并，没有就跳过）
             mergeDensityRecordJson(
-                    nuclearDensityMapper.selectByEntrustmentId(entrustmentId),
+                    nuclearDensityMapper.selectByEntrustmentId(wtNum),
                     recordData,
                     NuclearDensity::getDataJson,
                     "NuclearDensity"
             );
             mergeDensityRecordJson(
-                    sandReplacementMapper.selectByEntrustmentId(entrustmentId),
+                    sandReplacementMapper.selectByEntrustmentId(wtNum),
                     recordData,
                     SandReplacement::getDataJson,
                     "SandReplacement"
             );
             mergeDensityRecordJson(
-                    waterReplacementMapper.selectByEntrustmentId(entrustmentId),
+                    waterReplacementMapper.selectByEntrustmentId(wtNum),
                     recordData,
                     WaterReplacement::getDataJson,
                     "WaterReplacement"
             );
             mergeDensityRecordJson(
-                    cuttingRingMapper.selectByEntrustmentId(entrustmentId),
+                    cuttingRingMapper.selectByEntrustmentId(wtNum),
                     recordData,
                     CuttingRing::getDataJson,
                     "CuttingRing"
@@ -374,27 +383,27 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             // 3）填充报告必需但可能缺失的字段（虚拟数据）
             populateMissingDensityReportFields(recordData);
 
-            DensityTestReport report = densityTestReportMapper.selectByEntrustmentId(entrustmentId);
+            DensityTestReport report = densityTestReportMapper.selectByEntrustmentId(wtNum);
             if (report == null) {
                 report = new DensityTestReport();
                 report.setId(UUID.randomUUID().toString());
-                report.setEntrustmentId(entrustmentId);
-                fillTableFromEntrustment("DENSITY_TEST", entrustmentId, report);
+                report.setEntrustmentId(wtNum);
+                fillTableFromEntrustment("DENSITY_TEST", wtNum, report);
             }
             report.setDataJson(objectMapper.writeValueAsString(recordData));
             saveDensityTestReport(report);
 
-            DensityTestResult result = densityTestResultMapper.selectByEntrustmentId(entrustmentId);
+            DensityTestResult result = densityTestResultMapper.selectByEntrustmentId(wtNum);
             if (result == null) {
                 result = new DensityTestResult();
                 result.setId(UUID.randomUUID().toString());
-                result.setEntrustmentId(entrustmentId);
-                fillTableFromEntrustment("DENSITY_TEST", entrustmentId, result);
+                result.setEntrustmentId(wtNum);
+                fillTableFromEntrustment("DENSITY_TEST", wtNum, result);
             }
             result.setDataJson(objectMapper.writeValueAsString(recordData));
             saveDensityTestResult(result);
 
-            System.out.println("Generated Report and Result for DensityTest entrustment: " + entrustmentId);
+            System.out.println("Generated Report and Result for DensityTest entrustment: " + wtNum);
         } catch (Exception e) {
             e.printStackTrace();
             // IMPORTANT: Do NOT rethrow RuntimeException here if we want to avoid rolling back the outer transaction

@@ -48,7 +48,7 @@
 
         <template v-if="formData.id && !draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >

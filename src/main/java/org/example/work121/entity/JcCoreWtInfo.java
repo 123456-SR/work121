@@ -233,11 +233,33 @@ public class JcCoreWtInfo extends Entrustment {
     // 记录表专用状态（例如核子法记录的 STATUS），与委托状态解耦，用于前端列表展示
     private String recordStatus;
 
+    // 报告表专用状态，与委托状态解耦，用于前端列表展示
+    private String reportStatus;
+
+    // 结果表专用状态，与委托状态解耦，用于前端列表展示
+    private String resultStatus;
+
     public String getRecordStatus() {
         return recordStatus;
     }
 
     public void setRecordStatus(String recordStatus) {
         this.recordStatus = recordStatus;
+    }
+
+    public String getReportStatus() {
+        return reportStatus;
+    }
+
+    public void setReportStatus(String reportStatus) {
+        this.reportStatus = reportStatus;
+    }
+
+    public String getResultStatus() {
+        return resultStatus;
+    }
+
+    public void setResultStatus(String resultStatus) {
+        this.resultStatus = resultStatus;
     }
 }

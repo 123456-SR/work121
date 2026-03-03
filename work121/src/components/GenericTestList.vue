@@ -120,9 +120,9 @@ const apiEndpoint = computed(() => {
 })
 
 // 计算当前行应显示的状态：
-// - 所有列表：使用 status 字段，与详情页面保持一致
+// - 记录表列表：优先使用 recordStatus 字段（记录表状态），如果不存在则使用 status 字段（委托单状态）
 const getEffectiveStatus = (item) => {
-  return item?.status
+  return item?.recordStatus || item?.status
 }
 
 // 获取当前登录用户
@@ -173,6 +173,12 @@ watch(() => props.category, () => {
   pageNum.value = 1
   loadData()
 })
+
+// 监听props变化，当导航到该组件时重新加载数据
+watch(() => props, () => {
+  // 当props发生变化时（比如从详情页返回），重新加载数据
+  loadData()
+}, { deep: true })
 
 // 翻页
 const changePage = (newPage) => {

@@ -49,7 +49,7 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -985,6 +985,12 @@ const submitForm = async () => {
         }
         
         console.log('最终 formData.id:', formData.id)
+        
+        // 保存成功后重新加载数据，确保显示最新状态
+        const entrustmentId = formData.entrustmentId || formData.unifiedNumber
+        if (entrustmentId) {
+          await loadData(entrustmentId)
+        }
       } else {
         // 如果后端没有返回数据，尝试重新查询
         console.warn('后端未返回保存的数据，尝试重新查询...')

@@ -49,7 +49,7 @@
         <template v-if="formData.id && !draftMode">
           <button
             :disabled="Number(formData.status) === 1"
-            v-if="Number(formData.status) === 0 || Number(formData.status) === 2"
+            v-if="Number(formData.status) === 0 || Number(formData.status) === 2 || Number(formData.status) === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >

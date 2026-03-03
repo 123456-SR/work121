@@ -891,10 +891,20 @@ onMounted(() => {
                              // 映射标准击实参数和其他通用字段
                              const commonFields = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate', 'constructionPart', 'testCategory', 'equipment', 'sampleNameStatus', 'standard', 'designCompaction', 'maxDryDensity', 'optimumMoisture', 'minDryDensity']
                              commonFields.forEach(field => {
-                                 if (nParsed[field] !== undefined) {
+                                 // 优先从顶级字段获取值，然后从dataJson中获取
+                                 if (nRecord[field] !== undefined && nRecord[field] !== null && nRecord[field] !== '') {
+                                     formData[field] = nRecord[field]
+                                 } else if (nParsed[field] !== undefined) {
                                      formData[field] = nParsed[field]
                                  }
                              })
+                             
+                             // 特别处理委托单位字段，确保正确映射
+                             if (nRecord.clientUnit !== undefined && nRecord.clientUnit !== null && nRecord.clientUnit !== '') {
+                                 formData.clientUnit = nRecord.clientUnit
+                             } else if (nParsed.entrustingUnit !== undefined) {
+                                 formData.clientUnit = nParsed.entrustingUnit
+                             }
                              
                              // 只填充前8行数据到报告表（从核子法记录表第一页）
                              const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']

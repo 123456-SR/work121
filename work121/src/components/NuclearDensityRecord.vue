@@ -23,7 +23,7 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -282,6 +282,39 @@ const submitWorkflow = async (action) => {
         return
     }
     
+    // 先保存当前记录状态，确保所有字段都被保存
+    saveCurrentRecordState()
+    
+    // 保存到数据库，确保字段被持久化
+    try {
+        const formDataCopy = { ...formData }
+        if (formDataCopy.tester) delete formDataCopy.tester
+        if (formDataCopy.reviewer) delete formDataCopy.reviewer
+
+        const dataToSave = {
+            id: formData.id,
+            entrustmentId: formData.entrustmentId || props.id,
+            status: formData.status,
+            dataJson: JSON.stringify(formDataCopy),
+            reviewSignaturePhoto: formData.reviewerSignature,
+            inspectSignaturePhoto: formData.testerSignature,
+            recordTester: formData.recordTester,
+            recordReviewer: formData.recordReviewer,
+            tester: formData.recordTester,
+            reviewer: formData.recordReviewer,
+            filler: formData.filler,
+            nuclearModel: formData.equipment,
+            clientUnit: formData.entrustingUnit,
+            commissionDate: formData.commissionDate,
+            constructionPart: formData.constructionPart,
+            testCategory: formData.testCategory
+        }
+
+        await axios.post('/api/nuclear-density/save', dataToSave)
+    } catch (e) {
+        console.error('Save before workflow error', e)
+    }
+    
     const user = JSON.parse(localStorage.getItem('userInfo'))
     console.log('Current user:', user)
     if (!user || !user.username) {
@@ -336,6 +369,18 @@ const submitWorkflow = async (action) => {
             alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
             return
         }
+    } else if (action === 'SIGN_TEST') {
+        // Role check: Only recordTester can sign
+        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权签字')
+            return
+        }
+
+        if (!formData.testerSignature) {
+            alert('请先进行检测人签字')
+            return
+        }
+        signatureData = formData.testerSignature
     }
 
     const request = {
@@ -478,8 +523,12 @@ const mapRecordToFormData = (record) => {
 const saveCurrentRecordState = () => {
   if (records.value.length > 0 && currentIndex.value >= 0 && currentIndex.value < records.value.length) {
      const current = records.value[currentIndex.value]
+     // Create a copy of formData and remove legacy fields before saving
+     const formDataCopy = { ...formData }
+     if (formDataCopy.tester) delete formDataCopy.tester
+     if (formDataCopy.reviewer) delete formDataCopy.reviewer
      // Update current record object with latest formData values
-     current.dataJson = JSON.stringify(formData)
+     current.dataJson = JSON.stringify(formDataCopy)
      current.reviewer = formData.reviewer
      current.tester = formData.tester
      // Update role fields
@@ -490,6 +539,14 @@ const saveCurrentRecordState = () => {
      current.reviewSignaturePhoto = formData.reviewerSignature
      current.inspectSignaturePhoto = formData.testerSignature
      // Also update flattened fields if needed for list view or other logic
+     current.clientUnit = formData.entrustingUnit
+     current.commissionDate = formData.commissionDate
+     current.constructionPart = formData.constructionPart
+     current.testCategory = formData.testCategory
+     current.projectName = formData.projectName
+     current.equipment = formData.equipment
+     current.sampleName = formData.sampleNameStatus
+     current.testBasis = formData.standard
   }
 }
 
@@ -638,9 +695,15 @@ const loadData = async (entrustmentId) => {
           // Create a new default record
           await addRecord()
         } else {
-          // Find record by ID if props.id is provided and it's not the entrustmentId
+          // Find record by ID: first try current formData.id, then props.id
           let foundIndex = 0
-          if (props.id && props.id !== entrustmentId) {
+          // First try to find the current record by its ID
+          if (formData.id) {
+                const idx = records.value.findIndex(r => r.id === formData.id)
+                if (idx !== -1) foundIndex = idx
+          }
+          // If not found, try props.id (if it's not the entrustmentId)
+          else if (props.id && props.id !== entrustmentId) {
                 const idx = records.value.findIndex(r => r.id === props.id)
                 if (idx !== -1) foundIndex = idx
           }
@@ -689,16 +752,21 @@ const saveData = async () => {
     if (formData.status === 0) {
       formData.status = 3
     }
+    // 如果状态是已签字待提交(4)，保持状态不变
+    else if (formData.status === 4) {
+      formData.status = 4
+    }
     
-    // Remove legacy fields from formData before saving
-    if (formData.tester) delete formData.tester
-    if (formData.reviewer) delete formData.reviewer
+    // Create a copy of formData and remove legacy fields before saving
+    const formDataCopy = { ...formData }
+    if (formDataCopy.tester) delete formDataCopy.tester
+    if (formDataCopy.reviewer) delete formDataCopy.reviewer
 
     const dataToSave = {
       id: formData.id,
       entrustmentId: formData.entrustmentId || props.id,
       status: formData.status, // 传递状态字段给后端
-      dataJson: JSON.stringify(formData),
+      dataJson: JSON.stringify(formDataCopy),
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature,
       // Role fields
@@ -710,6 +778,10 @@ const saveData = async () => {
       
       // Map other fields required by entity
       nuclearModel: formData.equipment,
+      clientUnit: formData.entrustingUnit,
+      commissionDate: formData.commissionDate,
+      constructionPart: formData.constructionPart,
+      testCategory: formData.testCategory,
       // testDepth: ... 
     }
     
@@ -722,10 +794,11 @@ const saveData = async () => {
            records.value[currentIndex.value] = saved
            mapRecordToFormData(saved)
       }
-      // 保存成功后返回列表页面，确保列表显示更新后的状态
-      if (navigateTo) {
-        navigateTo('NuclearDensityRecordList')
+      // 保存成功后重新加载数据，确保显示最新状态
+      if (formData.entrustmentId) {
+        await loadData(formData.entrustmentId)
       }
+      // 保存成功后留在当前页面，不返回列表
     } else {
       alert('保存失败: ' + response.data.message)
     }
@@ -779,8 +852,11 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        // 保存签名到数据库并更新状态为已签字待提交
+        // 直接更新状态为已签字待提交(4)
+        formData.status = 4
+        // 保存签名和状态到数据库
         await saveData()
+        // 强制更新状态，确保不会被服务器返回的数据覆盖
         formData.status = 4
         alert('签名成功并已保存，状态已更新为已签字待提交')
       } else {

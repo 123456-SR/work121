@@ -47,7 +47,7 @@
 
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -70,13 +70,14 @@
         </template>
 
         <button
-          v-if="!draftMode"
+          v-if="!draftMode && formData.status === 3"
           @click="handleSign"
           class="btn btn-secondary btn-small"
         >
           签字
         </button>
         <button
+          v-if="!draftMode && (formData.status < 1 || formData.status === 2)"
           @click="saveData"
           class="btn btn-secondary btn-small"
         >
@@ -110,44 +111,44 @@
         </div>
     </div>
 
-    <form id="pdfForm" ref="pdfForm" method="post">
+    <form id="pdfForm" ref="pdfForm" method="post" :class="{ 'form-disabled': formData.status >= 1 }">
     <h2>轻型动力触探检测记录表</h2>
 
     <div class="header-info">
-        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;" :disabled="formData.status >= 1"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" :disabled="formData.status >= 1"></span>
     </div>
 
     <table>
         <!-- Row 1 -->
         <tr>
             <td class="label">工程名称</td>
-            <td colspan="4"><input type="text" v-model="formData.projectName"   name="projectName"></td>
+            <td colspan="4"><input type="text" v-model="formData.projectName"   name="projectName" :disabled="formData.status >= 1"></td>
             <td class="label">委托日期</td>
-            <td colspan="4"><input type="text" v-model="formData.commissionDate"   name="commissionDate"></td>
+            <td colspan="4"><input type="text" v-model="formData.commissionDate"   name="commissionDate" :disabled="formData.status >= 1"></td>
         </tr>
         <!-- Row 2 -->
         <tr>
             <td class="label">施工部位</td>
-            <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
+            <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart" :disabled="formData.status >= 1"></td>
             <td class="label">检测日期</td>
-            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate"></td>
+            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate" :disabled="formData.status >= 1"></td>
         </tr>
         <!-- Row 3 -->
         <tr>
             <td class="label">岩土性状</td>
-            <td colspan="4"><input type="text" v-model="formData.soilProperties"   name="soilProperties"></td>
+            <td colspan="4"><input type="text" v-model="formData.soilProperties"   name="soilProperties" :disabled="formData.status >= 1"></td>
             <td class="label">检测类别</td>
-            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory"></td>
+            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory" :disabled="formData.status >= 1"></td>
         </tr>
         <!-- Row 4: Params -->
         <tr>
             <td class="label">设计<br>承载力<br>(kPa)</td>
-            <td colspan="2"><input type="text" v-model="formData.designCapacity"   name="designCapacity"></td>
+            <td colspan="2"><input type="text" v-model="formData.designCapacity"   name="designCapacity" :disabled="formData.status >= 1"></td>
             <td class="label">锤重量<br>(kg)</td>
-            <td colspan="2"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight"></td>
+            <td colspan="2"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight" :disabled="formData.status >= 1"></td>
             <td class="label">落距<br>(cm)</td>
-            <td colspan="3"><input type="text" v-model="formData.dropDistance"   name="dropDistance"></td>
+            <td colspan="3"><input type="text" v-model="formData.dropDistance"   name="dropDistance" :disabled="formData.status >= 1"></td>
         </tr>
 
         <!-- Row 5: Table Header for Data -->
@@ -171,38 +172,38 @@
                 <!-- 左栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
                     <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" :disabled="formData.status >= 1"></textarea>
                     </div>
                     <div v-else>
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="formData.status >= 1"></textarea>
+                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="formData.status >= 1"></textarea>
+                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="formData.status >= 1"></textarea>
                     </div>
                 </td>
 
-                <td><input type="text" :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]"></td>
+                <td><input type="text" :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]" :disabled="formData.status >= 1"></td>
+                <td><input type="text" :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]" :disabled="formData.status >= 1"></td>
 
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;" :disabled="formData.status >= 1"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;" :disabled="formData.status >= 1"></td>
 
                 <!-- 右栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
                     <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" :disabled="formData.status >= 1"></textarea>
                     </div>
                     <div v-else>
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="formData.status >= 1"></textarea>
+                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="formData.status >= 1"></textarea>
+                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="formData.status >= 1"></textarea>
                     </div>
                 </td>
 
-                <td><input type="text" :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]"></td>
+                <td><input type="text" :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]" :disabled="formData.status >= 1"></td>
+                <td><input type="text" :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]" :disabled="formData.status >= 1"></td>
 
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;" :disabled="formData.status >= 1"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;" :disabled="formData.status >= 1"></td>
             </tr>
             </template>
         </template>
@@ -212,31 +213,31 @@
             <!-- Row: 检测依据 -->
             <tr>
                 <td class="label">检测依据</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis" :disabled="formData.status >= 1"></td>
             </tr>
             <!-- Row: 仪器设备 -->
             <tr>
                 <td class="label">仪器设备</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" :disabled="formData.status >= 1"></td>
             </tr>
             <!-- Row: 检测结论 -->
             <tr>
                 <td class="label" style="height: 60px;">检测结论</td>
                 <td colspan="9" class="left-align" style="vertical-align: top;">
-                    <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;"></textarea>
+                    <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;" :disabled="formData.status >= 1"></textarea>
                 </td>
             </tr>
             <!-- Row: 备注 -->
             <tr>
                 <td class="label">备注</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks" :disabled="formData.status >= 1"></td>
             </tr>
         </template>
         <template v-else>
             <!-- Row: 仪器设备 -->
             <tr>
                 <td class="label">仪器设备</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" :disabled="formData.status >= 1"></td>
             </tr>
         </template>
     </table>
@@ -496,14 +497,10 @@ const submitWorkflow = async (action) => {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            // Refresh
-            const record = records.value[currentIndex.value]
-            if (record) {
-                record.status = response.data.data // Update status
-                formData.status = response.data.data
-                if (action === 'REJECT' && request.rejectReason) {
-                    formData.rejectReason = request.rejectReason
-                }
+            // Reload data to reflect status change
+            const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
+            if (reloadId) {
+                loadData(reloadId)
             }
         } else {
             alert('操作失败: ' + response.data.message)
@@ -990,9 +987,13 @@ const handleSign = async () => {
              if (!formData.testDate) {
                  formData.testDate = formatDate(new Date())
              }
-             // 保存签名到数据库
+             // 更新状态为已签字待提交(4)
+             formData.status = 4
+             // 保存签名和状态到数据库
              await saveData()
-             alert('签名成功并已保存')
+             // 强制更新状态，确保不会被服务器返回的数据覆盖
+             formData.status = 4
+             alert('签名成功并已保存，状态已更新为已签字待提交')
         } else {
              alert('未找到您的电子签名，请先在个人中心上传')
         }
@@ -1007,6 +1008,10 @@ const saveData = async () => {
     if (formData.status === 0) {
         formData.status = 3
     }
+    // 如果状态是已签字待提交(4)，保持状态不变
+    else if (formData.status === 4) {
+        formData.status = 4
+    }
     
     saveCurrentToState()
     const record = records.value[currentIndex.value]
@@ -1016,17 +1021,18 @@ const saveData = async () => {
     try {
         const res = await axios.post('/api/light-dynamic-penetration/save', record)
         if (res.data.success) {
-            alert('保存成功，状态已更新为待签字')
+            if (formData.status === 3) {
+                alert('保存成功，状态已更新为待签字')
+            } else {
+                alert('保存成功')
+            }
             // Update record with returned data (especially ID)
             if (res.data.data) {
                 records.value[currentIndex.value] = res.data.data
                 // Update formData in case backend normalized something
                 mapRecordToFormData(records.value[currentIndex.value])
             }
-            // 保存成功后返回列表页面，确保列表显示更新后的状态
-            if (navigateTo) {
-                navigateTo('LightDynamicPenetrationRecordList')
-            }
+            // 保存成功后留在当前页面，不返回列表
         } else {
             alert('保存失败: ' + (res.data.message || '未知错误'))
         }
@@ -1218,6 +1224,13 @@ const saveData = async () => {
             .no-print {
                 display: none;
             }
+        }
+        
+        /* 禁用表单样式 */
+        .form-disabled input[type="text"],
+        .form-disabled textarea {
+            cursor: not-allowed;
+            background-color: #f5f5f5 !important;
         }
     
 </style>

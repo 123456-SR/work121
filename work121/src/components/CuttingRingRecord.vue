@@ -411,81 +411,67 @@ const submitWorkflow = async (action) => {
         let signatureData = null
     
         if (action === 'SUBMIT') {
-        // Role check: Only recordTester can submit
-        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
-            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
-            return
-        }
+            // Role check: Only recordTester can submit
+            if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+                alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
+                return
+            }
 
-        if (!formData.testerSignature) {
-            alert('请先进行检测人签字')
-            return
-        }
-        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
-    }
+            if (!formData.testerSignature) {
+                alert('请先进行检测人签字')
+                return
+            }
+            signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
+        } else if (action === 'AUDIT_PASS') {
+            // Role check: Only recordReviewer can audit
+            if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+                alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
+                return
+            }
 
-    const request = {
-        tableType: 'CUTTING_RING',
-        recordId: formData.id,
-        action: action,
-        userAccount: user.username,
-        signatureData: signatureData,
-        nextHandler: ''
-    }
-
-    if (action === 'REJECT') {
-        const reason = prompt('请输入打回原因:')
-        if (!reason) return
-        request.rejectReason = reason
-    }
-
-    if (action === 'AUDIT_PASS') {
-        // Role check: Only recordReviewer can audit
-        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
-            alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
-            return
-        }
-
-        // Auto fetch signature if missing
-        if (!formData.reviewerSignature) {
-            try {
-                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
-                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
-                     formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordReviewer) {
-                        formData.recordReviewer = user.fullName || user.username
-                     }
-                } else {
-                     alert('未找到您的电子签名，无法自动签名')
-                     return
+            // Auto fetch signature if missing
+            if (!formData.reviewerSignature) {
+                try {
+                    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                    if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                         formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                         if (!formData.recordReviewer) {
+                            formData.recordReviewer = user.fullName || user.username
+                         }
+                    } else {
+                         alert('未找到您的电子签名，无法自动签名')
+                         return
+                    }
+                } catch (e) {
+                    console.error('Auto sign error', e)
+                    alert('自动签名失败')
+                    return
                 }
-            } catch (e) {
-                console.error('Auto sign error', e)
-                alert('自动签名失败')
+            }
+            signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+        } else if (action === 'REJECT') {
+            // Role check: Only recordReviewer can reject
+            if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
+                alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
                 return
             }
         }
-        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
-        request.signatureData = signatureData
-    }
-    
-    // Add SIGN_APPROVE support if needed (though CuttingRing might use AUDIT_PASS for approval flow depending on implementation, 
-    // but assuming standard flow: SUBMIT -> AUDIT_PASS -> APPROVED. If there is a separate approval step, it should be handled.
-    // Based on other files, often AUDIT_PASS leads to status 4 or 5.
-    // Cutting Ring code shows: AUDIT_PASS -> 5 (if status 1->5? No, previous code didn't show next status logic explicitly in submitWorkflow, 
-    // it relies on backend or nextHandler? 
-    // Wait, the original code had:
-    // else if (action === 'REJECT') ...
-    
-    // Let's just fix the REJECT check for now.
-    
-    if (action === 'REJECT') {
-        // Role check: Only recordReviewer can reject
-        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
-            alert('您不是该单据的记录复核人 (' + formData.recordReviewer + ')，无权操作')
-            return
+
+        const request = {
+            tableType: 'CUTTING_RING',
+            recordId: formData.id,
+            action: action,
+            userAccount: user.username,
+            signatureData: signatureData,
+            nextHandler: ''
         }
-    }
+
+        if (action === 'REJECT') {
+            const reason = prompt('请输入打回原因:')
+            if (!reason) return
+            request.rejectReason = reason
+        }
+
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')

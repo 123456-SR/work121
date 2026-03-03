@@ -449,13 +449,13 @@ const isSameTesterReviewer = computed(() => {
 })
 
 const showSubmitButton = computed(() => {
-  return (formData.status == 0 || formData.status == 2 || formData.status == 4 || formData.status > 5) && !isSameTesterReviewer.value
+  if (formData.status == 4) return true
+  return (formData.status == 0 || formData.status == 2 || formData.status > 5) && !isSameTesterReviewer.value
 })
 
 const showAuditButtons = computed(() => {
   if (!currentId.value) return false
   if (formData.status == 1) return true
-  if (isSameTesterReviewer.value && (formData.status == 0 || formData.status == 2 || formData.status > 5)) return true
   return false
 })
 
@@ -643,6 +643,10 @@ const loadData = async (id) => {
     if (response.data.success && response.data.data) {
       const data = response.data.data
       mapDataToForm(data)
+      // 同步更新目录信息，保证导航正常
+      if (data.wtNum) {
+        await fetchDirectoryInfo(data.wtNum)
+      }
     } else {
       console.error('Failed to load data:', response.data.message)
     }
@@ -786,11 +790,29 @@ const handleSign = async () => {
       // }
       
       if (signed) {
+        console.log('Before save, formData.status:', formData.status)
+        // 设置状态为待签字，确保工作流能正确处理
+        formData.status = 3
+        console.log('After setting status to 3, formData.status:', formData.status)
         // 保存签名到数据库
         const saved = await saveForm(true)
+        console.log('Save result:', saved)
         if (saved) {
+          // 确保currentId有值
+          if (!currentId.value) {
+            alert('保存成功，但无法获取记录ID，无法进行工作流操作')
+            return
+          }
+          console.log('Before submitWorkflow, formData.status:', formData.status)
           // 调用工作流处理，将状态从待签字(3)变为已签字待提交(4)
-          await submitWorkflow('SIGN_TEST')
+          await submitWorkflow('SIGN')
+          console.log('After submitWorkflow, formData.status:', formData.status)
+          // 重新加载数据，确保显示最新状态
+          if (currentId.value) {
+            await loadData(currentId.value)
+          } else if (formData.unifiedNumber) {
+            await loadDataByWtNum(formData.unifiedNumber)
+          }
           alert('签名成功并已保存')
         } else {
           alert('签名成功，但保存失败')
@@ -815,7 +837,7 @@ const saveForm = async (silent = false) => {
   }
 
   // Get current user
-  const user = JSON.parse(localStorage.getItem('user'))
+  const user = JSON.parse(localStorage.getItem('userInfo'))
   const currentUserName = user ? (user.fullName || user.username) : '未知用户'
   
   // Set clientRegName if empty (new record)
@@ -837,7 +859,8 @@ const saveForm = async (silent = false) => {
     witness: formData.witness,
     clientRegName: formData.clientRegName, 
     // Map other fields
-    sampleStatus: formData.sampleStatus, // Maintain current status
+    sampleStatus: formData.sampleStatus, // Sample status description
+    status: formData.status, // Workflow status
     remarks: formData.remarks,
     projectRemarks: formData.remarks,
     testCategory: formData.testCategory,
@@ -872,19 +895,30 @@ const saveForm = async (silent = false) => {
     testItems: formData.testItems
   }
   
-  // If sampleStatus is empty or draft, set to '3' (Pending Sign)
-  if (!payload.sampleStatus || formData.status === 0) payload.sampleStatus = '3'
+  // If status is empty, set to '3' (Pending Sign)
+  if (!payload.status) payload.status = '3'
 
   try {
+    console.log('Save form request:', payload)
     const response = await axios.post('/api/entrustment/save', payload)
+    console.log('Save form response:', response.data)
     if (response.data.success) {
       if (response.data.id) {
         currentId.value = response.data.id
         // Also update the route or props if possible, but currentId is reactive
       }
-      // Update local status to Pending Sign
-      formData.status = 3
-      if (!silent) alert('保存成功，状态已更新为待签字')
+      // Update local status to Pending Sign only if not silent (not called from handleSign)
+      if (!silent) {
+        formData.status = 3
+        alert('保存成功，状态已更新为待签字')
+      }
+      // 保存成功后重新加载数据，确保显示最新状态
+      if (currentId.value) {
+        await loadData(currentId.value)
+      } else if (formData.unifiedNumber) {
+        await loadDataByWtNum(formData.unifiedNumber)
+      }
+      console.log('After save, formData.status:', formData.status)
       return true
     } else {
       if (!silent) alert('保存失败: ' + response.data.message)
@@ -892,7 +926,7 @@ const saveForm = async (silent = false) => {
     }
   } catch (error) {
     console.error('Save error:', error)
-    alert('保存出错')
+    alert('保存出错: ' + error.message)
     return false
   }
 }
@@ -945,13 +979,16 @@ const confirmSubmit = async () => {
 }
 
 const submitWorkflow = async (action) => {
+    console.log('submitWorkflow called with action:', action)
     const idToSubmit = currentId.value || props.id
+    console.log('idToSubmit:', idToSubmit)
     if (!idToSubmit) {
         alert('请先保存记录')
         return
     }
     
     const user = JSON.parse(localStorage.getItem('userInfo'))
+    console.log('user:', user)
     if (!user || !user.username) {
         alert('请先登录')
         return
@@ -973,7 +1010,7 @@ const submitWorkflow = async (action) => {
             return
         }
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
-    } else if (action === 'SIGN_TEST') {
+    } else if (action === 'SIGN_TEST' || action === 'SIGN') {
         // Handle test sign action
         if (!formData.testerSignature) {
             alert('请先进行检测人签字')
@@ -1050,16 +1087,23 @@ const submitWorkflow = async (action) => {
     }
 
     try {
+        console.log('Submit workflow request:', request)
         const response = await axios.post('/api/workflow/handle', request)
+        console.log('Submit workflow response:', response.data)
         if (response.data.success) {
             alert('操作成功')
-            await loadData(idToSubmit)
+            // 重新加载数据，确保显示最新状态
+            if (idToSubmit) {
+                await loadData(idToSubmit)
+            } else if (formData.unifiedNumber) {
+                await loadDataByWtNum(formData.unifiedNumber)
+            }
         } else {
             alert('操作失败: ' + response.data.message)
         }
     } catch (e) {
         console.error('Workflow error', e)
-        alert('操作出错')
+        alert('操作出错: ' + e.message)
     }
 }
 

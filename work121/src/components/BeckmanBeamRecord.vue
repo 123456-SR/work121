@@ -48,7 +48,7 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -1018,8 +1018,13 @@ const submitForm = async () => {
             const currentRecord = records.value[i]
             const currentFormData = JSON.parse(currentRecord.dataJson)
             
-            // 更新状态为待签字
-            currentFormData.status = 3
+            // 如果状态是草稿(0)，保存后改为待签字(3)
+            // 如果状态是已签字待提交(4)，保持状态不变
+            if (currentFormData.status === 0) {
+                currentFormData.status = 3
+            } else if (currentFormData.status === 4) {
+                currentFormData.status = 4
+            }
             
             const payload = {
                 id: currentRecord.id || null, 
@@ -1059,10 +1064,7 @@ const submitForm = async () => {
         // 3. 显示保存结果
         if (successCount === totalCount) {
             alert(`保存成功，共保存 ${successCount} 页数据，状态已更新为待签字`)
-            // 保存成功后返回列表页面，确保列表显示更新后的状态
-            if (navigateTo) {
-                navigateTo('BeckmanBeamRecordList')
-            }
+            // 保存成功后留在当前页面，不返回列表
         } else {
             alert(`保存完成，成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
         }
@@ -1108,8 +1110,11 @@ const handleSign = async () => {
       // Reviewer signature is handled in AUDIT_PASS action
       
       if (signed) {
-        // 保存签名到数据库并更新状态为已签字待提交
+        // 更新状态为已签字待提交(4)
+        formData.status = 4
+        // 保存签名和状态到数据库
         await saveData()
+        // 强制更新状态，确保不会被服务器返回的数据覆盖
         formData.status = 4
         alert('签名成功并已保存，状态已更新为已签字待提交')
       } else {
