@@ -367,6 +367,15 @@ const formData = reactive({
   companyPhone: '',
 })
 
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
+
 onMounted(() => {
   if (props.id) {
     loadData(props.id)
@@ -602,7 +611,7 @@ const loadData = async (entrustmentId) => {
       formData.entrustingUnit = ent.clientUnit
       formData.unifiedNumber = ent.wtNum
       formData.projectName = ent.projectName
-      formData.commissionDate = ent.commissionDate
+      formData.commissionDate = formatDate(ent.commissionDate)
       formData.constructionPart = ent.constructionPart
       formData.testCategory = ent.testCategory
       formData.witnessUnit = ent.witnessUnit
@@ -718,6 +727,17 @@ const saveData = async () => {
         // 如果状态是草稿(0)，保存后改为待签字(3)
         if (formData.status === 0) {
             formData.status = 3
+        }
+        
+        // 确保日期格式正确
+        if (formData.commissionDate) {
+            formData.commissionDate = formatDate(formData.commissionDate)
+        }
+        if (formData.testDate) {
+            formData.testDate = formatDate(formData.testDate)
+        }
+        if (formData.reportDate) {
+            formData.reportDate = formatDate(formData.reportDate)
         }
         
         const dataJsonObj = { ...formData }

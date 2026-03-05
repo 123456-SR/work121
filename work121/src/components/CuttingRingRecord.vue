@@ -1095,6 +1095,11 @@ const saveData = async () => {
     saveCurrentPageData()
     saveCurrentRecordState()
     
+    // 确保日期格式正确
+    if (formData.testDate) {
+      formData.testDate = formatDate(formData.testDate)
+    }
+    
     const dataJsonObj = { ...formData }
     delete dataJsonObj.tester
     delete dataJsonObj.reviewer
@@ -1128,6 +1133,11 @@ const saveData = async () => {
         if (currentRecord.value) {
           currentRecord.value.id = response.data.data.id
         }
+      }
+      // 重新加载数据以确保数据一致性
+      const idOrWtNum = formData.entrustmentId || props.wtNum || props.id
+      if (idOrWtNum) {
+        await loadData(idOrWtNum)
       }
     } else {
       alert('保存失败: ' + response.data.message)

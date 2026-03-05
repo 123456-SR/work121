@@ -975,6 +975,17 @@ const submitForm = async () => {
       formData.status = 3
     }
     
+    // 确保日期格式正确
+    if (formData.entrustDate) {
+      formData.entrustDate = formatDate(formData.entrustDate)
+    }
+    if (formData.testDate) {
+      formData.testDate = formatDate(formData.testDate)
+    }
+    if (formData.reportDate) {
+      formData.reportDate = formatDate(formData.reportDate)
+    }
+    
     // 获取当前登录用户信息
     const userInfoStr = localStorage.getItem('userInfo');
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : {};

@@ -327,6 +327,15 @@ const formData = reactive({
   approverSignature: ''
 })
 
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
+
 // 根据检测方法自动判断是否为“核子法”
 const isNuclearMethod = computed(() => {
   const method = (formData.testMethod || '').toString()
@@ -596,7 +605,7 @@ onMounted(() => {
           
           // 从record对象中获取字段值，优先于dataJson
           if (data.projectName) formData.projectName = data.projectName
-          if (data.commissionDate) formData.commissionDate = data.commissionDate
+          if (data.commissionDate) formData.commissionDate = new Date(data.commissionDate).toISOString().split('T')[0]
           if (data.constructionPart) formData.constructionPart = data.constructionPart
           if (data.testCategory) formData.testCategory = data.testCategory
           if (data.clientUnit) formData.clientUnit = data.clientUnit
@@ -762,7 +771,7 @@ onMounted(() => {
           // 委托单位：后端字段叫 clientUnit，这里既保存在 clientUnit，又映射到页面使用的 client
           formData.clientUnit = eData.clientUnit || ''
           formData.client = eData.clientUnit || ''
-          formData.commissionDate = eData.commissionDate || ''
+          formData.commissionDate = eData.commissionDate ? new Date(eData.commissionDate).toISOString().split('T')[0] : ''
           formData.constructionPart = eData.constructionPart || ''
           formData.testCategory = eData.testCategory || ''
           // 样品名称及状态：从委托单 sampleName + sampleStatus 拼接，中间用顿号隔开
@@ -908,9 +917,17 @@ onMounted(() => {
                              commonFields.forEach(field => {
                                  // 优先从顶级字段获取值，然后从dataJson中获取
                                  if (nRecord[field] !== undefined && nRecord[field] !== null && nRecord[field] !== '') {
-                                     formData[field] = nRecord[field]
+                                     if (field === 'commissionDate') {
+                                         formData[field] = new Date(nRecord[field]).toISOString().split('T')[0]
+                                     } else {
+                                         formData[field] = nRecord[field]
+                                     }
                                  } else if (nParsed[field] !== undefined) {
-                                     formData[field] = nParsed[field]
+                                     if (field === 'commissionDate') {
+                                         formData[field] = new Date(nParsed[field]).toISOString().split('T')[0]
+                                     } else {
+                                         formData[field] = nParsed[field]
+                                     }
                                  }
                              })
                              
@@ -1040,6 +1057,23 @@ const saveData = async () => {
     // 如果状态是草稿(0)，保存后改为待签字(3)
     if (formData.status === 0) {
       formData.status = 3
+    }
+    
+    // 确保日期格式正确
+    if (formData.commissionDate) {
+      formData.commissionDate = formatDate(formData.commissionDate)
+    }
+    if (formData.testDate) {
+      formData.testDate = formatDate(formData.testDate)
+    }
+    if (formData.reportDate) {
+      formData.reportDate = formatDate(formData.reportDate)
+    }
+    // 确保数据行中的日期格式正确
+    for (let i = 0; i < 8; i++) {
+      if (formData['date_' + i]) {
+        formData['date_' + i] = formatDate(formData['date_' + i])
+      }
     }
     
     const dataToSave = {

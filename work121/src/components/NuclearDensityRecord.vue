@@ -306,7 +306,7 @@ const submitWorkflow = async (action) => {
             nuclearModel: formData.equipment,
             clientUnit: formData.entrustingUnit,
             projectName: formData.projectName,
-            commissionDate: formData.commissionDate,
+            commissionDate: formData.commissionDate ? new Date(formData.commissionDate).toISOString().split('T')[0] : '',
             constructionPart: formData.constructionPart,
             testCategory: formData.testCategory
         }
@@ -470,7 +470,14 @@ const mapRecordToFormData = (record) => {
   formData.entrustingUnit = jsonData.entrustingUnit || record.clientUnit || ''
   formData.unifiedNumber = jsonData.unifiedNumber || record.wtNum || record.entrustmentId || ''
   formData.projectName = jsonData.projectName || record.projectName || ''
-  formData.commissionDate = jsonData.commissionDate || record.commissionDate || ''
+  // 确保委托日期只显示年月日部分
+  if (jsonData.commissionDate) {
+    formData.commissionDate = new Date(jsonData.commissionDate).toISOString().split('T')[0]
+  } else if (record.commissionDate) {
+    formData.commissionDate = new Date(record.commissionDate).toISOString().split('T')[0]
+  } else if (formData.commissionDate) {
+    formData.commissionDate = new Date(formData.commissionDate).toISOString().split('T')[0]
+  }
   formData.constructionPart = jsonData.constructionPart || record.constructionPart || ''
   formData.testCategory = jsonData.testCategory || record.testCategory || ''
   formData.equipment = jsonData.equipment || record.equipment || ''
@@ -753,7 +760,7 @@ const saveData = async () => {
       // Map other fields required by entity
       nuclearModel: formData.equipment,
       clientUnit: formData.entrustingUnit,
-      commissionDate: formData.commissionDate,
+      commissionDate: formData.commissionDate ? new Date(formData.commissionDate).toISOString().split('T')[0] : '',
       constructionPart: formData.constructionPart,
       testCategory: formData.testCategory,
       // testDepth: ... 

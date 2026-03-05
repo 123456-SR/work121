@@ -688,15 +688,10 @@ const saveCurrentToState = () => {
     record.clientUnit = formData.entrustingUnit
     record.wtNum = formData.unifiedNumber
     record.projectName = formData.projectName
-    // commissionDate is formatted string, entity expects Date?
-    // If backend accepts string in JSON (Jackson), it's fine. 
-    // But mapper inserts it. The entity field is Date.
-    // We should convert back if needed, or rely on Axios to send string and Backend to parse.
-    // Usually Spring Boot handles "yyyy-MM-dd".
-    record.commissionDate = formData.commissionDate 
-    
+    // 确保日期格式正确
+    record.commissionDate = formatDate(formData.commissionDate)
     record.constructionPart = formData.constructionPart
-    record.testDate = formData.testDate
+    record.testDate = formatDate(formData.testDate)
     record.soilProperty = formData.soilProperties
     record.testCategory = formData.testCategory
     record.designCapacity = formData.designCapacity
@@ -1013,6 +1008,14 @@ const saveData = async () => {
         formData.status = 4
     }
     
+    // 确保日期格式正确
+    if (formData.commissionDate) {
+        formData.commissionDate = formatDate(formData.commissionDate)
+    }
+    if (formData.testDate) {
+        formData.testDate = formatDate(formData.testDate)
+    }
+    
     saveCurrentToState()
     const record = records.value[currentIndex.value]
     // 确保状态字段被传递给后端
@@ -1032,7 +1035,8 @@ const saveData = async () => {
                 // Update formData in case backend normalized something
                 mapRecordToFormData(records.value[currentIndex.value])
             }
-            // 保存成功后留在当前页面，不返回列表
+            // 重新加载数据以确保数据一致性
+            loadData()
         } else {
             alert('保存失败: ' + (res.data.message || '未知错误'))
         }

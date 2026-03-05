@@ -346,6 +346,17 @@ const formData = reactive({
   status: 0 // 0:Draft, 1:PendingAudit, 2:Returned, 3:PendingSign, 5:Approved
 })
 
+// 日期格式化函数
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 // Status Text Helper
 const getStatusText = (status) => {
     const s = parseInt(status)
@@ -620,7 +631,7 @@ const mapRecordToFormData = (record) => {
   }
   if (record.equipment) formData.equipment = record.equipment
   if (record.testBasis) formData.standard = record.testBasis
-  if (record.commissionDate && !formData.testDate) formData.testDate = record.commissionDate // Fallback if testDate empty
+  if (record.commissionDate && !formData.testDate) formData.testDate = formatDate(record.commissionDate) // Fallback if testDate empty
   if (record.tester) formData.tester = record.tester
   if (record.reviewer) formData.reviewer = record.reviewer
   
@@ -818,6 +829,11 @@ const submitForm = async () => {
       formData.status = 3
     }
     
+    // 确保日期格式正确
+    if (formData.testDate) {
+      formData.testDate = formatDate(formData.testDate)
+    }
+    
     const submitData = {
       id: formData.id,
       entrustmentId: formData.entrustmentId || formData.unifiedNumber,
@@ -841,10 +857,8 @@ const submitForm = async () => {
              records.value[currentIndex.value].id = formData.id
          }
       }
-      // 保存成功后返回列表页面，确保列表显示更新后的状态
-      if (navigateTo) {
-        navigateTo('WaterReplacementRecordList')
-      }
+      // 重新加载数据以确保数据一致性
+      loadData(formData.entrustmentId || formData.unifiedNumber)
     } else {
       alert('保存失败: ' + response.data.message)
     }

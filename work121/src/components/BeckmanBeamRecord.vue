@@ -1009,6 +1009,14 @@ const submitForm = async () => {
             formData.status = 3
         }
         
+        // 确保日期格式正确
+        if (formData.commissionDate) {
+            formData.commissionDate = formatDate(formData.commissionDate)
+        }
+        if (formData.testDate) {
+            formData.testDate = formatDate(formData.testDate)
+        }
+        
         // 2. 保存所有页数据
         let successCount = 0
         let totalCount = records.value.length
@@ -1064,7 +1072,8 @@ const submitForm = async () => {
         // 3. 显示保存结果
         if (successCount === totalCount) {
             alert(`保存成功，共保存 ${successCount} 页数据，状态已更新为待签字`)
-            // 保存成功后留在当前页面，不返回列表
+            // 重新加载数据以确保数据一致性
+            await loadData(formData.entrustmentId)
         } else {
             alert(`保存完成，成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
         }
