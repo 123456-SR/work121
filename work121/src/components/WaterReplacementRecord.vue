@@ -76,6 +76,7 @@
         <button
           @click="submitForm"
           class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
         >
           保存
         </button>
@@ -110,22 +111,22 @@
     <h2>相对密度试验记录表（灌水法）</h2>
 
     <div class="header-info">
-        <span>工程部位：<input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>工程部位：<input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
     <div class="header-info">
-        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>最大干密度：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"> g/cm³</span>
-        <span>最小干密度：<input type="text" v-model="formData.minDryDensity"   name="minDryDensity" style="width: 80px; border-bottom: 1px solid black;"> g/cm³</span>
-        <span>最优含水率：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"> %</span>
-        <span>相对密度：<input type="text" v-model="formData.relativeDensity"   name="relativeDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>最大干密度：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
+        <span>最小干密度：<input type="text" v-model="formData.minDryDensity"   name="minDryDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
+        <span>最优含水率：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> %</span>
+        <span>相对密度：<input type="text" v-model="formData.relativeDensity"   name="relativeDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-info">
-        <span>水的密度：<input type="text" v-model="formData.waterDensity"   name="waterDensity" style="width: 80px; border-bottom: 1px solid black;"> g/cm³</span>
-        <span>仪器设备：<input type="text" v-model="formData.equipment"   name="equipment" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>检测类别：<input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>水的密度：<input type="text" v-model="formData.waterDensity"   name="waterDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
+        <span>仪器设备：<input type="text" v-model="formData.equipment"   name="equipment" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>检测类别：<input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 100px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
 
     <table>
@@ -133,14 +134,14 @@
         <tr>
             <td colspan="4" class="label" style="width: 20%;">取样位置</td>
             <template v-for="(n, i_idx) in 4" :key="i_idx">
-            <td colspan="4"><input type="text" :name="'samplingLocation_page' + currentPage + '_' + i_idx" v-model="formData['samplingLocation_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="4"><input type="text" :name="'samplingLocation_page' + currentPage + '_' + i_idx" v-model="formData['samplingLocation_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">套环体积</td>
             <td class="label">cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
@@ -148,42 +149,42 @@
             <td class="label">初始</td>
             <td class="label">cm</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'initialWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['initialWaterLevel_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'initialWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['initialWaterLevel_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td class="label">终了</td>
             <td class="label">cm</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'finalWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['finalWaterLevel_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'finalWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['finalWaterLevel_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">储水桶面积</td>
             <td class="label">cm²</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'tankArea_page' + currentPage + '_' + i_idx" v-model="formData['tankArea_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'tankArea_page' + currentPage + '_' + i_idx" v-model="formData['tankArea_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">试坑体积</td>
             <td class="label">cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'pitVolume_page' + currentPage + '_' + i_idx" v-model="formData['pitVolume_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'pitVolume_page' + currentPage + '_' + i_idx" v-model="formData['pitVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">试样质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'sampleMass_page' + currentPage + '_' + i_idx" v-model="formData['sampleMass_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'sampleMass_page' + currentPage + '_' + i_idx" v-model="formData['sampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">试样湿密度</td>
             <td class="label">g/cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
 
@@ -193,42 +194,42 @@
             <td class="label">编号</td>
             <td class="label">/</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'moistureNo_page' + currentPage + '_' + i_idx" v-model="formData['moistureNo_page' + currentPage + '_' + i_idx]"></td>
+            <td><input type="text" :name="'moistureNo_page' + currentPage + '_' + i_idx" v-model="formData['moistureNo_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td class="label">容器质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'containerMass_page' + currentPage + '_' + i_idx" v-model="formData['containerMass_page' + currentPage + '_' + i_idx]"></td>
+            <td><input type="text" :name="'containerMass_page' + currentPage + '_' + i_idx" v-model="formData['containerMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td class="label">容器+湿样质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'wetSampleMass_page' + currentPage + '_' + i_idx" v-model="formData['wetSampleMass_page' + currentPage + '_' + i_idx]"></td>
+            <td><input type="text" :name="'wetSampleMass_page' + currentPage + '_' + i_idx" v-model="formData['wetSampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td class="label">容器+干样质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'drySampleMass_page' + currentPage + '_' + i_idx" v-model="formData['drySampleMass_page' + currentPage + '_' + i_idx]"></td>
+            <td><input type="text" :name="'drySampleMass_page' + currentPage + '_' + i_idx" v-model="formData['drySampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td class="label">含水率</td>
             <td class="label">%</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'moistureContent_page' + currentPage + '_' + i_idx" v-model="formData['moistureContent_page' + currentPage + '_' + i_idx]"></td>
+            <td><input type="text" :name="'moistureContent_page' + currentPage + '_' + i_idx" v-model="formData['moistureContent_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td class="label">平均含水率</td>
             <td class="label">%</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
 
@@ -237,27 +238,27 @@
             <td colspan="3" class="label">实测干密度</td>
             <td class="label">g/cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'measuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['measuredDryDensity_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'measuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['measuredDryDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">平均实测干密度</td>
             <td class="label">g/cm³</td>
             <template v-for="(n, i_idx) in 4" :key="i_idx">
-            <td colspan="4"><input type="text" :name="'avgMeasuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgMeasuredDryDensity_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="4"><input type="text" :name="'avgMeasuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgMeasuredDryDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">相对密度</td>
             <td class="label"></td>
             <template v-for="(n, i_idx) in 4" :key="i_idx">
-            <td colspan="4"><input type="text" :name="'relativeDensity_page' + currentPage + '_' + i_idx" v-model="formData['relativeDensity_page' + currentPage + '_' + i_idx]"></td>
+            <td colspan="4"><input type="text" :name="'relativeDensity_page' + currentPage + '_' + i_idx" v-model="formData['relativeDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </template>
         </tr>
         <tr>
             <td colspan="4" class="label">备注</td>
             <td colspan="16" class="left-align" style="height: 60px; vertical-align: top;">
-                <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;"></textarea>
+                <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;" :disabled="!isEditable"></textarea>
             </td>
         </tr>
     </table>
@@ -319,6 +320,10 @@ const totalPages = computed(() => {
   return formData.totalPages || 1
 })
 
+const isEditable = computed(() => {
+  return formData.status == 0 || formData.status == 2
+})
+
 const formData = reactive({
   id: '',
   entrustmentId: '',
@@ -354,21 +359,18 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 3: return '待签字'
         case 4: return '已签字待提交'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 13: return '待签字'
         case 14: return '已签字待提交'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 23: return '待签字'
         case 24: return '已签字待提交'
         case 25: return '审核通过待批准'
         default: return '未知'
@@ -382,21 +384,18 @@ const getStatusColor = (status) => {
         case 0: return '#6c757d' // secondary
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
-        case 3: return '#ffc107' // warning
         case 4: return '#17a2b8' // info
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
-        case 13: return '#ffc107' // warning
         case 14: return '#17a2b8' // info
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
-        case 23: return '#ffc107' // warning
         case 24: return '#17a2b8' // info
         case 25: return '#28a745' // success
         default: return '#6c757d'
@@ -1107,10 +1106,7 @@ const submitForm = async () => {
     saveCurrentPageData()
     saveCurrentRecordState()
     
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-      formData.status = 3
-    }
+    // 保存后状态不变
     
     const submitData = {
       id: formData.id,
@@ -1127,7 +1123,7 @@ const submitForm = async () => {
     
     const response = await axios.post('/api/water-replacement/save', submitData)
     if (response.data.success) {
-      alert('保存成功，状态已更新为待签字')
+      alert('保存成功')
       if (response.data.data && response.data.data.id) {
          formData.id = response.data.data.id
          // Update current record
@@ -1318,17 +1314,25 @@ const previewPdf = () => {
             text-align: left;
             padding-left: 10px;
         }
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 98%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             font-family: inherit;
             font-size: inherit;
             background-color: transparent;
             text-align: center;
+            padding: 2px 4px;
         }
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         textarea {
             resize: none;

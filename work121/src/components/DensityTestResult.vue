@@ -119,12 +119,12 @@
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
+    <h2>原位密度检测结果</h2>
+
     <div class="header-info" style="justify-content: space-between;">
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black; text-align: left;" disabled></span>
         <span></span> <!-- Placeholder for layout balance if needed -->
     </div>
-
-    <h2>原位密度检测结果</h2>
 
     <table>
         <!-- Header Rows -->
@@ -1124,6 +1124,11 @@ const previewPdf = () => {
             font-family: inherit; /* Inherit font */
             font-size: inherit;
             background-color: transparent; /* 与周围背景保持一致 */
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         .left-align input {
             text-align: left;

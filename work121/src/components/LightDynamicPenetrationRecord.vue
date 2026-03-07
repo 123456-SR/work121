@@ -73,6 +73,7 @@
         <button
           @click="saveData"
           class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
         >
           保存
         </button>
@@ -108,40 +109,40 @@
     <h2>轻型动力触探检测记录表</h2>
 
     <div class="header-info">
-        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
 
     <table>
         <!-- Row 1 -->
         <tr>
             <td class="label">工程名称</td>
-            <td colspan="4"><input type="text" v-model="formData.projectName"   name="projectName"></td>
+            <td colspan="4"><input type="text" v-model="formData.projectName"   name="projectName" :disabled="!isEditable"></td>
             <td class="label">委托日期</td>
-            <td colspan="4"><input type="text" v-model="formData.commissionDate"   name="commissionDate"></td>
+            <td colspan="4"><input type="text" v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 2 -->
         <tr>
             <td class="label">施工部位</td>
-            <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
+            <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart" :disabled="!isEditable"></td>
             <td class="label">检测日期</td>
-            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate"></td>
+            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 3 -->
         <tr>
             <td class="label">岩土性状</td>
-            <td colspan="4"><input type="text" v-model="formData.soilProperties"   name="soilProperties"></td>
+            <td colspan="4"><input type="text" v-model="formData.soilProperties"   name="soilProperties" :disabled="!isEditable"></td>
             <td class="label">检测类别</td>
-            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory"></td>
+            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 4: Params -->
         <tr>
             <td class="label">设计<br>承载力<br>(kPa)</td>
-            <td colspan="2"><input type="text" v-model="formData.designCapacity"   name="designCapacity"></td>
+            <td colspan="2"><input type="text" v-model="formData.designCapacity"   name="designCapacity" :disabled="!isEditable"></td>
             <td class="label">锤重量<br>(kg)</td>
-            <td colspan="2"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight"></td>
+            <td colspan="2"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight" :disabled="!isEditable"></td>
             <td class="label">落距<br>(cm)</td>
-            <td colspan="3"><input type="text" v-model="formData.dropDistance"   name="dropDistance"></td>
+            <td colspan="3"><input type="text" v-model="formData.dropDistance"   name="dropDistance" :disabled="!isEditable"></td>
         </tr>
 
         <!-- Row 5: Table Header for Data -->
@@ -165,38 +166,38 @@
                 <!-- 左栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
                     <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" :disabled="!isEditable"></textarea>
                     </div>
                     <div v-else>
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
                     </div>
                 </td>
 
-                <td><input type="text" :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]"></td>
+                <td><input type="text" :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
 
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
 
                 <!-- 右栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
                     <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;"></textarea>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" :disabled="!isEditable"></textarea>
                     </div>
                     <div v-else>
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
-                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;"></textarea>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
                     </div>
                 </td>
 
-                <td><input type="text" :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]"></td>
-                <td><input type="text" :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]"></td>
+                <td><input type="text" :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
 
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;"></td>
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
+                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
             </tr>
             </template>
         </template>
@@ -206,31 +207,31 @@
             <!-- Row: 检测依据 -->
             <tr>
                 <td class="label">检测依据</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis" :disabled="!isEditable"></td>
             </tr>
             <!-- Row: 仪器设备 -->
             <tr>
                 <td class="label">仪器设备</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" :disabled="!isEditable"></td>
             </tr>
             <!-- Row: 检测结论 -->
             <tr>
                 <td class="label" style="height: 60px;">检测结论</td>
                 <td colspan="9" class="left-align" style="vertical-align: top;">
-                    <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;"></textarea>
+                    <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;" :disabled="!isEditable"></textarea>
                 </td>
             </tr>
             <!-- Row: 备注 -->
             <tr>
                 <td class="label">备注</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks" :disabled="!isEditable"></td>
             </tr>
         </template>
         <template v-else>
             <!-- Row: 仪器设备 -->
             <tr>
                 <td class="label">仪器设备</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment"></td>
+                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" :disabled="!isEditable"></td>
             </tr>
         </template>
     </table>
@@ -283,6 +284,10 @@ const draftMode = computed(() => props.draftMode)
 const records = ref([])
 const currentIndex = ref(0)
 
+const isEditable = computed(() => {
+  return formData.status == 0 || formData.status == 2
+})
+
 const formData = reactive({
   entrustingUnit: '',
   unifiedNumber: '',
@@ -319,21 +324,18 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 3: return '待签字'
         case 4: return '已签字待提交'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 13: return '待签字'
         case 14: return '已签字待提交'
         case 15: return '审核通过'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 23: return '待签字'
         case 24: return '已签字待提交'
         case 25: return '审核通过'
         default: return '未知'
@@ -347,21 +349,18 @@ const getStatusColor = (status) => {
         case 0: return '#6c757d' // secondary
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
-        case 3: return '#ffc107' // warning
         case 4: return '#17a2b8' // info
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
-        case 13: return '#ffc107' // warning
         case 14: return '#17a2b8' // info
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
-        case 23: return '#ffc107' // warning
         case 24: return '#17a2b8' // info
         case 25: return '#28a745' // success
         default: return '#6c757d'
@@ -1041,10 +1040,7 @@ const handleSign = async () => {
 }
 
 const saveData = async () => {
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-        formData.status = 3
-    }
+    // 保存后状态不变
     
     saveCurrentToState()
     const record = records.value[currentIndex.value]
@@ -1054,7 +1050,7 @@ const saveData = async () => {
     try {
         const res = await axios.post('/api/light-dynamic-penetration/save', record)
         if (res.data.success) {
-            alert('保存成功，状态已更新为待签字')
+            alert('保存成功')
             // Update record with returned data (especially ID)
             if (res.data.data) {
                 records.value[currentIndex.value] = res.data.data
@@ -1206,20 +1202,28 @@ const saveData = async () => {
             text-align: left;
             padding-left: 10px;
         }
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 98%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             font-family: inherit;
             font-size: inherit;
             background-color: transparent;
             text-align: center;
+            padding: 2px 4px;
         }
         .left-align input[type="text"] {
             text-align: left;
         }
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         textarea {
             resize: none;

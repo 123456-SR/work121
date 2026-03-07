@@ -117,7 +117,7 @@
 
     <div class="header-info">
         <div>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
-        <div>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
+        <div>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></div>
     </div>
 
     <!-- Table 1: Header Info (Rows 1-6) -->
@@ -965,6 +965,11 @@ const previewPdf = () => {
             font-family: inherit;
             font-size: inherit;
             background: transparent;
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         .label {
             text-align: center;
