@@ -128,7 +128,7 @@
 
     <div class="header-info">
         <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
 
     <table>
@@ -371,7 +371,6 @@ const getStatusText = (status) => {
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
-    case 3: return '待签字'
     case 4: return '已签字待提交'
     case 5: return '审核通过待批准'
     case 6: return '已批准'
@@ -380,7 +379,6 @@ const getStatusText = (status) => {
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
-    case 13: return '待签字'
     case 14: return '已签字待提交'
     case 15: return '审核通过待批准'
     case 16: return '已批准'
@@ -389,7 +387,6 @@ const getStatusText = (status) => {
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
-    case 23: return '待签字'
     case 24: return '已签字待提交'
     case 25: return '审核通过待批准'
     case 26: return '已批准'
@@ -405,7 +402,6 @@ const getStatusColor = (status) => {
     case 0: return '#6c757d' // secondary
     case 1: return '#007bff' // primary
     case 2: return '#dc3545' // danger
-    case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
     case 5: return '#ff8c00' // orange
     case 6: return '#28a745' // success
@@ -414,7 +410,6 @@ const getStatusColor = (status) => {
     case 10: return '#6c757d' // secondary
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
-    case 13: return '#ffc107' // warning
     case 14: return '#17a2b8' // info
     case 15: return '#ff8c00' // orange
     case 16: return '#28a745' // success
@@ -423,7 +418,6 @@ const getStatusColor = (status) => {
     case 20: return '#6c757d' // secondary
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
-    case 23: return '#ffc107' // warning
     case 24: return '#17a2b8' // info
     case 25: return '#ff8c00' // orange
     case 26: return '#28a745' // success
@@ -814,8 +808,8 @@ const handleSign = async () => {
       let signed = false
 
       // Match Tester
-      if (!formData.recordTester || formData.recordTester === currentAccount || formData.recordTester === currentRealName) {
-        if (!formData.recordTester) formData.recordTester = currentRealName
+      if (!formData.recordTester || formData.recordTester === currentAccount || formData.recordTester === currentName) {
+        if (!formData.recordTester) formData.recordTester = currentName
         formData.inspectSignature = imgSrc
         signed = true
       }
@@ -825,7 +819,7 @@ const handleSign = async () => {
         await saveData()
         alert('签名成功并已保存')
       } else {
-        alert(`当前用户(${currentRealName})与表单中的检测人员(${formData.recordTester})不匹配，无法签名`)
+        alert(`当前用户(${currentName})与表单中的检测人员(${formData.recordTester})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')
@@ -1187,6 +1181,9 @@ const previewPdf = () => {
         }
         input[type="text"]:focus, textarea:focus {
             background-color: #f0f8ff;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus {
+            background-color: transparent;
         }
         textarea {
             resize: none;

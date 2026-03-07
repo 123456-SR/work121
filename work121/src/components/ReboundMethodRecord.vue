@@ -96,6 +96,7 @@
         <button
           @click="submitForm"
           class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
         >
           保存
         </button>
@@ -106,11 +107,11 @@
     <h2>回弹法检测混凝土抗压强度记录表</h2>
 
     <div class="header-top">
-        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-top">
-        <span>样品编号：<input type="text" v-model="formData.sampleNo"   name="sampleNo" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>样品编号：<input type="text" v-model="formData.sampleNo"   name="sampleNo" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
     </div>
 
     <table>
@@ -128,31 +129,31 @@
         <!-- Header Info -->
         <tr>
             <td colspan="2" class="label">工程名称</td>
-            <td colspan="13" class="left-align"><input type="text" v-model="formData.projectName"   name="projectName" style="text-align: left;"></td>
+            <td colspan="13" class="left-align"><input type="text" v-model="formData.projectName"   name="projectName" style="text-align: left;" :disabled="!isEditable"></td>
             <td colspan="3" class="label">委托日期</td>
-            <td colspan="3"><input type="text" v-model="formData.commissionDate"   name="commissionDate"></td>
+            <td colspan="3"><input type="text" v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable"></td>
         </tr>
         <tr>
             <td colspan="2" class="label">结构部位</td>
-            <td colspan="5"><input type="text" v-model="formData.structurePart"   name="structurePart"></td>
+            <td colspan="5"><input type="text" v-model="formData.structurePart"   name="structurePart" :disabled="!isEditable"></td>
             <td colspan="3" class="label">检测类别</td>
-            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory"></td>
+            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable"></td>
             <td colspan="3" class="label">浇筑日期</td>
-            <td colspan="4"><input type="text" v-model="formData.pourDate"   name="pourDate"></td>
+            <td colspan="4"><input type="text" v-model="formData.pourDate"   name="pourDate" :disabled="!isEditable"></td>
         </tr>
         <tr>
             <td colspan="2" class="label">样品状态</td>
-            <td colspan="5"><input type="text" v-model="formData.sampleStatus"   name="sampleStatus"></td>
+            <td colspan="5"><input type="text" v-model="formData.sampleStatus"   name="sampleStatus" :disabled="!isEditable"></td>
             <td colspan="3" class="label">测试角度</td>
-            <td colspan="4"><input type="text" v-model="formData.testAngle"   name="testAngle"></td>
+            <td colspan="4"><input type="text" v-model="formData.testAngle"   name="testAngle" :disabled="!isEditable"></td>
             <td colspan="3" class="label">检测日期</td>
-            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate"></td>
+            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate" :disabled="!isEditable"></td>
         </tr>
         <tr>
             <td colspan="2" class="label">设计指标</td>
-            <td colspan="5"><input type="text" v-model="formData.designIndex"   name="designIndex"></td>
+            <td colspan="5"><input type="text" v-model="formData.designIndex"   name="designIndex" :disabled="!isEditable"></td>
             <td colspan="7" class="label">构件厚度或骨料最大粒径</td>
-            <td colspan="7"><input type="text" v-model="formData.aggregateSize"   name="aggregateSize"></td>
+            <td colspan="7"><input type="text" v-model="formData.aggregateSize"   name="aggregateSize" :disabled="!isEditable"></td>
         </tr>
 
         <!-- Data Table Header -->
@@ -175,46 +176,46 @@
         <tr>
             <td>{{ (i_idx + 1) }}</td>
             <template v-for="(n, j_idx) in 16" :key="j_idx">
-            <td><input type="text" :name="'reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)" v-model="formData['reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)]"></td>
+            <td><input type="text" :name="'reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)" v-model="formData['reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)]" :disabled="!isEditable"></td>
             </template>
-            <td><input type="text" :name="'avgRebound_' + (i_idx + 1)" v-model="formData['avgRebound_' + (i_idx + 1)]"></td>
-            <td><input type="text" :name="'carbonDepth_' + (i_idx + 1)" v-model="formData['carbonDepth_' + (i_idx + 1)]"></td>
-            <td><input type="text" :name="'estimatedStrength_' + (i_idx + 1)" v-model="formData['estimatedStrength_' + (i_idx + 1)]"></td>
-            <td><input type="text" :name="'correctedStrength_' + (i_idx + 1)" v-model="formData['correctedStrength_' + (i_idx + 1)]"></td>
+            <td><input type="text" :name="'avgRebound_' + (i_idx + 1)" v-model="formData['avgRebound_' + (i_idx + 1)]" :disabled="!isEditable"></td>
+            <td><input type="text" :name="'carbonDepth_' + (i_idx + 1)" v-model="formData['carbonDepth_' + (i_idx + 1)]" :disabled="!isEditable"></td>
+            <td><input type="text" :name="'estimatedStrength_' + (i_idx + 1)" v-model="formData['estimatedStrength_' + (i_idx + 1)]" :disabled="!isEditable"></td>
+            <td><input type="text" :name="'correctedStrength_' + (i_idx + 1)" v-model="formData['correctedStrength_' + (i_idx + 1)]" :disabled="!isEditable"></td>
         </tr>
         </template>
 
         <!-- Summary Section -->
         <tr>
             <td colspan="3" class="label">平均强度值<br>MPa</td>
-            <td colspan="2"><input type="text" v-model="formData.avgStrength"   name="avgStrength"></td>
+            <td colspan="2"><input type="text" v-model="formData.avgStrength"   name="avgStrength" :disabled="!isEditable"></td>
             <td colspan="3" class="label">标准差<br>MPa</td>
-            <td colspan="2"><input type="text" v-model="formData.stdDev"   name="stdDev"></td>
+            <td colspan="2"><input type="text" v-model="formData.stdDev"   name="stdDev" :disabled="!isEditable"></td>
             <td colspan="3" class="label">变异系<br>数%</td>
-            <td colspan="2"><input type="text" v-model="formData.coefVariation"   name="coefVariation"></td>
+            <td colspan="2"><input type="text" v-model="formData.coefVariation"   name="coefVariation" :disabled="!isEditable"></td>
             <td colspan="3" class="label">构件强度推<br>定值 MPa</td>
-            <td colspan="3"><input type="text" v-model="formData.compEstimatedStrength"   name="compEstimatedStrength"></td>
+            <td colspan="3"><input type="text" v-model="formData.compEstimatedStrength"   name="compEstimatedStrength" :disabled="!isEditable"></td>
         </tr>
         <tr>
             <td colspan="2" class="label">仪器设备</td>
-            <td colspan="11" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" style="text-align: left;"></td>
+            <td colspan="11" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" style="text-align: left;" :disabled="!isEditable"></td>
             <td colspan="4" class="label">碳化平均值<br>mm</td>
-            <td colspan="4"><input type="text" v-model="formData.avgCarbonation"   name="avgCarbonation"></td>
+            <td colspan="4"><input type="text" v-model="formData.avgCarbonation"   name="avgCarbonation" :disabled="!isEditable"></td>
         </tr>
         <tr>
             <td colspan="2" class="label">依据标准</td>
-            <td colspan="11" class="left-align"><input type="text" v-model="formData.standard"   name="standard" style="text-align: left;"></td>
+            <td colspan="11" class="left-align"><input type="text" v-model="formData.standard"   name="standard" style="text-align: left;" :disabled="!isEditable"></td>
             <td colspan="4" class="label">率定值</td>
             <td colspan="4" class="left-align">
 
-                检测前：<input type="text" v-model="formData.calibrationBefore"   name="calibrationBefore" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;"><br>
-                检测后：<input type="text" v-model="formData.calibrationAfter"   name="calibrationAfter" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;">
+                检测前：<input type="text" v-model="formData.calibrationBefore"   name="calibrationBefore" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;" :disabled="!isEditable"><br>
+                检测后：<input type="text" v-model="formData.calibrationAfter"   name="calibrationAfter" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;" :disabled="!isEditable">
             </td>
         </tr>
         <tr>
             <td colspan="2" class="label">结论</td>
             <td colspan="19" class="left-align" style="height: 40px;">
-                <input type="text" v-model="formData.conclusion"   name="conclusion" style="text-align: left; width: 100%;">
+                <input type="text" v-model="formData.conclusion"   name="conclusion" style="text-align: left; width: 100%;" :disabled="!isEditable">
             </td>
         </tr>
         <tr>
@@ -226,7 +227,7 @@
         <tr>
             <td colspan="2" class="label">备注</td>
             <td colspan="19" class="left-align" style="height: 40px;">
-                <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;"></textarea>
+                <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;" :disabled="!isEditable"></textarea>
             </td>
         </tr>
     </table>
@@ -283,6 +284,10 @@ const records = ref([])
 const currentIndex = ref(0)
 const totalRecords = computed(() => records.value.length)
 
+const isEditable = computed(() => {
+  return formData.status == 0 || formData.status == 2
+})
+
 const formData = reactive({
   id: '',
   entrustmentId: '',
@@ -332,7 +337,7 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
-        case 3: return '待签字'
+        case 4: return '已签字待提交'
         case 5: return '已通过'
         default: return '未知'
     }
@@ -351,7 +356,7 @@ const getStatusColor = (status) => {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
-        case 3: return '#FF9800' // Orange
+        case 4: return '#17a2b8' // Info
         case 5: return '#4CAF50' // Green
         default: return '#9E9E9E' // Grey
     }
@@ -893,10 +898,7 @@ const previewPdf = () => {
 
 const submitForm = async () => {
   try {
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-      formData.status = 3
-    }
+    // 保存后状态不变
     
     // 确保日期格式正确
     if (formData.commissionDate) {
@@ -1250,17 +1252,25 @@ const handleSign = async () => {
             text-align: left;
             padding-left: 5px;
         }
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 98%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             font-family: inherit;
             font-size: inherit;
             background-color: transparent;
             text-align: center;
+            padding: 2px 4px;
         }
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         textarea {
             resize: none;

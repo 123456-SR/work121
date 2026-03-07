@@ -118,7 +118,7 @@
     <input type="hidden" v-model="formData.approverSignature" name="approverSignature">
     <div class="header-top">
         <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-top">
         <span>样品编号：<input type="text" v-model="formData.sampleNumber"   name="sampleNumber" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
@@ -954,6 +954,9 @@ const previewPdf = () => {
         }
         input[type="text"]:focus, textarea:focus {
             background-color: #f0f8ff;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus {
+            background-color: transparent;
         }
         textarea {
             resize: none;

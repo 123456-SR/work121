@@ -110,7 +110,7 @@
     <div class="header-info">
         <span>单元工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
      <div class="header-info">
         <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
@@ -1022,6 +1022,9 @@ const previewPdf = () => {
         }
         input[type="text"]:focus, textarea:focus {
             background-color: #f0f8ff;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus {
+            background-color: transparent;
         }
         textarea {
             resize: none;

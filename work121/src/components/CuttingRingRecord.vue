@@ -75,6 +75,7 @@
         <button
           @click="saveData"
           class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
         >
           保存
         </button>
@@ -106,21 +107,21 @@
     <h2>原位密度检测记录表（环刀法）</h2>
 
     <div class="header-info">
-        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-info">
-        <span>施工部位：<input type="text" v-model="formData.constructionLocation"   name="constructionLocation" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>施工部位：<input type="text" v-model="formData.constructionLocation"   name="constructionLocation" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
     <!-- 隐藏字段：检测类别不在页面上展示，但仍随表单提交 -->
     <input type="hidden" v-model="formData.testType" name="testType" />
     <div class="header-info">
-        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;"></span>
-        <span>检测日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>检测日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
 
     <table>
@@ -153,63 +154,63 @@
             <!-- 含水率测定改为 4 行结构 -->
             <tr>
                 <!-- 样品基本信息列：首行展示 -->
-                <td rowspan="4"><input type="text" :name="'sampleNo_page' + currentPage + '_' + i_idx" v-model="formData['sampleNo_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="4"><input type="text" :name="'location_page' + currentPage + '_' + i_idx" v-model="formData['location_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="4"><input type="text" :name="'status_page' + currentPage + '_' + i_idx" v-model="formData['status_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="4"><input type="text" :name="'sampleNo_page' + currentPage + '_' + i_idx" v-model="formData['sampleNo_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="4"><input type="text" :name="'location_page' + currentPage + '_' + i_idx" v-model="formData['location_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="4"><input type="text" :name="'status_page' + currentPage + '_' + i_idx" v-model="formData['status_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
                 <!-- 环刀相关：第一把环刀（上 2 行一格） -->
-                <td rowspan="2"><input type="text" :name="'ringNo_page' + currentPage + '_' + i_idx" v-model="formData['ringNo_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringMass_page' + currentPage + '_' + i_idx" v-model="formData['ringMass_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringWetMass_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringNo_page' + currentPage + '_' + i_idx" v-model="formData['ringNo_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'ringMass_page' + currentPage + '_' + i_idx" v-model="formData['ringMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'ringWetMass_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
                 
                 <!-- Moisture Box 1 -->
-                <td><input type="text" :name="'boxNo1_page' + currentPage + '_' + i_idx" v-model="formData['boxNo1_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxMass1_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxWetMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass1_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxDryMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass1_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'moisture1_page' + currentPage + '_' + i_idx" v-model="formData['moisture1_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxNo1_page' + currentPage + '_' + i_idx" v-model="formData['boxNo1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxMass1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxWetMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxDryMass1_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'moisture1_page' + currentPage + '_' + i_idx" v-model="formData['moisture1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
 
                 <!-- 结果列：第一把环刀对应的数据（行 1-2） -->
-                <td rowspan="2"><input type="text" :name="'avgMoisture1_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture1_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'wetDensity1_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity1_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'dryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity1_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="4"><input type="text" :name="'avgDryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity1_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="4"><input type="text" :name="'compaction1_page' + currentPage + '_' + i_idx" v-model="formData['compaction1_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgMoisture1_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'wetDensity1_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'dryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="4"><input type="text" :name="'avgDryDensity1_page' + currentPage + '_' + i_idx" v-model="formData['avgDryDensity1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="4"><input type="text" :name="'compaction1_page' + currentPage + '_' + i_idx" v-model="formData['compaction1_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </tr>
             <tr>
                 <!-- Moisture Box 2 -->
-                <td><input type="text" :name="'boxNo2_page' + currentPage + '_' + i_idx" v-model="formData['boxNo2_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxMass2_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass2_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxDryMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass2_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'moisture2_page' + currentPage + '_' + i_idx" v-model="formData['moisture2_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxNo2_page' + currentPage + '_' + i_idx" v-model="formData['boxNo2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxMass2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxDryMass2_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'moisture2_page' + currentPage + '_' + i_idx" v-model="formData['moisture2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </tr>
             <tr>
                 <!-- 第二把环刀（下 2 行一格），使用独立字段 ringNo2_* 等。
                      注意：必须先画环刀列，再画含水率列，才能保证列与表头对齐。 -->
-                <td rowspan="2"><input type="text" :name="'ringNo2_page' + currentPage + '_' + i_idx" v-model="formData['ringNo2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringMass2_page' + currentPage + '_' + i_idx" v-model="formData['ringMass2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'ringVolume2_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'ringNo2_page' + currentPage + '_' + i_idx" v-model="formData['ringNo2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'ringMass2_page' + currentPage + '_' + i_idx" v-model="formData['ringMass2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'ringWetMass2_page' + currentPage + '_' + i_idx" v-model="formData['ringWetMass2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'ringVolume2_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
                 <!-- Moisture Box 3 -->
-                <td><input type="text" :name="'boxNo3_page' + currentPage + '_' + i_idx" v-model="formData['boxNo3_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxMass3_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxWetMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass3_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxDryMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass3_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'moisture3_page' + currentPage + '_' + i_idx" v-model="formData['moisture3_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxNo3_page' + currentPage + '_' + i_idx" v-model="formData['boxNo3_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxMass3_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxWetMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass3_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxDryMass3_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass3_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'moisture3_page' + currentPage + '_' + i_idx" v-model="formData['moisture3_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
                 <!-- 结果列：第二把环刀对应的数据（行 3-4） -->
-                <td rowspan="2"><input type="text" :name="'avgMoisture2_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'wetDensity2_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity2_page' + currentPage + '_' + i_idx]"></td>
-                <td rowspan="2"><input type="text" :name="'dryDensity2_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity2_page' + currentPage + '_' + i_idx]"></td>
+                <td rowspan="2"><input type="text" :name="'avgMoisture2_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'wetDensity2_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td rowspan="2"><input type="text" :name="'dryDensity2_page' + currentPage + '_' + i_idx" v-model="formData['dryDensity2_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
 
             </tr>
             <tr>
                 <!-- Moisture Box 4 -->
-                <td><input type="text" :name="'boxNo4_page' + currentPage + '_' + i_idx" v-model="formData['boxNo4_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxMass4_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxWetMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass4_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'boxDryMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass4_page' + currentPage + '_' + i_idx]"></td>
-                <td><input type="text" :name="'moisture4_page' + currentPage + '_' + i_idx" v-model="formData['moisture4_page' + currentPage + '_' + i_idx]"></td>
+                <td><input type="text" :name="'boxNo4_page' + currentPage + '_' + i_idx" v-model="formData['boxNo4_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxMass4_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxWetMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxWetMass4_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'boxDryMass4_page' + currentPage + '_' + i_idx" v-model="formData['boxDryMass4_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+                <td><input type="text" :name="'moisture4_page' + currentPage + '_' + i_idx" v-model="formData['moisture4_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
             </tr>
             </template>
             <!-- Empty rows to fill space if needed, or just these 5 sample blocks (10 rows) -->
@@ -218,7 +219,7 @@
             <tr>
                 <td colspan="2" class="label">备注</td>
                 <td colspan="15" class="left-align" style="height: 60px; vertical-align: top;">
-                    <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;"></textarea>
+                    <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;" :disabled="!isEditable"></textarea>
                 </td>
             </tr>
         </tfoot>
@@ -285,6 +286,10 @@ const totalPages = computed(() => {
   return formData.totalPages || 1
 })
 
+const isEditable = computed(() => {
+  return formData.status == 0 || formData.status == 2
+})
+
 const formData = reactive({
       id: '',
       entrustmentId: '',
@@ -323,21 +328,18 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 3: return '待签字'
         case 4: return '已签字待提交'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 13: return '待签字'
         case 14: return '已签字待提交'
         case 15: return '审核通过'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 23: return '待签字'
         case 24: return '已签字待提交'
         case 25: return '审核通过'
         default: return '未知'
@@ -357,21 +359,18 @@ const getStatusColor = (status) => {
         case 0: return '#9E9E9E' // Grey (草稿)
         case 1: return '#2196F3' // Blue (待审核)
         case 2: return '#F44336' // Red (已打回)
-        case 3: return '#FF9800' // Orange (待签字)
         case 4: return '#17a2b8' // Info (待批准)
         case 5: return '#4CAF50' // Green (已通过)
         // 报告表状态 (10-15)
         case 10: return '#9E9E9E' // Grey (报告草稿)
         case 11: return '#2196F3' // Blue (报告待审核)
         case 12: return '#F44336' // Red (报告已打回)
-        case 13: return '#FF9800' // Orange (报告待签字)
         case 14: return '#17a2b8' // Info (报告待批准)
         case 15: return '#4CAF50' // Green (报告已通过)
         // 结果表状态 (20-25)
         case 20: return '#9E9E9E' // Grey (结果草稿)
         case 21: return '#2196F3' // Blue (结果待审核)
         case 22: return '#F44336' // Red (结果已打回)
-        case 23: return '#FF9800' // Orange (结果待签字)
         case 24: return '#17a2b8' // Info (结果待批准)
         case 25: return '#4CAF50' // Green (结果已通过)
         default: return '#9E9E9E' // Grey (默认草稿)
@@ -1146,13 +1145,8 @@ const saveData = async () => {
     
     const response = await axios.post('/api/cutting-ring/save', dataToSave)
     if (response.data.success) {
-      // 如果状态是草稿(0)，保存后改为待签字(3)
-      if (formData.status === 0) {
-        formData.status = 3
-        alert('保存成功，状态已更新为待签字')
-      } else {
-        alert('保存成功')
-      }
+      // 保存后状态不变
+      alert('保存成功')
       // If new record, update ID
       if (!formData.id && response.data.data && response.data.data.id) {
         formData.id = response.data.data.id
@@ -1512,17 +1506,25 @@ const includeCurrentPageData = () => {
             text-align: left;
             padding-left: 10px;
         }
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 98%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             font-family: inherit;
             font-size: inherit;
             background-color: transparent;
             text-align: center;
+            padding: 2px 4px;
         }
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         textarea {
             resize: none;

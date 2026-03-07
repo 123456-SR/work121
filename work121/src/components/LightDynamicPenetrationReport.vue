@@ -122,7 +122,7 @@
 
     <div class="header-info">
         <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
 
     <table>
@@ -373,7 +373,6 @@ const getStatusText = (status) => {
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
-    case 3: return '待签字'
     case 4: return '已签字待提交'
     case 5: return '审核通过待批准'
     case 6: return '已批准'
@@ -382,7 +381,6 @@ const getStatusText = (status) => {
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
-    case 13: return '待签字'
     case 14: return '已签字待提交'
     case 15: return '审核通过待批准'
     case 16: return '已批准'
@@ -391,7 +389,6 @@ const getStatusText = (status) => {
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
-    case 23: return '待签字'
     case 24: return '已签字待提交'
     case 25: return '审核通过待批准'
     case 26: return '已批准'
@@ -407,7 +404,6 @@ const getStatusColor = (status) => {
     case 0: return '#6c757d' // secondary
     case 1: return '#007bff' // primary
     case 2: return '#dc3545' // danger
-    case 3: return '#ffc107' // warning
     case 4: return '#17a2b8' // info
     case 5: return '#ff8c00' // orange
     case 6: return '#28a745' // success
@@ -416,7 +412,6 @@ const getStatusColor = (status) => {
     case 10: return '#6c757d' // secondary
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
-    case 13: return '#ffc107' // warning
     case 14: return '#17a2b8' // info
     case 15: return '#ff8c00' // orange
     case 16: return '#28a745' // success
@@ -425,7 +420,6 @@ const getStatusColor = (status) => {
     case 20: return '#6c757d' // secondary
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
-    case 23: return '#ffc107' // warning
     case 24: return '#17a2b8' // info
     case 25: return '#ff8c00' // orange
     case 26: return '#28a745' // success
@@ -970,11 +964,6 @@ const previewPdf = () => {
 
 const submitForm = async () => {
   try {
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-      formData.status = 3
-    }
-    
     // 确保日期格式正确
     if (formData.entrustDate) {
       formData.entrustDate = formatDate(formData.entrustDate)
@@ -1059,7 +1048,7 @@ const submitForm = async () => {
     const response = await axios.post('/api/light-dynamic-penetration/save', submitData);
     
     if (response.data.success) {
-      alert('保存成功，状态已更新为待签字');
+      alert('保存成功');
       // 保存成功后返回列表页面，确保列表显示更新后的状态
       if (navigateTo) {
         navigateTo('LightDynamicPenetrationReportList');
@@ -1198,6 +1187,11 @@ const submitForm = async () => {
         }
         input[type="text"]:focus, textarea:focus {
             background-color: #f0f8ff;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         textarea {
             resize: none;

@@ -61,6 +61,7 @@
         <button
           @click="saveForm"
           class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
         >
           保存
         </button>
@@ -75,31 +76,31 @@
 <h2>检测 (验) 委托单 (代合同)</h2>
 
     <div class="header-info">
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>样品编号：<input type="text" v-model="formData.sampleNumber"   name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
+        <span>样品编号：<input type="text" v-model="formData.sampleNumber"   name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
 
     <table>
         <!-- Row 1 -->
         <tr>
             <td class="label">委托单位：</td>
-            <td><input type="text" v-model="formData.clientUnit"   name="clientUnit"></td>
+            <td><input type="text" v-model="formData.clientUnit"   name="clientUnit" :disabled="!isEditable"></td>
             <td class="label">委托日期：</td>
-            <td><input type="text" v-model="formData.clientDate"   name="clientDate"></td>
+            <td><input type="text" v-model="formData.clientDate"   name="clientDate" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 2 -->
         <tr>
             <td class="label">施工单位：</td>
-            <td><input type="text" v-model="formData.constructionUnit"   name="constructionUnit"></td>
+            <td><input type="text" v-model="formData.constructionUnit"   name="constructionUnit" :disabled="!isEditable"></td>
             <td class="label">建设单位：</td>
-            <td><input type="text" v-model="formData.buildingUnit"   name="buildingUnit"></td>
+            <td><input type="text" v-model="formData.buildingUnit"   name="buildingUnit" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 3 -->
         <tr>
             <td class="label">工程名称：</td>
-            <td><input type="text" v-model="formData.projectName"   name="projectName"></td>
+            <td><input type="text" v-model="formData.projectName"   name="projectName" :disabled="!isEditable"></td>
             <td class="label">施工 (使用) 部位：</td>
-            <td><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
+            <td><input type="text" v-model="formData.constructionPart"   name="constructionPart" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 4 -->
         <tr>
@@ -107,11 +108,11 @@
                 <table style="width: 100%; border: none; margin: -1px; border-collapse: collapse;">
                     <tr>
                         <td class="label" style="width: 15%; border: none; padding: 5px;">样品名称：</td>
-                        <td style="width: 18%; border: none; padding: 5px;"><input type="text" v-model="formData.sampleName"   name="sampleName"></td>
+                        <td style="width: 18%; border: none; padding: 5px;"><input type="text" v-model="formData.sampleName"   name="sampleName" :disabled="!isEditable"></td>
                         <td class="label" style="width: 15%; border: none; padding: 5px;">规格/型号：</td>
-                        <td style="width: 18%; border: none; padding: 5px;"><input type="text" v-model="formData.spec"   name="spec"></td>
+                        <td style="width: 18%; border: none; padding: 5px;"><input type="text" v-model="formData.spec"   name="spec" :disabled="!isEditable"></td>
                         <td class="label" style="width: 15%; border: none; padding: 5px;">生产厂家<br>或产地</td>
-                        <td style="width: 19%; border: none; padding: 5px;"><input type="text" v-model="formData.manufacturer"   name="manufacturer"></td>
+                        <td style="width: 19%; border: none; padding: 5px;"><input type="text" v-model="formData.manufacturer"   name="manufacturer" :disabled="!isEditable"></td>
                     </tr>
                 </table>
             </td>
@@ -124,19 +125,19 @@
                         <td style="border: none; width: 25%;">
                             <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
                                 <span class="label" style="margin-right: 5px;">样品数量：</span>
-                                <input type="text" v-model="formData.sampleQuantity"   name="sampleQuantity" style="width: 100px;">
+                                <input type="text" v-model="formData.sampleQuantity"   name="sampleQuantity" style="width: 100px;" :disabled="!isEditable">
                             </div>
                         </td>
                         <td style="border: none; width: 25%;">
                             <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
                                 <span class="label" style="margin-right: 5px;">代表批量：</span>
-                                <input type="text" v-model="formData.representativeBatch"   name="representativeBatch" style="width: 100px;">
+                                <input type="text" v-model="formData.representativeBatch"   name="representativeBatch" style="width: 100px;" :disabled="!isEditable">
                             </div>
                         </td>
                         <td style="border: none; width: 25%;">
                             <div class="center-text" style="display: flex; align-items: center; justify-content: center;">
                                 <span class="label" style="margin-right: 5px;">批号：</span>
-                                <input type="text" v-model="formData.batchNumber"   name="batchNumber" style="width: 100px;">
+                                <input type="text" v-model="formData.batchNumber"   name="batchNumber" style="width: 100px;" :disabled="!isEditable">
                             </div>
                         </td>
                         <td style="border: none; width: 25%;">
@@ -154,50 +155,50 @@
         <tr>
             <td colspan="2" style="height: 100px; vertical-align: top;">
                 <div class="label">样品历史及概况：</div>
-                <textarea v-model="formData.sampleHistory"  name="sampleHistory" rows="4" style="width: 100%; height: 80px;"></textarea>
+                <textarea v-model="formData.sampleHistory"  name="sampleHistory" rows="4" style="width: 100%; height: 80px;" :disabled="!isEditable"></textarea>
             </td>
             <td colspan="2" style="height: 100px; vertical-align: top;">
                 <div class="label">样品状态：</div>
-                <textarea v-model="formData.sampleStatus"  name="sampleStatus" rows="4" style="width: 100%; height: 80px;"></textarea>
+                <textarea v-model="formData.sampleStatus"  name="sampleStatus" rows="4" style="width: 100%; height: 80px;" :disabled="!isEditable"></textarea>
             </td>
         </tr>
         <!-- Row 7: 检测项目及依据 -->
         <tr>
             <td colspan="4" style="height: 60px; vertical-align: top;">
                 <div class="label">检测(验)项目及依据：</div>
-                <textarea v-model="formData.testItems"  name="testItems" rows="2" style="width: 100%; height: 40px;"></textarea>
+                <textarea v-model="formData.testItems"  name="testItems" rows="2" style="width: 100%; height: 40px;" :disabled="!isEditable"></textarea>
             </td>
         </tr>
         <!-- Row 8: 地址电话 -->
         <tr>
             <td class="label">委托单位地址<br>及电话(传真)：</td>
-            <td colspan="3"><input type="text" v-model="formData.clientAddressPhone"   name="clientAddressPhone"></td>
+            <td colspan="3"><input type="text" v-model="formData.clientAddressPhone"   name="clientAddressPhone" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 9: 报告发送 & 样品处置 -->
         <tr>
             <td class="label">报告发送</td>
             <td>
                 <div class="checkbox-group">
-                    <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="1">1.自取</label>
-                    <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="2">2.邮寄</label>
-                    <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="3">3.其它</label>
+                    <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="1" :disabled="!isEditable">1.自取</label>
+                    <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="2" :disabled="!isEditable">2.邮寄</label>
+                    <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="3" :disabled="!isEditable">3.其它</label>
                 </div>
 
             </td>
             <td class="label">样品处置</td>
             <td>
                 <div class="checkbox-group">
-                    <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="1">1.取回</label>
-                    <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="2">2.不取回</label>
+                    <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="1" :disabled="!isEditable">1.取回</label>
+                    <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="2" :disabled="!isEditable">2.不取回</label>
                 </div>
             </td>
         </tr>
         <!-- Row 10: 见证人 -->
         <tr>
             <td class="label">见证人</td>
-            <td><input type="text" v-model="formData.witness"   name="witness"></td>
+            <td><input type="text" v-model="formData.witness"   name="witness" :disabled="!isEditable"></td>
             <td class="label">见证单位</td>
-            <td><input type="text" v-model="formData.witnessUnit"   name="witnessUnit"></td>
+            <td><input type="text" v-model="formData.witnessUnit"   name="witnessUnit" :disabled="!isEditable"></td>
         </tr>
 
         <!-- Row 11: 交付日期 & 费用 -->
@@ -206,28 +207,28 @@
             <td>
                 <div class="checkbox-group">
                     <div style="margin-bottom: 5px;">
-                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="1">可以为:</label>
-                        <input type="text" v-model="formData.deliveryDate1"   name="deliveryDate1" style="width: 120px; border-bottom: 1px solid black;">
+                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="1" :disabled="!isEditable">可以为:</label>
+                        <input type="text" v-model="formData.deliveryDate1"   name="deliveryDate1" style="width: 120px; border-bottom: 1px solid black;" :disabled="!isEditable">
                         <input type="hidden" name="deliveryMode_1" :value="formData.deliveryMode === '1' ? '1' : ''">
                     </div>
                     <div style="margin-bottom: 5px;">
-                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="2">严格限定为:</label>
-                        <input type="text" v-model="formData.deliveryDate2"   name="deliveryDate2" style="width: 120px; border-bottom: 1px solid black;">
+                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="2" :disabled="!isEditable">严格限定为:</label>
+                        <input type="text" v-model="formData.deliveryDate2"   name="deliveryDate2" style="width: 120px; border-bottom: 1px solid black;" :disabled="!isEditable">
                         <input type="hidden" name="deliveryMode_2" :value="formData.deliveryMode === '2' ? '1' : ''">
                     </div>
                     <div>
-                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="3">不要求</label>
+                        <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="3" :disabled="!isEditable">不要求</label>
                         <input type="hidden" name="deliveryMode_3" :value="formData.deliveryMode === '3' ? '1' : ''">
                     </div>
                 </div>
             </td>
             <td class="label">应缴检测(验)费(元)</td>
-            <td><input type="text" v-model="formData.fee"   name="fee"></td>
+            <td><input type="text" v-model="formData.fee"   name="fee" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 12: 备注 -->
         <tr>
             <td class="label">备注</td>
-            <td colspan="3"><input type="text" v-model="formData.remarks"   name="remarks"></td>
+            <td colspan="3"><input type="text" v-model="formData.remarks"   name="remarks" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 13: 说明 -->
         <tr>
@@ -370,6 +371,12 @@
     display: none;
   }
 }
+
+input[type="text"]:disabled:focus {
+    background-color: transparent;
+    outline: none;
+    border-color: black;
+}
 </style>
 
 <script setup>
@@ -454,6 +461,10 @@ const showAuditButtons = computed(() => {
   if (!currentId.value) return false
   if (formData.status == 1) return true
   return false
+})
+
+const isEditable = computed(() => {
+  return formData.status == 0 || formData.status == 2
 })
 
 // 格式化日期
@@ -1412,16 +1423,19 @@ const goToList = () => {
             white-space: nowrap;
             width: 100px; /* 调整标签列宽 */
         }
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 98%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             font-family: inherit;
             font-size: inherit;
             background-color: transparent;
+            padding: 2px 4px;
         }
-        input[type="text"]:focus, textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus {
             background-color: #f0f8ff;
+            border-color: #3498db;
         }
         .checkbox-group label {
             margin-right: 15px;

@@ -115,7 +115,7 @@
     <div class="header-info">
         <!-- 委托单位应对应委托单里的单位(clientUnit)，而不是委托人(client) -->
         <span>委托单位：<input type="text" v-model="formData.clientUnit"   name="clientUnit" style="width: 250px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
         <!-- 兼容后端 PDF 旧字段名：把当前委托单位再同步一份到 entrustingUnit，确保 PDF 一定有值 -->
         <input type="hidden" name="entrustingUnit" :value="formData.clientUnit" />
     </div>
@@ -1317,6 +1317,11 @@ const previewPdf = () => {
         }
         input[type="text"]:focus, textarea:focus {
             background-color: #f0f8ff;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         textarea {
             resize: none;

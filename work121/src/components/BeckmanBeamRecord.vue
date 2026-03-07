@@ -106,7 +106,7 @@
 
     <div class="header-info">
         <div>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></div>
-        <div>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;"></div>
+        <div>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></div>
     </div>
 
     <!-- Top Info Table -->
@@ -427,21 +427,18 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 3: return '待签字'
         case 4: return '已签字待提交'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 13: return '待签字'
         case 14: return '已签字待提交'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 23: return '待签字'
         case 24: return '已签字待提交'
         case 25: return '审核通过待批准'
         default: return '未知'
@@ -455,21 +452,18 @@ const getStatusColor = (status) => {
         case 0: return '#6c757d' // secondary
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
-        case 3: return '#ffc107' // warning
         case 4: return '#17a2b8' // info
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
-        case 13: return '#ffc107' // warning
         case 14: return '#17a2b8' // info
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
-        case 23: return '#ffc107' // warning
         case 24: return '#17a2b8' // info
         case 25: return '#28a745' // success
         default: return '#6c757d'
@@ -1017,11 +1011,6 @@ const submitForm = async () => {
         // 1. 保存当前页数据到records数组
         saveCurrentRecordState()
 
-        // 如果状态是草稿(0)，保存后改为待签字(3)
-        if (formData.status === 0) {
-            formData.status = 3
-        }
-
         // 2. 保存所有页数据
         let successCount = 0
         let totalCount = records.value.length
@@ -1030,9 +1019,6 @@ const submitForm = async () => {
             // 构建当前页的payload
             const currentRecord = records.value[i]
             const currentFormData = JSON.parse(currentRecord.dataJson)
-
-            // 更新状态为待签字
-            currentFormData.status = 3
 
             const payload = {
                 id: currentRecord.id || null,
@@ -1071,7 +1057,7 @@ const submitForm = async () => {
 
         // 3. 显示保存结果
         if (successCount === totalCount) {
-            alert(`保存成功，共保存 ${successCount} 页数据，状态已更新为待签字`)
+            alert(`保存成功，共保存 ${successCount} 页数据`)
         } else {
             alert(`保存完成，成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
         }
@@ -1129,7 +1115,7 @@ const handleSign = async () => {
           formData.status = 4
         }
         // 保存签名到数据库
-        await saveData()
+        await submitForm()
         // 显示成功消息
         if (formData.status === 4) {
           alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
@@ -1307,14 +1293,25 @@ const previewPdf = () => {
             vertical-align: middle;
             word-wrap: break-word;
         }
-        input[type="text"] {
+        input[type="text"], textarea, select {
             width: 95%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             text-align: center;
             font-family: inherit;
             font-size: inherit;
             background: transparent;
+            padding: 2px 4px;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
+            background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        input[type="text"]:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         .label {
             text-align: center;
