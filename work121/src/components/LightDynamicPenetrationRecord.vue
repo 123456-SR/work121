@@ -5,8 +5,7 @@
     <div class="no-print toolbar">
       <div class="toolbar-left">
         <button @click="goToList" class="link-button">&lt; 返回列表</button>
-        <span v-if="!draftMode && records.length > 0" class="record-nav">
-          <span class="record-nav-info">第 {{ currentIndex + 1 }} / {{ records.length }} 页</span>
+        <span v-if="records.length > 0" class="record-nav">
           <button
             @click="prevRecord"
             :disabled="currentIndex === 0"
@@ -14,6 +13,9 @@
           >
             上一页
           </button>
+          <span class="record-nav-info">
+            页面 {{ currentIndex + 1 }} / {{ records.length }}
+          </span>
           <button
             @click="nextRecord"
             :disabled="currentIndex === records.length - 1"
@@ -25,14 +27,14 @@
             @click="addRecord"
             class="btn btn-primary btn-small"
           >
-            新增页
+            添加页面
           </button>
           <button
             @click="deleteRecord"
-            :disabled="records.length === 0"
+            :disabled="records.length <= 1"
             class="btn btn-danger btn-small"
           >
-            删除页
+            删除当前页面
           </button>
         </span>
       </div>
@@ -117,32 +119,32 @@
         <!-- Row 1 -->
         <tr>
             <td class="label">工程名称</td>
-            <td colspan="4"><input type="text" v-model="formData.projectName"   name="projectName" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.projectName"   name="projectName" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td class="label">委托日期</td>
-            <td colspan="4"><input type="text" v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <!-- Row 2 -->
         <tr>
             <td class="label">施工部位</td>
-            <td colspan="4"><input type="text" v-model="formData.constructionPart"   name="constructionPart" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.constructionPart"   name="constructionPart" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td class="label">检测日期</td>
-            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.testDate"   name="testDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <!-- Row 3 -->
         <tr>
             <td class="label">岩土性状</td>
-            <td colspan="4"><input type="text" v-model="formData.soilProperties"   name="soilProperties" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.soilProperties"   name="soilProperties" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td class="label">检测类别</td>
-            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <!-- Row 4: Params -->
         <tr>
             <td class="label">设计<br>承载力<br>(kPa)</td>
-            <td colspan="2"><input type="text" v-model="formData.designCapacity"   name="designCapacity" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea v-model="formData.designCapacity"   name="designCapacity" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td class="label">锤重量<br>(kg)</td>
-            <td colspan="2"><input type="text" v-model="formData.hammerWeight"   name="hammerWeight" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea v-model="formData.hammerWeight"   name="hammerWeight" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td class="label">落距<br>(cm)</td>
-            <td colspan="3"><input type="text" v-model="formData.dropDistance"   name="dropDistance" :disabled="!isEditable"></td>
+            <td colspan="3"><textarea v-model="formData.dropDistance"   name="dropDistance" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
 
         <!-- Row 5: Table Header for Data -->
@@ -160,44 +162,44 @@
         </tr>
 
         <!-- Data Rows -->
-        <template v-for="(b, b_idx) in 3" :key="b_idx">
+        <template v-for="(b, b_idx) in 2" :key="b_idx">
             <template v-for="(s, s_idx) in 7" :key="s_idx">
             <tr>
                 <!-- 左栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
                     <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
                     </div>
                     <div v-else>
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
                     </div>
                 </td>
 
-                <td><input type="text" :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
-                <td><input type="text" :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
+                <td><textarea :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+                <td><textarea :name="'actual_L_' + (b_idx * 7 + s_idx)" v-model="formData['actual_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
 
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
+                <td v-if="s_idx === 0" rowspan="7"><textarea :name="'avg_L_' + b_idx" v-model="formData['avg_L_' + b_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+                <td v-if="s_idx === 0" rowspan="7"><textarea :name="'capacity_L_' + b_idx" v-model="formData['capacity_L_' + b_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
 
                 <!-- 右栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
                     <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
                     </div>
                     <div v-else>
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" style="height: 30%; width: 100%; border: none; text-align: center; padding-top: 5px;" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
+                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
                     </div>
                 </td>
 
-                <td><input type="text" :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
-                <td><input type="text" :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable"></td>
+                <td><textarea :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+                <td><textarea :name="'actual_R_' + (b_idx * 7 + s_idx)" v-model="formData['actual_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
 
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
-                <td v-if="s_idx === 0" rowspan="7"><input type="text" :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" style="height: 100%;" :disabled="!isEditable"></td>
+                <td v-if="s_idx === 0" rowspan="7"><textarea :name="'avg_R_' + b_idx" v-model="formData['avg_R_' + b_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+                <td v-if="s_idx === 0" rowspan="7"><textarea :name="'capacity_R_' + b_idx" v-model="formData['capacity_R_' + b_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </tr>
             </template>
         </template>
@@ -207,31 +209,31 @@
             <!-- Row: 检测依据 -->
             <tr>
                 <td class="label">检测依据</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.testBasis"   name="testBasis" :disabled="!isEditable"></td>
+                <td colspan="9" class="left-align"><textarea v-model="formData.testBasis"   name="testBasis" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             </tr>
             <!-- Row: 仪器设备 -->
             <tr>
                 <td class="label">仪器设备</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" :disabled="!isEditable"></td>
+                <td colspan="9" class="left-align"><textarea v-model="formData.equipment"   name="equipment" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             </tr>
             <!-- Row: 检测结论 -->
             <tr>
                 <td class="label" style="height: 60px;">检测结论</td>
                 <td colspan="9" class="left-align" style="vertical-align: top;">
-                    <textarea v-model="formData.conclusion"  name="conclusion" rows="3" style="width: 100%; height: 100%;" :disabled="!isEditable"></textarea>
+                    <textarea v-model="formData.conclusion"  name="conclusion" :disabled="!isEditable" class="table-textarea left-align"></textarea>
                 </td>
             </tr>
             <!-- Row: 备注 -->
             <tr>
                 <td class="label">备注</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.remarks"   name="remarks" :disabled="!isEditable"></td>
+                <td colspan="9" class="left-align"><textarea v-model="formData.remarks"   name="remarks" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             </tr>
         </template>
         <template v-else>
             <!-- Row: 仪器设备 -->
             <tr>
                 <td class="label">仪器设备</td>
-                <td colspan="9" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" :disabled="!isEditable"></td>
+                <td colspan="9" class="left-align"><textarea v-model="formData.equipment"   name="equipment" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             </tr>
         </template>
     </table>
@@ -754,81 +756,116 @@ const saveCurrentToState = () => {
 const loadData = async () => {
     // Prioritize wtNum if available, otherwise fallback to id (assuming it might be entrustmentId)
     const queryId = props.wtNum || props.id
-    if (!queryId) return
 
     try {
-        const res = await axios.get(`/api/light-dynamic-penetration/get-by-entrustment-id?entrustmentId=${queryId}`)
-        if (res.data.success && res.data.data && res.data.data.length > 0) {
-            records.value = res.data.data
-            
-            // If we have both wtNum and id, it means id is likely the specific Record ID
-            // Try to navigate to that specific record
-            if (props.wtNum && props.id) {
-                const targetIndex = records.value.findIndex(r => r.id === props.id)
-                if (targetIndex !== -1) {
-                    currentIndex.value = targetIndex
+        if (queryId) {
+            const res = await axios.get(`/api/light-dynamic-penetration/get-by-entrustment-id?entrustmentId=${queryId}`)
+            if (res.data.success && res.data.data) {
+                // 确保records数组至少有一个元素
+                if (res.data.data.length > 0) {
+                    records.value = res.data.data
+                } else {
+                    // 如果API返回空数组，创建一个新记录
+                    records.value = [{
+                        id: null,
+                        entrustmentId: queryId,
+                        clientUnit: '',
+                        projectName: '',
+                        commissionDate: '',
+                        wtNum: queryId
+                    }]
+                }
+                
+                // If we have both wtNum and id, it means id is likely the specific Record ID
+                // Try to navigate to that specific record
+                if (props.wtNum && props.id) {
+                    const targetIndex = records.value.findIndex(r => r.id === props.id)
+                    if (targetIndex !== -1) {
+                        currentIndex.value = targetIndex
+                    } else {
+                        currentIndex.value = 0
+                    }
                 } else {
                     currentIndex.value = 0
                 }
+                
+                mapRecordToFormData(records.value[currentIndex.value])
             } else {
-                currentIndex.value = 0
-            }
-            
-            mapRecordToFormData(records.value[currentIndex.value])
-        } else {
-            // No records found, try to fetch entrustment info to initialize
-            // Use queryId as the identifier (wtNum or ID)
-            let ent = null
-            try {
-                // Try fetching by wtNum first if it looks like one (or just try both endpoints)
-                // Actually, Entrustment.vue passes wtNum.
-                const entRes = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(queryId)}`)
-                if (entRes.data.success && entRes.data.data) {
-                    ent = entRes.data.data
-                } else {
-                     // Fallback to by-id
-                     const entRes2 = await axios.get(`/api/jc-core-wt-info/by-id?id=${queryId}`)
-                     if (entRes2.data.success && entRes2.data.data) {
-                         ent = entRes2.data.data
-                     }
+                // No records found, try to fetch entrustment info to initialize
+                // Use queryId as the identifier (wtNum or ID)
+                let ent = null
+                try {
+                    // Try fetching by wtNum first if it looks like one (or just try both endpoints)
+                    // Actually, Entrustment.vue passes wtNum.
+                    const entRes = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(queryId)}`)
+                    if (entRes.data.success && entRes.data.data) {
+                        ent = entRes.data.data
+                    } else {
+                         // Fallback to by-id
+                         const entRes2 = await axios.get(`/api/jc-core-wt-info/by-id?id=${queryId}`)
+                         if (entRes2.data.success && entRes2.data.data) {
+                             ent = entRes2.data.data
+                         }
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch entrustment info', e)
                 }
-            } catch (e) {
-                console.warn('Failed to fetch entrustment info', e)
-            }
 
-            let newRecord = {
+                let newRecord = {
+                    id: null,
+                    entrustmentId: queryId,
+                    clientUnit: '',
+                    projectName: '',
+                    commissionDate: '',
+                    wtNum: queryId // Default unified number to ID
+                }
+                
+                if (ent) {
+                    // 检查委托单状态是否为审核通过（状态值为5）
+                    if (ent.status === 5) {
+                        newRecord.clientUnit = ent.client || ent.clientUnit || ''
+                        newRecord.projectName = ent.projectName || ''
+                        newRecord.commissionDate = ent.commissionDate || ''
+                        newRecord.wtNum = ent.wtNum || queryId
+                        newRecord.entrustmentId = ent.id || newRecord.entrustmentId
+                        // Populate other fields if needed
+                        newRecord.constructionPart = ent.constructionPart || ''
+                        newRecord.testCategory = ent.testCategory || ''
+                        newRecord.testDate = ent.testDate || ''
+                    } else {
+                        console.log('委托单状态未审核通过，不自动填充数据')
+                    }
+                }
+
+                records.value = [newRecord]
+                currentIndex.value = 0
+                mapRecordToFormData(newRecord)
+            }
+        } else {
+            // 如果queryId不存在，创建一个默认记录
+            records.value = [{
                 id: null,
-                entrustmentId: queryId,
+                entrustmentId: '',
                 clientUnit: '',
                 projectName: '',
                 commissionDate: '',
-                wtNum: queryId // Default unified number to ID
-            }
-            
-            if (ent) {
-                // 检查委托单状态是否为审核通过（状态值为5）
-                if (ent.status === 5) {
-                    newRecord.clientUnit = ent.client || ent.clientUnit || ''
-                    newRecord.projectName = ent.projectName || ''
-                    newRecord.commissionDate = ent.commissionDate || ''
-                    newRecord.wtNum = ent.wtNum || queryId
-                    newRecord.entrustmentId = ent.id || newRecord.entrustmentId
-                    // Populate other fields if needed
-                    newRecord.constructionPart = ent.constructionPart || ''
-                    newRecord.testCategory = ent.testCategory || ''
-                    newRecord.testDate = ent.testDate || ''
-                } else {
-                    console.log('委托单状态未审核通过，不自动填充数据')
-                }
-            }
-
-            records.value = [newRecord]
+                wtNum: ''
+            }]
             currentIndex.value = 0
-            mapRecordToFormData(newRecord)
+            mapRecordToFormData(records.value[0])
         }
     } catch (e) {
         console.error('Load error', e)
-        records.value = [{ id: null, entrustmentId: queryId }]
+        // 即使出错，也要确保records数组至少有一个元素
+        records.value = [{
+            id: null,
+            entrustmentId: queryId || '',
+            clientUnit: '',
+            projectName: '',
+            commissionDate: '',
+            wtNum: queryId || ''
+        }]
+        currentIndex.value = 0
         mapRecordToFormData(records.value[0])
     }
 }
@@ -1077,65 +1114,92 @@ const saveData = async () => {
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
+            padding: 0 30px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
-        .toolbar-left,
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-left: 0;
+            flex: 1;
+        }
+
         .toolbar-right {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+            justify-content: flex-end;
         }
 
         .link-button {
-            background: none;
-            border: none;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
             color: #3498db;
             cursor: pointer;
-            font-size: 14px;
-            padding: 0;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .link-button:hover {
-            text-decoration: underline;
+            background: #e9ecef;
+            border-color: #adb5bd;
+            text-decoration: none;
         }
 
         .record-nav {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-left: 16px;
         }
 
         .record-nav-info {
-            font-size: 13px;
+            font-size: 15px;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-label {
-            margin-left: 4px;
+            margin-left: 6px;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             border: 1px solid transparent;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             background-color: #f5f7fa;
             color: #333;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-small {
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn-primary {
@@ -1229,6 +1293,32 @@ const saveData = async () => {
             resize: none;
             overflow: hidden;
             text-align: left;
+        }
+        .table-textarea {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            outline: none;
+            font-family: inherit;
+            font-size: inherit;
+            background-color: transparent;
+            text-align: center;
+            padding: 2px 4px;
+            resize: none;
+            overflow: hidden;
+        }
+        .table-textarea.left-align {
+            text-align: left;
+        }
+        .table-textarea:focus {
+            background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        .table-textarea:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         .footer-info {
             display: flex;

@@ -1202,13 +1202,15 @@ const previewPdf = () => {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: nowrap;
 }
 .toolbar-left,
 .toolbar-right {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
+  white-space: nowrap;
 }
 .link-button {
   background: none;

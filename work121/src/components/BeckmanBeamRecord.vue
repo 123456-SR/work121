@@ -119,25 +119,25 @@
         </colgroup>
         <tr>
             <td class="label">工程名称</td>
-            <td><input type="text" v-model="formData.projectName"   name="projectName"></td>
+            <td><textarea v-model="formData.projectName"   name="projectName" class="table-textarea"></textarea></td>
             <td class="label">委托日期</td>
-            <td><input type="text" v-model="formData.commissionDate"   name="commissionDate" class="date-input"></td>
+            <td><textarea v-model="formData.commissionDate"   name="commissionDate" class="table-textarea date-input"></textarea></td>
         </tr>
         <tr>
             <td class="label">施工部位</td>
-            <td><input type="text" v-model="formData.constructionPart"   name="constructionPart"></td>
+            <td><textarea v-model="formData.constructionPart"   name="constructionPart" class="table-textarea"></textarea></td>
             <td class="label">检测日期</td>
-            <td><input type="text" v-model="formData.testDate"   name="testDate" class="date-input"></td>
+            <td><textarea v-model="formData.testDate"   name="testDate" class="table-textarea date-input"></textarea></td>
         </tr>
         <tr>
             <td class="label">仪器设备及编码</td>
-            <td><input type="text" v-model="formData.equipmentCode"   name="equipmentCode"></td>
+            <td><textarea v-model="formData.equipmentCode"   name="equipmentCode" class="table-textarea"></textarea></td>
             <td class="label">检测类别</td>
-            <td><input type="text" v-model="formData.testCategory"   name="testCategory"></td>
+            <td><textarea v-model="formData.testCategory"   name="testCategory" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td class="label">样品名称及状态</td>
-            <td><input type="text" :value="sampleNameStatusDisplay" @input="handleSampleNameStatusInput"   name="sampleStatus"></td>
+            <td><textarea :value="sampleNameStatusDisplay" @input="handleSampleNameStatusInput"   name="sampleStatus" class="table-textarea"></textarea></td>
             <td class="label">检测方法</td>
             <td>贝克曼梁法</td>
         </tr>
@@ -155,35 +155,35 @@
         </colgroup>
         <tr>
             <td class="label">依据标准</td>
-            <td><input type="text" v-model="formData.standard"   name="standard"></td>
+            <td><textarea v-model="formData.standard"   name="standard" class="table-textarea"></textarea></td>
             <td class="label">设计弯沉值(0.01mm)</td>
-            <td><input type="text" v-model="formData.designDeflection"   name="designDeflection"></td>
+            <td><textarea v-model="formData.designDeflection"   name="designDeflection" class="table-textarea"></textarea></td>
             <td class="label">温度修正系数K</td>
-            <td><input type="text" v-model="formData.tempCorrectionK"   name="tempCorrectionK"></td>
+            <td><textarea v-model="formData.tempCorrectionK"   name="tempCorrectionK" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td class="label">测试车车型</td>
-            <td><input type="text" v-model="formData.vehicleModel"   name="vehicleModel"></td>
+            <td><textarea v-model="formData.vehicleModel"   name="vehicleModel" class="table-textarea"></textarea></td>
             <td class="label">沥青面层平均温度<br>t=(t<sub>25</sub>+t<sub>m</sub>+t<sub>e</sub>)/3</td>
-            <td><input type="text" v-model="formData.avgAsphaltTemp"   name="avgAsphaltTemp"></td>
+            <td><textarea v-model="formData.avgAsphaltTemp"   name="avgAsphaltTemp" class="table-textarea"></textarea></td>
             <td class="label">轮胎传压面积(cm<sup>2</sup>)</td>
-            <td><input type="text" v-model="formData.tireArea"   name="tireArea"></td>
+            <td><textarea v-model="formData.tireArea"   name="tireArea" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td class="label">前5天平均气温的平均值(℃)</td>
-            <td><input type="text" v-model="formData.avgTempPrev5Days"   name="avgTempPrev5Days"></td>
+            <td><textarea v-model="formData.avgTempPrev5Days"   name="avgTempPrev5Days" class="table-textarea"></textarea></td>
             <td class="label">路面结构类型</td>
-            <td><input type="text" v-model="formData.pavementType"   name="pavementType"></td>
+            <td><textarea v-model="formData.pavementType"   name="pavementType" class="table-textarea"></textarea></td>
             <td class="label">路面厚度(mm)</td>
-            <td><input type="text" v-model="formData.pavementThickness"   name="pavementThickness"></td>
+            <td><textarea v-model="formData.pavementThickness"   name="pavementThickness" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td class="label">后轴重(kN)</td>
-            <td><input type="text" v-model="formData.rearAxleWeight"   name="rearAxleWeight"></td>
+            <td><textarea v-model="formData.rearAxleWeight"   name="rearAxleWeight" class="table-textarea"></textarea></td>
             <td class="label">轮胎气压左(MPa)</td>
-            <td><input type="text" v-model="formData.tirePressureLeft"   name="tirePressureLeft"></td>
+            <td><textarea v-model="formData.tirePressureLeft"   name="tirePressureLeft" class="table-textarea"></textarea></td>
             <td class="label">轮胎气压右(MPa)</td>
-            <td><input type="text" v-model="formData.tirePressureRight"   name="tirePressureRight"></td>
+            <td><textarea v-model="formData.tirePressureRight"   name="tirePressureRight" class="table-textarea"></textarea></td>
         </tr>
     </table>
 
@@ -223,15 +223,15 @@
             <template v-for="(n, i_idx) in 15" :key="i_idx">
             <tr>
                 <td>{{ (i_idx + 1) }}</td>
-                <td><input type="text" :name="'station_' + (i_idx + 1)" v-model="formData['station_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'lane_' + (i_idx + 1)" v-model="formData['lane_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'surfaceTemp_' + (i_idx + 1)" v-model="formData['surfaceTemp_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'leftInitial_' + (i_idx + 1)" v-model="formData['leftInitial_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'leftFinal_' + (i_idx + 1)" v-model="formData['leftFinal_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'leftDeflection_' + (i_idx + 1)" v-model="formData['leftDeflection_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'rightInitial_' + (i_idx + 1)" v-model="formData['rightInitial_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'rightFinal_' + (i_idx + 1)" v-model="formData['rightFinal_' + (i_idx + 1)]"></td>
-                <td><input type="text" :name="'rightDeflection_' + (i_idx + 1)" v-model="formData['rightDeflection_' + (i_idx + 1)]"></td>
+                <td><textarea :name="'station_' + (i_idx + 1)" v-model="formData['station_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'lane_' + (i_idx + 1)" v-model="formData['lane_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'surfaceTemp_' + (i_idx + 1)" v-model="formData['surfaceTemp_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'leftInitial_' + (i_idx + 1)" v-model="formData['leftInitial_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'leftFinal_' + (i_idx + 1)" v-model="formData['leftFinal_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'leftDeflection_' + (i_idx + 1)" v-model="formData['leftDeflection_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'rightInitial_' + (i_idx + 1)" v-model="formData['rightInitial_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'rightFinal_' + (i_idx + 1)" v-model="formData['rightFinal_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
+                <td><textarea :name="'rightDeflection_' + (i_idx + 1)" v-model="formData['rightDeflection_' + (i_idx + 1)]" class="table-textarea"></textarea></td>
             </tr>
             </template>
         </tbody>
@@ -264,16 +264,16 @@
             <td class="label">是否合格</td>
         </tr>
         <tr>
-            <td><input type="text" v-model="formData.testInterval"   name="testInterval"></td>
-            <td><input type="text" v-model="formData.laneCount"   name="laneCount"></td>
-            <td><input type="text" v-model="formData.totalPoints"   name="totalPoints"></td>
-            <td><input type="text" v-model="formData.testKm"   name="testKm"></td>
-            <td><input type="text" v-model="formData.totalAvgDeflection"   name="totalAvgDeflection"></td>
-            <td><input type="text" v-model="formData.stdDev"   name="stdDev"></td>
-            <td><input type="text" v-model="formData.repDeflection"   name="repDeflection"></td>
-            <td><input type="text" v-model="formData.tempCorrectedAvg"   name="tempCorrectedAvg"></td>
-            <td><input type="text" v-model="formData.outlierCount"   name="outlierCount"></td>
-            <td><input type="text" v-model="formData.isQualified"   name="isQualified"></td>
+            <td><textarea v-model="formData.testInterval"   name="testInterval" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.laneCount"   name="laneCount" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.totalPoints"   name="totalPoints" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.testKm"   name="testKm" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.totalAvgDeflection"   name="totalAvgDeflection" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.stdDev"   name="stdDev" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.repDeflection"   name="repDeflection" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.tempCorrectedAvg"   name="tempCorrectedAvg" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.outlierCount"   name="outlierCount" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.isQualified"   name="isQualified" class="table-textarea"></textarea></td>
         </tr>
     </table>
 
@@ -296,12 +296,12 @@
             <td class="label">去特异点温度修正平均弯沉值(0.01mm)</td>
         </tr>
         <tr>
-            <td><input type="text" v-model="formData.outlierLower"   name="outlierLower"></td>
-            <td><input type="text" v-model="formData.outlierUpper"   name="outlierUpper"></td>
-            <td><input type="text" v-model="formData.cleanAvg"   name="cleanAvg"></td>
-            <td><input type="text" v-model="formData.cleanStdDev"   name="cleanStdDev"></td>
-            <td><input type="text" v-model="formData.cleanRepDeflection"   name="cleanRepDeflection"></td>
-            <td><input type="text" v-model="formData.cleanTempCorrectedAvg"   name="cleanTempCorrectedAvg"></td>
+            <td><textarea v-model="formData.outlierLower"   name="outlierLower" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.outlierUpper"   name="outlierUpper" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.cleanAvg"   name="cleanAvg" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.cleanStdDev"   name="cleanStdDev" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.cleanRepDeflection"   name="cleanRepDeflection" class="table-textarea"></textarea></td>
+            <td><textarea v-model="formData.cleanTempCorrectedAvg"   name="cleanTempCorrectedAvg" class="table-textarea"></textarea></td>
         </tr>
     </table>
 
@@ -309,7 +309,7 @@
     <table>
         <tr>
             <td style="width: 10%; text-align: center;">备注</td>
-            <td><input type="text" v-model="formData.remarks"   name="remarks" style="width: 100%; text-align: left;"></td>
+            <td><textarea v-model="formData.remarks"   name="remarks" class="table-textarea left-align"></textarea></td>
         </tr>
     </table>
 
@@ -1174,65 +1174,92 @@ const previewPdf = () => {
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
+            padding: 0 30px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
-        .toolbar-left,
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-left: 0;
+            flex: 1;
+        }
+
         .toolbar-right {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+            justify-content: flex-end;
         }
 
         .link-button {
-            background: none;
-            border: none;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
             color: #3498db;
             cursor: pointer;
-            font-size: 14px;
-            padding: 0;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .link-button:hover {
-            text-decoration: underline;
+            background: #e9ecef;
+            border-color: #adb5bd;
+            text-decoration: none;
         }
 
         .record-nav {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-left: 16px;
         }
 
         .record-nav-info {
-            font-size: 13px;
+            font-size: 15px;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-label {
-            margin-left: 4px;
+            margin-left: 6px;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             border: 1px solid transparent;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             background-color: #f5f7fa;
             color: #333;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-small {
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn-primary {
@@ -1315,6 +1342,32 @@ const previewPdf = () => {
         }
         .label {
             text-align: center;
+        }
+        .table-textarea {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            outline: none;
+            text-align: center;
+            font-family: inherit;
+            font-size: inherit;
+            background: transparent;
+            padding: 2px 4px;
+            resize: none;
+            overflow: hidden;
+        }
+        .table-textarea.left-align {
+            text-align: left;
+        }
+        .table-textarea:focus {
+            background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        .table-textarea:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         /* Hide navigation buttons when printing */
         @media print {

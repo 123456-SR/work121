@@ -900,66 +900,93 @@ const previewPdf = () => {
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
+            padding: 0 30px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
-        .toolbar-left,
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-left: 0;
+            flex: 1;
+        }
+
         .toolbar-right {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+            justify-content: flex-end;
         }
 
         .link-button {
-            background: none;
-            border: none;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
             color: #3498db;
             cursor: pointer;
-            font-size: 14px;
-            padding: 0;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .link-button:hover {
-            text-decoration: underline;
+            background: #e9ecef;
+            border-color: #adb5bd;
+            text-decoration: none;
         }
 
         .record-nav {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-left: 16px;
         }
 
         .record-nav-info {
-            font-size: 13px;
+            font-size: 15px;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             color: #666;
+            white-space: nowrap;
             margin-right: 8px;
         }
 
         .status-label {
-            margin-left: 4px;
+            margin-left: 6px;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             border: 1px solid transparent;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             background-color: #f5f7fa;
             color: #333;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-small {
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn-primary {

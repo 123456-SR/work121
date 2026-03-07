@@ -134,14 +134,14 @@
         <tr>
             <td colspan="4" class="label" style="width: 20%;">取样位置</td>
             <template v-for="(n, i_idx) in 4" :key="i_idx">
-            <td colspan="4"><input type="text" :name="'samplingLocation_page' + currentPage + '_' + i_idx" v-model="formData['samplingLocation_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea :name="'samplingLocation_page' + currentPage + '_' + i_idx" v-model="formData['samplingLocation_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">套环体积</td>
             <td class="label">cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'ringVolume_page' + currentPage + '_' + i_idx" v-model="formData['ringVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
@@ -149,42 +149,42 @@
             <td class="label">初始</td>
             <td class="label">cm</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'initialWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['initialWaterLevel_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'initialWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['initialWaterLevel_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td class="label">终了</td>
             <td class="label">cm</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'finalWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['finalWaterLevel_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'finalWaterLevel_page' + currentPage + '_' + i_idx" v-model="formData['finalWaterLevel_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">储水桶面积</td>
             <td class="label">cm²</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'tankArea_page' + currentPage + '_' + i_idx" v-model="formData['tankArea_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'tankArea_page' + currentPage + '_' + i_idx" v-model="formData['tankArea_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">试坑体积</td>
             <td class="label">cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'pitVolume_page' + currentPage + '_' + i_idx" v-model="formData['pitVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'pitVolume_page' + currentPage + '_' + i_idx" v-model="formData['pitVolume_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">试样质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'sampleMass_page' + currentPage + '_' + i_idx" v-model="formData['sampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'sampleMass_page' + currentPage + '_' + i_idx" v-model="formData['sampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">试样湿密度</td>
             <td class="label">g/cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'wetDensity_page' + currentPage + '_' + i_idx" v-model="formData['wetDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
 
@@ -194,42 +194,42 @@
             <td class="label">编号</td>
             <td class="label">/</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'moistureNo_page' + currentPage + '_' + i_idx" v-model="formData['moistureNo_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td><textarea :name="'moistureNo_page' + currentPage + '_' + i_idx" v-model="formData['moistureNo_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td class="label">容器质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'containerMass_page' + currentPage + '_' + i_idx" v-model="formData['containerMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td><textarea :name="'containerMass_page' + currentPage + '_' + i_idx" v-model="formData['containerMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td class="label">容器+湿样质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'wetSampleMass_page' + currentPage + '_' + i_idx" v-model="formData['wetSampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td><textarea :name="'wetSampleMass_page' + currentPage + '_' + i_idx" v-model="formData['wetSampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td class="label">容器+干样质量</td>
             <td class="label">g</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'drySampleMass_page' + currentPage + '_' + i_idx" v-model="formData['drySampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td><textarea :name="'drySampleMass_page' + currentPage + '_' + i_idx" v-model="formData['drySampleMass_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td class="label">含水率</td>
             <td class="label">%</td>
             <template v-for="(n, i_idx) in 16" :key="i_idx">
-            <td><input type="text" :name="'moistureContent_page' + currentPage + '_' + i_idx" v-model="formData['moistureContent_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td><textarea :name="'moistureContent_page' + currentPage + '_' + i_idx" v-model="formData['moistureContent_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td class="label">平均含水率</td>
             <td class="label">%</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'avgMoisture_page' + currentPage + '_' + i_idx" v-model="formData['avgMoisture_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
 
@@ -238,21 +238,21 @@
             <td colspan="3" class="label">实测干密度</td>
             <td class="label">g/cm³</td>
             <template v-for="(n, i_idx) in 8" :key="i_idx">
-            <td colspan="2"><input type="text" :name="'measuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['measuredDryDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea :name="'measuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['measuredDryDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">平均实测干密度</td>
             <td class="label">g/cm³</td>
             <template v-for="(n, i_idx) in 4" :key="i_idx">
-            <td colspan="4"><input type="text" :name="'avgMeasuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgMeasuredDryDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea :name="'avgMeasuredDryDensity_page' + currentPage + '_' + i_idx" v-model="formData['avgMeasuredDryDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
             <td colspan="3" class="label">相对密度</td>
             <td class="label"></td>
             <template v-for="(n, i_idx) in 4" :key="i_idx">
-            <td colspan="4"><input type="text" :name="'relativeDensity_page' + currentPage + '_' + i_idx" v-model="formData['relativeDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea :name="'relativeDensity_page' + currentPage + '_' + i_idx" v-model="formData['relativeDensity_page' + currentPage + '_' + i_idx]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
         </tr>
         <tr>
@@ -1182,65 +1182,92 @@ const previewPdf = () => {
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
+            padding: 0 30px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
-        .toolbar-left,
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-left: 0;
+            flex: 1;
+        }
+
         .toolbar-right {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+            justify-content: flex-end;
         }
 
         .link-button {
-            background: none;
-            border: none;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
             color: #3498db;
             cursor: pointer;
-            font-size: 14px;
-            padding: 0;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .link-button:hover {
-            text-decoration: underline;
+            background: #e9ecef;
+            border-color: #adb5bd;
+            text-decoration: none;
         }
 
         .record-nav {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-left: 16px;
         }
 
         .record-nav-info {
-            font-size: 13px;
+            font-size: 15px;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-label {
-            margin-left: 4px;
+            margin-left: 6px;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             border: 1px solid transparent;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             background-color: #f5f7fa;
             color: #333;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-small {
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn-primary {

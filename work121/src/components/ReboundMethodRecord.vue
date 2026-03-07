@@ -129,31 +129,31 @@
         <!-- Header Info -->
         <tr>
             <td colspan="2" class="label">工程名称</td>
-            <td colspan="13" class="left-align"><input type="text" v-model="formData.projectName"   name="projectName" style="text-align: left;" :disabled="!isEditable"></td>
+            <td colspan="13" class="left-align"><textarea v-model="formData.projectName"   name="projectName" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             <td colspan="3" class="label">委托日期</td>
-            <td colspan="3"><input type="text" v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable"></td>
+            <td colspan="3"><textarea v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">结构部位</td>
-            <td colspan="5"><input type="text" v-model="formData.structurePart"   name="structurePart" :disabled="!isEditable"></td>
+            <td colspan="5"><textarea v-model="formData.structurePart"   name="structurePart" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">检测类别</td>
-            <td colspan="4"><input type="text" v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">浇筑日期</td>
-            <td colspan="4"><input type="text" v-model="formData.pourDate"   name="pourDate" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.pourDate"   name="pourDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">样品状态</td>
-            <td colspan="5"><input type="text" v-model="formData.sampleStatus"   name="sampleStatus" :disabled="!isEditable"></td>
+            <td colspan="5"><textarea v-model="formData.sampleStatus"   name="sampleStatus" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">测试角度</td>
-            <td colspan="4"><input type="text" v-model="formData.testAngle"   name="testAngle" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.testAngle"   name="testAngle" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">检测日期</td>
-            <td colspan="4"><input type="text" v-model="formData.testDate"   name="testDate" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.testDate"   name="testDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">设计指标</td>
-            <td colspan="5"><input type="text" v-model="formData.designIndex"   name="designIndex" :disabled="!isEditable"></td>
+            <td colspan="5"><textarea v-model="formData.designIndex"   name="designIndex" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="7" class="label">构件厚度或骨料最大粒径</td>
-            <td colspan="7"><input type="text" v-model="formData.aggregateSize"   name="aggregateSize" :disabled="!isEditable"></td>
+            <td colspan="7"><textarea v-model="formData.aggregateSize"   name="aggregateSize" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
 
         <!-- Data Table Header -->
@@ -176,46 +176,46 @@
         <tr>
             <td>{{ (i_idx + 1) }}</td>
             <template v-for="(n, j_idx) in 16" :key="j_idx">
-            <td><input type="text" :name="'reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)" v-model="formData['reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)]" :disabled="!isEditable"></td>
+            <td><textarea :name="'reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)" v-model="formData['reboundValue_' + (i_idx + 1) + '_' + (j_idx + 1)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
             </template>
-            <td><input type="text" :name="'avgRebound_' + (i_idx + 1)" v-model="formData['avgRebound_' + (i_idx + 1)]" :disabled="!isEditable"></td>
-            <td><input type="text" :name="'carbonDepth_' + (i_idx + 1)" v-model="formData['carbonDepth_' + (i_idx + 1)]" :disabled="!isEditable"></td>
-            <td><input type="text" :name="'estimatedStrength_' + (i_idx + 1)" v-model="formData['estimatedStrength_' + (i_idx + 1)]" :disabled="!isEditable"></td>
-            <td><input type="text" :name="'correctedStrength_' + (i_idx + 1)" v-model="formData['correctedStrength_' + (i_idx + 1)]" :disabled="!isEditable"></td>
+            <td><textarea :name="'avgRebound_' + (i_idx + 1)" v-model="formData['avgRebound_' + (i_idx + 1)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td><textarea :name="'carbonDepth_' + (i_idx + 1)" v-model="formData['carbonDepth_' + (i_idx + 1)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td><textarea :name="'estimatedStrength_' + (i_idx + 1)" v-model="formData['estimatedStrength_' + (i_idx + 1)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td><textarea :name="'correctedStrength_' + (i_idx + 1)" v-model="formData['correctedStrength_' + (i_idx + 1)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         </template>
 
         <!-- Summary Section -->
         <tr>
             <td colspan="3" class="label">平均强度值<br>MPa</td>
-            <td colspan="2"><input type="text" v-model="formData.avgStrength"   name="avgStrength" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea v-model="formData.avgStrength"   name="avgStrength" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">标准差<br>MPa</td>
-            <td colspan="2"><input type="text" v-model="formData.stdDev"   name="stdDev" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea v-model="formData.stdDev"   name="stdDev" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">变异系<br>数%</td>
-            <td colspan="2"><input type="text" v-model="formData.coefVariation"   name="coefVariation" :disabled="!isEditable"></td>
+            <td colspan="2"><textarea v-model="formData.coefVariation"   name="coefVariation" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">构件强度推<br>定值 MPa</td>
-            <td colspan="3"><input type="text" v-model="formData.compEstimatedStrength"   name="compEstimatedStrength" :disabled="!isEditable"></td>
+            <td colspan="3"><textarea v-model="formData.compEstimatedStrength"   name="compEstimatedStrength" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">仪器设备</td>
-            <td colspan="11" class="left-align"><input type="text" v-model="formData.equipment"   name="equipment" style="text-align: left;" :disabled="!isEditable"></td>
+            <td colspan="11" class="left-align"><textarea v-model="formData.equipment"   name="equipment" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             <td colspan="4" class="label">碳化平均值<br>mm</td>
-            <td colspan="4"><input type="text" v-model="formData.avgCarbonation"   name="avgCarbonation" :disabled="!isEditable"></td>
+            <td colspan="4"><textarea v-model="formData.avgCarbonation"   name="avgCarbonation" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">依据标准</td>
-            <td colspan="11" class="left-align"><input type="text" v-model="formData.standard"   name="standard" style="text-align: left;" :disabled="!isEditable"></td>
+            <td colspan="11" class="left-align"><textarea v-model="formData.standard"   name="standard" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             <td colspan="4" class="label">率定值</td>
             <td colspan="4" class="left-align">
 
-                检测前：<input type="text" v-model="formData.calibrationBefore"   name="calibrationBefore" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;" :disabled="!isEditable"><br>
-                检测后：<input type="text" v-model="formData.calibrationAfter"   name="calibrationAfter" style="width: 60px; border-bottom: 1px solid #ccc; text-align: center;" :disabled="!isEditable">
+                检测前：<textarea v-model="formData.calibrationBefore"   name="calibrationBefore" :disabled="!isEditable" class="table-textarea small-textarea"></textarea><br>
+                检测后：<textarea v-model="formData.calibrationAfter"   name="calibrationAfter" :disabled="!isEditable" class="table-textarea small-textarea"></textarea>
             </td>
         </tr>
         <tr>
             <td colspan="2" class="label">结论</td>
             <td colspan="19" class="left-align" style="height: 40px;">
-                <input type="text" v-model="formData.conclusion"   name="conclusion" style="text-align: left; width: 100%;" :disabled="!isEditable">
+                <textarea v-model="formData.conclusion"   name="conclusion" :disabled="!isEditable" class="table-textarea left-align"></textarea>
             </td>
         </tr>
         <tr>
@@ -227,7 +227,7 @@
         <tr>
             <td colspan="2" class="label">备注</td>
             <td colspan="19" class="left-align" style="height: 40px;">
-                <textarea v-model="formData.remarks"  name="remarks" style="width: 100%; height: 100%;" :disabled="!isEditable"></textarea>
+                <textarea v-model="formData.remarks"  name="remarks" :disabled="!isEditable" class="table-textarea left-align"></textarea>
             </td>
         </tr>
     </table>
@@ -1124,65 +1124,92 @@ const handleSign = async () => {
             align-items: center;
             justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
+            padding: 0 30px;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
-        .toolbar-left,
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-left: 0;
+            flex: 1;
+        }
+
         .toolbar-right {
             display: flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+            justify-content: flex-end;
         }
 
         .link-button {
-            background: none;
-            border: none;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
             color: #3498db;
             cursor: pointer;
-            font-size: 14px;
-            padding: 0;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .link-button:hover {
-            text-decoration: underline;
+            background: #e9ecef;
+            border-color: #adb5bd;
+            text-decoration: none;
         }
 
         .record-nav {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             margin-left: 16px;
         }
 
         .record-nav-info {
-            font-size: 13px;
+            font-size: 15px;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
             color: #666;
+            white-space: nowrap;
         }
 
         .status-label {
-            margin-left: 4px;
+            margin-left: 6px;
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             border: 1px solid transparent;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             background-color: #f5f7fa;
             color: #333;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .btn-small {
-            padding: 4px 10px;
-            font-size: 12px;
+            padding: 6px 12px;
+            font-size: 13px;
         }
 
         .btn-primary {
@@ -1276,6 +1303,37 @@ const handleSign = async () => {
             resize: none;
             overflow: hidden;
             text-align: left;
+        }
+        .table-textarea {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            outline: none;
+            font-family: inherit;
+            font-size: inherit;
+            background-color: transparent;
+            text-align: center;
+            padding: 2px 4px;
+            resize: none;
+            overflow: hidden;
+        }
+        .table-textarea.left-align {
+            text-align: left;
+        }
+        .table-textarea.small-textarea {
+            width: 60px;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+        }
+        .table-textarea:focus {
+            background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        .table-textarea:disabled:focus {
+            background-color: transparent;
+            outline: none;
+            border-color: black;
         }
         .footer-info {
             display: flex;
