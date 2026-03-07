@@ -751,8 +751,8 @@ const handleSign = async () => {
       }
 
       let signed = false
-      const currentName = user.userName || user.username
       const currentAccount = user.username
+      const currentName = user.userName
 
       // Match Tester
       if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {

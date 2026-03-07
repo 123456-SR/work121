@@ -17,7 +17,6 @@
         <button
           v-if="showSubmitButton"
           @click="submitForm"
-          :disabled="!formData.testerSignature"
           class="btn btn-primary btn-small"
         >
           提交
@@ -58,12 +57,7 @@
         >
           预览PDF
         </button>
-        <button
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
+
         <button
           @click="saveForm"
           class="btn btn-secondary btn-small"
@@ -453,13 +447,12 @@ const isSameTesterReviewer = computed(() => {
 })
 
 const showSubmitButton = computed(() => {
-  return (formData.status == 0 || formData.status == 2 || formData.status == 4 || formData.status > 5) && !isSameTesterReviewer.value
+  return formData.status == 0 || formData.status == 2 || formData.status == 4
 })
 
 const showAuditButtons = computed(() => {
   if (!currentId.value) return false
   if (formData.status == 1) return true
-  if (isSameTesterReviewer.value && (formData.status == 0 || formData.status == 2 || formData.status > 5)) return true
   return false
 })
 
@@ -536,7 +529,7 @@ const mapDataToForm = (data) => {
   formData.fee = data.fee || ''
   formData.sampleHistory = data.sampleHistory || ''
   const statusVal = parseInt(data.status)
-  formData.status = !isNaN(statusVal) ? statusVal : 0
+  formData.status = !isNaN(statusVal) && statusVal <= 5 ? statusVal : 0
   formData.clientAddressPhone = data.clientAddressPhone || data.clientUnitTel || ''
   formData.reportSend = data.reportSendMode ? data.reportSendMode.split(',') : []
   formData.sampleDisposal = data.sampleDisposal ? data.sampleDisposal.split(',') : []
@@ -890,9 +883,7 @@ const saveForm = async (silent = false) => {
         currentId.value = response.data.id
         // Also update the route or props if possible, but currentId is reactive
       }
-      // Update local status to Pending Sign
-      formData.status = 3
-      if (!silent) alert('保存成功，状态已更新为待签字')
+      if (!silent) alert('保存成功')
       return true
     } else {
       if (!silent) alert('保存失败: ' + response.data.message)
@@ -909,12 +900,12 @@ const getStatusText = (status) => {
   const s = parseInt(status)
   switch(s) {
     case 0: return '草稿'
-    case 1: return '已提交待审核'
+    case 1: return '待审核'
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '已签字待提交'
     case 5: return '审核通过'
-    default: return '未知/历史'
+    default: return '草稿'
   }
 }
 
@@ -970,15 +961,35 @@ const submitWorkflow = async (action) => {
 
     if (action === 'SUBMIT') {
         // Role check: Only tester can submit
-        if (formData.tester && user.username !== formData.tester) {
+        if (formData.tester && user.username !== formData.tester && user.userName !== formData.tester) {
             alert('您不是该单据的检测人 (' + formData.tester + ')，无权提交')
             return
         }
 
-        // Check signature
+        // Check signature and auto-fill if missing
         if (!formData.testerSignature) {
-            alert('请先进行检测人签字')
-            return
+            // Auto-fetch signature
+            try {
+                const response = await axios.post('/api/signature/get', {
+                    userAccount: user.username
+                })
+
+                if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+                    const signatureBlob = response.data.data.signatureBlob
+                    const imgSrc = `data:image/png;base64,${signatureBlob}`
+                    formData.testerSignature = imgSrc
+                    
+                    // Save signature to database
+                    await saveForm(true)
+                } else {
+                    alert('未找到您的电子签名，请先去“电子签名”页面设置')
+                    return
+                }
+            } catch (error) {
+                console.error('Error fetching signature:', error)
+                alert('获取签名失败')
+                return
+            }
         }
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'SIGN_TEST') {
@@ -990,19 +1001,37 @@ const submitWorkflow = async (action) => {
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
         // Role check: Only reviewer can audit/reject
-        if (formData.reviewer && user.username !== formData.reviewer) {
+        if (formData.reviewer && user.username !== formData.reviewer && user.userName !== formData.reviewer) {
             alert('您不是该单据的审核人 (' + formData.reviewer + ')，无权操作')
             return
         }
 
         if (action === 'AUDIT_PASS') {
-            // Reviewer does not need signature
-            // if (!formData.reviewerSignature) {
-            //    alert('请先进行审核人签字')
-            //    return
-            // }
-            // signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
-            signatureData = null
+            // Auto-fetch signature for reviewer
+            if (!formData.reviewerSignature) {
+                try {
+                    const response = await axios.post('/api/signature/get', {
+                        userAccount: user.username
+                    })
+
+                    if (response.data.success && response.data.data && response.data.data.signatureBlob) {
+                        const signatureBlob = response.data.data.signatureBlob
+                        const imgSrc = `data:image/png;base64,${signatureBlob}`
+                        formData.reviewerSignature = imgSrc
+                        
+                        // Save signature to database
+                        await saveForm(true)
+                    } else {
+                        alert('未找到您的电子签名，请先去“电子签名”页面设置')
+                        return
+                    }
+                } catch (error) {
+                    console.error('Error fetching signature:', error)
+                    alert('获取签名失败')
+                    return
+                }
+            }
+            signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
         }
 
         nextHandler = formData.reviewer // Stay with reviewer or move to next? 
@@ -1015,7 +1044,7 @@ const submitWorkflow = async (action) => {
         
     } else if (action === 'SIGN_REVIEW') {
          // Role check: Only reviewer can sign
-        if (formData.reviewer && user.username !== formData.reviewer) {
+        if (formData.reviewer && user.username !== formData.reviewer && user.userName !== formData.reviewer) {
             alert('您不是该单据的复核人 (' + formData.reviewer + ')，无权签字')
             return
         }
@@ -1028,7 +1057,7 @@ const submitWorkflow = async (action) => {
         
     } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 4)) {
          // Role check: Only approver can sign/reject
-         if (formData.approver && user.username !== formData.approver) {
+         if (formData.approver && user.username !== formData.approver && user.userName !== formData.approver) {
             alert('您不是该单据的批准人 (' + formData.approver + ')，无权操作')
             return
         }
@@ -1088,14 +1117,7 @@ const prevForm = () => {
   navigateBetweenForms(-1)
 }
 
-// 下一页
-const nextForm = () => {
-  if (formData.status < 3) {
-    alert('委托单未审核通过，无法填写记录表')
-    return
-  }
-  goToFirstRecordForm()
-}
+
 
 const goToFirstRecordForm = async () => {
   let currentDirectory = localStorage.getItem('currentDirectory')

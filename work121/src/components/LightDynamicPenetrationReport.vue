@@ -442,8 +442,8 @@ const submitWorkflow = async (action) => {
 
   const rawUser = localStorage.getItem('userInfo')
   const user = rawUser ? JSON.parse(rawUser) : null
-  const currentAccount = user && (user.username || user.userAccount || user.userName)
-  const currentName = user && (user.fullName || user.userName || currentAccount)
+  const currentAccount = user && user.username
+  const currentName = user && user.userName
   if (!currentAccount) {
     alert('请先登录')
     return
@@ -900,8 +900,8 @@ onMounted(() => {
 const handleSign = async () => {
   const rawUser = localStorage.getItem('userInfo')
   const user = rawUser ? JSON.parse(rawUser) : null
-  const currentAccount = user && (user.username || user.userAccount || user.userName)
-  const currentName = user && (user.fullName || user.userName || currentAccount)
+  const currentAccount = user && user.username
+  const currentName = user && user.userName
   if (!currentAccount) {
     alert('请先登录')
     return

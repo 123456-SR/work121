@@ -46,7 +46,6 @@
         </template>
 
         <button @click="saveData" class="btn btn-secondary btn-small">保存</button>
-        <button v-if="!draftMode" @click="handleSign" class="btn btn-secondary btn-small">签字</button>
         <button v-if="!draftMode" @click="printDocument" class="btn btn-secondary btn-small">打印此单</button>
         <button v-if="!draftMode" @click="generatePdf" class="btn btn-secondary btn-small">下载PDF</button>
         <button v-if="!draftMode" @click="previewPdf" class="btn btn-secondary btn-small">预览PDF</button>
@@ -314,14 +313,31 @@ const submitWorkflow = async (action) => {
     
     if (action === 'SUBMIT') {
         // Role check: Only recordTester can submit
-        if (formData.recordTester && user.username !== formData.recordTester && user.fullName !== formData.recordTester) {
+        if (formData.recordTester && user.username !== formData.recordTester && user.userName !== formData.recordTester) {
             alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
             return
         }
 
+        // Auto fetch signature if missing
         if (!formData.testerSignature) {
-            alert('请先进行检测人签字')
-            return
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordTester) {
+                        formData.recordTester = user.userName || user.username
+                     }
+                     // 保存签名到数据库
+                     await saveData()
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
         }
         signatureData = formData.testerSignature
     } else if (action === 'AUDIT_PASS') {
@@ -340,6 +356,8 @@ const submitWorkflow = async (action) => {
                      if (!formData.recordReviewer) {
                         formData.recordReviewer = user.fullName || user.username
                      }
+                     // 保存签名到数据库
+                     await saveData()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -770,9 +788,9 @@ const handleSign = async () => {
     return
   }
 
-  // 获取用户账号，支持多种字段名
-  const currentAccount = user.username || user.userAccount || user.userName
-  const currentName = user.fullName || user.nickName || currentAccount
+  // 直接使用后端返回的字段
+  const currentAccount = user.username
+  const currentName = user.userName
   
   if (!currentAccount) {
     alert('无法获取用户账号信息')
@@ -819,11 +837,14 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        // 保存签名到数据库
-        await saveData()
-        // 如果两个人都签了，状态更新为已签字待提交
+        // 如果两个人都签了，先更新状态为已签字待提交
         if (formData.testerSignature && formData.reviewerSignature) {
           formData.status = 4
+        }
+        // 保存签名到数据库
+        await saveData()
+        // 显示成功消息
+        if (formData.status === 4) {
           alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
         } else {
           alert(`签名成功并已保存，您以${signType}身份签字`)

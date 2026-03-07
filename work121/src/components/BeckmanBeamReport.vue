@@ -788,7 +788,7 @@ const handleSign = async () => {
                 return
             }
 
-            const currentName = user.fullName || user.username
+            const currentName = user.userName
 
             // 点击签名时只在检测那里加上电子签名
             formData.testerSignature = imgSrc

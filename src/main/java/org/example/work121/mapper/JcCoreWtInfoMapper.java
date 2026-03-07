@@ -22,8 +22,8 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(t1.CONSTRUCTION_UNIT, t2.SG_UNIT) as constructionUnit, " +
             "COALESCE(t1.BUILDING_UNIT, t2.JS_UNIT) as buildingUnit, " +
             "COALESCE(t1.SUPERVISION_UNIT, t2.JL_UNIT) as supervisionUnit, " +
-            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " +
-            "t1.WITNESS as witness, " +
+            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " + 
+             "COALESCE(t1.WITNESS, t2.JZ_MAN) as witness, " +
             "COALESCE(TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegName, " +
             "TO_CHAR(t1.CREATE_BY) as createBy, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as createByName, " +
@@ -70,15 +70,15 @@ public interface JcCoreWtInfoMapper {
             "t1.WT_REVIEWER as wtReviewer, " +
             "t1.WT_REVIEW_SIGN as wtReviewSign, " +
             "t1.SAMPLE_NUMBER as sampleNumber, " +
-            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " +
-            "FROM JC_CORE_WT_INFO t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
-            "LEFT JOIN JZS_USERS u_create ON u_create.USER_ACCOUNT = TO_CHAR(t1.CREATE_BY) " +
-            "LEFT JOIN JZS_USERS u_tester ON u_tester.USER_ACCOUNT = TO_CHAR(t1.TESTER) " +
-            "LEFT JOIN JZS_USERS u_reviewer ON u_reviewer.USER_ACCOUNT = TO_CHAR(t1.REVIEWER) " +
-            "LEFT JOIN JZS_USERS u_approver ON u_approver.USER_ACCOUNT = TO_CHAR(t1.APPROVER) " +
-            "LEFT JOIN JZS_USERS u_update ON u_update.USER_ACCOUNT = TO_CHAR(t1.UPDATE_BY) " +
-            "WHERE UPPER(TRIM(t2.WT_NUM)) = UPPER(TRIM(#{wtNum})) AND ROWNUM <= 1")
+            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " + 
+             "FROM JC_CORE_WT_INFO t2 " + 
+             "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " + 
+             "LEFT JOIN JZS_USERS u_create ON u_create.USER_ACCOUNT = TO_CHAR(t1.CREATE_BY) " + 
+             "LEFT JOIN JZS_USERS u_tester ON u_tester.USER_ACCOUNT = TO_CHAR(t1.TESTER) " + 
+             "LEFT JOIN JZS_USERS u_reviewer ON u_reviewer.USER_ACCOUNT = TO_CHAR(t1.REVIEWER) " + 
+             "LEFT JOIN JZS_USERS u_approver ON u_approver.USER_ACCOUNT = TO_CHAR(t1.APPROVER) " + 
+             "LEFT JOIN JZS_USERS u_update ON u_update.USER_ACCOUNT = TO_CHAR(t1.UPDATE_BY) " + 
+             "WHERE UPPER(TRIM(t2.WT_NUM)) = UPPER(TRIM(#{wtNum})) AND ROWNUM <= 1")
     List<JcCoreWtInfo> selectByWtNum(@Param("wtNum") String wtNum);
 
     /**
@@ -108,8 +108,8 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(t1.CONSTRUCTION_UNIT, t2.SG_UNIT) as constructionUnit, " +
             "COALESCE(t1.BUILDING_UNIT, t2.JS_UNIT) as buildingUnit, " +
             "COALESCE(t1.SUPERVISION_UNIT, t2.JL_UNIT) as supervisionUnit, " +
-            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " +
-            "t1.WITNESS as witness, " +
+            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " + 
+             "COALESCE(t1.WITNESS, t2.JZ_MAN) as witness, " +
             "COALESCE(TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegName, " +
             "TO_CHAR(t1.CREATE_BY) as createBy, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as createByName, " +
@@ -293,8 +293,8 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(t1.CONSTRUCTION_UNIT, t2.SG_UNIT) as constructionUnit, " +
             "COALESCE(t1.BUILDING_UNIT, t2.JS_UNIT) as buildingUnit, " +
             "COALESCE(t1.SUPERVISION_UNIT, t2.JL_UNIT) as supervisionUnit, " +
-            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " +
-            "t1.WITNESS as witness, " +
+            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " + 
+             "COALESCE(t1.WITNESS, t2.JZ_MAN) as witness, " +
             "COALESCE(TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegName, " +
             "TO_CHAR(t1.CREATE_BY) as createBy, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as createByName, " +
@@ -464,8 +464,8 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(t1.CONSTRUCTION_UNIT, t2.SG_UNIT) as constructionUnit, " +
             "COALESCE(t1.BUILDING_UNIT, t2.JS_UNIT) as buildingUnit, " +
             "COALESCE(t1.SUPERVISION_UNIT, t2.JL_UNIT) as supervisionUnit, " +
-            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " +
-            "t1.WITNESS as witness, " +
+            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " + 
+             "COALESCE(t1.WITNESS, t2.JZ_MAN) as witness, " +
             "COALESCE(TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegName, " +
             "TO_CHAR(t1.CREATE_BY) as createBy, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as createByName, " +
@@ -657,8 +657,8 @@ public interface JcCoreWtInfoMapper {
             "COALESCE(t1.CONSTRUCTION_UNIT, t2.SG_UNIT) as constructionUnit, " +
             "COALESCE(t1.BUILDING_UNIT, t2.JS_UNIT) as buildingUnit, " +
             "COALESCE(t1.SUPERVISION_UNIT, t2.JL_UNIT) as supervisionUnit, " +
-            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " +
-            "t1.WITNESS as witness, " +
+            "COALESCE(t1.WITNESS_UNIT, t2.JZ_UNIT) as witnessUnit, " + 
+             "COALESCE(t1.WITNESS, t2.JZ_MAN) as witness, " +
             "COALESCE(TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as clientRegName, " +
             "TO_CHAR(t1.CREATE_BY) as createBy, " +
             "COALESCE(u_create.USER_NAME, TO_CHAR(t1.CREATE_BY), t2.WT_REG_NAME) as createByName, " +

@@ -792,8 +792,8 @@ const handleSign = async () => {
     return
   }
 
-  const currentAccount = user.username || user.userAccount || user.userName
-  const currentRealName = user.fullName || user.userName || currentAccount
+  const currentAccount = user.username
+  const currentName = user.userName
 
   try {
     const response = await axios.post('/api/signature/get', {

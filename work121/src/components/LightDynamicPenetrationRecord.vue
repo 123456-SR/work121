@@ -69,13 +69,7 @@
           </button>
         </template>
 
-        <button
-          v-if="!draftMode"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
+
         <button
           @click="saveData"
           class="btn btn-secondary btn-small"
@@ -430,9 +424,26 @@ const submitWorkflow = async (action) => {
         //      return
         // }
 
+        // Auto fetch signature if missing
         if (!formData.testerSignature) {
-            alert('请先进行检测人签字')
-            return
+            try {
+                const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+                if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
+                     formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordTester) {
+                        formData.recordTester = user.userName || user.username
+                     }
+                     // 保存签名到数据库
+                     await saveData()
+                } else {
+                     alert('未找到您的电子签名，无法自动签名')
+                     return
+                }
+            } catch (e) {
+                console.error('Auto sign error', e)
+                alert('自动签名失败')
+                return
+            }
         }
         
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
@@ -451,6 +462,8 @@ const submitWorkflow = async (action) => {
                     const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                     if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                          formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                         // Save signature to database
+                         await saveData()
                     } else {
                          alert('未找到您的电子签名，无法自动签名')
                          return
@@ -974,8 +987,8 @@ const handleSign = async () => {
         return
     }
     
-    const currentAccount = getUserAccount(user)
-    const currentName = user.fullName || user.nickName || currentAccount
+    const currentAccount = user.username
+    const currentName = user.userName
 
     try {
         const res = await axios.post('/api/signature/get', { userAccount: currentAccount })
@@ -1003,11 +1016,14 @@ const handleSign = async () => {
                 if (!formData.testDate) {
                     formData.testDate = formatDate(new Date())
                 }
-                // 保存签名到数据库
-                await saveData()
-                // 如果两个人都签了，状态更新为已签字待提交
+                // 如果两个人都签了，先更新状态为已签字待提交
                 if (formData.testerSignature && formData.reviewerSignature) {
                     formData.status = 4
+                }
+                // 保存签名到数据库
+                await saveData()
+                // 显示成功消息
+                if (formData.status === 4) {
                     alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
                 } else {
                     alert(`签名成功并已保存，您以${signType}身份签字`)

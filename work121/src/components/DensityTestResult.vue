@@ -906,7 +906,7 @@ const handleSign = async () => {
 
       let signed = false
       const currentAccount = user.username
-      const currentName = user.fullName || user.nickName || currentAccount
+      const currentName = user.userName
 
       // Only allow Tester to sign via button
       if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
