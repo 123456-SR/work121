@@ -164,9 +164,9 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString()
 }
 
-// 结果列表状态：使用 status 字段，与详情页面保持一致
+// 结果列表状态：优先使用 resultStatus 字段（结果表状态），如果不存在则使用 status 字段（委托单状态）
 const getEffectiveStatus = (item) => {
-  return item?.status
+  return item?.resultStatus || item?.status
 }
 
 const getStatusText = (status) => {

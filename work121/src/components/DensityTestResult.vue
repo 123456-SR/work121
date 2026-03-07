@@ -263,6 +263,15 @@ const formData = reactive({
   approverSignature: ''
 })
 
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
+
 // 根据检测方法/类别自动判断是否为“核子法”
 const isNuclearMethod = computed(() => {
   const method = (formData.testMethod || formData.testCategory || '').toString()
@@ -686,6 +695,13 @@ const saveData = async () => {
       formData.status = 3
     }
     
+    // 确保日期格式正确
+    for (let i = 0; i < 20; i++) {
+      if (formData['date_' + i]) {
+        formData['date_' + i] = formatDate(formData['date_' + i])
+      }
+    }
+    
     // 保存当前页的数据
     saveCurrentRecordState()
     
@@ -694,6 +710,13 @@ const saveData = async () => {
     for (let i = 0; i < records.value.length; i++) {
       const record = records.value[i]
       const recordData = JSON.parse(record.dataJson || '{}')
+      
+      // 确保recordData中的日期格式正确
+      for (let j = 0; j < 20; j++) {
+        if (recordData['date_' + j]) {
+          recordData['date_' + j] = formatDate(recordData['date_' + j])
+        }
+      }
       
       // 确保recordData也有正确的状态
       recordData.status = formData.status

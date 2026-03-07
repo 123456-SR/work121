@@ -591,21 +591,11 @@ public class Entrustment extends BusinessEntity {
     public String getSampleStatus() { return sampleStatus; }
     public void setSampleStatus(String sampleStatus) { 
         this.sampleStatus = sampleStatus; 
-        try {
-            if (sampleStatus != null) {
-                super.setStatus(sampleStatus);
-            }
-        } catch (NumberFormatException e) {
-            // ignore
-        }
     }
 
     @Override
     public void setStatus(String status) {
         super.setStatus(status);
-        if (status != null) {
-            this.sampleStatus = status;
-        }
     }
 
     public String getVirtualMoney() { return virtualMoney; }

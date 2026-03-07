@@ -164,9 +164,9 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString()
 }
 
-// 报告列表状态：使用 status 字段，与详情页面保持一致
+// 报告列表状态：优先使用 reportStatus 字段（报告表状态），如果不存在则使用 status 字段（委托单状态）
 const getEffectiveStatus = (item) => {
-  return item?.status
+  return item?.reportStatus || item?.status
 }
 
 const getStatusText = (status) => {
@@ -222,7 +222,7 @@ const getStatusClass = (status) => {
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
-    case 5: return 'status-approving'
+    case 5: return 'status-completed'
     case 6: return 'status-completed'
     case 7: return 'status-rejected'
     // 报告表状态 (10-17)

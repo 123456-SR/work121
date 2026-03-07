@@ -49,7 +49,7 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -357,6 +357,17 @@ const getStatusColor = (status) => {
     }
 }
 
+// 日期格式化函数
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  if (isNaN(date.getTime())) return dateString
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const normalizeSignatureSrc = (value) => {
   if (!value) return ''
   if (typeof value !== 'string') return ''
@@ -615,7 +626,7 @@ const mapRecordToFormData = (record) => {
   // Map fields from BusinessEntity/Entrustment（先映射除样品编号以外的）
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
   if (record.projectName) formData.projectName = record.projectName
-  if (record.commissionDate) formData.commissionDate = record.commissionDate
+  if (record.commissionDate) formData.commissionDate = formatDate(record.commissionDate)
   if (record.testCategory) formData.testCategory = record.testCategory
   
   // Map Roles
@@ -887,6 +898,17 @@ const submitForm = async () => {
       formData.status = 3
     }
     
+    // 确保日期格式正确
+    if (formData.commissionDate) {
+      formData.commissionDate = formatDate(formData.commissionDate)
+    }
+    if (formData.testDate) {
+      formData.testDate = formatDate(formData.testDate)
+    }
+    if (formData.pourDate) {
+      formData.pourDate = formatDate(formData.pourDate)
+    }
+    
     saveCurrentRecordState()
     
     // 获取当前登录用户信息
@@ -998,6 +1020,12 @@ const submitForm = async () => {
         }
         
         console.log('最终 formData.id:', formData.id)
+        
+        // 保存成功后重新加载数据，确保显示最新状态
+        const entrustmentId = formData.entrustmentId || formData.unifiedNumber
+        if (entrustmentId) {
+          await loadData(entrustmentId)
+        }
       } else {
         // 如果后端没有返回数据，尝试重新查询
         console.warn('后端未返回保存的数据，尝试重新查询...')

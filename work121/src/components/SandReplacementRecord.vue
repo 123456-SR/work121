@@ -48,7 +48,7 @@
 
         <template v-if="formData.id && !draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -536,6 +536,16 @@ const initDynamicFields = () => {
 }
 initDynamicFields()
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
+  const year = d.getFullYear()
+  const month = ('0' + (d.getMonth() + 1)).slice(-2)
+  const day = ('0' + d.getDate()).slice(-2)
+  return `${year}-${month}-${day}`
+}
+
 const mapRecordToFormData = (record) => {
   // Clear dynamic fields first
   initDynamicFields()
@@ -563,7 +573,7 @@ const mapRecordToFormData = (record) => {
   // Map fields from BusinessEntity/Entrustment (Always map these first as defaults)
   if (record.projectName) formData.projectName = record.projectName
   if (record.wtNum) formData.unifiedNumber = record.wtNum
-  if (record.commissionDate) formData.testDate = record.commissionDate
+  if (record.commissionDate) formData.testDate = formatDate(record.commissionDate)
   if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
   if (record.clientUnit) formData.entrustingUnit = record.clientUnit
   if (record.constructionPart) formData.constructionPart = record.constructionPart

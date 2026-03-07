@@ -341,6 +341,15 @@ const formData = reactive({
   testerSignature: ''
 })
 
+const formatDate = (d) => {
+    if (!d) return ''
+    const date = new Date(d)
+    const year = date.getFullYear()
+    const month = ('0' + (date.getMonth() + 1)).slice(-2)
+    const day = ('0' + date.getDate()).slice(-2)
+    return `${year}-${month}-${day}`
+}
+
 onMounted(() => {
 
   // Initialize dynamic fields for loop variable 'i_idx'
@@ -688,6 +697,20 @@ const submitForm = async () => {
     // 如果状态是草稿(0)，保存后改为待签字(3)
     if (formData.status === 0) {
       formData.status = 3
+    }
+    
+    // 确保日期格式正确
+    if (formData.commissionDate) {
+      formData.commissionDate = formatDate(formData.commissionDate)
+    }
+    if (formData.testDate) {
+      formData.testDate = formatDate(formData.testDate)
+    }
+    if (formData.reportDate) {
+      formData.reportDate = formatDate(formData.reportDate)
+    }
+    if (formData.pourDate) {
+      formData.pourDate = formatDate(formData.pourDate)
     }
     
     // 构建提交数据

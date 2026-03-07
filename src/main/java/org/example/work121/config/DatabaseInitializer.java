@@ -210,6 +210,10 @@ public class DatabaseInitializer implements CommandLineRunner {
             addColumnSafe(table, "CREATE_TIME", "TIMESTAMP");
             addColumnSafe(table, "UPDATE_BY", "VARCHAR2(64)");
             addColumnSafe(table, "UPDATE_TIME", "TIMESTAMP");
+            
+            // Add report and result status columns
+            addColumnSafe(table, "REPORT_STATUS", "VARCHAR2(64)");
+            addColumnSafe(table, "RESULT_STATUS", "VARCHAR2(64)");
         }
         addColumnSafe("T_REBOUND_METHOD", "STRUCTURE_PART", "VARCHAR2(255)");
         addColumnSafe("T_REBOUND_METHOD", "CONCRETE_GRADE", "VARCHAR2(64)");

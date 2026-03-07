@@ -36,7 +36,7 @@
           </button>
         </span>
       </div>
-      
+
       <div class="toolbar-right">
         <div v-if="formData.status !== undefined" class="status-text">
           状态:
@@ -335,7 +335,7 @@
 
     </form>
 
-    
+
 
   </div>
 </template>
@@ -507,7 +507,7 @@ const submitWorkflow = async (action) => {
         alert('请先保存记录')
         return
     }
-    
+
     const user = JSON.parse(localStorage.getItem('userInfo'))
     if (!user || !user.username) {
         alert('请先登录')
@@ -515,7 +515,7 @@ const submitWorkflow = async (action) => {
     }
 
     let signatureData = null
-    
+
     if (action === 'SUBMIT') {
         // Role check: Only recordTester can submit
         if (formData.recordTester && user.username !== formData.recordTester && user.userName !== formData.recordTester) {
@@ -601,7 +601,7 @@ const submitWorkflow = async (action) => {
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            
+
             // 如果是审核通过，生成报告表和结果表
             if (action === 'AUDIT_PASS') {
                 try {
@@ -611,7 +611,7 @@ const submitWorkflow = async (action) => {
                     alert('审核通过，但生成报告表和结果表失败，请手动生成')
                 }
             }
-            
+
             // 重新按委托号加载一次，刷新最新的 STATUS（例如从 0 -> 1）
             const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
             if (reloadId) {
@@ -681,7 +681,7 @@ const initDynamicFields = () => {
 
 onMounted(() => {
   initDynamicFields()
-  
+
   let wtNum = props.wtNum
   if (!wtNum) {
       const urlParams = new URLSearchParams(window.location.search)
@@ -707,21 +707,21 @@ const formatDate = (dateStr) => {
 
 const mapRecordToFormData = (record) => {
   initDynamicFields()
-  
+
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || formData.unifiedNumber
   // 状态统一转成数字，避免后端返回字符串导致严格等于判断失效（影响按钮显示）
   formData.status = record.status !== undefined ? Number(record.status) : 0
-  
+
   // Map signature photos
   formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
   formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
-  
+
   // Map explicit columns
   if (record.subgradeType) formData.pavementType = record.subgradeType
   if (record.deflectometerType) formData.equipmentCode = record.deflectometerType
   if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
-  
+
   if (record.dataJson) {
     try {
       const json = JSON.parse(record.dataJson)
@@ -762,17 +762,17 @@ const mapRecordToFormData = (record) => {
   // Map Roles
   // Load defaults from directory if available
   const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
-  
+
   // Filler - Priority: record.filler
   // Note: We check formData.filler (from JSON) to avoid overwriting if entity column is empty
   formData.filler = record.filler || (formData.filler && formData.filler !== records.value[currentIndex.value === 0 && records.value.length > 1 ? 1 : 0]?.filler ? formData.filler : '') || ''
-  
+
   // Record Tester - Priority: record.recordTester -> record.tester (legacy)
   formData.recordTester = record.recordTester || record.tester || ''
-  
+
   // Record Reviewer - Priority: record.recordReviewer -> record.reviewer (legacy)
   formData.recordReviewer = record.recordReviewer || record.reviewer || ''
-  
+
   // Ensure entity fields override JSON if present
   if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
   if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
@@ -780,11 +780,11 @@ const mapRecordToFormData = (record) => {
 
 const getCleanDataJson = () => {
   const dynamicData = {}
-  
+
   // Fields that should NOT be in dataJson (because they have their own columns or are UI state)
   const excludeFields = [
     'id', 'entrustmentId', 'status', 'reviewerSignature', 'testerSignature',
-    'recordTester', 'recordReviewer', 'filler', 
+    'recordTester', 'recordReviewer', 'filler',
     'pavementType', 'equipmentCode' // These map to subgradeType/deflectometerType
   ]
 
@@ -793,25 +793,25 @@ const getCleanDataJson = () => {
       dynamicData[key] = formData[key]
     }
   })
-  
+
   return JSON.stringify(dynamicData)
 }
 
 const saveCurrentRecordState = () => {
   if (records.value.length === 0) return
-  
+
   const record = records.value[currentIndex.value]
   record.id = formData.id
   record.entrustmentId = formData.entrustmentId || formData.unifiedNumber
-  
+
   // Update signatures
   record.reviewSignaturePhoto = formData.reviewerSignature
   record.inspectSignaturePhoto = formData.testerSignature
-  
+
   // Update explicit columns
   record.subgradeType = formData.pavementType
   record.deflectometerType = formData.equipmentCode
-  
+
   // Update dataJson
   record.dataJson = getCleanDataJson()
 }
@@ -862,7 +862,7 @@ const addRecord = () => {
           console.error('Error copying fields', e)
       }
   }
-  
+
   records.value.push(newRecord)
   currentIndex.value = records.value.length - 1
   mapRecordToFormData(newRecord)
@@ -873,11 +873,11 @@ const deleteRecord = async () => {
     alert('至少保留一条记录')
     return
   }
-  
+
   if (!confirm('确定要删除当前记录吗？')) return
 
   const currentRecord = records.value[currentIndex.value]
-  
+
   if (currentRecord.id) {
     try {
       const response = await axios.post('/api/beckman-beam/delete', { id: currentRecord.id })
@@ -891,7 +891,7 @@ const deleteRecord = async () => {
       return
     }
   }
-  
+
   records.value.splice(currentIndex.value, 1)
   if (currentIndex.value >= records.value.length) {
     currentIndex.value = records.value.length - 1
@@ -901,14 +901,14 @@ const deleteRecord = async () => {
 
 const loadData = async (identifier) => {
   if (!identifier) return
-  
+
   try {
     // 1. First get the entrustment info
     // Try as wtNum (Unified Number) first
     let wtRes = await axios.get('/api/jc-core-wt-info/detail', {
         params: { unifiedNumber: identifier }
     })
-    
+
     // If not found, try as ID
     if (!wtRes.data.success || !wtRes.data.data) {
         wtRes = await axios.get('/api/jc-core-wt-info/by-id', {
@@ -920,7 +920,7 @@ const loadData = async (identifier) => {
         const wtInfo = wtRes.data.data
         const wtNum = wtInfo.wtNum
         const isEntrustmentApproved = wtInfo.status === 5
-        
+
         // Auto-fill basic info from Entrustment only if approved
         if (isEntrustmentApproved) {
             formData.entrustingUnit = wtInfo.clientUnit || ''
@@ -946,7 +946,7 @@ const loadData = async (identifier) => {
             formData.unifiedNumber = wtNum
             formData.entrustmentId = wtNum
         }
-        
+
         // Tester/Reviewer might be pre-filled from task assignment if available
         if (wtInfo.tester) formData.recordTester = wtInfo.tester
         if (wtInfo.reviewer) formData.recordReviewer = wtInfo.reviewer
@@ -956,7 +956,7 @@ const loadData = async (identifier) => {
             const recordRes = await axios.get('/api/beckman-beam/get-by-entrustment-id', {
                 params: { entrustmentId: wtNum }
             })
-            
+
             if (recordRes.data.success && recordRes.data.data && recordRes.data.data.length > 0) {
                 records.value = recordRes.data.data
                 currentIndex.value = 0
@@ -977,7 +977,7 @@ const loadData = async (identifier) => {
                     if (!formData.recordReviewer) formData.recordReviewer = ''
                     if (!formData.filler) formData.filler = ''
                 }
-                
+
                 records.value = [newRecord]
                 currentIndex.value = 0
                 // Update newRecord dataJson with pre-filled formData
@@ -1012,30 +1012,30 @@ const submitForm = async () => {
         alert('缺少委托编号，无法保存')
         return
     }
-    
+
      try {
         // 1. 保存当前页数据到records数组
         saveCurrentRecordState()
-        
+
         // 如果状态是草稿(0)，保存后改为待签字(3)
         if (formData.status === 0) {
             formData.status = 3
         }
-        
+
         // 2. 保存所有页数据
         let successCount = 0
         let totalCount = records.value.length
-        
+
         for (let i = 0; i < records.value.length; i++) {
             // 构建当前页的payload
             const currentRecord = records.value[i]
             const currentFormData = JSON.parse(currentRecord.dataJson)
-            
+
             // 更新状态为待签字
             currentFormData.status = 3
-            
+
             const payload = {
-                id: currentRecord.id || null, 
+                id: currentRecord.id || null,
                 entrustmentId: formData.entrustmentId,
                 status: currentFormData.status, // 传递状态字段给后端
                 dataJson: JSON.stringify(currentFormData),
@@ -1053,9 +1053,9 @@ const submitForm = async () => {
                 subgradeType: currentFormData.pavementType,
                 deflectometerType: currentFormData.equipmentCode
             }
-            
+
             const response = await axios.post('/api/beckman-beam/save', payload)
-            
+
             if (response.data.success) {
                 successCount++
                 if (response.data.data && response.data.data.id) {
@@ -1068,7 +1068,7 @@ const submitForm = async () => {
                 }
             }
         }
-        
+
         // 3. 显示保存结果
         if (successCount === totalCount) {
             alert(`保存成功，共保存 ${successCount} 页数据，状态已更新为待签字`)
@@ -1096,7 +1096,7 @@ const handleSign = async () => {
     if (response.data.success && response.data.data && response.data.data.signatureBlob) {
       const signatureBlob = response.data.data.signatureBlob
       let imgSrc = ''
-      
+
       if (typeof signatureBlob === 'string') {
         imgSrc = `data:image/png;base64,${signatureBlob}`
       } else {
@@ -1115,14 +1115,14 @@ const handleSign = async () => {
         signed = true
         signType = '检测人'
       }
-      
+
       // Match Record Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
       if (!signed && (!formData.recordReviewer || formData.recordReviewer === currentName || formData.recordReviewer === currentAccount)) {
         formData.reviewerSignature = imgSrc
         signed = true
         signType = '审核人'
       }
-      
+
       if (signed) {
         // 如果两个人都签了，先更新状态为已签字待提交
         if (formData.testerSignature && formData.reviewerSignature) {
@@ -1343,5 +1343,5 @@ const previewPdf = () => {
             text-decoration: none;
             border-radius: 5px;
         }
-    
+
 </style>

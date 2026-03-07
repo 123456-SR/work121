@@ -2,6 +2,7 @@ package org.example.work121.mapper;
 
 import org.apache.ibatis.annotations.*;
 import org.example.work121.entity.DensityTestResult;
+import java.util.List;
 
 @Mapper
 public interface DensityTestResultMapper {
@@ -21,6 +22,21 @@ public interface DensityTestResultMapper {
             "APPROVER as approver " +
             "FROM T_DENSITY_TEST " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+    List<DensityTestResult> selectListByEntrustmentId(@Param("entrustmentId") String entrustmentId);
+
+    @Select("SELECT " +
+            "ID as id, " +
+            "ENTRUSTMENT_ID as entrustmentId, " +
+            "DATA_JSON as dataJson, " +
+            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "TESTER as tester, " +
+            "REVIEWER as reviewer, " +
+            "APPROVER as approver " +
+            "FROM T_DENSITY_TEST " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId} " +
+            "AND ROWNUM <= 1")
     DensityTestResult selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Select("SELECT " +

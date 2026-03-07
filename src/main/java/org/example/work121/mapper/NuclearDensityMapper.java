@@ -22,14 +22,14 @@ public interface NuclearDensityMapper {
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
+            "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TO_NUMBER(t2.STATUS) as status, " +
+            "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
-            "t2.CREATE_BY as createBy, " +
-            "t2.CREATE_TIME as createTime, " +
             "t2.UPDATE_BY as updateBy, " +
             "t2.UPDATE_TIME as updateTime, " +
             "t1.SAMPLE_NUMBER as wtNum, " +
@@ -45,7 +45,7 @@ public interface NuclearDensityMapper {
             "t1.WITNESS as witness, " +
             "t1.BEIZHU as remarks " +
             "FROM T_NUCLEAR_DENSITY t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.WT_NUM " +
             "WHERE t2.ID = #{id}")
     NuclearDensity selectById(@Param("id") String id);
 
@@ -102,7 +102,7 @@ public interface NuclearDensityMapper {
             "t1.WITNESS as witness, " +
             "t1.BEIZHU as remarks " +
             "FROM T_NUCLEAR_DENSITY t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.WT_NUM " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     List<NuclearDensity> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 

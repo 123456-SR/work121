@@ -332,7 +332,51 @@ public interface JcCoreWtInfoMapper {
             "t1.REPORT_SEND_USER as reportSendUser, " +
             "t1.WITNESS_ID_CARD as witnessIdCard, " +
             "t1.SAMPLING_MAN_ID_CARD as samplingManIdCard, " +
-            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " +
+            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone, " +
+            "NVL( " +
+            "  COALESCE( " +
+            "    (SELECT MAX(TO_CHAR(d.REPORT_STATUS)) FROM T_DENSITY_TEST d " +
+            "      WHERE d.ENTRUSTMENT_ID = t2.WT_NUM OR d.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(n.REPORT_STATUS)) FROM T_NUCLEAR_DENSITY n " +
+            "      WHERE n.ENTRUSTMENT_ID = t2.WT_NUM OR n.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(s.REPORT_STATUS)) FROM T_SAND_REPLACEMENT s " +
+            "      WHERE s.ENTRUSTMENT_ID = t2.WT_NUM OR s.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(w.REPORT_STATUS)) FROM T_WATER_REPLACEMENT w " +
+            "      WHERE w.ENTRUSTMENT_ID = t2.WT_NUM OR w.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(c.REPORT_STATUS)) FROM T_CUTTING_RING c " +
+            "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(r.REPORT_STATUS)) FROM T_REBOUND_METHOD r " +
+            "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(l.REPORT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION l " +
+            "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(b.REPORT_STATUS)) FROM T_BECKMAN_BEAM b " +
+            "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID) " +
+            "  ), " +
+            "  '0' " +
+            ") as reportStatus, " +
+            "NVL( " +
+            "  COALESCE( " +
+            "    (SELECT MAX(TO_CHAR(d.RESULT_STATUS)) FROM T_DENSITY_TEST d " +
+            "      WHERE d.ENTRUSTMENT_ID = t2.WT_NUM OR d.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(n.RESULT_STATUS)) FROM T_NUCLEAR_DENSITY n " +
+            "      WHERE n.ENTRUSTMENT_ID = t2.WT_NUM OR n.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(s.RESULT_STATUS)) FROM T_SAND_REPLACEMENT s " +
+            "      WHERE s.ENTRUSTMENT_ID = t2.WT_NUM OR s.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(w.RESULT_STATUS)) FROM T_WATER_REPLACEMENT w " +
+            "      WHERE w.ENTRUSTMENT_ID = t2.WT_NUM OR w.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(c.RESULT_STATUS)) FROM T_CUTTING_RING c " +
+            "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(r.RESULT_STATUS)) FROM T_REBOUND_METHOD r " +
+            "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(l.RESULT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION l " +
+            "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(b.RESULT_STATUS)) FROM T_BECKMAN_BEAM b " +
+            "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(ldp.RESULT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION_RESULT ldp " +
+            "      WHERE ldp.ENTRUSTMENT_ID = t2.WT_NUM OR ldp.ENTRUSTMENT_ID = t2.WT_ID) " +
+            "  ), " +
+            "  '0' " +
+            ") as resultStatus " +
             "FROM JC_CORE_WT_INFO t2 " +
             "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
             "LEFT JOIN JZS_USERS u_create ON u_create.USER_ACCOUNT = TO_CHAR(t1.CREATE_BY) " +
