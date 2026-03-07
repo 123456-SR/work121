@@ -80,6 +80,7 @@ public class LoginController {
             userInfo.put("username", user.getUserAccount());
             userInfo.put("userName", user.getUserName());
             userInfo.put("status", user.getUserStatus());
+            userInfo.put("position", user.getPosition());
             
             result.put("data", userInfo);
             

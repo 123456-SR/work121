@@ -12,58 +12,66 @@ import java.util.List;
 public interface UserMapper {
 
     @Select("SELECT " +
-            "ID as id, " +
-            "USER_ACCOUNT as userAccount, " +
-            "USER_PASS as userPass, " +
-            "USER_NAME as userName, " +
-            "USER_TEL as userTel, " +
-            "USER_EMAIL as userEmail, " +
-            "ORGNIZATION_NAME as orgnizationName, " +
-            "SH_TYPE as shType, " +
-            "'1' as userStatus " +
-            "FROM JZS_USERS " +
-            "WHERE USER_NAME = #{userName}")
+            "u.ID as id, " +
+            "u.USER_ACCOUNT as userAccount, " +
+            "u.USER_PASS as userPass, " +
+            "u.USER_NAME as userName, " +
+            "u.USER_TEL as userTel, " +
+            "u.USER_EMAIL as userEmail, " +
+            "u.ORGNIZATION_NAME as orgnizationName, " +
+            "u.SH_TYPE as shType, " +
+            "'1' as userStatus, " +
+            "j.POSITION as position " +
+            "FROM JZS_USERS u " +
+            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID " +
+            "WHERE u.USER_NAME = #{userName}")
     List<User> selectByName(String userName);
 
     @Select("SELECT " +
-            "ID as id, " +
-            "USER_ACCOUNT as userAccount, " +
-            "USER_PASS as userPass, " +
-            "USER_NAME as userName, " +
-            "USER_TEL as userTel, " +
-            "USER_EMAIL as userEmail, " +
-            "ORGNIZATION_NAME as orgnizationName, " +
-            "SH_TYPE as shType, " +
-            "'1' as userStatus " +
-            "FROM JZS_USERS")
+            "u.ID as id, " +
+            "u.USER_ACCOUNT as userAccount, " +
+            "u.USER_PASS as userPass, " +
+            "u.USER_NAME as userName, " +
+            "u.USER_TEL as userTel, " +
+            "u.USER_EMAIL as userEmail, " +
+            "u.ORGNIZATION_NAME as orgnizationName, " +
+            "u.SH_TYPE as shType, " +
+            "'1' as userStatus, " +
+            "j.POSITION as position " +
+            "FROM JZS_USERS u " +
+            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID")
     List<User> selectAll();
 
     @Select("SELECT " +
-            "ID as id, " +
-            "USER_ACCOUNT as userAccount, " +
-            "USER_PASS as userPass, " +
-            "USER_NAME as userName, " +
-            "USER_TEL as userTel, " +
-            "USER_EMAIL as userEmail, " +
-            "ORGNIZATION_NAME as orgnizationName, " +
-            "SH_TYPE as shType, " +
-            "'1' as userStatus " +
-            "FROM JZS_USERS " +
-            "WHERE USER_ACCOUNT = #{userAccount}")
+            "u.ID as id, " +
+            "u.USER_ACCOUNT as userAccount, " +
+            "u.USER_PASS as userPass, " +
+            "u.USER_NAME as userName, " +
+            "u.USER_TEL as userTel, " +
+            "u.USER_EMAIL as userEmail, " +
+            "u.ORGNIZATION_NAME as orgnizationName, " +
+            "u.SH_TYPE as shType, " +
+            "'1' as userStatus, " +
+            "j.POSITION as position " +
+            "FROM JZS_USERS u " +
+            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID " +
+            "WHERE u.USER_ACCOUNT = #{userAccount}")
     User selectByAccount(String userAccount);
 
     @Select("SELECT " +
-            "ID as id, " +
-            "USER_ACCOUNT as userAccount, " +
-            "USER_PASS as userPass, " +
-            "USER_NAME as userName, " +
-            "USER_TEL as userTel, " +
-            "USER_EMAIL as userEmail, " +
-            "ORGNIZATION_NAME as orgnizationName, " +
-            "SH_TYPE as shType, " +
-            "'1' as userStatus " +
-            "FROM JZS_USERS " +
-            "WHERE ID = #{id}")
+            "u.ID as id, " +
+            "u.USER_ACCOUNT as userAccount, " +
+            "u.USER_PASS as userPass, " +
+            "u.USER_NAME as userName, " +
+            "u.USER_TEL as userTel, " +
+            "u.USER_EMAIL as userEmail, " +
+            "u.ORGNIZATION_NAME as orgnizationName, " +
+            "u.SH_TYPE as shType, " +
+            "'1' as userStatus, " +
+            "j.POSITION as position " +
+            "FROM JZS_USERS u " +
+            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID " +
+            "WHERE u.ID = #{id}")
     User selectById(String id);
 
     @Insert("INSERT INTO JZS_USERS (" +

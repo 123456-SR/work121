@@ -26,7 +26,7 @@ CREATE TABLE T_ENTRUSTMENT (
     PROJECT_AREA VARCHAR2(255), -- 工程区域/地点
     BEIZHU VARCHAR2(500), -- 备注
     SAMPLE_NAME VARCHAR2(255), -- 样品名称
-    
+
     -- 新增字段 (来自 T_ENTRUSTMENT)
     SAMPLE_NUMBER VARCHAR2(255), -- 样品编号
     SPEC VARCHAR2(255), -- 规格型号
@@ -340,3 +340,83 @@ CREATE TABLE T_BECKMAN_BEAM (
     RECORD_REVIEWER VARCHAR2(64), -- 记录表审核人
     RECORD_REVIEW_SIGN CLOB -- 记录表审核人签名
 );
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE T_SAMPLE_CIRCULATION (
+                                      ID                  VARCHAR2(36)    NOT NULL,          -- 主键ID（UUID）
+                                      TEST_LAB            VARCHAR2(255),                     -- 检测室
+                                      SAMPLE_NAME         VARCHAR2(255),                     -- 样品名称
+                                      SPEC_MODEL          VARCHAR2(255),                     -- 规格/型号
+                                      SAMPLE_NUMBER       VARCHAR2(255),                     -- 样品编号
+                                      RECEIVE_DATE        DATE,                              -- 接样日期
+                                      SAMPLE_STATUS       VARCHAR2(64),                      -- 样品状态（如：正常、异常等）
+                                      SAMPLE_QUANTITY     VARCHAR2(64),                      -- 样品数量
+                                      TEST_ITEMS          VARCHAR2(2000),                    -- 检测项目
+                                      TEST_STANDARD       VARCHAR2(2000),                    -- 检测依据
+                                      SAMPLE_HISTORY      VARCHAR2(2000),                    -- 样品历史及概况
+                                      RECEIVE_PERSON      VARCHAR2(64),                      -- 接样人/发样人
+                                      RECEIVE_PERSON_ID   VARCHAR2(36),                      -- 接样人/发样人ID（关联用户表）
+                                      WITHDRAW_PERSON     VARCHAR2(64),                      -- 领样人
+                                      WITHDRAW_PERSON_ID  VARCHAR2(36),                      -- 领样人ID（关联用户表）
+                                      REMARKS             VARCHAR2(500),                     -- 备注
+                                      CREATE_TIME         TIMESTAMP(6)   DEFAULT SYSTIMESTAMP, -- 创建时间
+                                      CREATE_BY           VARCHAR2(64),                      -- 创建人
+                                      UPDATE_TIME         TIMESTAMP(6),                      -- 更新时间
+                                      UPDATE_BY           VARCHAR2(64),                      -- 更新人
+                                      CONSTRAINT PK_SAMPLE_CIRCULATION PRIMARY KEY (ID)
+);
+
+-- 添加表和字段注释
+COMMENT ON TABLE T_SAMPLE_CIRCULATION IS '样品流转单主表';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.ID IS '主键ID';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.TEST_LAB IS '检测室';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.SAMPLE_NAME IS '样品名称';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.SPEC_MODEL IS '规格/型号';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.SAMPLE_NUMBER IS '样品编号';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.RECEIVE_DATE IS '接样日期';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.SAMPLE_STATUS IS '样品状态';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.SAMPLE_QUANTITY IS '样品数量';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.TEST_ITEMS IS '检测项目';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.TEST_STANDARD IS '检测依据';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.SAMPLE_HISTORY IS '样品历史及概况';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.RECEIVE_PERSON IS '接样人/发样人';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.RECEIVE_PERSON_ID IS '接样人/发样人ID';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.WITHDRAW_PERSON IS '领样人';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.WITHDRAW_PERSON_ID IS '领样人ID';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.REMARKS IS '备注';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.CREATE_TIME IS '创建时间';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.CREATE_BY IS '创建人';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.UPDATE_TIME IS '更新时间';
+COMMENT ON COLUMN T_SAMPLE_CIRCULATION.UPDATE_BY IS '更新人';
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- 创建用户扩展表（无外键约束，仅保留主键）
+CREATE TABLE JZS_USER_EXT (
+                              ID              VARCHAR2(36)    NOT NULL,          -- 与主表JZS_USERS的ID一致（业务层面关联）
+                              POSITION        VARCHAR2(100),                   -- 职务字段
+                              CONSTRAINT PK_USER_EXT PRIMARY KEY (ID)           -- 仅保留扩展表自身主键
+);
+
+-- 添加表和字段注释（明确业务关联逻辑）
+COMMENT ON TABLE JZS_USER_EXT IS '用户扩展信息表';
+COMMENT ON COLUMN JZS_USER_EXT.ID IS '用户ID';
+COMMENT ON COLUMN JZS_USER_EXT.POSITION IS '用户职务';
