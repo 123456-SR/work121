@@ -1183,11 +1183,15 @@ const previewPdf = () => {
             justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
-            padding: 0 30px;
+            padding: 0 24px;
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
             overflow-x: hidden;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 16px 24px;
         }
 
         .toolbar-left {
@@ -1301,7 +1305,10 @@ const previewPdf = () => {
             font-family: 'SimSun', 'Songti SC', serif;
             width: 260mm; /* Using wider width similar to sand replacement record */
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
         }
         h2 {
             text-align: center;

@@ -1205,14 +1205,14 @@ const previewPdf = () => {
         }
 
         .link-button {
-            background: var(--card-blue);
-            border: none;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
             border-radius: 4px;
-            color: var(--color-blue);
+            color: #3498db;
             cursor: pointer;
-            font-size: 14px;
-            padding: 6px 12px;
-            transition: all 0.2s;
+            font-size: 16px;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -1220,8 +1220,8 @@ const previewPdf = () => {
         }
 
         .link-button:hover {
-            background-color: var(--color-blue);
-            color: white;
+            background: #e9ecef;
+            border-color: #adb5bd;
             text-decoration: none;
         }
 
@@ -1233,15 +1233,15 @@ const previewPdf = () => {
         }
 
         .record-nav-info {
-            font-size: 14px;
-            color: var(--text-light);
+            font-size: 15px;
+            color: #666;
             white-space: nowrap;
         }
 
         .status-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 500;
-            color: var(--text-light);
+            color: #666;
             white-space: nowrap;
         }
 
@@ -1250,20 +1250,20 @@ const previewPdf = () => {
         }
 
         .btn {
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
-            border: none;
+            border: 1px solid transparent;
             font-size: 14px;
             cursor: pointer;
-            background-color: var(--card-blue);
-            color: var(--color-blue);
+            background-color: #f5f7fa;
+            color: #333;
             transition: all 0.2s;
             white-space: nowrap;
         }
 
         .btn-small {
             padding: 6px 12px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .btn-primary {
