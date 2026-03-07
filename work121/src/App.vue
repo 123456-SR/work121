@@ -14,16 +14,44 @@
           <h1>表格管理系统</h1>
         </div>
         <nav class="nav-menu">
-          <div class="nav-section">
-            <div class="section-title">前置表格</div>
-            <div v-for="item in menuItems.preliminary" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: activeMenuId === item.id }]">
-              <span class="nav-item-text">{{ item.name }}</span>
-            </div>
-          </div>
-          <div class="nav-section">
-            <div class="section-title">报告表格</div>
-            <div v-for="item in menuItems.report" :key="item.id" @click="navigateTo(item)" :class="['nav-item', { active: activeMenuId === item.id }]">
-              <span class="nav-item-text">{{ item.name }}</span>
+          <div class="sidebar-group">
+            <div class="sidebar-group-title">核心功能</div>
+            <div v-for="item in accessibleMenus" :key="item.id">
+              <!-- 带二级菜单的菜单项 -->
+              <div v-if="item.submenu" class="with-submenu">
+                <div @click="toggleSubmenu(item.id)" :class="['sidebar-nav-item', { active: activeMenuId === item.id || expandedMenus[item.id] }]">
+                  <i class="icon fa-solid fa-table"></i>
+                  <span>{{ item.name }}</span>
+                  <i class="icon fa-solid" :class="expandedMenus[item.id] ? 'fa-chevron-down' : 'fa-chevron-right'" style="margin-left: auto;"></i>
+                </div>
+                <!-- 二级菜单 -->
+                <div v-if="expandedMenus[item.id]" class="sidebar-submenu">
+                  <div v-for="subitem in item.submenu" :key="subitem.id">
+                    <!-- 带三级菜单的二级菜单项 -->
+                    <div v-if="subitem.submenu" class="with-submenu">
+                      <div @click="toggleSubmenu(subitem.id)" :class="['sidebar-submenu-item', { active: activeMenuId === subitem.id || expandedMenus[subitem.id] }]">
+                        {{ subitem.name }}
+                        <i class="icon fa-solid" :class="expandedMenus[subitem.id] ? 'fa-chevron-down' : 'fa-chevron-right'" style="margin-left: auto;"></i>
+                      </div>
+                      <!-- 三级菜单 -->
+                      <div v-if="expandedMenus[subitem.id]" class="sidebar-submenu">
+                        <div v-for="thirditem in subitem.submenu" :key="thirditem.id" @click.stop="navigateTo(thirditem)" :class="['sidebar-submenu-item', { active: activeMenuId === thirditem.id }]">
+                          {{ thirditem.name }}
+                        </div>
+                      </div>
+                    </div>
+                    <!-- 普通二级菜单项 -->
+                    <div v-else @click.stop="navigateTo(subitem)" :class="['sidebar-submenu-item', { active: activeMenuId === subitem.id }]">
+                      {{ subitem.name }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 普通菜单项 -->
+              <div v-else @click="navigateTo(item)" :class="['sidebar-nav-item', { active: activeMenuId === item.id }]">
+                <i class="icon fa-solid fa-table"></i>
+                <span>{{ item.name }}</span>
+              </div>
             </div>
           </div>
         </nav>
@@ -35,13 +63,14 @@
       <!-- 右侧内容区域 -->
       <main class="main-content">
         <header class="content-header">
-        <div class="header-title">{{ currentPageTitle }}</div>
-        <div class="header-actions">
-          <span class="user-info">{{ getCurrentUserName() }}</span>
-          <button class="btn btn-primary" @click="refreshPage">刷新</button>
-          <button class="btn btn-success" @click="printPage">打印</button>
-        </div>
-      </header>
+          <div class="header-title">{{ currentPageTitle }}</div>
+          <div class="header-actions">
+            <span class="user-info">当前登录：{{ getCurrentUserName() }}</span>
+            <span class="role-tag" id="current-role">{{ getCurrentUserRole() }}</span>
+            <button class="btn" @click="refreshPage">刷新</button>
+            <button class="btn" @click="printPage">打印</button>
+          </div>
+        </header>
         <div class="content-wrapper">
           <component v-if="currentView" :is="components[currentView]" v-bind="currentProps" />
           <div v-else class="welcome-message">
@@ -80,12 +109,15 @@ import Login from './components/Login.vue'
 import GenericTestList from './components/GenericTestList.vue'
 import GenericReportList from './components/GenericReportList.vue'
 import GenericResultList from './components/GenericResultList.vue'
+import UserManagement from './components/UserManagement.vue'
+import PendingTasks from './components/PendingTasks.vue'
 
 const currentView = ref('')
 const activeMenuId = ref('')
 const currentProps = ref({})
 const currentPageTitle = ref('欢迎使用表格管理系统')
 const isLoggedIn = ref(false)
+const expandedMenus = ref({})
 
 const components = {
   Entrustment,
@@ -110,102 +142,137 @@ const components = {
   DirectoryList,
   GenericTestList,
   GenericReportList,
-  GenericResultList
+  GenericResultList,
+  UserManagement,
+  PendingTasks
 }
 
 const menuItems = {
   preliminary: [
-    { id: 'DirectoryList', name: '流程管理' },
-    { id: 'EntrustmentList', name: '检测委托单' },
-    { 
-      id: 'LightDynamicPenetrationRecordList', 
-      name: '轻型动力触探检测记录表', 
-      component: 'GenericTestList', 
-      props: { title: '轻型动力触探检测记录', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationRecord', dataType: 'record' } 
-    },
-    { 
-      id: 'NuclearDensityRecordList', 
-      name: '原位密度检测记录表（核子法）',
-      component: 'GenericTestList', 
-      props: { title: '原位密度检测记录（核子法）', category: '核子法', formComponent: 'NuclearDensityRecord', dataType: 'record' }
-    },
-    { 
-      id: 'SandReplacementRecordList', 
-      name: '原位密度检测记录表（灌砂法）',
-      component: 'GenericTestList', 
-      props: { title: '原位密度检测记录（灌砂法）', category: '灌砂法', formComponent: 'SandReplacementRecord', dataType: 'record' }
-    },
-    { 
-      id: 'WaterReplacementRecordList', 
-      name: '相对密度试验记录表（灌水法）',
-      component: 'GenericTestList', 
-      props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord', dataType: 'record' }
+    {
+      id: 'TaskManagement',
+      name: '任务管理',
+      submenu: [
+        { id: 'PendingTasks', name: '待处理任务' }
+      ]
     },
     {
-      id: 'CuttingRingRecordList', 
-      name: '原位密度检测记录表（环刀法）',
-      component: 'GenericTestList', 
-      props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord', dataType: 'record' }
-    },
-    { id: 'SampleTransferList', name: '样品流转单' },
-    { 
-      id: 'ReboundMethodRecordList', 
-      name: '回弹法检测混凝土抗压强度记录表',
-      component: 'GenericTestList', 
-      props: { title: '回弹法检测记录', category: '回弹法', formComponent: 'ReboundMethodRecord', dataType: 'record' }
-    },
-    { 
-      id: 'BeckmanBeamRecordList', 
-      name: '路基路面回弹弯沉试验检测记录表',
-      component: 'GenericTestList', 
-      props: { title: '回弹弯沉试验检测记录', category: '贝克曼梁', formComponent: 'BeckmanBeamRecord', dataType: 'record' }
+      id: 'MyTables',
+      name: '我的表格',
+      submenu: [
+        {
+          id: 'EntrustmentCategory',
+          name: '委托单',
+          submenu: [
+            { id: 'EntrustmentList', name: '检测委托单' },
+            { id: 'SampleTransferList', name: '样品流转单' }
+          ]
+        },
+        {
+          id: 'RecordCategory',
+          name: '记录表',
+          submenu: [
+            { 
+              id: 'LightDynamicPenetrationRecordList', 
+              name: '轻型动力触探检测记录表', 
+              component: 'GenericTestList', 
+              props: { title: '轻型动力触探检测记录', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationRecord', dataType: 'record' } 
+            },
+            { 
+              id: 'NuclearDensityRecordList', 
+              name: '原位密度检测记录表（核子法）',
+              component: 'GenericTestList', 
+              props: { title: '原位密度检测记录（核子法）', category: '核子法', formComponent: 'NuclearDensityRecord', dataType: 'record' }
+            },
+            { 
+              id: 'SandReplacementRecordList', 
+              name: '原位密度检测记录表（灌砂法）',
+              component: 'GenericTestList', 
+              props: { title: '原位密度检测记录（灌砂法）', category: '灌砂法', formComponent: 'SandReplacementRecord', dataType: 'record' }
+            },
+            { 
+              id: 'WaterReplacementRecordList', 
+              name: '相对密度试验记录表（灌水法）',
+              component: 'GenericTestList', 
+              props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord', dataType: 'record' }
+            },
+            { id: 'CuttingRingRecordList', name: '原位密度检测记录表（环刀法）', component: 'GenericTestList', props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord', dataType: 'record' }},
+            { 
+              id: 'ReboundMethodRecordList', 
+              name: '回弹法检测混凝土抗压强度记录表',
+              component: 'GenericTestList', 
+              props: { title: '回弹法检测记录', category: '回弹法', formComponent: 'ReboundMethodRecord', dataType: 'record' }
+            },
+            { 
+              id: 'BeckmanBeamRecordList', 
+              name: '路基路面回弹弯沉试验检测记录表',
+              component: 'GenericTestList', 
+              props: { title: '回弹弯沉试验检测记录', category: '贝克曼梁', formComponent: 'BeckmanBeamRecord', dataType: 'record' }
+            }
+          ]
+        },
+        {
+          id: 'ReportCategory',
+          name: '报告表',
+          submenu: [
+            { 
+              id: 'DensityTestReportList', 
+              name: '原位密度检测报告',
+              component: 'GenericReportList', 
+              props: { title: '原位密度检测报告', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestReport', dataType: 'report' } 
+            },
+            { 
+              id: 'LightDynamicPenetrationReportList', 
+              name: '轻型动力触探检测报告',
+              component: 'GenericReportList', 
+              props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationReport', dataType: 'report' }
+            },
+            { 
+              id: 'ReboundMethodReportList', 
+              name: '回弹法检测混凝土抗压强度报告',
+              component: 'GenericReportList', 
+              props: { title: '回弹法检测报告', category: '回弹法', formComponent: 'ReboundMethodReport', dataType: 'report' }
+            },
+            { 
+              id: 'BeckmanBeamReportList', 
+              name: '路基路面回弹弯沉检测报告',
+              component: 'GenericReportList', 
+              props: { title: '回弹弯沉检测报告', category: '贝克曼梁', formComponent: 'BeckmanBeamReport', dataType: 'report' }
+            }
+          ]
+        },
+        {
+          id: 'ResultCategory',
+          name: '结果表',
+          submenu: [
+            { 
+              id: 'DensityTestResultList', 
+              name: '原位密度检测结果',
+              component: 'GenericResultList', 
+              props: { title: '原位密度检测结果', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestResult', dataType: 'result' }
+            },
+            { 
+              id: 'LightDynamicPenetrationResultList', 
+              name: '轻型动力触探检测结果',
+              component: 'GenericResultList', 
+              props: { title: '轻型动力触探检测结果', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationResult', dataType: 'result' }
+            },
+            { 
+              id: 'BeckmanBeamResultList', 
+              name: '路基路面回弹弯沉检测结果',
+              component: 'GenericResultList', 
+              props: { title: '回弹弯沉检测结果', category: '贝克曼梁', formComponent: 'BeckmanBeamResult', dataType: 'result' }
+            }
+          ]
+        }
+      ]
     },
     { id: 'Signature', name: '电子签名' }
   ],
-  report: [
-    { 
-      id: 'DensityTestReportList', 
-      name: '原位密度检测报告',
-      component: 'GenericReportList', 
-      props: { title: '原位密度检测报告', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestReport', dataType: 'report' } 
-    },
-    { 
-      id: 'DensityTestResultList', 
-      name: '原位密度检测结果',
-      component: 'GenericResultList', 
-      props: { title: '原位密度检测结果', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestResult', dataType: 'result' }
-    },
-    { 
-      id: 'LightDynamicPenetrationReportList', 
-      name: '轻型动力触探检测报告',
-      component: 'GenericReportList', 
-      props: { title: '轻型动力触探检测报告', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationReport', dataType: 'report' }
-    },
-    { 
-      id: 'LightDynamicPenetrationResultList', 
-      name: '轻型动力触探检测结果',
-      component: 'GenericResultList', 
-      props: { title: '轻型动力触探检测结果', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationResult', dataType: 'result' }
-    },
-    { 
-      id: 'ReboundMethodReportList', 
-      name: '回弹法检测混凝土抗压强度报告',
-      component: 'GenericReportList', 
-      props: { title: '回弹法检测报告', category: '回弹法', formComponent: 'ReboundMethodReport', dataType: 'report' }
-    },
-    { 
-      id: 'BeckmanBeamReportList', 
-      name: '路基路面回弹弯沉检测报告',
-      component: 'GenericReportList', 
-      props: { title: '回弹弯沉检测报告', category: '贝克曼梁', formComponent: 'BeckmanBeamReport', dataType: 'report' }
-    },
-    { 
-      id: 'BeckmanBeamResultList', 
-      name: '路基路面回弹弯沉检测结果',
-      component: 'GenericResultList', 
-      props: { title: '回弹弯沉检测结果', category: '贝克曼梁', formComponent: 'BeckmanBeamResult', dataType: 'result' }
-    }
-  ]
+  admin: [
+    { id: 'UserManagement', name: '用户管理' }
+  ],
+  report: []
 }
 
 // 导航逻辑
@@ -264,6 +331,11 @@ const navigateTo = (target, props = {}) => {
 
 provide('navigateTo', navigateTo)
 
+// 切换子菜单展开/收起
+const toggleSubmenu = (menuId) => {
+  expandedMenus.value[menuId] = !expandedMenus.value[menuId]
+}
+
 const refreshPage = () => {
   // For Vue components, we can just re-mount the component or trigger a refresh
   window.location.reload()
@@ -306,8 +378,15 @@ checkLoginStatus()
 // 处理登录成功
 const handleLoginSuccess = () => {
   isLoggedIn.value = true
-  // 登录后默认显示目录列表
-  navigateTo({ id: 'DirectoryList', name: '流程管理' })
+  // 登录后根据角色导航到不同页面
+  const role = getCurrentUserRole()
+  if (role === '管理员') {
+    // 管理员默认显示任务分配
+    navigateTo({ id: 'DirectoryList', name: '任务分配' })
+  } else {
+    // 普通员工默认显示待处理任务
+    navigateTo({ id: 'PendingTasks', name: '待处理任务' })
+  }
 }
 
 // 退出登录
@@ -335,6 +414,44 @@ const getCurrentUserName = () => {
   }
 }
 
+// 获取当前用户角色
+const getCurrentUserRole = () => {
+  try {
+    const userInfoStr = localStorage.getItem('userInfo')
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      return userInfo.position || '员工'
+    }
+    return '员工'
+  } catch (error) {
+    console.error('获取用户角色失败:', error)
+    return '员工'
+  }
+}
+
+// 计算属性：获取当前用户可访问的菜单
+const accessibleMenus = computed(() => {
+  const role = getCurrentUserRole()
+  let menus = [...menuItems.preliminary]
+  
+  // 如果是管理员，修改任务管理菜单的子菜单，添加任务分配
+  if (role === '管理员') {
+    // 找到任务管理菜单
+    const taskManagementMenu = menus.find(item => item.id === 'TaskManagement')
+    if (taskManagementMenu) {
+      // 修改子菜单，添加任务分配
+      taskManagementMenu.submenu = [
+        { id: 'DirectoryList', name: '任务分配' },
+        { id: 'PendingTasks', name: '待处理任务' }
+      ]
+    }
+    // 添加管理员菜单
+    menus = [...menus, ...menuItems.admin]
+  }
+  
+  return menus
+})
+
 // 组件挂载时检查登录状态
 onMounted(() => {
   // checkLoginStatus() // 已在 setup 中立即执行
@@ -342,92 +459,162 @@ onMounted(() => {
 </script>
 
 <style>
+/* 核心变量（对标 wangye 页面调整） */
+:root {
+    --bg-primary: #E3F2FD;    /* 页面主背景（浅蓝） */
+    --bg-card: #FFFFFF;       /* 卡片背景 */
+    --text-primary: #2196F3;  /* 主文字色（深蓝） */
+    --text-normal: #333333;   /* 常规文字 */
+    --text-light: #666666;    /* 浅色文字 */
+    --border-color: #E0E0E0;  /* 通用边框 */
+    --shadow: 0 2px 8px rgba(0,0,0,0.05); /* 轻量阴影 */
+    
+    /* 数据卡片配色 */
+    --card-blue: #E3F2FD;
+    --card-green: #E8F5E9;
+    --card-yellow: #FFF8E1;
+    --color-blue: #2196F3;
+    --color-green: #4CAF50;
+    --color-yellow: #FFC107;
+    --color-gray: #9E9E9E;    /* 无权限时的灰色 */
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Microsoft YaHei', Arial, sans-serif; background-color: #f5f7fa; }
+body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background-color: var(--bg-primary); color: var(--text-normal); }
 #app { width: 100%; height: 100vh; }
 .app-container { display: flex; height: 100vh; overflow: hidden; }
 
 /* 左侧导航栏 */
 .sidebar {
-width: 280px;
-background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
-color: white;
+width: 220px; /* 适度加宽，避免拥挤 */
+background-color: var(--bg-card);
+border-right: 1px solid var(--border-color);
+padding: 20px 0;
+overflow-y: auto;
 display: flex;
 flex-direction: column;
-box-shadow: 2px 0 8px rgba(0,0,0,0.15);
 }
 .sidebar-header {
 padding: 20px;
-text-align: center;
-border-bottom: 1px solid rgba(255,255,255,0.1);
+border-bottom: 1px solid var(--border-color);
 }
 .sidebar-header h1 {
-font-size: 20px;
+font-size: 18px;
 font-weight: 600;
-background: linear-gradient(90deg, #3498db, #2ecc71);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-background-clip: text;
+color: var(--text-primary);
 margin: 0;
 }
 .nav-menu {
 flex: 1;
 overflow-y: auto;
-padding: 15px 0;
-}
-.nav-section {
-margin-bottom: 20px;
-}
-.section-title {
-padding: 10px 20px;
-font-size: 12px;
-font-weight: 600;
-color: #95a5a6;
-text-transform: uppercase;
-letter-spacing: 1px;
-}
-.nav-item {
- display: flex;
- align-items: center;
- padding: 12px 20px;
- cursor: pointer;
- transition: all 0.3s ease;
- border-left: 3px solid transparent;
-}
-.nav-item:hover {
-background: rgba(255,255,255,0.1);
-border-left-color: #3498db;
-}
-.nav-item.active {
-background: rgba(52, 152, 219, 0.3);
-border-left-color: #3498db;
 }
 
-.nav-item-text {
-font-size: 14px;
+/* 侧边栏分组标题 */
+.sidebar-group {
+margin-bottom: 24px;
+padding: 0 16px;
+}
+
+.sidebar-group-title {
+font-size: 12px;
+color: var(--text-light);
+text-transform: uppercase;
+letter-spacing: 1px;
+padding: 8px 16px;
+margin-bottom: 8px;
+}
+
+/* 一级导航项（增加图标、优化间距） */
+.sidebar-nav-item {
+ display: flex;
+ align-items: center;
+ gap: 12px; /* 图标和文字间距 */
+ padding: 12px 16px 12px 20px;
+ color: var(--text-normal);
+ cursor: pointer;
+ transition: all 0.2s;
+ font-size: 14px;
+ border-radius: 6px;
+ margin: 0 8px 4px 8px; /* 增加项间距，避免紧凑 */
+}
+
+/* 图标样式 */
+.sidebar-nav-item .icon {
+ font-size: 16px;
+ color: var(--text-light);
+}
+
+.sidebar-nav-item.active {
+background-color: var(--card-blue);
+color: var(--color-blue);
+font-weight: 500;
+}
+
+.sidebar-nav-item.active .icon {
+color: var(--color-blue);
+}
+
+.sidebar-nav-item:hover {
+background-color: var(--bg-primary);
+}
+
+/* 二级菜单样式 */
+.sidebar-submenu {
+padding-left: 20px; /* 与一级菜单对齐 */
+margin: 4px 0 12px 0;
+width: 100%;
+box-sizing: border-box;
+}
+
+.sidebar-submenu-item {
+padding: 8px 16px;
+color: var(--text-light);
+font-size: 13px;
+cursor: pointer;
+transition: all 0.2s;
+display: flex;
+align-items: center;
+width: 100%;
+box-sizing: border-box;
+}
+
+.sidebar-submenu-item:hover {
+color: var(--color-blue);
+background-color: var(--bg-primary);
+border-radius: 4px;
+margin: 0 8px;
+}
+
+.sidebar-submenu-item.active {
+color: var(--color-blue);
+font-weight: 500;
+background-color: var(--bg-primary);
+border-radius: 4px;
+margin: 0 8px;
 }
 
 /* 侧边栏底部 */
 .sidebar-footer {
 padding: 20px;
-border-top: 1px solid rgba(255,255,255,0.1);
+border-top: 1px solid var(--border-color);
 margin-top: auto;
 }
 
 .logout-button {
 width: 100%;
 padding: 10px;
-background: rgba(231, 76, 60, 0.2);
-color: #e74c3c;
-border: 1px solid rgba(231, 76, 60, 0.4);
+background: var(--card-blue);
+color: var(--color-blue);
+border: none;
 border-radius: 4px;
 font-size: 14px;
 cursor: pointer;
-transition: all 0.3s ease;
+transition: all 0.2s;
 }
 
 .logout-button:hover {
-background: rgba(231, 76, 60, 0.3);
+background-color: var(--color-blue);
+color: white;
 }
 
 /* 右侧内容区域 */
@@ -439,75 +626,72 @@ overflow: hidden;
 }
 .content-header {
 height: 60px;
-border-bottom: 1px solid #e0e0e0;
+border-bottom: 1px solid var(--border-color);
 display: flex;
 align-items: center;
 justify-content: space-between;
-padding: 0 30px;
-background: white;
-box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+padding: 0 24px;
+background: var(--bg-card);
+box-shadow: var(--shadow);
 }
 .header-title {
 font-size: 18px;
 font-weight: 600;
-color: #2c3e50;
+color: var(--text-primary);
 }
 .header-actions {
  display: flex;
- gap: 10px;
+ gap: 16px;
  align-items: center;
 }
 
 .user-info {
  font-size: 14px;
- color: #333;
- font-weight: 500;
- margin-right: 10px;
- padding: 6px 12px;
- background: #f5f7fa;
- border-radius: 4px;
- border: 1px solid #e0e0e0;
+ color: var(--text-light);
 }
+
+/* 角色标签样式 */
+.role-tag {
+ padding: 2px 8px;
+ border-radius: 4px;
+ font-size: 12px;
+ background-color: var(--card-green);
+ color: var(--color-green);
+}
+
 .btn {
-padding: 8px 16px;
+padding: 6px 12px;
 border: none;
 border-radius: 4px;
 cursor: pointer;
 font-size: 14px;
-transition: all 0.3s ease;
+background-color: var(--card-blue);
+color: var(--color-blue);
+transition: all 0.2s;
 }
-.btn-primary {
-background: #3498db;
+
+.btn:hover {
+background-color: var(--color-blue);
 color: white;
-}
-.btn-primary:hover {
-background: #2980b9;
-}
-.btn-success {
-background: #2ecc71;
-color: white;
-}
-.btn-success:hover {
-background: #27ae60;
 }
 
 /* 内容区域 */
 .content-wrapper {
 flex: 1;
 overflow: auto;
-padding: 20px;
-background: #f5f7fa;
+padding: 24px;
+background: var(--bg-primary);
 }
 .welcome-message {
 text-align: center;
 padding: 100px 20px;
 }
 .welcome-message h2 {
-color: #2c3e50;
+color: var(--text-primary);
 margin-bottom: 20px;
 }
 .welcome-message p {
-color: #7f8c8d;
+color: var(--text-light);
 font-size: 16px;
 }
 
@@ -522,7 +706,7 @@ width: 60px;
 .nav-item-text {
  display: none;
 }
-.nav-item-icon {
+.nav-item .icon {
  margin-right: 0;
 }
 .section-title {

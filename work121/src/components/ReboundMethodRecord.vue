@@ -1125,11 +1125,15 @@ const handleSign = async () => {
             justify-content: space-between;
             gap: 16px;
             flex-wrap: wrap;
-            padding: 0 30px;
+            padding: 0 24px;
             box-sizing: border-box;
             width: 100%;
             max-width: 100%;
             overflow-x: hidden;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 16px 24px;
         }
 
         .toolbar-left {
@@ -1151,14 +1155,14 @@ const handleSign = async () => {
         }
 
         .link-button {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
+            background: var(--card-blue);
+            border: none;
             border-radius: 4px;
-            color: #3498db;
+            color: var(--color-blue);
             cursor: pointer;
-            font-size: 16px;
-            padding: 8px 16px;
-            transition: all 0.2s ease;
+            font-size: 14px;
+            padding: 6px 12px;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -1166,8 +1170,8 @@ const handleSign = async () => {
         }
 
         .link-button:hover {
-            background: #e9ecef;
-            border-color: #adb5bd;
+            background-color: var(--color-blue);
+            color: white;
             text-decoration: none;
         }
 
@@ -1179,15 +1183,15 @@ const handleSign = async () => {
         }
 
         .record-nav-info {
-            font-size: 15px;
-            color: #666;
+            font-size: 14px;
+            color: var(--text-light);
             white-space: nowrap;
         }
 
         .status-text {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
-            color: #666;
+            color: var(--text-light);
             white-space: nowrap;
         }
 
@@ -1196,38 +1200,35 @@ const handleSign = async () => {
         }
 
         .btn {
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 4px;
-            border: 1px solid transparent;
+            border: none;
             font-size: 14px;
             cursor: pointer;
-            background-color: #f5f7fa;
-            color: #333;
+            background-color: var(--card-blue);
+            color: var(--color-blue);
             transition: all 0.2s;
             white-space: nowrap;
         }
 
         .btn-small {
             padding: 6px 12px;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .btn-primary {
-            background-color: #3498db;
-            color: #fff;
-            border-color: #3498db;
+            background-color: var(--color-blue);
+            color: white;
         }
 
         .btn-secondary {
-            background-color: #fff;
-            border-color: #d0d7de;
-            color: #34495e;
+            background-color: var(--card-blue);
+            color: var(--color-blue);
         }
 
         .btn-danger {
-            background-color: #e74c3c;
-            border-color: #e74c3c;
-            color: #fff;
+            background-color: #FFCDD2;
+            color: #D32F2F;
         }
 
         .btn:disabled {
@@ -1243,13 +1244,17 @@ const handleSign = async () => {
             font-family: 'SimSun', 'Songti SC', serif;
             width: 260mm;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
         }
         h2 {
             text-align: center;
             margin-bottom: 20px;
             font-size: 24px;
             font-weight: bold;
+            color: var(--text-primary);
         }
         .header-top {
             display: flex;

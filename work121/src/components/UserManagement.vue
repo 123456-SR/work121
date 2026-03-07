@@ -1,0 +1,270 @@
+<template>
+  <div class="user-management">
+    <h2>用户管理</h2>
+    <div class="toolbar">
+      <button class="btn" @click="addUser">添加用户</button>
+    </div>
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>用户名</th>
+          <th>姓名</th>
+          <th>职务</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="user in users" :key="user.id">
+          <td>{{ user.id }}</td>
+          <td>{{ user.userAccount }}</td>
+          <td>{{ user.userName }}</td>
+          <td>{{ user.position }}</td>
+          <td>
+            <button class="btn btn-edit" @click="editUser(user)">编辑</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <!-- 添加/编辑用户对话框 -->
+    <div v-if="showDialog" class="dialog-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3>{{ editingUser ? '编辑用户' : '添加用户' }}</h3>
+          <button class="dialog-close" @click="showDialog = false">&times;</button>
+        </div>
+        <div class="dialog-body">
+          <form @submit.prevent="saveUser">
+            <div class="form-group">
+              <label>用户名</label>
+              <input v-model="formData.userAccount" type="text" required>
+            </div>
+            <div class="form-group">
+              <label>姓名</label>
+              <input v-model="formData.userName" type="text" required>
+            </div>
+            <div class="form-group">
+              <label>密码</label>
+              <input v-model="formData.password" type="password" :required="!editingUser">
+            </div>
+            <div class="form-group">
+              <label>职务</label>
+              <select v-model="formData.position" required>
+                <option value="员工">员工</option>
+                <option value="管理员">管理员</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-cancel" @click="showDialog = false">取消</button>
+              <button type="submit" class="btn btn-submit">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+
+const users = ref([])
+const showDialog = ref(false)
+const editingUser = ref(null)
+const formData = ref({
+  userAccount: '',
+  userName: '',
+  password: '',
+  position: '员工'
+})
+
+// 获取用户列表
+const fetchUsers = async () => {
+  try {
+    const response = await fetch('/api/user/list')
+    const result = await response.json()
+    if (result.success) {
+      users.value = result.data
+    } else {
+      console.error('获取用户列表失败:', result.message)
+    }
+  } catch (error) {
+    console.error('获取用户列表异常:', error)
+  }
+}
+
+// 添加用户
+const addUser = () => {
+  editingUser.value = null
+  formData.value = {
+    userAccount: '',
+    userName: '',
+    password: '',
+    position: '员工'
+  }
+  showDialog.value = true
+}
+
+// 编辑用户
+const editUser = (user) => {
+  editingUser.value = user
+  formData.value = {
+    userAccount: user.userAccount,
+    userName: user.userName,
+    password: '',
+    position: user.position
+  }
+  showDialog.value = true
+}
+
+// 保存用户
+const saveUser = async () => {
+  try {
+    // 这里需要实现保存用户的逻辑
+    // 由于后端还没有实现添加和修改用户的接口，这里只是模拟
+    console.log('保存用户:', formData.value)
+    showDialog.value = false
+    // 重新获取用户列表
+    fetchUsers()
+  } catch (error) {
+    console.error('保存用户失败:', error)
+  }
+}
+
+// 组件挂载时获取用户列表
+onMounted(() => {
+  fetchUsers()
+})
+</script>
+
+<style scoped>
+.user-management {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 24px;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table th,
+.user-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.user-table th {
+  background-color: var(--card-blue);
+  color: var(--color-blue);
+  font-weight: 500;
+}
+
+.user-table tr:hover {
+  background-color: var(--bg-primary);
+}
+
+.btn-edit {
+  background-color: #FFE0B2;
+  color: #F57C00;
+  margin-right: 8px;
+}
+
+/* 对话框样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background-color: white;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.dialog-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-light);
+}
+
+.dialog-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-normal);
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-cancel {
+  background-color: #F5F5F5;
+  color: var(--text-normal);
+}
+
+.btn-submit {
+  background-color: var(--color-blue);
+  color: white;
+}
+
+.btn-submit:hover {
+  background-color: #1976D2;
+}
+</style>
