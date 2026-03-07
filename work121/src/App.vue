@@ -65,6 +65,8 @@ import WaterReplacementRecord from './components/WaterReplacementRecord.vue'
 import CuttingRingRecord from './components/CuttingRingRecord.vue'
 import ReboundMethodRecord from './components/ReboundMethodRecord.vue'
 import BeckmanBeamRecord from './components/BeckmanBeamRecord.vue'
+import SampleTransfer from './components/SampleTransfer.vue'
+import SampleTransferList from './components/SampleTransferList.vue'
 import Signature from './components/Signature.vue'
 import DensityTestReport from './components/DensityTestReport.vue'
 import DensityTestResult from './components/DensityTestResult.vue'
@@ -95,6 +97,8 @@ const components = {
   CuttingRingRecord,
   ReboundMethodRecord,
   BeckmanBeamRecord,
+  SampleTransfer,
+  SampleTransferList,
   Signature,
   DensityTestReport,
   DensityTestResult,
@@ -137,12 +141,13 @@ const menuItems = {
       component: 'GenericTestList', 
       props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord', dataType: 'record' }
     },
-    { 
+    {
       id: 'CuttingRingRecordList', 
       name: '原位密度检测记录表（环刀法）',
       component: 'GenericTestList', 
       props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord', dataType: 'record' }
     },
+    { id: 'SampleTransferList', name: '样品流转单' },
     { 
       id: 'ReboundMethodRecordList', 
       name: '回弹法检测混凝土抗压强度记录表',

@@ -13,6 +13,7 @@ public class User extends BaseEntity {
     private String userEmail;
     private String orgnizationName;
     private String shType;
+    private String position;
 
     public String getUserId() {
         return getId();
@@ -84,5 +85,13 @@ public class User extends BaseEntity {
 
     public void setShType(String shType) {
         this.shType = shType;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
     }
 }
