@@ -49,21 +49,21 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2 || parseInt(formData.status) === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
-            审核通过
+            升级为已审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -457,7 +457,7 @@ const submitWorkflow = async (action) => {
             }
         }
         signatureData = formData.recordReviewSign.replace(/^data:image\/\w+;base64,/, '')
-    } else if (action === 'REJECT' && formData.status === 1) {
+    } else if (action === 'REJECT' && parseInt(formData.status) === 1) {
         // Role check: Only recordReviewer can audit/reject at status 1
         if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
             alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
@@ -963,6 +963,8 @@ const submitForm = async () => {
     // Include dataJson for persistence
     const dataJsonObj = { ...formData }
     // Remove legacy fields from dataJson to avoid confusion
+    delete dataJsonObj.id
+    delete dataJsonObj.status
     delete dataJsonObj.tester
     delete dataJsonObj.reviewer
     submitData.dataJson = JSON.stringify(dataJsonObj);
@@ -1095,7 +1097,7 @@ const handleSign = async () => {
         // 保存签名到数据库
         await submitForm()
         // 显示成功消息
-        if (formData.status === 4) {
+        if (parseInt(formData.status) === 4) {
           alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
         } else {
           alert(`签名成功并已保存，您以${signType}身份签字`)

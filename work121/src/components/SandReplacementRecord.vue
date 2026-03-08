@@ -46,23 +46,23 @@
           </span>
         </div>
 
-        <template v-if="formData.id && !draftMode">
+        <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2 || formData.status === 4"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2 || parseInt(formData.status) === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
             升级为已审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -399,9 +399,13 @@ const getStatusColor = (status) => {
 
 // Workflow Action Handler
 const submitWorkflow = async (action) => {
+    // 如果记录还未保存，先保存记录
     if (!formData.id) {
-        alert('请先保存记录')
-        return
+        await submitForm()
+        if (!formData.id) {
+            alert('保存记录失败，请重试')
+            return
+        }
     }
     
     // Get current user
@@ -571,7 +575,9 @@ const mapRecordToFormData = (record) => {
   formData.recordReviewer = record.recordReviewer || record.reviewer || ''
 
   // Map fields from BusinessEntity/Entrustment (Always map these first as defaults)
-  if (record.projectName) formData.projectName = record.projectName
+  // 优先使用施工部位作为单元工程名称
+  if (record.constructionPart) formData.projectName = record.constructionPart
+  else if (record.projectName) formData.projectName = record.projectName
   if (record.wtNum) formData.unifiedNumber = record.wtNum
   if (record.commissionDate) formData.testDate = formatDate(record.commissionDate)
   if (record.entrustmentId) formData.unifiedNumber = record.entrustmentId
@@ -585,7 +591,10 @@ const mapRecordToFormData = (record) => {
     try {
       const parsed = JSON.parse(record.dataJson)
       Object.keys(parsed).forEach(key => {
-        formData[key] = parsed[key]
+        // 不要覆盖id和status字段，因为dataJson中的这些字段可能不正确
+        if (key !== 'id' && key !== 'status') {
+          formData[key] = parsed[key]
+        }
       })
       // Specific fields mapping if needed
       if (parsed.projectName) formData.projectName = parsed.projectName
@@ -599,8 +608,8 @@ const mapRecordToFormData = (record) => {
     }
   }
   
-  if (record.status !== undefined) {
-      formData.status = record.status
+  if (record.status !== null && record.status !== undefined) {
+      formData.status = parseInt(record.status) || 0
   } else {
       formData.status = 0
   }
@@ -647,8 +656,8 @@ const addRecord = async () => {
             const res = await axios.get(`/api/jc-core-wt-info/by-wt-num?wtNum=${encodeURIComponent(wtNum)}`)
             if (res.data.success && res.data.data) {
                 const eData = res.data.data
-                // 检查委托单状态是否为审核通过（状态值为5）
-                if (eData.status === 5) {
+                // 检查委托单状态是否为审核通过（状态值为5，支持字符串或数字类型）
+                if (parseInt(eData.status) === 5) {
                     entrustmentData = eData
                 } else {
                     console.log('委托单状态未审核通过，不自动填充数据')
@@ -662,7 +671,7 @@ const addRecord = async () => {
     let newRecord = {
         id: null,
         entrustmentId: wtNum,
-        projectName: entrustmentData.projectName || '',
+        projectName: entrustmentData.constructionPart || entrustmentData.projectName || '',
         unifiedNumber: wtNum || '',
         testDate: '',
         standard: '',
@@ -670,6 +679,7 @@ const addRecord = async () => {
         testCategory: entrustmentData.testCategory || '',
         tester: '',
         reviewer: '',
+        status: 0, // 默认为草稿状态
     }
     
     // If we have previous records, copy some fields
@@ -794,19 +804,16 @@ const loadData = async (entrustmentId) => {
 
 const submitForm = async () => {
     try {
-        // 如果状态是草稿(0)，保存后改为待签字(3)
-        if (formData.status === 0) {
-            formData.status = 3
-        }
-        
         const dataJsonObj = { ...formData }
+        delete dataJsonObj.id
+        delete dataJsonObj.status
         delete dataJsonObj.tester
         delete dataJsonObj.reviewer
 
         const dataToSave = {
             id: formData.id,
             entrustmentId: formData.entrustmentId || props.id,
-            status: formData.status, // 传递状态字段给后端
+            status: String(formData.status), // 确保status是字符串类型
             dataJson: JSON.stringify(dataJsonObj),
             reviewSignaturePhoto: formData.reviewerSignature,
             inspectSignaturePhoto: formData.testerSignature,
@@ -824,7 +831,7 @@ const submitForm = async () => {
         
         const response = await axios.post('/api/sand-replacement/save', dataToSave)
         if (response.data.success) {
-            alert('保存成功，状态已更新为待签字')
+            alert('保存成功')
             if (response.data.data) {
                 const saved = response.data.data
                 records.value[currentIndex.value] = saved

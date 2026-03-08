@@ -34,10 +34,10 @@ public class SandReplacementServiceImpl implements SandReplacementService {
     @Override
     @Transactional
     public void save(SandReplacement sandReplacement) {
-        if (sandReplacement.getId() != null && mapper.selectById(sandReplacement.getId()) != null) {
+        if (sandReplacement.getId() != null && !sandReplacement.getId().isEmpty() && mapper.selectById(sandReplacement.getId()) != null) {
             mapper.update(sandReplacement);
         } else {
-            if (sandReplacement.getId() == null) {
+            if (sandReplacement.getId() == null || sandReplacement.getId().isEmpty()) {
                 sandReplacement.setId(UUID.randomUUID().toString());
             }
             mapper.insert(sandReplacement);

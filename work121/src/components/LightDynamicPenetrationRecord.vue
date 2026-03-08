@@ -654,7 +654,7 @@ const mapRecordToFormData = (record) => {
     }
 
     // Ensure status is a Number and takes precedence over JSON
-    formData.status = record.status !== undefined ? Number(record.status) : 0
+    formData.status = record.status !== null && record.status !== undefined ? Number(record.status) : 0
     formData.id = record.id || null
     formData.rejectReason = record.rejectReason || ''
 
