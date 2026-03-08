@@ -5,15 +5,16 @@
     <div class="no-print toolbar">
       <div class="toolbar-left">
         <button @click="goToList" class="link-button">&lt; 返回列表</button>
+      </div>
+
+      <div class="toolbar-right">
         <span v-if="formData.status !== undefined" class="status-text">
           状态:
           <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
             {{ getStatusText(formData.status) }}
           </span>
         </span>
-      </div>
-
-      <div class="toolbar-right">
+        
         <button
           v-if="formData.status === 0 || formData.status === 2"
           @click="saveData"
@@ -1183,6 +1184,16 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
+.densityTestReport-container {
+    font-family: 'SimSun', 'Songti SC', serif;
+    width: 210mm;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+
 /* Add signature overlay style */
 .signature-overlay {
   position: absolute;
@@ -1195,91 +1206,133 @@ const previewPdf = () => {
   opacity: 0.8;
 }
 .no-print {
-  margin-bottom: 20px;
-}
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: nowrap;
-}
-.toolbar-left,
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 12px;
-  white-space: nowrap;
-}
-.link-button {
-  background: none;
-  border: none;
-  color: #3498db;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 0;
-}
-.link-button:hover {
-  text-decoration: underline;
-}
-.status-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: #666;
-}
-.status-label {
-  margin-left: 4px;
-}
-.btn {
-  padding: 6px 12px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  font-size: 13px;
-  cursor: pointer;
-  background-color: #f5f7fa;
-  color: #333;
-  transition: all 0.2s;
-}
-.btn-small {
-  padding: 4px 10px;
-  font-size: 12px;
-}
-.btn-primary {
-  background-color: #3498db;
-  color: #fff;
-  border-color: #3498db;
-}
-.btn-secondary {
-  background-color: #fff;
-  border-color: #d0d7de;
-  color: #34495e;
-}
-.btn-danger {
-  background-color: #e74c3c;
-  border-color: #e74c3c;
-  color: #fff;
-}
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.btn:not(:disabled):hover {
-  filter: brightness(0.95);
-}
+    margin-bottom: 20px;
+  }
 
-        .densityTestReport-container {
-            font-family: 'SimSun', 'Songti SC', serif;
-            width: 210mm;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
-            font-weight: bold;
-        }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 0 24px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 16px 24px;
+  }
+
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-left: 0;
+    flex: 1;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .link-button {
+    background: var(--card-blue);
+    border: none;
+    border-radius: 4px;
+    color: var(--color-blue);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 12px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  .link-button:hover {
+    background-color: var(--color-blue);
+    color: white;
+    text-decoration: none;
+  }
+
+  .status-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-light);
+    white-space: nowrap;
+  }
+
+  .status-label {
+    margin-left: 6px;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: var(--card-blue);
+    color: var(--color-blue);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-small {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    background-color: var(--color-blue);
+    color: white;
+  }
+
+  .btn-secondary {
+    background-color: var(--card-blue);
+    color: var(--color-blue);
+  }
+
+  .btn-danger {
+    background-color: #FFCDD2;
+    color: #D32F2F;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn:not(:disabled):hover {
+    filter: brightness(0.95);
+  }
+
+  .densityTestReport-container {
+    font-family: 'SimSun', 'Songti SC', serif;
+    width: 210mm;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+  }
         .header-info {
             display: flex;
             justify-content: space-between;

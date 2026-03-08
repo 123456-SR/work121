@@ -47,9 +47,10 @@
             <td>{{ item.testingRoom }}</td>
             <td>{{ item.receiveDate }}</td>
             <td>{{ item.sampleStatus }}</td>
-            <td class="action-buttons">
-              <button class="btn btn-sm btn-primary" @click="editItem(item)">编辑</button>
-              <button class="btn btn-sm btn-danger" @click="deleteItem(item.id)">删除</button>
+            <td class="actions-cell">
+              <span class="action-link" @click="editItem(item)">编辑</span>
+              <span class="separator">|</span>
+              <span class="action-link delete-link" @click="deleteItem(item.id)">删除</span>
             </td>
           </tr>
         </tbody>
@@ -153,83 +154,62 @@ onMounted(() => {
 <style scoped>
 .sample-transfer-list-container {
   padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 10px;
+  margin-bottom: 24px;
+  background-color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .list-header h2 {
   margin: 0;
-  color: #2c3e50;
+  color: black;
+  font-weight: 600;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .search-box {
   display: flex;
-  gap: 5px;
+  align-items: center;
+  gap: 8px;
 }
 
 .search-input {
-  padding: 6px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-size: 14px;
+  outline: none;
+  width: 200px;
+  transition: border-color 0.2s;
 }
 
-.btn {
-  padding: 6px 12px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background-color: #3498db;
-  color: white;
+.search-input:focus {
   border-color: #3498db;
 }
 
-.btn-secondary {
-  background-color: #fff;
-  border-color: #d0d7de;
-  color: #34495e;
-}
-
-.btn-danger {
-  background-color: #e74c3c;
-  color: white;
-  border-color: #e74c3c;
-}
-
-.btn-sm {
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.btn:hover {
-  filter: brightness(0.95);
+.search-btn {
+  padding: 8px 16px;
 }
 
 .table-container {
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   overflow: hidden;
-  margin-bottom: 20px;
 }
 
 .data-table {
@@ -237,76 +217,157 @@ onMounted(() => {
   border-collapse: collapse;
 }
 
-.data-table th,
-.data-table td {
-  padding: 12px;
+.data-table th, .data-table td {
+  padding: 16px 24px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #edf2f7;
 }
 
 .data-table th {
-  background-color: #f5f7fa;
+  background-color: #f8f9fa;
   font-weight: 600;
-  color: #2c3e50;
+  color: #5d6d7e;
+  font-size: 14px;
+  text-transform: uppercase;
 }
 
 .data-row:hover {
-  background-color: #f9f9f9;
+  background-color: #f8f9fa;
   cursor: pointer;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 5px;
-}
-
-.pagination-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.page-info {
-  font-size: 14px;
-  color: #666;
 }
 
 .text-center {
   text-align: center;
-  padding: 20px;
-  color: #999;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  color: white;
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 24px;
+  gap: 16px;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:disabled {
+  background-color: #f7fafc;
+  color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #edf2f7;
+  color: #2d3748;
+}
+
+.page-info {
+  color: #718096;
+  font-size: 14px;
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.action-link {
+  color: #3498db;
+  cursor: pointer;
+  margin: 0 4px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.action-link:hover {
+  background-color: #ebf8ff;
+  color: #2980b9;
+  text-decoration: none;
+}
+
+.delete-link {
+  color: #e74c3c;
+}
+
+.delete-link:hover {
+  background-color: #fee2e2;
+  color: #c0392b;
+}
+
+.separator {
+  color: #cbd5e0;
+  margin: 0 2px;
 }
 
 @media (max-width: 768px) {
   .list-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
   
   .header-actions {
     width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
   
   .search-box {
-    flex: 1;
+    width: 100%;
   }
   
   .search-input {
     flex: 1;
   }
   
-  .data-table {
-    font-size: 12px;
-  }
-  
   .data-table th,
   .data-table td {
-    padding: 8px;
+    padding: 12px;
   }
   
-  .action-buttons {
+  .actions-cell {
+    white-space: normal;
+  }
+  
+  .action-link {
+    display: block;
+    margin: 4px 0;
+  }
+  
+  .separator {
+    display: none;
+  }
+  
+  .pagination-container {
     flex-direction: column;
+    gap: 12px;
   }
 }
 </style>
