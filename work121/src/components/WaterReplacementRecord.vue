@@ -1315,6 +1315,7 @@ const previewPdf = () => {
             margin-bottom: 20px;
             font-size: 24px;
             font-weight: bold;
+            color: black;
         }
         .header-info {
             display: flex;

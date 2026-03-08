@@ -39,7 +39,10 @@
       </div>
       <div class="toolbar-right">
         <span class="status-text" v-if="formData.status !== undefined">
-           状态: {{ getStatusText(formData.status) }}
+          状态:
+          <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
+            {{ getStatusText(formData.status) }}
+          </span>
         </span>
         <button
           v-if="formData.status === 0 || formData.status === 2"
@@ -1128,7 +1131,7 @@ const previewPdf = () => {
     margin-bottom: 20px;
     font-size: 24px;
     font-weight: bold;
-    color: var(--text-primary);
+    color: black;
   }
         .header-info {
             display: flex;

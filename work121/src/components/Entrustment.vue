@@ -276,6 +276,16 @@
 </template>
 
 <style scoped>
+.entrustment-container {
+    font-family: 'SimSun', 'Songti SC', serif;
+    width: 210mm;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+
 .no-print {
     margin-bottom: 20px;
   }
@@ -1447,6 +1457,7 @@ const goToList = () => {
             margin-bottom: 20px;
             font-size: 24px;
             font-weight: bold;
+            color: black;
         }
         .header-info {
             display: flex;

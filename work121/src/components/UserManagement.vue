@@ -121,14 +121,44 @@ const editUser = (user) => {
 // 保存用户
 const saveUser = async () => {
   try {
-    // 这里需要实现保存用户的逻辑
-    // 由于后端还没有实现添加和修改用户的接口，这里只是模拟
-    console.log('保存用户:', formData.value)
-    showDialog.value = false
-    // 重新获取用户列表
-    fetchUsers()
+    let apiUrl = '/api/user/add'
+    let successMessage = '添加用户成功'
+    let errorMessage = '添加用户失败'
+    
+    const requestBody = {
+      userAccount: formData.value.userAccount,
+      userPass: formData.value.password,
+      userName: formData.value.userName,
+      position: formData.value.position
+    }
+    
+    // 如果是编辑用户，调用更新API
+    if (editingUser.value) {
+      apiUrl = '/api/user/update'
+      successMessage = '更新用户成功'
+      errorMessage = '更新用户失败'
+      requestBody.userId = editingUser.value.id
+    }
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    })
+    const result = await response.json()
+    if (result.success) {
+      alert(successMessage)
+      showDialog.value = false
+      // 重新获取用户列表
+      fetchUsers()
+    } else {
+      alert(errorMessage + ': ' + result.message)
+    }
   } catch (error) {
     console.error('保存用户失败:', error)
+    alert('操作失败: 网络错误')
   }
 }
 

@@ -1234,15 +1234,15 @@ const saveData = async () => {
             font-family: 'SimSun', 'Songti SC', serif;
             width: 210mm;
             margin: 0 auto;
-            padding: 24px;
+            padding: 16px;
             background-color: var(--bg-card);
             border-radius: 8px;
             box-shadow: var(--shadow);
         }
         h2 {
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
+            margin-bottom: 12px;
+            font-size: 20px;
             font-weight: bold;
             color: black;
         }
@@ -1259,9 +1259,10 @@ const saveData = async () => {
         }
         td {
             border: 1px solid black;
-            padding: 5px;
+            padding: 3px;
             vertical-align: middle;
             text-align: center;
+            line-height: 1.2;
         }
         .label {
             font-weight: bold;
@@ -1269,7 +1270,7 @@ const saveData = async () => {
         }
         .left-align {
             text-align: left;
-            padding-left: 10px;
+            padding-left: 6px;
         }
         input[type="text"], textarea, select {
             width: 98%;
@@ -1277,10 +1278,11 @@ const saveData = async () => {
             border-radius: 4px;
             outline: none;
             font-family: inherit;
-            font-size: inherit;
+            font-size: 14px;
             background-color: transparent;
             text-align: center;
-            padding: 2px 4px;
+            padding: 1px 3px;
+            line-height: 1.2;
         }
         .left-align input[type="text"] {
             text-align: left;
@@ -1298,6 +1300,7 @@ const saveData = async () => {
             resize: none;
             overflow: hidden;
             text-align: left;
+            line-height: 1.2;
         }
         .table-textarea {
             width: 100%;
@@ -1306,12 +1309,13 @@ const saveData = async () => {
             border-radius: 4px;
             outline: none;
             font-family: inherit;
-            font-size: inherit;
+            font-size: 14px;
             background-color: transparent;
             text-align: center;
-            padding: 2px 4px;
+            padding: 1px 3px;
             resize: none;
             overflow: hidden;
+            line-height: 1.2;
         }
         .table-textarea.left-align {
             text-align: left;
@@ -1328,11 +1332,11 @@ const saveData = async () => {
         .footer-info {
             display: flex;
             justify-content: space-between;
-            margin-top: 30px;
-            margin-bottom: 20px;
-            font-size: 16px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
             font-weight: bold;
-            padding: 0 50px;
+            padding: 0 30px;
         }
         .page-footer {
             margin-top: 10px;

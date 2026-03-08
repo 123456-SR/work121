@@ -5,15 +5,16 @@
     <div class="no-print toolbar">
       <div class="toolbar-left">
         <button @click="goToList" class="link-button">&lt; 返回列表</button>
+      </div>
+
+      <div class="toolbar-right">
         <span v-if="formData.status !== undefined" class="status-text">
           状态:
           <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
             {{ getStatusText(formData.status) }}
           </span>
         </span>
-      </div>
-
-      <div class="toolbar-right">
+        
         <button
           v-if="formData.status === 0 || formData.status === 2"
           @click="saveData"
@@ -1183,6 +1184,16 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
+.densityTestReport-container {
+    font-family: 'SimSun', 'Songti SC', serif;
+    width: 210mm;
+    margin: 0 auto;
+    padding: 24px;
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+
 /* Add signature overlay style */
 .signature-overlay {
   position: absolute;
@@ -1320,7 +1331,7 @@ const previewPdf = () => {
     margin-bottom: 20px;
     font-size: 24px;
     font-weight: bold;
-    color: var(--text-primary);
+    color: black;
   }
         .header-info {
             display: flex;

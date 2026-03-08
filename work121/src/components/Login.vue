@@ -161,7 +161,7 @@ const handleUserAction = async () => {
 .login-title {
   text-align: center;
   margin-bottom: 20px;
-  color: #333;
+  color: black;
   font-size: 24px;
   font-weight: 600;
 }

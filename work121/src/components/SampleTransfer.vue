@@ -318,6 +318,7 @@ h2 {
   margin-bottom: 20px;
   font-size: 24px;
   font-weight: bold;
+  color: black;
 }
 
 .sample-transfer-table {

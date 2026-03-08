@@ -1164,27 +1164,36 @@ const previewPdf = () => {
 </script>
 
 <style scoped>
+    .beckmanBeamRecord-container {
+        font-family: 'SimSun', 'Songti SC', serif;
+        width: 210mm;
+        margin: 0 auto;
+        padding: 24px;
+        background-color: var(--bg-card);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+    }
 
-        .no-print {
-            margin-bottom: 20px;
-        }
+    .no-print {
+        margin-bottom: 20px;
+    }
 
-        .toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-            padding: 0 24px;
-            box-sizing: border-box;
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-            background-color: var(--bg-card);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 16px 24px;
-        }
+    .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 0 24px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        background-color: var(--bg-card);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 16px 24px;
+    }
 
         .toolbar-left {
             display: flex;

@@ -1505,7 +1505,7 @@ const includeCurrentPageData = () => {
             margin-bottom: 20px;
             font-size: 24px;
             font-weight: bold;
-            color: var(--text-primary);
+            color: black;
         }
         .header-info {
             display: flex;

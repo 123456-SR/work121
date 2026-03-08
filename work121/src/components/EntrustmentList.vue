@@ -250,7 +250,7 @@ onMounted(() => {
 
 .list-header h2 {
   margin: 0;
-  color: #2c3e50;
+  color: black;
   font-weight: 600;
 }
 
