@@ -1,8 +1,8 @@
 <template>
   <div class="process-list-container">
     <div class="header">
-      <h2>流程列表</h2>
-      <button @click="openAddModal" class="add-btn">+ 增加流程</button>
+      <h2>任务列表</h2>
+      <button @click="openAddModal" class="add-btn">+ 分配任务</button>
     </div>
 
     <div class="process-table">
@@ -50,7 +50,7 @@
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>{{ isEditing ? '编辑流程' : '增加流程' }}</h3>
+          <h3>{{ isEditing ? '编辑任务' : '分配任务' }}</h3>
           <button @click="closeModal" class="close-btn">×</button>
         </div>
         <div class="modal-body">
@@ -325,7 +325,7 @@ const loadProcesses = async () => {
       total.value = 0
     }
   } catch (error) {
-    console.error('加载流程列表失败:', error)
+    console.error('加载任务列表失败:', error)
     processes.value = []
     total.value = 0
   } finally {
