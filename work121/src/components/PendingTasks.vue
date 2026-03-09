@@ -34,13 +34,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 const searchQuery = ref('')
-const tasks = ref([
-  { id: 'XT-2024-55711', name: '地基检测任务', createTime: '2024-03-01 10:00', status: '待处理' },
-  { id: 'XT-2024-55131', name: '密度检测任务', createTime: '2024-03-02 14:30', status: '待处理' },
-  { id: 'M-2024-53507', name: '动力触探任务', createTime: '2024-03-03 09:15', status: '待处理' }
-])
+const tasks = ref([])
 
 // 过滤任务
 const filteredTasks = computed(() => {
@@ -54,17 +51,39 @@ const filteredTasks = computed(() => {
 })
 
 // 搜索任务
-const searchTasks = () => {
-  // 这里可以实现实际的搜索逻辑
-  console.log('搜索任务:', searchQuery.value)
+const searchTasks = async () => {
+  try {
+    const response = await axios.get('/api/pending-tasks/search', {
+      params: { taskType: searchQuery.value }
+    })
+    if (response.data.success) {
+      tasks.value = response.data.data.map(item => ({
+        id: item.UNIFIED_NUMBER || item.unified_number || item.unifiedNumber || '未知编号',
+        name: (item.TABLE_TYPE || item.table_type || item.tableType || '未知类型') + '审核任务',
+        createTime: new Date().toLocaleString(),
+        status: '待处理'
+      }))
+    }
+  } catch (e) {
+    console.error('搜索任务失败', e)
+  }
 }
 
-
-
 // 组件挂载时获取任务列表
-onMounted(() => {
-  // 这里可以实现实际的获取任务列表逻辑
-  console.log('获取待处理任务列表')
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/pending-tasks/get-all')
+    if (response.data.success) {
+      tasks.value = response.data.data.map(item => ({
+        id: item.UNIFIED_NUMBER || item.unified_number || item.unifiedNumber || '未知编号',
+        name: (item.TABLE_TYPE || item.table_type || item.tableType || '未知类型') + '审核任务',
+        createTime: new Date().toLocaleString(),
+        status: '待处理'
+      }))
+    }
+  } catch (e) {
+    console.error('获取待处理任务列表失败', e)
+  }
 })
 </script>
 
