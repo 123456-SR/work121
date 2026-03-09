@@ -184,4 +184,10 @@ public interface LightDynamicPenetrationMapper {
 
     @Delete("DELETE FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}")
     int deleteById(@Param("id") String id);
+
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status} WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

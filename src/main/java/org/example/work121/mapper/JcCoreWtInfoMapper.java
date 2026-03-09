@@ -3,6 +3,7 @@ package org.example.work121.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.example.work121.entity.JcCoreWtInfo;
 import java.util.List;
 
@@ -95,6 +96,12 @@ public interface JcCoreWtInfoMapper {
 
     @Select("SELECT t1.ID, t1.WT_NUM, t1.PROJECT_NAME, t1.CREATE_BY, t1.TESTER, t1.REVIEWER, t1.APPROVER FROM T_ENTRUSTMENT t1 WHERE ROWNUM <= 10")
     List<JcCoreWtInfo> debugSelectAll();
+
+    @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status} WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Select("<script>" +
             "SELECT DISTINCT " +

@@ -59,4 +59,33 @@ public class PendingTasksController {
         }
         return result;
     }
+
+    /**
+     * 审核通过任务
+     * @param params 任务参数
+     * @return 响应结果
+     */
+    @PostMapping("/approve")
+    public Map<String, Object> approveTask(@RequestBody Map<String, String> params) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String taskType = params.get("taskType");
+            String taskId = params.get("taskId");
+            String userAccount = params.get("userAccount");
+            logger.info("审核通过任务，任务类型: {}, 任务ID: {}, 用户账号: {}", taskType, taskId, userAccount);
+            boolean success = pendingTasksService.approveTask(taskType, taskId, userAccount);
+            if (success) {
+                result.put("success", true);
+                result.put("message", "审核通过成功");
+            } else {
+                result.put("success", false);
+                result.put("message", "审核通过失败");
+            }
+        } catch (Exception e) {
+            logger.error("审核通过任务失败", e);
+            result.put("success", false);
+            result.put("message", "审核通过任务失败: " + e.getMessage());
+        }
+        return result;
+    }
 }

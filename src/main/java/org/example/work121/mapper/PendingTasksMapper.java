@@ -33,7 +33,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_BECKMAN_BEAM t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -43,7 +43,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_LIGHT_DYNAMIC_PENETRATION t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -53,7 +53,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_REBOUND_METHOD t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -63,7 +63,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_CUTTING_RING t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -73,7 +73,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_WATER_REPLACEMENT t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -83,7 +83,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_SAND_REPLACEMENT t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -93,7 +93,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_NUCLEAR_DENSITY t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "UNION ALL " +
             "SELECT " +
@@ -103,7 +103,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_DENSITY_TEST t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "ORDER BY unified_number ASC")
     List<Map<String, Object>> getAllPendingTasks();
@@ -131,7 +131,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_BECKMAN_BEAM t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '贝克曼梁' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -142,7 +142,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_LIGHT_DYNAMIC_PENETRATION t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '轻型动力触探' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -153,7 +153,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_REBOUND_METHOD t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '回弹法' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -164,7 +164,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_CUTTING_RING t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '环刀法' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -175,7 +175,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_WATER_REPLACEMENT t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '灌水法' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -186,7 +186,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_SAND_REPLACEMENT t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '灌砂法' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -197,7 +197,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_NUCLEAR_DENSITY t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '核子密度' LIKE CONCAT('%', #{taskType}, '%') " +
             "UNION ALL " +
@@ -208,7 +208,7 @@ public interface PendingTasksMapper {
             "t.STATUS AS status, " +
             "t.REVIEWER AS reviewer " +
             "FROM T_DENSITY_TEST t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ID = e.WT_NUM " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ID = e.ID " +
             "WHERE t.STATUS = '1' " +
             "AND '密度试验' LIKE CONCAT('%', #{taskType}, '%') " +
             "ORDER BY unified_number ASC")

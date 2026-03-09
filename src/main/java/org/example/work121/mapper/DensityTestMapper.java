@@ -23,6 +23,8 @@ public interface DensityTestMapper {
             // 下面这些业务字段（optimumMoisture / sampleNameStatus / designIndex / testResult 等）
             // 统一放在 DATA_JSON 里，不再单独建物理列
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -50,7 +52,48 @@ public interface DensityTestMapper {
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     java.util.List<DensityTest> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Select("SELECT * FROM T_DENSITY_TEST WHERE ID = #{id}")
+    @Select("SELECT " +
+            "t2.ID as id, " +
+            "t2.ENTRUSTMENT_ID as entrustmentId, " +
+            "t2.SOIL_TYPE as soilType, " +
+            "t2.PIT_VOLUME as ringVolume, " +
+            "t2.WET_WEIGHT as wetWeight, " +
+            "t2.DRY_WEIGHT as dryWeight, " +
+            "t2.WATER_CONTENT as waterContent, " +
+            "t2.WET_DENSITY as wetDensity, " +
+            "t2.DRY_DENSITY as dryDensity, " +
+            "t2.MAX_DRY_DENSITY as maxDryDensity, " +
+            "t2.MIN_DRY_DENSITY as minDryDensity, " +
+            "t2.COMPACTION_COEFFICIENT as compactionCoefficient, " +
+            "t2.QUALIFIED_RATE as qualifiedRate, " +
+            "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
+            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
+            "t2.STATUS as status, " +
+            "t2.REJECT_REASON as rejectReason, " +
+            "t2.NEXT_HANDLER as nextHandler, " +
+            "t2.CREATE_BY as createBy, " +
+            "t2.CREATE_TIME as createTime, " +
+            "t2.UPDATE_BY as updateBy, " +
+            "t2.UPDATE_TIME as updateTime, " +
+            "t1.SAMPLE_NUMBER as wtNum, " +
+            "t1.CLIENT_UNIT as clientUnit, " +
+            "t1.COMMISSION_DATE as commissionDate, " +
+            "t1.PROJECT_NAME as projectName, " +
+            "t1.CONSTRUCTION_PART as constructionPart, " +
+            "t1.CONSTRUCTION_UNIT as constructionUnit, " +
+            "t1.BUILDING_UNIT as buildingUnit, " +
+            "t1.SAMPLE_NAME as sampleName, " +
+            "t1.TEST_CATEGORY as testCategory, " +
+            "t1.WITNESS_UNIT as witnessUnit, " +
+            "t1.WITNESS as witness, " +
+            "t1.BEIZHU as remarks " +
+            "FROM T_DENSITY_TEST t2 " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "WHERE t2.ID = #{id}")
     DensityTest selectById(@Param("id") String id);
 
     @Delete("DELETE FROM T_DENSITY_TEST WHERE ID = #{id}")
@@ -128,4 +171,10 @@ public interface DensityTestMapper {
             "UPDATE_TIME = #{updateTime} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(DensityTest densityTest);
+
+    @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status} WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

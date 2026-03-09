@@ -3,7 +3,7 @@ package org.example.work121.service.impl;
 import org.example.work121.dto.WorkflowRequest;
 import org.example.work121.entity.*;
 import org.example.work121.mapper.*;
-import org.example.work121.entity.ReboundMethodRecord;
+import org.example.work121.entity.BusinessEntity;
 import org.example.work121.service.BeckmanBeamService;
 import org.example.work121.service.WorkflowService;
 import org.example.work121.service.WaterReplacementService;
@@ -132,6 +132,17 @@ public class WorkflowServiceImpl implements WorkflowService {
             simpleDirectoryService.syncEntrustmentDataByWtNum(entity.getWtNum());
         }
 
+        // 委托单审核通过时，自动创建记录表
+        if (entity.getStatus() != null && STATUS_APPROVED.equals(entity.getStatus())) {
+            SimpleDirectory directory = simpleDirectoryService.getDirectoryByDirName(entity.getWtNum());
+            if (directory != null) {
+                // 创建记录表
+                createRecordsForDirectory(directory);
+                // 同步角色信息到记录表
+                syncRolesToRecords(directory);
+            }
+        }
+
         return extResult > 0;
     }
 
@@ -142,6 +153,372 @@ public class WorkflowServiceImpl implements WorkflowService {
      *   只能由“委托审核人”(wtReviewer) 执行
      * 如果目录或角色未配置，则不做限制以保持兼容。
      */
+    private void createRecordsForDirectory(SimpleDirectory directory) {
+        String dirName = directory.getDirName();
+        String creator = directory.getCreateBy();
+        if (creator == null) {
+            creator = "admin";
+        }
+        
+        // 输出创建信息
+        System.out.println("=== 开始创建记录表 ===");
+        System.out.println("统一编号: " + dirName);
+        System.out.println("创建人: " + creator);
+        
+        // 确定检测类别
+        java.util.Set<String> categories = new java.util.LinkedHashSet<>();
+        String[] types = {
+            directory.getTable1Type(), directory.getTable2Type(), directory.getTable3Type(),
+            directory.getTable4Type(), directory.getTable5Type(), directory.getTable6Type(),
+            directory.getTable7Type(), directory.getTable8Type(), directory.getTable9Type(),
+            directory.getTable10Type()
+        };
+        
+        for (String type : types) {
+            if (type == null) continue;
+            String upper = type.toUpperCase();
+            if (upper.contains("NUCLEAR")) categories.add("核子法");
+            else if (upper.contains("SAND")) categories.add("灌砂法");
+            else if (upper.contains("WATER")) categories.add("灌水法");
+            else if (upper.contains("CUTTING")) categories.add("环刀法");
+            else if (upper.contains("REBOUND")) categories.add("回弹法");
+            else if (upper.contains("PENETRATION")) categories.add("轻型动力触探");
+            else if (upper.contains("BECKMAN")) categories.add("贝克曼梁");
+            else if (upper.contains("DENSITY")) categories.add("密度试验");
+        }
+        
+        String category = categories.isEmpty() ? "通用检测" : String.join(",", categories);
+        System.out.println("检测类别: " + category);
+        
+        // 创建表1
+        if (directory.getTable1Type() != null && directory.getTable1Id() == null) {
+            System.out.println("创建表1 - 类型: " + directory.getTable1Type());
+            String table1Id = createRelatedRecord(directory.getTable1Type(), dirName, creator, category, directory);
+            directory.setTable1Id(table1Id);
+            System.out.println("表1创建成功，ID: " + table1Id);
+        }
+        
+        // 创建表2
+        if (directory.getTable2Type() != null && directory.getTable2Id() == null) {
+            System.out.println("创建表2 - 类型: " + directory.getTable2Type());
+            String table2Id = createRelatedRecord(directory.getTable2Type(), dirName, creator, category, directory);
+            directory.setTable2Id(table2Id);
+            System.out.println("表2创建成功，ID: " + table2Id);
+        }
+        
+        // 创建表3
+        if (directory.getTable3Type() != null && directory.getTable3Id() == null) {
+            System.out.println("创建表3 - 类型: " + directory.getTable3Type());
+            String table3Id = createRelatedRecord(directory.getTable3Type(), dirName, creator, category, directory);
+            directory.setTable3Id(table3Id);
+            System.out.println("表3创建成功，ID: " + table3Id);
+        }
+        
+        // 创建表4
+        if (directory.getTable4Type() != null && directory.getTable4Id() == null) {
+            System.out.println("创建表4 - 类型: " + directory.getTable4Type());
+            String table4Id = createRelatedRecord(directory.getTable4Type(), dirName, creator, category, directory);
+            directory.setTable4Id(table4Id);
+            System.out.println("表4创建成功，ID: " + table4Id);
+        }
+        
+        // 创建表5
+        if (directory.getTable5Type() != null && directory.getTable5Id() == null) {
+            System.out.println("创建表5 - 类型: " + directory.getTable5Type());
+            String table5Id = createRelatedRecord(directory.getTable5Type(), dirName, creator, category, directory);
+            directory.setTable5Id(table5Id);
+            System.out.println("表5创建成功，ID: " + table5Id);
+        }
+        
+        // 创建表6
+        if (directory.getTable6Type() != null && directory.getTable6Id() == null) {
+            System.out.println("创建表6 - 类型: " + directory.getTable6Type());
+            String table6Id = createRelatedRecord(directory.getTable6Type(), dirName, creator, category, directory);
+            directory.setTable6Id(table6Id);
+            System.out.println("表6创建成功，ID: " + table6Id);
+        }
+        
+        // 创建表7
+        if (directory.getTable7Type() != null && directory.getTable7Id() == null) {
+            System.out.println("创建表7 - 类型: " + directory.getTable7Type());
+            String table7Id = createRelatedRecord(directory.getTable7Type(), dirName, creator, category, directory);
+            directory.setTable7Id(table7Id);
+            System.out.println("表7创建成功，ID: " + table7Id);
+        }
+        
+        // 创建表8
+        if (directory.getTable8Type() != null && directory.getTable8Id() == null) {
+            System.out.println("创建表8 - 类型: " + directory.getTable8Type());
+            String table8Id = createRelatedRecord(directory.getTable8Type(), dirName, creator, category, directory);
+            directory.setTable8Id(table8Id);
+            System.out.println("表8创建成功，ID: " + table8Id);
+        }
+        
+        // 创建表9
+        if (directory.getTable9Type() != null && directory.getTable9Id() == null) {
+            System.out.println("创建表9 - 类型: " + directory.getTable9Type());
+            String table9Id = createRelatedRecord(directory.getTable9Type(), dirName, creator, category, directory);
+            directory.setTable9Id(table9Id);
+            System.out.println("表9创建成功，ID: " + table9Id);
+        }
+        
+        // 创建表10
+        if (directory.getTable10Type() != null && directory.getTable10Id() == null) {
+            System.out.println("创建表10 - 类型: " + directory.getTable10Type());
+            String table10Id = createRelatedRecord(directory.getTable10Type(), dirName, creator, category, directory);
+            directory.setTable10Id(table10Id);
+            System.out.println("表10创建成功，ID: " + table10Id);
+        }
+        
+        // 更新目录
+        if (directory.getId() != null) {
+            simpleDirectoryMapper.update(directory);
+            System.out.println("目录更新成功，ID: " + directory.getId());
+        }
+        
+        System.out.println("=== 记录表创建完成 ===");
+    }
+    
+    private String createRelatedRecord(String type, String dirName, String creator, String category, SimpleDirectory directory) {
+        if (type == null || type.isEmpty()) return null;
+        
+        String id = java.util.UUID.randomUUID().toString();
+        java.util.Date now = new java.util.Date();
+        
+        try {
+            if (isTypeMatch(type, "ENTRUSTMENT_LIST", "ENTRUSTMENT", "检测委托单")) {
+                // 委托单已经存在，返回现有ID
+                java.util.List<JcCoreWtInfo> existingList = jcCoreWtInfoMapper.selectByWtNum(dirName);
+                if (existingList != null && !existingList.isEmpty()) {
+                    JcCoreWtInfo existing = existingList.get(0);
+                    return existing.getId();
+                }
+                
+                // 创建委托单（如果不存在）
+                JcCoreWtInfo info = new JcCoreWtInfo();
+                info.setId(id);
+                info.setWtNum(dirName);
+                info.setCreateBy(creator);
+                info.setCreateTime(now);
+                
+                setDefaultValues(info, directory, category);
+                
+                jcCoreWtInfoMapper.insert(info);
+                jcCoreWtInfoMapper.insertExt(info);
+
+                return id;
+            } else if (isTypeMatch(type, "REBOUND_METHOD_RECORD", "回弹法检测混凝土抗压强度记录表")) {
+                ReboundMethod entity = new ReboundMethod();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                reboundMethodMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
+                // 获取实际的委托单ID
+                String actualEntrustmentId = dirName;
+                java.util.List<JcCoreWtInfo> wtInfoList = jcCoreWtInfoMapper.selectByWtNum(dirName);
+                JcCoreWtInfo wtInfo = null;
+                if (wtInfoList != null && !wtInfoList.isEmpty()) {
+                    wtInfo = wtInfoList.get(0);
+                    actualEntrustmentId = wtInfo.getId();
+                }
+                
+                LightDynamicPenetration entity = new LightDynamicPenetration();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(actualEntrustmentId);
+                
+                setDefaultValues(entity, directory, category);
+                
+                if (wtInfo != null) {
+                    copyFields(wtInfo, entity);
+                    populateVirtualData(entity);
+                    mergeEntrustmentDataToJson(entity, wtInfo);
+                } else {
+                    populateVirtualData(entity);
+                }
+                
+                lightDynamicPenetrationMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "DENSITY_TEST_RECORD", "原位密度检测记录表")) {
+                DensityTest entity = new DensityTest();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                densityTestMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
+                NuclearDensity entity = new NuclearDensity();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                // 尝试从委托单获取数据并填充到实体对象和 DATA_JSON
+                java.util.List<JcCoreWtInfo> entrustmentList = jcCoreWtInfoMapper.selectByWtNum(dirName);
+                JcCoreWtInfo entrustment = null;
+                if (entrustmentList != null && !entrustmentList.isEmpty()) {
+                    entrustment = entrustmentList.get(0);
+                    copyFields(entrustment, entity);
+                    populateVirtualData(entity);
+                    mergeEntrustmentDataToJson(entity, entrustment);
+                } else {
+                    populateVirtualData(entity);
+                }
+                
+                nuclearDensityMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "SAND_REPLACEMENT_RECORD", "原位密度检测记录表（灌砂法）")) {
+                SandReplacement entity = new SandReplacement();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                sandReplacementMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "WATER_REPLACEMENT_RECORD", "相对密度试验记录表（灌水法）")) {
+                WaterReplacement entity = new WaterReplacement();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                waterReplacementMapper.insert(entity);
+                return id;
+            } else if (isTypeMatch(type, "CUTTING_RING_RECORD", "原位密度检测记录表（环刀法）")) {
+                CuttingRing entity = new CuttingRing();
+                entity.setId(id);
+                entity.setWtNum(dirName);
+                entity.setCreateBy(creator);
+                entity.setCreateTime(now);
+                entity.setEntrustmentId(dirName);
+                
+                setDefaultValues(entity, directory, category);
+                
+                cuttingRingMapper.insert(entity);
+                return id;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    private boolean isTypeMatch(String type, String... candidates) {
+        for (String candidate : candidates) {
+            if (candidate.equalsIgnoreCase(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private void setDefaultValues(Object entity, SimpleDirectory directory, String category) {
+        if (entity instanceof BusinessEntity) {
+            BusinessEntity be = (BusinessEntity) entity;
+            be.setProjectName("未命名工程");
+            be.setClientUnit("未填写单位");
+            be.setConstructionUnit("未填写单位");
+            be.setBuildingUnit("未填写单位");
+            be.setWitnessUnit("未填写单位");
+            be.setSampleName("未填写样品");
+            be.setTestCategory(category);
+            be.setCommissionDate(new java.util.Date());
+            be.setStatus("0"); // 默认草稿状态
+            
+            // 扩展虚拟数据
+            be.setConstructionPart("未填写部位");
+            be.setDesignUnit("未填写单位");
+            be.setSupervisionUnit("未填写单位");
+            be.setTestBasis("未填写依据");
+            be.setEquipment("未填写设备");
+            be.setTestMethod("未填写方法");
+        }
+    }
+    
+    private void copyFields(JcCoreWtInfo source, BusinessEntity target) {
+        if (source.getProjectName() != null) target.setProjectName(source.getProjectName());
+        if (source.getClientUnit() != null) target.setClientUnit(source.getClientUnit());
+        if (source.getWtNum() != null) target.setWtNum(source.getWtNum());
+        if (source.getCommissionDate() != null) target.setCommissionDate(source.getCommissionDate());
+        if (source.getConstructionUnit() != null) target.setConstructionUnit(source.getConstructionUnit());
+        if (source.getBuildingUnit() != null) target.setBuildingUnit(source.getBuildingUnit());
+        if (source.getSupervisionUnit() != null) target.setSupervisionUnit(source.getSupervisionUnit());
+        if (source.getDesignUnit() != null) target.setDesignUnit(source.getDesignUnit());
+        if (source.getWitnessUnit() != null) target.setWitnessUnit(source.getWitnessUnit());
+        if (source.getWitness() != null) target.setWitness(source.getWitness());
+    }
+    
+    private void populateVirtualData(BusinessEntity entity) {
+        // 设置虚拟数据
+        entity.setConstructionPart("未填写部位");
+        entity.setDesignUnit("未填写单位");
+        entity.setSupervisionUnit("未填写单位");
+        entity.setTestBasis("未填写依据");
+        entity.setEquipment("未填写设备");
+        entity.setTestMethod("未填写方法");
+    }
+    
+    private void mergeEntrustmentDataToJson(BusinessEntity entity, JcCoreWtInfo source) {
+        try {
+            // 暂时注释掉 JSON 相关代码，因为 BusinessEntity 可能没有这些方法
+            // String dataJson = entity.getDataJson();
+            // java.util.Map<String, Object> data = new java.util.HashMap<>();
+            // 
+            // if (dataJson != null && !dataJson.isEmpty()) {
+            //     try {
+            //         data = new com.fasterxml.jackson.databind.ObjectMapper().readValue(dataJson, java.util.Map.class);
+            //     } catch (Exception e) {
+            //         e.printStackTrace();
+            //     }
+            // }
+            // 
+            // // 合并委托单数据到 JSON
+            // if (source.getProjectName() != null) data.put("projectName", source.getProjectName());
+            // if (source.getClientUnit() != null) data.put("entrustingUnit", source.getClientUnit());
+            // if (source.getWtNum() != null) data.put("unifiedNumber", source.getWtNum());
+            // if (source.getCommissionDate() != null) {
+            //     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            //     data.put("commissionDate", sdf.format(source.getCommissionDate()));
+            // }
+            // if (source.getConstructionPart() != null) data.put("constructionPart", source.getConstructionPart());
+            // if (source.getSampleName() != null) data.put("sampleName", source.getSampleName());
+            // 
+            // // 更新 DATA_JSON
+            // entity.setDataJson(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(data));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void syncRolesToRecords(SimpleDirectory directory) {
+        // 同步角色信息到记录表
+        // 这里可以根据需要实现角色同步逻辑
+    }
+    
     private void validateEntrustmentPermission(JcCoreWtInfo entity, WorkflowRequest request) {
         String wtNum = entity.getWtNum();
         if (wtNum == null || wtNum.trim().isEmpty()) {

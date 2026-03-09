@@ -119,4 +119,10 @@ public interface NuclearDensityMapper {
             "TO_CHAR(#{status,jdbcType=INTEGER}), #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
             "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(NuclearDensity nuclearDensity);
+
+    @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}) WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

@@ -100,6 +100,9 @@ public class SimpleDirectory extends BaseEntity {
     /** 记录审核人 */
     private String jcReviewer;
 
+    /** 记录批准人 */
+    private String jcApprover;
+
     /** 报告检验人 */
     private String bgTester;
 

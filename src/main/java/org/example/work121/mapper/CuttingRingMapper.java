@@ -11,6 +11,8 @@ public interface CuttingRingMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -56,6 +58,8 @@ public interface CuttingRingMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -115,4 +119,10 @@ public interface CuttingRingMapper {
 
     @Delete("DELETE FROM T_CUTTING_RING WHERE ID = #{id}")
     int deleteById(@Param("id") String id);
+
+    @Update("UPDATE T_CUTTING_RING SET STATUS = #{status} WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_CUTTING_RING SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

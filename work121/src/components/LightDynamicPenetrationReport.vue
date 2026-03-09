@@ -469,9 +469,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: currentAccount })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordReviewer) {
-                        formData.recordReviewer = currentName
-                     }
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -495,9 +492,6 @@ const submitWorkflow = async (action) => {
             const sigRes = await axios.post('/api/signature/get', { userAccount: currentAccount })
             if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                     formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                    if (!formData.recordReviewer) {
-                    formData.recordReviewer = currentName
-                    }
             } else {
                     alert('未找到您的电子签名，无法自动签名')
                     return

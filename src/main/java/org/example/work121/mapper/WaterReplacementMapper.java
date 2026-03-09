@@ -12,6 +12,8 @@ public interface WaterReplacementMapper {
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             // 业务明细字段统一保存在 DATA_JSON，这里不再单独取列
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -73,6 +75,8 @@ public interface WaterReplacementMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -132,4 +136,10 @@ public interface WaterReplacementMapper {
 
     @Delete("DELETE FROM T_WATER_REPLACEMENT WHERE ID = #{id}")
     int deleteById(@Param("id") String id);
+
+    @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status} WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

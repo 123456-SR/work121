@@ -25,6 +25,8 @@ public interface ReboundMethodMapper {
             "t2.CARBONATION_DEPTH as carbonationDepth, " +
             "t2.TEST_RESULT as testResult, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -70,6 +72,8 @@ public interface ReboundMethodMapper {
             "t2.CARBONATION_DEPTH as carbonationDepth, " +
             "t2.TEST_RESULT as testResult, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -117,6 +121,7 @@ public interface ReboundMethodMapper {
     int insert(ReboundMethod reboundMethod);
 
     @Update("UPDATE T_REBOUND_METHOD SET " +
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "STRUCTURE_PART = #{structurePart,jdbcType=VARCHAR}, " +
             "CONCRETE_GRADE = #{concreteGrade,jdbcType=VARCHAR}, " +
             "MOLDING_DATE = #{moldingDate,jdbcType=TIMESTAMP}, " +
@@ -143,34 +148,12 @@ public interface ReboundMethodMapper {
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
-    int update(ReboundMethod reboundMethod);
-
-    @Update("UPDATE T_REBOUND_METHOD SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
-            "STRUCTURE_PART = #{structurePart,jdbcType=VARCHAR}, " +
-            "CONCRETE_GRADE = #{concreteGrade,jdbcType=VARCHAR}, " +
-            "MOLDING_DATE = #{moldingDate,jdbcType=TIMESTAMP}, " +
-            "AGE = #{age,jdbcType=VARCHAR}, " +
-            "INSTRUMENT_MODEL = #{instrumentModel,jdbcType=VARCHAR}, " +
-            "CALIBRATION_NO = #{calibrationNo,jdbcType=VARCHAR}, " +
-            "ZONE_COUNT = #{zoneCount,jdbcType=VARCHAR}, " +
-            "POURING_DIRECTION = #{pouringDirection,jdbcType=VARCHAR}, " +
-            "TEST_ANGLE = #{testAngle,jdbcType=VARCHAR}, " +
-            "PUMPING_METHOD = #{pumpingMethod,jdbcType=VARCHAR}, " +
-            "PUMPING = #{pumping,jdbcType=VARCHAR}, " +
-            "DESIGN_STRENGTH = #{designStrength,jdbcType=VARCHAR}, " +
-            "CARBONATION_DEPTH = #{carbonationDepth,jdbcType=VARCHAR}, " +
-            "TEST_RESULT = #{testResult,jdbcType=VARCHAR}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "STATUS = #{status,jdbcType=VARCHAR}, " +
-            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
-            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
-            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
-            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB} " +
             "WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateById(ReboundMethod reboundMethod);
+
+    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR} WHERE ID = #{id,jdbcType=VARCHAR}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

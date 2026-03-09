@@ -358,10 +358,10 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
             
             // Map to standard fields for compatibility if needed, OR keep them separate
             // User said: "记录表单独使用自己的审核人和检验人" -> So we use recordTester/recordReviewer
-            // And "报告表和记录表使用同一个批准人" -> So we use bgApprover for approver
+            // Use jcTester for approver as requested
             if (directory.getJcTester() != null) entity.setTester(directory.getJcTester()); // Map to tester for workflow?
             if (directory.getJcReviewer() != null) entity.setReviewer(directory.getJcReviewer()); // Map to reviewer for workflow?
-            if (directory.getBgApprover() != null) entity.setApprover(directory.getBgApprover());
+            if (directory.getJcTester() != null) entity.setApprover(directory.getJcTester()); // Use jcTester for approver
             
         } else if (category.contains("REPORT") || category.contains("报告") || category.contains("RESULT") || category.contains("结果")) {
             // For Reports/Results: use bgTester, bgReviewer, bgApprover
@@ -1532,6 +1532,17 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     }
 
     private void syncRoles(SimpleDirectory directory) {
+        System.out.println("=== syncRoles 开始 ===");
+        System.out.println("Directory DIR_NAME: " + directory.getDirName());
+        System.out.println("JC_FILLER: " + directory.getJcFiller());
+        System.out.println("JC_TESTER: " + directory.getJcTester());
+        System.out.println("JC_REVIEWER: " + directory.getJcReviewer());
+        System.out.println("TABLE1_TYPE: " + directory.getTable1Type() + ", TABLE1_ID: " + directory.getTable1Id());
+        System.out.println("TABLE2_TYPE: " + directory.getTable2Type() + ", TABLE2_ID: " + directory.getTable2Id());
+        System.out.println("TABLE3_TYPE: " + directory.getTable3Type() + ", TABLE3_ID: " + directory.getTable3Id());
+        System.out.println("TABLE4_TYPE: " + directory.getTable4Type() + ", TABLE4_ID: " + directory.getTable4Id());
+        System.out.println("TABLE5_TYPE: " + directory.getTable5Type() + ", TABLE5_ID: " + directory.getTable5Id());
+        
         updateRolesForTable(directory.getTable1Type(), directory.getTable1Id(), directory);
         updateRolesForTable(directory.getTable2Type(), directory.getTable2Id(), directory);
         updateRolesForTable(directory.getTable3Type(), directory.getTable3Id(), directory);
@@ -1542,12 +1553,16 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         updateRolesForTable(directory.getTable8Type(), directory.getTable8Id(), directory);
         updateRolesForTable(directory.getTable9Type(), directory.getTable9Id(), directory);
         updateRolesForTable(directory.getTable10Type(), directory.getTable10Id(), directory);
+        System.out.println("=== syncRoles 完成 ===");
     }
 
     private void updateRolesForTable(String type, String id, SimpleDirectory directory) {
         if (type == null || id == null || id.isEmpty()) return;
         
         try {
+            System.out.println("=== updateRolesForTable 开始 ===");
+            System.out.println("Type: " + type + ", ID: " + id);
+            
             String tester = null;
             String reviewer = null;
             String approver = null;
@@ -1562,11 +1577,12 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 reviewer = directory.getWtReviewer();
                 // Entrustment approver?
             } else if (type.toUpperCase().contains("RECORD")) {
-                // For Record: Use Record-specific roles + Shared Approver
+                // For Record: Use Record-specific roles + jcTester for Approver
                 recordTester = directory.getJcTester();     // 记录表检验人
                 recordReviewer = directory.getJcReviewer(); // 记录表审核人
                 filler = directory.getJcFiller();           // 记录表填写人
-                approver = directory.getBgApprover();       // Shared Approver
+                    approver = directory.getJcTester();       // Use jcTester for approver
+                    System.out.println("Record roles - Filler: " + filler + ", Tester: " + recordTester + ", Reviewer: " + recordReviewer + ", Approver: " + approver);
             } else {
                 // Report/Result: Use Background roles
                 tester = directory.getBgTester();
@@ -1588,6 +1604,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     densityTestRecordMapper.updateById(entity);
                 }
@@ -1609,6 +1627,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     reboundMethodRecordMapper.updateById(entity);
                 }
@@ -1624,6 +1644,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     sandReplacementRecordMapper.updateById(entity);
                 }
@@ -1633,6 +1655,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     lightDynamicPenetrationRecordMapper.updateById(entity);
                 }
@@ -1654,6 +1678,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     beckmanBeamRecordMapper.updateById(entity);
                 }
@@ -1675,17 +1701,26 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     cuttingRingRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
+                System.out.println("匹配到核子法记录表，ID: " + id);
                 NuclearDensityRecord entity = nuclearDensityRecordMapper.selectById(id);
                 if (entity != null) {
+                    System.out.println("找到核子法记录实体，当前 Filler: " + entity.getFiller() + ", Tester: " + entity.getRecordTester() + ", Reviewer: " + entity.getRecordReviewer());
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
-                    nuclearDensityRecordMapper.updateById(entity);
+                    int result = nuclearDensityRecordMapper.updateById(entity);
+                    System.out.println("更新核子法记录角色信息，结果: " + result + ", 新 Filler: " + filler + ", 新 Tester: " + recordTester + ", 新 Reviewer: " + recordReviewer);
+                } else {
+                    System.out.println("未找到核子法记录实体，ID: " + id);
                 }
             } else if (isTypeMatch(type, "WATER_REPLACEMENT_RECORD", "相对密度试验记录表（灌水法）")) {
                 WaterReplacementRecord entity = waterReplacementRecordMapper.selectById(id);
@@ -1693,6 +1728,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setFiller(filler);
                     entity.setRecordTester(recordTester);
                     entity.setRecordReviewer(recordReviewer);
+                    entity.setTester(recordTester);
+                    entity.setReviewer(recordReviewer);
                     entity.setApprover(approver);
                     waterReplacementRecordMapper.updateById(entity);
                 }

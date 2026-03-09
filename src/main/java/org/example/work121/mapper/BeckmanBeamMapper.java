@@ -16,6 +16,8 @@ public interface BeckmanBeamMapper {
             "t2.TIRE_PRESSURE as tirePressure, " +
             "t2.TEST_LENGTH as testLength, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -71,6 +73,8 @@ public interface BeckmanBeamMapper {
             "t2.TIRE_PRESSURE as tirePressure, " +
             "t2.TEST_LENGTH as testLength, " +
             "t2.DATA_JSON as dataJson, " +
+            "t2.REVIEWER as reviewer, " +
+            "t2.TESTER as tester, " +
             "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
             "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
@@ -134,4 +138,10 @@ public interface BeckmanBeamMapper {
 
     @Delete("DELETE FROM T_BECKMAN_BEAM WHERE ID = #{id}")
     int deleteById(@Param("id") String id);
+
+    @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status} WHERE ID = #{id}")
+    int updateStatusById(@Param("id") String id, @Param("status") String status);
+
+    @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 }

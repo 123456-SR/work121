@@ -425,9 +425,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordTester) {
-                        formData.recordTester = user.userName || user.username
-                     }
                      // Save signature to database
                      await submitForm()
                 } else {
@@ -461,9 +458,6 @@ const submitWorkflow = async (action) => {
                  const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                  if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                       formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                      if (!formData.recordReviewer) {
-                         formData.recordReviewer = user.userName || user.username
-                      }
                       // Save signature to database
                       await submitForm()
                  } else {

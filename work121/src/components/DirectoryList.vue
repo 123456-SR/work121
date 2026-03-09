@@ -401,6 +401,7 @@ const resetForm = () => {
   formData.status = 1
   formData.wtUndertaker = ''
   formData.wtReviewer = ''
+  formData.jcFiller = ''
   formData.jcTester = ''
   formData.jcReviewer = ''
   formData.bgTester = ''

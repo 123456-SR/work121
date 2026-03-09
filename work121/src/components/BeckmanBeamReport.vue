@@ -500,9 +500,6 @@ const submitWorkflow = async (action) => {
         if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
              signatureData = sigRes.data.data.signatureBlob
              formData.reviewerSignature = `data:image/png;base64,${signatureData}`
-             if (!formData.recordReviewer) {
-                 formData.recordReviewer = user.fullName || user.username
-             }
         } else {
              alert('未找到您的电子签名，无法审核通过')
              return
@@ -711,12 +708,6 @@ const loadData = async (entrustmentId) => {
     
     // Approver - Priority: record.approver
     formData.approver = formData.approver || ''
-
-    // Set filler to current user if new
-    const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
-    if (user.username && !formData.filler) {
-       formData.filler = user.username
-    }
 
   } catch (error) {
     console.error('Failed to load data', error)

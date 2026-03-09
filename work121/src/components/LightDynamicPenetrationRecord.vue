@@ -431,9 +431,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordTester) {
-                        formData.recordTester = user.userName || user.username
-                     }
                      // 保存签名到数据库
                      await saveData()
                 } else {
@@ -821,8 +818,8 @@ const loadData = async () => {
                 }
                 
                 if (ent) {
-                    // 检查委托单状态是否为审核通过（状态值为5）
-                    if (ent.status === 5) {
+                    // 检查委托单状态是否为审核通过（状态值为5），支持字符串和数字比较
+                    if (parseInt(ent.status) === 5) {
                         newRecord.clientUnit = ent.client || ent.clientUnit || ''
                         newRecord.projectName = ent.projectName || ''
                         newRecord.commissionDate = ent.commissionDate || ''

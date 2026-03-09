@@ -305,9 +305,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordReviewer) {
-                        formData.recordReviewer = user.fullName || user.username
-                     }
                 }
              } catch (e) {
                 console.error('Auto sign error', e)
@@ -476,12 +473,6 @@ const loadData = async (entrustmentId) => {
     // Approver
     if (!formData.approver) {
         formData.approver = ''
-    }
-    
-    // Set filler to current user if new
-    const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
-    if (user.username && !formData.filler) {
-       formData.filler = user.username
     }
 
   } catch (error) {

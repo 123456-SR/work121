@@ -463,10 +463,7 @@ const loadData = async (id) => {
       if (!formData.approver) {
           formData.approver = directory.approver || directory.bgApprover || ''
       }
-      if (!formData.filler && userInfo) {
-          formData.filler = userInfo.userName
-      }
-      
+
     } else {
         console.log('No report data found, trying to load record data or init defaults')
         // Optional: Load basic info from entrustment or record if report doesn't exist yet
@@ -589,9 +586,6 @@ const submitWorkflow = async (action) => {
         if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
              signatureData = sigRes.data.data.signatureBlob
              formData.reviewerSignature = `data:image/png;base64,${signatureData}`
-             if (!formData.recordReviewer) {
-                 formData.recordReviewer = user.userName || user.username
-             }
         } else {
              alert('未找到您的电子签名，无法审核通过')
              return

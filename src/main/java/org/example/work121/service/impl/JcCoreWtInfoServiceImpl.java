@@ -132,7 +132,12 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
                 info.setId(newId);
                 logger.info("生成新ID: {}", newId);
                 
-                // 新记录：同时插入 JC_CORE_WT_INFO 和 JC_CORE_WT_INFO_EXT
+                // 新记录：设置默认状态为草稿（0）
+                if (info.getStatus() == null || info.getStatus().trim().isEmpty()) {
+                    info.setStatus("0");
+                    logger.info("设置新委托单默认状态为草稿（0）");
+                }
+                // 同时插入 JC_CORE_WT_INFO 和 JC_CORE_WT_INFO_EXT
                 jcCoreWtInfoMapper.insert(info);
                 jcCoreWtInfoMapper.insertExt(info);
                 return true;

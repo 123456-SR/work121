@@ -416,9 +416,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordTester) {
-                        formData.recordTester = user.userName || user.username
-                     }
                      // 保存签名到数据库
                      await saveData()
                 } else {
@@ -462,9 +459,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     if (!formData.recordReviewer) {
-                        formData.recordReviewer = user.userName || user.username
-                     }
                      // Save signature to database
                      await saveData()
                 } else {
@@ -1068,8 +1062,8 @@ const loadData = async (paramId) => {
       
       // 2. Fill basic fields from entrustment, but only if entrustment is approved
       if (entrustmentData) {
-        // 检查委托单状态是否为审核通过（状态值为5）
-        if (entrustmentData.status === 5) {
+        // 检查委托单状态是否为审核通过（状态值为5），支持字符串和数字比较
+      if (parseInt(entrustmentData.status) === 5) {
           formData.entrustmentId = idOrWtNum
           formData.unifiedNumber = entrustmentData.wtNum || idOrWtNum
           formData.entrustingUnit = entrustmentData.clientUnit || ''
@@ -1205,10 +1199,7 @@ const handleSign = async () => {
       }
       
       // Match Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
-      if (!signed && (!formData.recordReviewer || formData.recordReviewer === currentName || formData.recordReviewer === currentAccount)) {
-        if (!formData.recordReviewer) {
-            formData.recordReviewer = currentName
-        }
+      if (!signed && (formData.recordReviewer === currentName || formData.recordReviewer === currentAccount)) {
         formData.reviewerSignature = imgSrc
         signed = true
         signType = '审核人'
