@@ -49,21 +49,21 @@
 
         <template v-if="formData.id && !draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
             升级为已审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -1140,7 +1140,10 @@ const saveData = async () => {
       
       // Signatures
       testerSignature: formData.testerSignature,
-      reviewerSignature: formData.reviewerSignature
+      reviewerSignature: formData.reviewerSignature,
+      
+      // Status
+      status: formData.status
     }
     
     const response = await axios.post('/api/cutting-ring/save', dataToSave)

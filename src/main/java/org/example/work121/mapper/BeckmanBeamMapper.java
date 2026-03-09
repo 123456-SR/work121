@@ -39,7 +39,7 @@ public interface BeckmanBeamMapper {
             "t1.WITNESS as witness, " +
             "t1.BEIZHU as remarks " +
             "FROM T_BECKMAN_BEAM t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.WT_NUM " +
             "WHERE t2.ID = #{id}")
     BeckmanBeam selectById(@Param("id") String id);
 
@@ -94,7 +94,7 @@ public interface BeckmanBeamMapper {
             "t1.WITNESS as witness, " +
             "t1.BEIZHU as remarks " +
             "FROM T_BECKMAN_BEAM t2 " +
-            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.ID " +
+            "LEFT JOIN T_ENTRUSTMENT t1 ON t2.ENTRUSTMENT_ID = t1.WT_NUM " +
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     List<BeckmanBeam> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 

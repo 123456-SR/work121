@@ -23,21 +23,21 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
             审核通过
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -440,7 +440,7 @@ const mapRecordToFormData = (record) => {
   formData.id = record.id || ''
   formData.entrustmentId = record.entrustmentId || props.id
   // 状态统一转成数字，避免后端返回字符串导致严格等于判断失效（影响按钮显示）
-  formData.status = record.status !== undefined ? Number(record.status) : 0
+  formData.status = record.status !== null && record.status !== undefined ? parseInt(record.status) || 0 : 0
   
   // Signature photos
   formData.reviewerSignature = record.reviewSignaturePhoto || ''
@@ -735,20 +735,22 @@ onMounted(() => {
 
 const saveData = async () => {
   try {
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-      formData.status = 3
-    }
-    
     // Remove legacy fields from formData before saving
     if (formData.tester) delete formData.tester
     if (formData.reviewer) delete formData.reviewer
 
+    // 准备保存的数据，移除status字段，避免将其保存到dataJson中
+    const dataJsonObj = { ...formData }
+    delete dataJsonObj.id
+    delete dataJsonObj.status
+    delete dataJsonObj.tester
+    delete dataJsonObj.reviewer
+
     const dataToSave = {
       id: formData.id,
       entrustmentId: formData.entrustmentId || props.id,
-      status: formData.status, // 传递状态字段给后端
-      dataJson: JSON.stringify(formData),
+      status: String(formData.status), // 确保status是字符串类型
+      dataJson: JSON.stringify(dataJsonObj),
       reviewSignaturePhoto: formData.reviewerSignature,
       inspectSignaturePhoto: formData.testerSignature,
       // Role fields
@@ -765,7 +767,7 @@ const saveData = async () => {
     
     const response = await axios.post('/api/nuclear-density/save', dataToSave)
     if (response.data.success) {
-      alert('保存成功，状态已更新为待签字')
+      alert('保存成功')
       if (response.data.data) {
            // Update current record in list
            const saved = response.data.data
@@ -837,18 +839,10 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        // 如果两个人都签了，先更新状态为已签字待提交
-        if (formData.testerSignature && formData.reviewerSignature) {
-          formData.status = 4
-        }
         // 保存签名到数据库
         await saveData()
         // 显示成功消息
-        if (formData.status === 4) {
-          alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
-        } else {
-          alert(`签名成功并已保存，您以${signType}身份签字`)
-        }
+        alert(`签名成功并已保存，您以${signType}身份签字`)
       } else {
         alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
       }

@@ -48,21 +48,21 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="formData.status === 0 || formData.status === 2"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2 || parseInt(formData.status) === 4"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
             提交审核
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('AUDIT_PASS')"
             class="btn btn-primary btn-small"
           >
             审核通过
           </button>
           <button
-            v-if="formData.status === 1"
+            v-if="parseInt(formData.status) === 1"
             @click="submitWorkflow('REJECT')"
             class="btn btn-danger btn-small"
           >
@@ -377,6 +377,7 @@ const formData = reactive({
   projectName: '',
   commissionDate: '',
   constructionPart: '',
+  constructionUnit: '', // 施工单位
   testDate: '',
   equipmentCode: '',
   testCategory: '',
@@ -421,24 +422,33 @@ const formData = reactive({
 })
 
 const getStatusText = (status) => {
+    if (status === null || status === undefined || status === '') {
+        return '草稿'
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '草稿'
+    }
     switch(s) {
         // 统一状态名称
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
+        case 3: return '待签字'
         case 4: return '已签字待提交'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
+        case 13: return '待签字'
         case 14: return '已签字待提交'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
+        case 23: return '待签字'
         case 24: return '已签字待提交'
         case 25: return '审核通过待批准'
         default: return '未知'
@@ -446,24 +456,33 @@ const getStatusText = (status) => {
 }
 
 const getStatusColor = (status) => {
+    if (status === null || status === undefined || status === '') {
+        return '#6c757d' // secondary (草稿)
+    }
     const s = parseInt(status)
+    if (isNaN(s)) {
+        return '#6c757d' // secondary (草稿)
+    }
     switch(s) {
         // 记录表状态 (0-5)
         case 0: return '#6c757d' // secondary
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
+        case 3: return '#ffc107' // warning
         case 4: return '#17a2b8' // info
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
+        case 13: return '#ffc107' // warning
         case 14: return '#17a2b8' // info
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
+        case 23: return '#ffc107' // warning
         case 24: return '#17a2b8' // info
         case 25: return '#28a745' // success
         default: return '#6c757d'
@@ -742,6 +761,7 @@ const mapRecordToFormData = (record) => {
   if (record.projectName) formData.projectName = record.projectName
   if (record.commissionDate) formData.commissionDate = formatDate(record.commissionDate)
   if (record.constructionPart) formData.constructionPart = record.constructionPart
+  if (record.constructionUnit) formData.constructionUnit = record.constructionUnit
   if (record.testCategory) formData.testCategory = record.testCategory
   if (record.sampleName) formData.sampleName = record.sampleName
   // 拼接样品名称和状态（实体字段优先）
@@ -922,7 +942,8 @@ const loadData = async (identifier) => {
             formData.entrustmentId = wtNum
             formData.projectName = wtInfo.projectName || ''
             formData.commissionDate = formatDate(wtInfo.commissionDate)
-            formData.constructionPart = wtInfo.constructionPart || ''
+            formData.constructionPart = wtInfo.constructionPart || wtInfo.projectArea || ''
+            formData.constructionUnit = wtInfo.constructionUnit || ''
             formData.testCategory = wtInfo.testCategory || ''
             formData.sampleName = wtInfo.sampleName || ''
             formData.sampleStatus = wtInfo.sampleStatus || ''

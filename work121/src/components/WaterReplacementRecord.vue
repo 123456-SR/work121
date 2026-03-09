@@ -47,7 +47,7 @@
           </span>
         </div>
 
-        <template v-if="formData.id && !draftMode">
+        <template v-if="!draftMode">
           <button
             :disabled="Number(formData.status) === 1"
             v-if="Number(formData.status) === 0 || Number(formData.status) === 2"
@@ -404,9 +404,13 @@ const getStatusColor = (status) => {
 
 // Workflow Action Handler
 const submitWorkflow = async (action) => {
+    // 如果记录还未保存，先保存记录
     if (!formData.id) {
-        alert('请先保存记录')
-        return
+        await submitForm()
+        if (!formData.id) {
+            alert('保存记录失败，请重试')
+            return
+        }
     }
     
     // 保存当前页面的数据
