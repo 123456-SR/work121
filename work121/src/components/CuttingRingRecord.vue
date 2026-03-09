@@ -106,9 +106,7 @@
     <form id="pdfForm" ref="pdfForm" method="post">
     <h2>原位密度检测记录表（环刀法）</h2>
 
-    <div class="header-info">
-        <span>委托单位：<input type="text" v-model="formData.entrustingUnit"   name="entrustingUnit" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
-        <span>工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+    <div class="header-info" style="display: none;">
         <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-info">
@@ -119,9 +117,9 @@
     <!-- 隐藏字段：检测类别不在页面上展示，但仍随表单提交 -->
     <input type="hidden" v-model="formData.testType" name="testType" />
     <div class="header-info">
-        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
         <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
-        <span>检测日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>检测日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 120px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
 
     <table>
@@ -1487,7 +1485,7 @@ const includeCurrentPageData = () => {
 
         .cuttingRingRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 260mm;
+            width: 210mm;
             margin: 0 auto;
             padding: 24px;
             background-color: var(--bg-card);
@@ -1520,10 +1518,11 @@ const includeCurrentPageData = () => {
         }
         td {
             border: 1px solid black;
-            padding: 5px;
+            padding: 2px;
             vertical-align: middle;
             text-align: center;
             font-size: 14px;
+            height: 40px;
         }
         .label {
             font-weight: bold;
@@ -1533,7 +1532,7 @@ const includeCurrentPageData = () => {
             padding-left: 10px;
         }
         input[type="text"], textarea, select {
-            width: 98%;
+            width: 100%;
             border: 1px solid #b3d9ff;
             border-radius: 4px;
             outline: none;
@@ -1541,7 +1540,8 @@ const includeCurrentPageData = () => {
             font-size: inherit;
             background-color: transparent;
             text-align: center;
-            padding: 2px 4px;
+            padding: 2px;
+            margin: 0;
         }
         input[type="text"]:focus, textarea:focus, select:focus {
             background-color: #f0f8ff;
@@ -1567,7 +1567,8 @@ const includeCurrentPageData = () => {
             font-size: inherit;
             background-color: transparent;
             text-align: center;
-            padding: 2px 4px;
+            padding: 2px;
+            margin: 0;
             resize: none;
             overflow: hidden;
         }

@@ -282,12 +282,26 @@ const menuItems = {
   report: []
 }
 
+// 递归查找菜单项（包括子菜单）
+const findMenuItem = (menus, targetId) => {
+  for (const item of menus) {
+    if (item.id === targetId) {
+      return item
+    }
+    if (item.submenu) {
+      const found = findMenuItem(item.submenu, targetId)
+      if (found) return found
+    }
+  }
+  return null
+}
+
 // 导航逻辑
 const navigateTo = (target, props = {}) => {
   if (typeof target === 'string') {
-    // 查找标题
+    // 查找标题（递归查找，包括子菜单）
     let title = ''
-    let menuItem = menuItems.preliminary.find(i => i.id === target) || menuItems.report.find(i => i.id === target)
+    let menuItem = findMenuItem(menuItems.preliminary, target) || findMenuItem(menuItems.report, target)
     
     if (menuItem) {
         title = menuItem.name

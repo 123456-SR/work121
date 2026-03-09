@@ -80,27 +80,27 @@
         <span>样品编号：<input type="text" v-model="formData.sampleNumber"   name="sampleNumber" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
 
-    <table>
+    <table style="width: 100%; table-layout: fixed;">
         <!-- Row 1 -->
         <tr>
-            <td class="label">委托单位：</td>
-            <td><input type="text" v-model="formData.clientUnit"   name="clientUnit" :disabled="!isEditable"></td>
-            <td class="label">委托日期：</td>
-            <td><input type="text" v-model="formData.clientDate"   name="clientDate" :disabled="!isEditable"></td>
+            <td class="label" style="width: 15%;">委托单位：</td>
+            <td style="width: 25%;"><input type="text" v-model="formData.clientUnit"   name="clientUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td class="label" style="width: 20%;">委托日期：</td>
+            <td style="width: 40%;"><input type="text" v-model="formData.clientDate"   name="clientDate" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 2 -->
         <tr>
-            <td class="label">施工单位：</td>
-            <td><input type="text" v-model="formData.constructionUnit"   name="constructionUnit" :disabled="!isEditable"></td>
-            <td class="label">建设单位：</td>
-            <td><input type="text" v-model="formData.buildingUnit"   name="buildingUnit" :disabled="!isEditable"></td>
+            <td class="label" style="width: 15%;">施工单位：</td>
+            <td style="width: 25%;"><input type="text" v-model="formData.constructionUnit"   name="constructionUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td class="label" style="width: 20%;">建设单位：</td>
+            <td style="width: 40%;"><input type="text" v-model="formData.buildingUnit"   name="buildingUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 3 -->
         <tr>
-            <td class="label">工程名称：</td>
-            <td><input type="text" v-model="formData.projectName"   name="projectName" :disabled="!isEditable"></td>
-            <td class="label">施工 (使用) 部位：</td>
-            <td><input type="text" v-model="formData.constructionPart"   name="constructionPart" :disabled="!isEditable"></td>
+            <td class="label" style="width: 15%;">工程名称：</td>
+            <td style="width: 25%;"><input type="text" v-model="formData.projectName"   name="projectName" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td class="label" style="width: 20%;">施工 (使用) 部位：</td>
+            <td style="width: 40%;"><input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 4 -->
         <tr>
@@ -171,13 +171,13 @@
         </tr>
         <!-- Row 8: 地址电话 -->
         <tr>
-            <td class="label">委托单位地址<br>及电话(传真)：</td>
-            <td colspan="3"><input type="text" v-model="formData.clientAddressPhone"   name="clientAddressPhone" :disabled="!isEditable"></td>
+            <td class="label" style="width: 12%;">委托单位地址<br>及电话(传真)：</td>
+            <td colspan="3" style="width: 88%;"><input type="text" v-model="formData.clientAddressPhone"   name="clientAddressPhone" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 9: 报告发送 & 样品处置 -->
         <tr>
-            <td class="label">报告发送</td>
-            <td>
+            <td class="label" style="width: 15%;">报告发送</td>
+            <td style="width: 25%;">
                 <div class="checkbox-group">
                     <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="1" :disabled="!isEditable">1.自取</label>
                     <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="2" :disabled="!isEditable">2.邮寄</label>
@@ -185,8 +185,8 @@
                 </div>
 
             </td>
-            <td class="label">样品处置</td>
-            <td>
+            <td class="label" style="width: 20%;">样品处置</td>
+            <td style="width: 40%;">
                 <div class="checkbox-group">
                     <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="1" :disabled="!isEditable">1.取回</label>
                     <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="2" :disabled="!isEditable">2.不取回</label>
@@ -195,16 +195,16 @@
         </tr>
         <!-- Row 10: 见证人 -->
         <tr>
-            <td class="label">见证人</td>
-            <td><input type="text" v-model="formData.witness"   name="witness" :disabled="!isEditable"></td>
-            <td class="label">见证单位</td>
-            <td><input type="text" v-model="formData.witnessUnit"   name="witnessUnit" :disabled="!isEditable"></td>
+            <td class="label" style="width: 15%;">见证人</td>
+            <td style="width: 25%;"><input type="text" v-model="formData.witness"   name="witness" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td class="label" style="width: 20%;">见证单位</td>
+            <td style="width: 40%;"><input type="text" v-model="formData.witnessUnit"   name="witnessUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
 
         <!-- Row 11: 交付日期 & 费用 -->
         <tr>
-            <td class="label">检测报告<br>交付日期</td>
-            <td>
+            <td class="label" style="width: 15%;">检测报告<br>交付日期</td>
+            <td style="width: 25%;">
                 <div class="checkbox-group">
                     <div style="margin-bottom: 5px;">
                         <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="1" :disabled="!isEditable">可以为:</label>
@@ -222,8 +222,8 @@
                     </div>
                 </div>
             </td>
-            <td class="label">应缴检测(验)费(元)</td>
-            <td><input type="text" v-model="formData.fee"   name="fee" :disabled="!isEditable"></td>
+            <td class="label" style="width: 20%;">应缴检测(验)费(元)</td>
+            <td style="width: 40%;"><input type="text" v-model="formData.fee"   name="fee" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 12: 备注 -->
         <tr>
@@ -426,6 +426,19 @@ input[type="text"]:disabled:focus {
     background-color: transparent;
     outline: none;
     border-color: black;
+}
+
+/* 统一输入字段样式，确保与表格其他字段字体一致 */
+input[type="text"], textarea {
+    font-family: 'SimSun', 'Songti SC', serif;
+    font-size: 14px;
+    color: #000000;
+}
+
+input[type="text"]:disabled, textarea:disabled {
+    color: #000000;
+    font-family: 'SimSun', 'Songti SC', serif;
+    font-size: 14px;
 }
 </style>
 
