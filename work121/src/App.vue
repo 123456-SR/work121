@@ -49,7 +49,7 @@
               </div>
               <!-- 普通菜单项 -->
               <div v-else @click="navigateTo(item)" :class="['sidebar-nav-item', { active: activeMenuId === item.id }]">
-                <i class="icon fa-solid fa-table"></i>
+                <i class="icon fa-solid" :class="item.id === 'Dashboard' ? 'fa-gauge-high' : 'fa-table'"></i>
                 <span>{{ item.name }}</span>
               </div>
             </div>
@@ -111,6 +111,7 @@ import GenericReportList from './components/GenericReportList.vue'
 import GenericResultList from './components/GenericResultList.vue'
 import UserManagement from './components/UserManagement.vue'
 import PendingTasks from './components/PendingTasks.vue'
+import Dashboard from './components/Dashboard.vue'
 
 const currentView = ref('')
 const activeMenuId = ref('')
@@ -144,11 +145,17 @@ const components = {
   GenericReportList,
   GenericResultList,
   UserManagement,
-  PendingTasks
+  PendingTasks,
+  Dashboard
 }
 
 const menuItems = {
   preliminary: [
+    {
+      id: 'Dashboard',
+      name: '仪表盘',
+      component: 'Dashboard'
+    },
     {
       id: 'TaskManagement',
       name: '任务管理',
@@ -378,15 +385,8 @@ checkLoginStatus()
 // 处理登录成功
 const handleLoginSuccess = () => {
   isLoggedIn.value = true
-  // 登录后根据角色导航到不同页面
-  const role = getCurrentUserRole()
-  if (role === '管理员') {
-    // 管理员默认显示任务分配
-    navigateTo({ id: 'DirectoryList', name: '任务分配' })
-  } else {
-    // 普通员工默认显示待处理任务
-    navigateTo({ id: 'PendingTasks', name: '待处理任务' })
-  }
+  // 登录后默认导航到仪表盘
+  navigateTo({ id: 'Dashboard', name: '仪表盘' })
 }
 
 // 退出登录
