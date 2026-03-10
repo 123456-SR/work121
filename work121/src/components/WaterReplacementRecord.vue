@@ -72,6 +72,13 @@
           </button>
         </template>
 
+        <button
+          @click="showAnalysisModal"
+          class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
+        >
+          数据分析
+        </button>
 
         <button
           @click="submitForm"
@@ -112,21 +119,18 @@
 
     <div class="header-info">
         <span>工程部位：<input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
-        <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span style="margin-left: auto;">试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
     <div class="header-info">
-        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
-        <span>最大干密度：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
-        <span>最小干密度：<input type="text" v-model="formData.minDryDensity"   name="minDryDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
-        <span>最优含水率：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> %</span>
-        <span>相对密度：<input type="text" v-model="formData.relativeDensity"   name="relativeDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
+        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 90px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>最大干密度：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 50px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
+        <span>最小干密度：<input type="text" v-model="formData.minDryDensity"   name="minDryDensity" style="width: 50px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
+        <span>设计相对密度：<input type="text" v-model="formData.relativeDensity"   name="relativeDensity" style="width: 50px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 90px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-info">
         <span>水的密度：<input type="text" v-model="formData.waterDensity"   name="waterDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"> g/cm³</span>
         <span>仪器设备：<input type="text" v-model="formData.equipment"   name="equipment" style="width: 150px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
-        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
-        <span>检测类别：<input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 100px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
 
     <table>
@@ -281,7 +285,98 @@
 
     </form>
 
-
+    <!-- 数据分析模态窗口 -->
+    <div v-if="showModal" class="modal-overlay" @click="closeAnalysisModal">
+      <div class="modal-content" @click.stop style="position: relative;">
+        <h3>数据分析</h3>
+        <button class="close-btn" @click="closeAnalysisModal">&times;</button>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>数据范围：</label>
+            <input type="number" v-model.number="analysisRange.start" min="1" max="4" placeholder="从" class="modal-input">
+            <span>列</span>
+            <input type="number" v-model.number="analysisRange.end" min="1" max="4" placeholder="至" class="modal-input">
+            <span>列</span>
+          </div>
+          
+          <div class="form-group">
+            <label>套环体积 (cm³)：</label>
+            <input type="number" v-model.number="analysisResults.ringVolumeMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.ringVolumeMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>储水桶水位 (cm)：</label>
+            <input type="number" v-model.number="analysisResults.waterLevelMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.waterLevelMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>储水桶面积 (cm²)：</label>
+            <input type="number" v-model.number="analysisResults.tankAreaMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.tankAreaMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>试坑体积 (cm³)：</label>
+            <input type="number" v-model.number="analysisResults.pitVolumeMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.pitVolumeMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>试样质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.sampleMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.sampleMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>试样湿密度 (g/cm³)：</label>
+            <input type="number" v-model.number="analysisResults.wetDensityMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.wetDensityMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>容器质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.containerMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.containerMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>容器+湿样质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.wetSampleMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.wetSampleMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>容器+干样质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.drySampleMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.drySampleMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>含水率 (%)：</label>
+            <input type="number" v-model.number="analysisResults.moistureContentMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.moistureContentMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>实测干密度 (g/cm³)：</label>
+            <input type="number" v-model.number="analysisResults.measuredDryDensityMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.measuredDryDensityMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>相对密度：</label>
+            <input type="number" v-model.number="analysisResults.relativeDensityMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.relativeDensityMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeAnalysisModal" class="btn btn-secondary">取消</button>
+          <button @click="autoAnalyzeAndFill" class="btn btn-primary">自动分析并填充</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -289,6 +384,37 @@
 <script setup>
 import { reactive, ref, onMounted, inject, computed } from 'vue'
 import axios from 'axios'
+
+// 数据分析相关变量
+const showModal = ref(false)
+const analysisRange = reactive({ start: 1, end: 4 })
+const analysisResults = reactive({
+  ringVolumeMin: '',
+  ringVolumeMax: '',
+  waterLevelMin: '',
+  waterLevelMax: '',
+  tankAreaMin: '',
+  tankAreaMax: '',
+  pitVolumeMin: '',
+  pitVolumeMax: '',
+  sampleMassMin: '',
+  sampleMassMax: '',
+  wetDensityMin: '',
+  wetDensityMax: '',
+  containerMassMin: '',
+  containerMassMax: '',
+  wetSampleMassMin: '',
+  wetSampleMassMax: '',
+  drySampleMassMin: '',
+  drySampleMassMax: '',
+  moistureContentMin: '',
+  moistureContentMax: '',
+  measuredDryDensityMin: '',
+  measuredDryDensityMax: '',
+  relativeDensityMin: '',
+  relativeDensityMax: '',
+  waterDensity: ''
+})
 
 const props = defineProps({
   id: {
@@ -333,13 +459,10 @@ const formData = reactive({
   standard: '',
   maxDryDensity: '',
   minDryDensity: '',
-  optMoisture: '',
   relativeDensity: '',
   unifiedNumber: '',
   waterDensity: '',
   equipment: '',
-  designCompaction: '',
-  testCategory: '',
   recordTester: '',
   recordReviewer: '',
   filler: '',
@@ -657,9 +780,9 @@ const mapRecordToFormData = (record) => {
     try {
       parsedJson = JSON.parse(record.dataJson)
       // 定义基础字段列表（这些字段应该优先从委托单获取，JSON 中的空值不应该覆盖）
-      const basicFields = ['projectName', 'constructionPart', 'testDate', 'standard', 'maxDryDensity', 'minDryDensity', 
-                          'optMoisture', 'relativeDensity', 'waterDensity', 'equipment', 
-                          'designCompaction', 'testCategory', 'remarks', 'totalPages']
+  const basicFields = ['projectName', 'constructionPart', 'testDate', 'standard', 'maxDryDensity', 'minDryDensity', 
+                      'relativeDensity', 'waterDensity', 'equipment', 
+                      'remarks', 'totalPages']
       
       // Merge parsed data into formData
       Object.keys(parsedJson).forEach(key => {
@@ -809,18 +932,15 @@ const mapRecordToFormData = (record) => {
   if (record.entrustmentId !== null && record.entrustmentId !== undefined && !formData.unifiedNumber) formData.unifiedNumber = record.entrustmentId
 
   if (record.constructionPart !== null && record.constructionPart !== undefined) formData.constructionPart = record.constructionPart
-  if (record.testCategory !== null && record.testCategory !== undefined) formData.testCategory = record.testCategory
   if ((record.standard !== null && record.standard !== undefined) || (record.testBasis !== null && record.testBasis !== undefined)) formData.standard = record.standard || record.testBasis
   if (record.testDate !== null && record.testDate !== undefined) formData.testDate = record.testDate
   
   // 这些字段通常不在委托单中，只在记录表的 JSON 中
   if (record.maxDryDensity !== null && record.maxDryDensity !== undefined) formData.maxDryDensity = record.maxDryDensity
   if (record.minDryDensity !== null && record.minDryDensity !== undefined) formData.minDryDensity = record.minDryDensity
-  if (record.optMoisture !== null && record.optMoisture !== undefined) formData.optMoisture = record.optMoisture
   if (record.relativeDensity !== null && record.relativeDensity !== undefined) formData.relativeDensity = record.relativeDensity
   if (record.waterDensity !== null && record.waterDensity !== undefined) formData.waterDensity = record.waterDensity
   if (record.equipment !== null && record.equipment !== undefined) formData.equipment = record.equipment
-  if (record.designCompaction !== null && record.designCompaction !== undefined) formData.designCompaction = record.designCompaction
 
   // Ensure entity fields override dataJson if present
   if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
@@ -857,8 +977,8 @@ const getCleanDataJson = () => {
   // Static fields to include in JSON
   const staticFields = [
     'projectName', 'constructionPart', 'testDate', 'standard', 'maxDryDensity', 'minDryDensity', 
-    'optMoisture', 'relativeDensity', 'waterDensity', 'equipment', 
-    'designCompaction', 'testCategory', 'remarks', 'totalPages'
+    'relativeDensity', 'waterDensity', 'equipment', 
+    'remarks', 'totalPages'
   ]
   
   staticFields.forEach(field => {
@@ -1169,6 +1289,490 @@ const previewPdf = () => {
     pdfForm.value.submit()
   }
 }
+
+// 显示数据分析模态窗口
+const showAnalysisModal = () => {
+  showModal.value = true
+  // 重置分析结果
+  Object.keys(analysisResults).forEach(key => {
+    analysisResults[key] = ''
+  })
+  // 重置范围
+  analysisRange.start = 1
+  analysisRange.end = 4
+}
+
+// 关闭数据分析模态窗口
+const closeAnalysisModal = () => {
+  showModal.value = false
+}
+
+// 生成范围内的随机数
+const getRandomInRange = (min, max, decimals = 2) => {
+  if (min === '' || max === '') return ''
+  const minNum = parseFloat(min)
+  const maxNum = parseFloat(max)
+  if (isNaN(minNum) || isNaN(maxNum)) return ''
+  const random = Math.random() * (maxNum - minNum) + minNum
+  return random.toFixed(decimals)
+}
+
+// 自动分析并填充数据
+const autoAnalyzeAndFill = () => {
+  // 将用户输入的列号（1-4）转换为数组索引（0-3）
+  const start = (parseInt(analysisRange.start) || 1) - 1
+  const end = (parseInt(analysisRange.end) || 4) - 1
+  
+  // 确保范围在有效范围内
+  const validStart = Math.max(0, start)
+  const validEnd = Math.min(3, end)
+  
+  if (validStart > validEnd) {
+    alert('起始列不能大于结束列')
+    return
+  }
+  
+  // 收集数据
+  const ringVolumes = []
+  const waterLevels = []
+  const tankAreas = []
+  const pitVolumes = []
+  const sampleMasses = []
+  const wetDensities = []
+  const containerMasses = []
+  const wetSampleMasses = []
+  const drySampleMasses = []
+  const moistureContents = []
+  const measuredDryDensities = []
+  const relativeDensities = []
+  
+  for (let col = validStart; col <= validEnd; col++) {
+    // 收集基本字段数据（每列2个数据点）
+    for (let i = col * 2; i < col * 2 + 2; i++) {
+      // 套环体积
+      const ringVolume = parseFloat(formData[`ringVolume_page${currentPage.value}_${i}`])
+      if (!isNaN(ringVolume)) ringVolumes.push(ringVolume)
+      
+      // 储水桶水位（取初始和终了的平均值）
+      const initialWaterLevel = parseFloat(formData[`initialWaterLevel_page${currentPage.value}_${i}`])
+      const finalWaterLevel = parseFloat(formData[`finalWaterLevel_page${currentPage.value}_${i}`])
+      if (!isNaN(initialWaterLevel) && !isNaN(finalWaterLevel)) {
+        waterLevels.push((initialWaterLevel + finalWaterLevel) / 2)
+      }
+      
+      // 储水桶面积
+      const tankArea = parseFloat(formData[`tankArea_page${currentPage.value}_${i}`])
+      if (!isNaN(tankArea)) tankAreas.push(tankArea)
+      
+      // 试坑体积
+      const pitVolume = parseFloat(formData[`pitVolume_page${currentPage.value}_${i}`])
+      if (!isNaN(pitVolume)) pitVolumes.push(pitVolume)
+      
+      // 试样质量
+      const sampleMass = parseFloat(formData[`sampleMass_page${currentPage.value}_${i}`])
+      if (!isNaN(sampleMass)) sampleMasses.push(sampleMass)
+      
+      // 试样湿密度
+      const wetDensity = parseFloat(formData[`wetDensity_page${currentPage.value}_${i}`])
+      if (!isNaN(wetDensity)) wetDensities.push(wetDensity)
+      
+      // 实测干密度
+      const measuredDryDensity = parseFloat(formData[`measuredDryDensity_page${currentPage.value}_${i}`])
+      if (!isNaN(measuredDryDensity)) measuredDryDensities.push(measuredDryDensity)
+      
+      // 相对密度
+      const relativeDensity = parseFloat(formData[`relativeDensity_page${currentPage.value}_${i}`])
+      if (!isNaN(relativeDensity)) relativeDensities.push(relativeDensity)
+    }
+    
+    // 收集试样含水率相关字段数据（每列4个数据点）
+    for (let i = col * 4; i < col * 4 + 4; i++) {
+      // 容器质量
+      const containerMass = parseFloat(formData[`containerMass_page${currentPage.value}_${i}`])
+      if (!isNaN(containerMass)) containerMasses.push(containerMass)
+      
+      // 容器+湿样质量
+      const wetSampleMass = parseFloat(formData[`wetSampleMass_page${currentPage.value}_${i}`])
+      if (!isNaN(wetSampleMass)) wetSampleMasses.push(wetSampleMass)
+      
+      // 容器+干样质量
+      const drySampleMass = parseFloat(formData[`drySampleMass_page${currentPage.value}_${i}`])
+      if (!isNaN(drySampleMass)) drySampleMasses.push(drySampleMass)
+      
+      // 含水率
+      const moistureContent = parseFloat(formData[`moistureContent_page${currentPage.value}_${i}`])
+      if (!isNaN(moistureContent)) moistureContents.push(moistureContent)
+    }
+  }
+  
+  // 计算范围（如果用户没有手动输入）
+  if (!analysisResults.ringVolumeMin || !analysisResults.ringVolumeMax) {
+    if (ringVolumes.length > 0) {
+      const min = Math.min(...ringVolumes)
+      const max = Math.max(...ringVolumes)
+      analysisResults.ringVolumeMin = min.toFixed(2)
+      analysisResults.ringVolumeMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.ringVolumeMin = '100.00'
+      analysisResults.ringVolumeMax = '200.00'
+    }
+  }
+  
+  if (!analysisResults.waterLevelMin || !analysisResults.waterLevelMax) {
+    if (waterLevels.length > 0) {
+      const min = Math.min(...waterLevels)
+      const max = Math.max(...waterLevels)
+      analysisResults.waterLevelMin = min.toFixed(2)
+      analysisResults.waterLevelMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.waterLevelMin = '10.00'
+      analysisResults.waterLevelMax = '30.00'
+    }
+  }
+  
+  if (!analysisResults.tankAreaMin || !analysisResults.tankAreaMax) {
+    if (tankAreas.length > 0) {
+      const min = Math.min(...tankAreas)
+      const max = Math.max(...tankAreas)
+      analysisResults.tankAreaMin = min.toFixed(2)
+      analysisResults.tankAreaMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.tankAreaMin = '100.00'
+      analysisResults.tankAreaMax = '300.00'
+    }
+  }
+  
+  if (!analysisResults.pitVolumeMin || !analysisResults.pitVolumeMax) {
+    if (pitVolumes.length > 0) {
+      const min = Math.min(...pitVolumes)
+      const max = Math.max(...pitVolumes)
+      analysisResults.pitVolumeMin = min.toFixed(2)
+      analysisResults.pitVolumeMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.pitVolumeMin = '1000.00'
+      analysisResults.pitVolumeMax = '3000.00'
+    }
+  }
+  
+  if (!analysisResults.sampleMassMin || !analysisResults.sampleMassMax) {
+    if (sampleMasses.length > 0) {
+      const min = Math.min(...sampleMasses)
+      const max = Math.max(...sampleMasses)
+      analysisResults.sampleMassMin = min.toFixed(2)
+      analysisResults.sampleMassMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.sampleMassMin = '1500.00'
+      analysisResults.sampleMassMax = '4500.00'
+    }
+  }
+  
+  if (!analysisResults.wetDensityMin || !analysisResults.wetDensityMax) {
+    if (wetDensities.length > 0) {
+      const min = Math.min(...wetDensities)
+      const max = Math.max(...wetDensities)
+      analysisResults.wetDensityMin = min.toFixed(2)
+      analysisResults.wetDensityMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.wetDensityMin = '1.80'
+      analysisResults.wetDensityMax = '2.20'
+    }
+  }
+  
+  if (!analysisResults.containerMassMin || !analysisResults.containerMassMax) {
+    if (containerMasses.length > 0) {
+      const min = Math.min(...containerMasses)
+      const max = Math.max(...containerMasses)
+      analysisResults.containerMassMin = min.toFixed(2)
+      analysisResults.containerMassMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.containerMassMin = '10.00'
+      analysisResults.containerMassMax = '30.00'
+    }
+  }
+  
+  if (!analysisResults.wetSampleMassMin || !analysisResults.wetSampleMassMax) {
+    if (wetSampleMasses.length > 0) {
+      const min = Math.min(...wetSampleMasses)
+      const max = Math.max(...wetSampleMasses)
+      analysisResults.wetSampleMassMin = min.toFixed(2)
+      analysisResults.wetSampleMassMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.wetSampleMassMin = '50.00'
+      analysisResults.wetSampleMassMax = '100.00'
+    }
+  }
+  
+  if (!analysisResults.drySampleMassMin || !analysisResults.drySampleMassMax) {
+    if (drySampleMasses.length > 0) {
+      const min = Math.min(...drySampleMasses)
+      const max = Math.max(...drySampleMasses)
+      analysisResults.drySampleMassMin = min.toFixed(2)
+      analysisResults.drySampleMassMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.drySampleMassMin = '40.00'
+      analysisResults.drySampleMassMax = '90.00'
+    }
+  }
+  
+  if (!analysisResults.moistureContentMin || !analysisResults.moistureContentMax) {
+    if (moistureContents.length > 0) {
+      const min = Math.min(...moistureContents)
+      const max = Math.max(...moistureContents)
+      analysisResults.moistureContentMin = min.toFixed(2)
+      analysisResults.moistureContentMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.moistureContentMin = '5.00'
+      analysisResults.moistureContentMax = '15.00'
+    }
+  }
+  
+  if (!analysisResults.measuredDryDensityMin || !analysisResults.measuredDryDensityMax) {
+    if (measuredDryDensities.length > 0) {
+      const min = Math.min(...measuredDryDensities)
+      const max = Math.max(...measuredDryDensities)
+      analysisResults.measuredDryDensityMin = min.toFixed(2)
+      analysisResults.measuredDryDensityMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.measuredDryDensityMin = '1.60'
+      analysisResults.measuredDryDensityMax = '1.90'
+    }
+  }
+  
+  if (!analysisResults.relativeDensityMin || !analysisResults.relativeDensityMax) {
+    if (relativeDensities.length > 0) {
+      const min = Math.min(...relativeDensities)
+      const max = Math.max(...relativeDensities)
+      analysisResults.relativeDensityMin = min.toFixed(2)
+      analysisResults.relativeDensityMax = max.toFixed(2)
+    } else {
+      // 默认范围
+      analysisResults.relativeDensityMin = '0.60'
+      analysisResults.relativeDensityMax = '0.90'
+    }
+  }
+  
+  // 填充数据
+  for (let col = validStart; col <= validEnd; col++) {
+    // 填充基本字段（每列2个数据点）
+    for (let i = col * 2; i < col * 2 + 2; i++) {
+      // 套环体积
+      if (!formData[`ringVolume_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.ringVolumeMin, analysisResults.ringVolumeMax, 2)
+        if (randomValue) {
+          formData[`ringVolume_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 储水桶水位
+      if (!formData[`initialWaterLevel_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.waterLevelMin, analysisResults.waterLevelMax, 2)
+        if (randomValue) {
+          formData[`initialWaterLevel_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      if (!formData[`finalWaterLevel_page${currentPage.value}_${i}`]) {
+        const initial = parseFloat(formData[`initialWaterLevel_page${currentPage.value}_${i}`]) || parseFloat(analysisResults.waterLevelMin)
+        const randomValue = getRandomInRange(initial - 5, initial - 1, 2)
+        if (randomValue) {
+          formData[`finalWaterLevel_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 储水桶面积
+      if (!formData[`tankArea_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.tankAreaMin, analysisResults.tankAreaMax, 2)
+        if (randomValue) {
+          formData[`tankArea_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 试坑体积
+      if (!formData[`pitVolume_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.pitVolumeMin, analysisResults.pitVolumeMax, 2)
+        if (randomValue) {
+          formData[`pitVolume_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 试样质量
+      if (!formData[`sampleMass_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.sampleMassMin, analysisResults.sampleMassMax, 2)
+        if (randomValue) {
+          formData[`sampleMass_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 试样湿密度
+      if (!formData[`wetDensity_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.wetDensityMin, analysisResults.wetDensityMax, 2)
+        if (randomValue) {
+          formData[`wetDensity_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 实测干密度
+      if (!formData[`measuredDryDensity_page${currentPage.value}_${i}`]) {
+        let min, max
+        // 如果有最大干密度和最小干密度，使用它们作为范围
+        if (formData.maxDryDensity && formData.minDryDensity) {
+          min = parseFloat(formData.minDryDensity)
+          max = parseFloat(formData.maxDryDensity)
+          // 确保范围合理
+          if (!isNaN(min) && !isNaN(max) && min < max) {
+            // 实测干密度通常在最小和最大干密度之间
+            const randomValue = getRandomInRange(min, max, 2)
+            if (randomValue) {
+              formData[`measuredDryDensity_page${currentPage.value}_${i}`] = randomValue
+            }
+          } else {
+            // 使用默认范围
+            const randomValue = getRandomInRange(analysisResults.measuredDryDensityMin, analysisResults.measuredDryDensityMax, 2)
+            if (randomValue) {
+              formData[`measuredDryDensity_page${currentPage.value}_${i}`] = randomValue
+            }
+          }
+        } else {
+          // 使用默认范围
+          const randomValue = getRandomInRange(analysisResults.measuredDryDensityMin, analysisResults.measuredDryDensityMax, 2)
+          if (randomValue) {
+            formData[`measuredDryDensity_page${currentPage.value}_${i}`] = randomValue
+          }
+        }
+      }
+      
+      // 相对密度
+      if (!formData[`relativeDensity_page${currentPage.value}_${i}`]) {
+        let min, max
+        // 如果有设计相对密度，使用它作为参考
+        if (formData.relativeDensity) {
+          const designValue = parseFloat(formData.relativeDensity)
+          if (!isNaN(designValue)) {
+            // 相对密度通常在0-1之间，围绕设计值波动
+            min = Math.max(0, designValue - 0.1)
+            max = Math.min(1, designValue + 0.1)
+            const randomValue = getRandomInRange(min, max, 2)
+            if (randomValue) {
+              formData[`relativeDensity_page${currentPage.value}_${i}`] = randomValue
+            }
+          } else {
+            // 使用默认范围
+            const randomValue = getRandomInRange(analysisResults.relativeDensityMin, analysisResults.relativeDensityMax, 2)
+            if (randomValue) {
+              formData[`relativeDensity_page${currentPage.value}_${i}`] = randomValue
+            }
+          }
+        } else {
+          // 使用默认范围
+          const randomValue = getRandomInRange(analysisResults.relativeDensityMin, analysisResults.relativeDensityMax, 2)
+          if (randomValue) {
+            formData[`relativeDensity_page${currentPage.value}_${i}`] = randomValue
+          }
+        }
+      }
+    }
+    
+    // 填充试样含水率相关字段（每列4个数据点）
+    for (let i = col * 4; i < col * 4 + 4; i++) {
+      // 容器质量
+      if (!formData[`containerMass_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.containerMassMin, analysisResults.containerMassMax, 2)
+        if (randomValue) {
+          formData[`containerMass_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 容器+湿样质量
+      if (!formData[`wetSampleMass_page${currentPage.value}_${i}`]) {
+        const containerMass = parseFloat(formData[`containerMass_page${currentPage.value}_${i}`]) || parseFloat(analysisResults.containerMassMin)
+        const randomValue = getRandomInRange(containerMass + 30, containerMass + 70, 2)
+        if (randomValue) {
+          formData[`wetSampleMass_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 容器+干样质量
+      if (!formData[`drySampleMass_page${currentPage.value}_${i}`]) {
+        const wetSampleMass = parseFloat(formData[`wetSampleMass_page${currentPage.value}_${i}`]) || parseFloat(analysisResults.wetSampleMassMin)
+        const randomValue = getRandomInRange(wetSampleMass - 15, wetSampleMass - 5, 2)
+        if (randomValue) {
+          formData[`drySampleMass_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+      
+      // 含水率
+      if (!formData[`moistureContent_page${currentPage.value}_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.moistureContentMin, analysisResults.moistureContentMax, 2)
+        if (randomValue) {
+          formData[`moistureContent_page${currentPage.value}_${i}`] = randomValue
+        }
+      }
+    }
+    
+    // 计算平均含水率（每列2个平均值，每个平均值基于2个含水率数据）
+    for (let avgIdx = 0; avgIdx < 2; avgIdx++) {
+      const moisture1 = parseFloat(formData[`moistureContent_page${currentPage.value}_${col * 4 + avgIdx * 2}`])
+      const moisture2 = parseFloat(formData[`moistureContent_page${currentPage.value}_${col * 4 + avgIdx * 2 + 1}`])
+      if (!isNaN(moisture1) && !isNaN(moisture2)) {
+        const avgMoisture = ((moisture1 + moisture2) / 2).toFixed(2)
+        formData[`avgMoisture_page${currentPage.value}_${col * 2 + avgIdx}`] = avgMoisture
+      }
+    }
+    
+    // 计算平均实测干密度
+    const dryDensity1 = parseFloat(formData[`measuredDryDensity_page${currentPage.value}_${col * 2}`])
+    const dryDensity2 = parseFloat(formData[`measuredDryDensity_page${currentPage.value}_${col * 2 + 1}`])
+    if (!isNaN(dryDensity1) && !isNaN(dryDensity2)) {
+      const avgDryDensity = ((dryDensity1 + dryDensity2) / 2).toFixed(2)
+      formData[`avgMeasuredDryDensity_page${currentPage.value}_${col}`] = avgDryDensity
+    }
+  }
+  
+  // 更新设计参数
+  if (!formData.maxDryDensity) {
+    if (measuredDryDensities.length > 0) {
+      const max = Math.max(...measuredDryDensities)
+      formData.maxDryDensity = (max + 0.1).toFixed(2)
+    } else {
+      formData.maxDryDensity = '2.00'
+    }
+  }
+  
+  if (!formData.minDryDensity) {
+    if (measuredDryDensities.length > 0) {
+      const min = Math.min(...measuredDryDensities)
+      formData.minDryDensity = (min - 0.1).toFixed(2)
+    } else {
+      formData.minDryDensity = '1.50'
+    }
+  }
+  
+  if (!formData.relativeDensity) {
+    if (relativeDensities.length > 0) {
+      const avg = relativeDensities.reduce((sum, val) => sum + val, 0) / relativeDensities.length
+      formData.relativeDensity = avg.toFixed(2)
+    } else {
+      formData.relativeDensity = '0.75'
+    }
+  }
+  
+  if (!formData.waterDensity) {
+    formData.waterDensity = '1.000'
+  }
+  
+  alert('自动分析并填充完成')
+  closeAnalysisModal()
+}
 </script>
 
 <style scoped>
@@ -1303,7 +1907,7 @@ const previewPdf = () => {
 
         .waterReplacementRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 260mm; /* Using wider width similar to sand replacement record */
+            width: 290mm;
             margin: 0 auto;
             padding: 24px;
             background-color: var(--bg-card);
@@ -1320,9 +1924,9 @@ const previewPdf = () => {
         .header-info {
             display: flex;
             justify-content: space-between;
+            flex-wrap: wrap;
             margin-bottom: 5px;
             font-weight: bold;
-            flex-wrap: wrap;
         }
         .header-info span {
             margin-right: 20px;
@@ -1349,31 +1953,179 @@ const previewPdf = () => {
             text-align: left;
             padding-left: 10px;
         }
-        input[type="text"], textarea, select {
+        input[type="text"], textarea, select, .table-textarea {
             width: 98%;
             border: 1px solid #b3d9ff;
             border-radius: 4px;
             outline: none;
-            font-family: inherit;
-            font-size: inherit;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+            color: #000000;
             background-color: transparent;
             text-align: center;
             padding: 2px 4px;
         }
-        input[type="text"]:focus, textarea:focus, select:focus {
+        .table-textarea {
+            width: 100%;
+            height: 100%;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus, .table-textarea:focus {
             background-color: #f0f8ff;
             border-color: #3498db;
         }
-        input[type="text"]:disabled:focus {
+        input[type="text"]:disabled, textarea:disabled, select:disabled, .table-textarea:disabled {
+            background-color: transparent;
+            color: #000000;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus, select:disabled:focus, .table-textarea:disabled:focus {
             background-color: transparent;
             outline: none;
             border-color: black;
         }
-        textarea {
+        textarea, .table-textarea {
             resize: none;
             overflow: hidden;
+        }
+        
+        /* 模态窗口样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .modal-input {
+            width: 120px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        
+        /* 隐藏输入框的上下箭头按钮 */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .modal-actions .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-actions .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+        }
+        
+        .modal-actions .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .modal-actions .btn-secondary {
+            background-color: #f5f7fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .modal-actions .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+        
+        .left-align {
             text-align: left;
         }
+        
         .footer-info {
             display: flex;
             justify-content: space-between;

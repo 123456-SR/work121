@@ -100,6 +100,13 @@
         >
           预览PDF
         </button>
+        <button
+          @click="fillPenetrationDepth"
+          class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
+        >
+          数据分析
+        </button>
       </div>
         
         <div v-if="formData.status === 2 && formData.rejectReason" style="background-color: #ffebee; color: #c62828; padding: 10px; border-radius: 4px; margin-top: 10px; border: 1px solid #ef9a9a; clear: both;">
@@ -162,19 +169,12 @@
         </tr>
 
         <!-- Data Rows -->
-        <template v-for="(b, b_idx) in 2" :key="b_idx">
+        <template v-for="(b, b_idx) in (currentIndex === 0 ? 2 : 3)" :key="b_idx">
             <template v-for="(s, s_idx) in 7" :key="s_idx">
             <tr>
                 <!-- 左栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
-                    <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                    </div>
-                    <div v-else>
-                        <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_L2_' + b_idx" v-model="formData['pos_L2_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_L3_' + b_idx" v-model="formData['pos_L3_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                    </div>
+                    <textarea :name="'pos_L_' + b_idx" v-model="formData['pos_L_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
                 </td>
 
                 <td><textarea :name="'depth_L_' + (b_idx * 7 + s_idx)" v-model="formData['depth_L_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
@@ -185,14 +185,7 @@
 
                 <!-- 右栏 -->
                 <td v-if="s_idx === 0" rowspan="7">
-                    <div v-if="currentIndex === 0">
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                    </div>
-                    <div v-else>
-                        <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_R2_' + b_idx" v-model="formData['pos_R2_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                        <textarea :name="'pos_R3_' + b_idx" v-model="formData['pos_R3_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
-                    </div>
+                    <textarea :name="'pos_R_' + b_idx" v-model="formData['pos_R_' + b_idx]" class="table-textarea" :disabled="!isEditable"></textarea>
                 </td>
 
                 <td><textarea :name="'depth_R_' + (b_idx * 7 + s_idx)" v-model="formData['depth_R_' + (b_idx * 7 + s_idx)]" :disabled="!isEditable" class="table-textarea"></textarea></td>
@@ -1073,6 +1066,25 @@ const handleSign = async () => {
     }
 }
 
+const fillPenetrationDepth = () => {
+    // 贯入深度值数组
+    const depths = ['0-30', '30-60', '60-90', '90-120', '120-150', '150-180', '180-210']
+    
+    // 获取当前页面的测点数量
+    const pointCount = currentIndex.value === 0 ? 2 : 3
+    
+    // 填充左侧和右侧的贯入深度
+    for (let b = 0; b < pointCount; b++) {
+        for (let s = 0; s < 7; s++) {
+            const idx = b * 7 + s
+            formData[`depth_L_${idx}`] = depths[s]
+            formData[`depth_R_${idx}`] = depths[s]
+        }
+    }
+    
+    alert('贯入深度已自动填充')
+}
+
 const saveData = async () => {
     // 保存后状态不变
     
@@ -1325,6 +1337,19 @@ const saveData = async () => {
             background-color: transparent;
             outline: none;
             border-color: black;
+        }
+
+        /* 统一输入字段样式，确保与表格其他字段字体一致 */
+        input[type="text"], textarea, .table-textarea {
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        input[type="text"]:disabled, textarea:disabled, .table-textarea:disabled {
+            color: #000000;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
         }
         .footer-info {
             display: flex;

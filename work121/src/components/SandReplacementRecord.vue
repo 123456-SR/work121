@@ -98,6 +98,12 @@
         >
           保存
         </button>
+        <button
+          @click="openAnalysisModal"
+          class="btn btn-secondary btn-small"
+        >
+          数据分析
+        </button>
       </div>
     </div>
 
@@ -269,7 +275,146 @@
 
     </form>
 
-
+    <!-- 数据分析模态窗口 -->
+    <div v-if="showAnalysisModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>数据分析</h3>
+        <div class="form-group">
+          <label>数据范围：</label>
+          <div class="range-inputs">
+            <span>从</span>
+            <input type="number" v-model="analysisRange.start" min="1" max="4" placeholder="起始列" />
+            <span>列至</span>
+            <input type="number" v-model="analysisRange.end" min="1" max="4" placeholder="结束列" />
+            <span>列</span>
+          </div>
+        </div>
+        <div class="analysis-results">
+          <h4>分析结果：</h4>
+          <div class="result-item">
+            <span>量砂容器+原有砂质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.totalSandMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.totalSandMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>量砂容器+剩余砂质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.remainingSandMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.remainingSandMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>锥体内砂质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.coneSandMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.coneSandMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>试坑耗砂质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.pitSandMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.pitSandMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>试坑体积：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.pitVolumeMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.pitVolumeMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>cm³</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>试样质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.sampleMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.sampleMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>试样湿密度：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.wetDensityMin" placeholder="最小值" step="0.01" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.wetDensityMax" placeholder="最大值" step="0.01" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g/cm³</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>盒质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.boxMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.boxMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>盒+湿样质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.boxWetMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.boxWetMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>盒+干样质量：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.boxDryMassMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.boxDryMassMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>含水率：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.moistureContentMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.moistureContentMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>%</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>实测干密度：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.dryDensityMin" placeholder="最小值" step="0.01" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.dryDensityMax" placeholder="最大值" step="0.01" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>g/cm³</span>
+            </div>
+          </div>
+          <div class="result-item">
+            <span>实测压实度：</span>
+            <div class="range-inputs">
+              <input type="number" v-model="analysisResults.compactionMin" placeholder="最小值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>至</span>
+              <input type="number" v-model="analysisResults.compactionMax" placeholder="最大值" step="0.1" style="appearance: textfield; -moz-appearance: textfield;" />
+              <span>%</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button @click="autoAnalyzeAndFill" class="btn btn-primary btn-small">自动分析并填充</button>
+          <button @click="closeAnalysisModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -326,6 +471,38 @@ const formData = reactive({
   reviewerSignature: '',
   testerSignature: '',
   status: 0
+})
+
+// 数据分析相关状态
+const showAnalysisModal = ref(false)
+const analysisRange = reactive({ start: 1, end: 4 })
+const analysisResults = reactive({
+  totalSandMassMin: '',
+  totalSandMassMax: '',
+  remainingSandMassMin: '',
+  remainingSandMassMax: '',
+  coneSandMassMin: '',
+  coneSandMassMax: '',
+  pitSandMassMin: '',
+  pitSandMassMax: '',
+  pitVolumeMin: '',
+  pitVolumeMax: '',
+  sampleMassMin: '',
+  sampleMassMax: '',
+  wetDensityMin: '',
+  wetDensityMax: '',
+  boxMassMin: '',
+  boxMassMax: '',
+  boxWetMassMin: '',
+  boxWetMassMax: '',
+  boxDryMassMin: '',
+  boxDryMassMax: '',
+  moistureContentMin: '',
+  moistureContentMax: '',
+  dryDensityMin: '',
+  dryDensityMax: '',
+  compactionMin: '',
+  compactionMax: ''
 })
 
 // Status Text Helper
@@ -425,6 +602,9 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                     if (!formData.recordTester) {
+                        formData.recordTester = user.userName || user.username
+                     }
                      // Save signature to database
                      await submitForm()
                 } else {
@@ -458,6 +638,9 @@ const submitWorkflow = async (action) => {
                  const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                  if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                       formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
+                      if (!formData.recordReviewer) {
+                         formData.recordReviewer = user.userName || user.username
+                      }
                       // Save signature to database
                       await submitForm()
                  } else {
@@ -868,6 +1051,426 @@ const previewPdf = () => {
     pdfForm.value.submit()
   }
 }
+
+// 数据分析相关方法
+const openAnalysisModal = () => {
+  showAnalysisModal.value = true
+  // 重置分析结果
+  Object.keys(analysisResults).forEach(key => {
+    analysisResults[key] = ''
+  })
+}
+
+const closeAnalysisModal = () => {
+  showAnalysisModal.value = false
+}
+
+// 生成指定范围内的随机数
+const getRandomInRange = (min, max, decimalPlaces) => {
+  if (!min || !max) return null
+  const minNum = parseFloat(min)
+  const maxNum = parseFloat(max)
+  if (isNaN(minNum) || isNaN(maxNum)) return null
+  const random = Math.random() * (maxNum - minNum) + minNum
+  return random.toFixed(decimalPlaces)
+}
+
+const autoAnalyzeAndFill = () => {
+  // 将用户输入的列号（1-4）转换为索引（0-3）
+  const start = (parseInt(analysisRange.start) || 1) - 1
+  const end = (parseInt(analysisRange.end) || 4) - 1
+  
+  // 确保范围在有效范围内
+  const validStart = Math.max(0, start)
+  const validEnd = Math.min(3, end)
+  
+  if (validStart > validEnd) {
+    alert('起始列不能大于结束列')
+    return
+  }
+  
+  // 收集数据
+  const data = {
+    totalSandMass: [],
+    remainingSandMass: [],
+    coneSandMass: [],
+    pitSandMass: [],
+    pitVolume: [],
+    sampleMass: [],
+    wetDensity: [],
+    boxMass: [],
+    boxWetMass: [],
+    boxDryMass: [],
+    moistureContent: [],
+    dryDensity: [],
+    compaction: []
+  }
+  
+  // 收集每列的数据
+  for (let col = validStart; col <= validEnd; col++) {
+    // 每列有2个重复的测试数据（对应16个含水率测试）
+    for (let i = col * 2; i < col * 2 + 2; i++) {
+      // 基本参数
+      const totalSandMass = parseFloat(formData[`totalSandMass_${i}`])
+      const remainingSandMass = parseFloat(formData[`remainingSandMass_${i}`])
+      const coneSandMass = parseFloat(formData[`coneSandMass_${i}`])
+      const pitSandMass = parseFloat(formData[`pitSandMass_${i}`])
+      const pitVolume = parseFloat(formData[`pitVolume_${i}`])
+      const sampleMass = parseFloat(formData[`sampleMass_${i}`])
+      const wetDensity = parseFloat(formData[`wetDensity_${i}`])
+      const dryDensity = parseFloat(formData[`dryDensity_${i}`])
+      
+      // 含水率相关参数（每列有4个含水率测试）
+      for (let j = col * 4; j < col * 4 + 4; j++) {
+        const boxMass = parseFloat(formData[`boxMass_${j}`])
+        const boxWetMass = parseFloat(formData[`boxWetMass_${j}`])
+        const boxDryMass = parseFloat(formData[`boxDryMass_${j}`])
+        const moistureContent = parseFloat(formData[`moistureContent_${j}`])
+        
+        if (!isNaN(boxMass)) data.boxMass.push(boxMass)
+        if (!isNaN(boxWetMass)) data.boxWetMass.push(boxWetMass)
+        if (!isNaN(boxDryMass)) data.boxDryMass.push(boxDryMass)
+        if (!isNaN(moistureContent)) data.moistureContent.push(moistureContent)
+      }
+      
+      if (!isNaN(totalSandMass)) data.totalSandMass.push(totalSandMass)
+      if (!isNaN(remainingSandMass)) data.remainingSandMass.push(remainingSandMass)
+      if (!isNaN(coneSandMass)) data.coneSandMass.push(coneSandMass)
+      if (!isNaN(pitSandMass)) data.pitSandMass.push(pitSandMass)
+      if (!isNaN(pitVolume)) data.pitVolume.push(pitVolume)
+      if (!isNaN(sampleMass)) data.sampleMass.push(sampleMass)
+      if (!isNaN(wetDensity)) data.wetDensity.push(wetDensity)
+      if (!isNaN(dryDensity)) data.dryDensity.push(dryDensity)
+    }
+    
+    // 压实度（每列1个）
+    const compaction = parseFloat(formData[`compaction_${col}`])
+    if (!isNaN(compaction)) data.compaction.push(compaction)
+  }
+  
+  // 计算范围（如果用户没有手动输入）
+  const calculateRange = (key, decimalPlaces) => {
+    if (!analysisResults[`${key}Min`] || !analysisResults[`${key}Max`]) {
+      if (data[key].length > 0) {
+        const min = Math.min(...data[key])
+        const max = Math.max(...data[key])
+        analysisResults[`${key}Min`] = min.toFixed(decimalPlaces)
+        analysisResults[`${key}Max`] = max.toFixed(decimalPlaces)
+      }
+    }
+  }
+  
+  calculateRange('totalSandMass', 1)
+  calculateRange('remainingSandMass', 1)
+  calculateRange('coneSandMass', 1)
+  calculateRange('pitSandMass', 1)
+  calculateRange('pitVolume', 1)
+  calculateRange('sampleMass', 1)
+  calculateRange('wetDensity', 2)
+  calculateRange('boxMass', 1)
+  calculateRange('boxWetMass', 1)
+  calculateRange('boxDryMass', 1)
+  calculateRange('moistureContent', 1)
+  calculateRange('dryDensity', 2)
+  calculateRange('compaction', 1)
+  
+  // 计算或验证量砂密度
+  const calculateSandDensity = () => {
+    const sandDensityValues = []
+    // 收集所有有效的量砂密度计算值
+    for (let col = validStart; col <= validEnd; col++) {
+      for (let i = col * 2; i < col * 2 + 2; i++) {
+        const pitSandMass = parseFloat(formData[`pitSandMass_${i}`])
+        const pitVolume = parseFloat(formData[`pitVolume_${i}`])
+        if (!isNaN(pitSandMass) && !isNaN(pitVolume) && pitVolume > 0) {
+          const sandDensity = pitSandMass / pitVolume
+          sandDensityValues.push(sandDensity)
+        }
+      }
+    }
+    
+    if (sandDensityValues.length > 0) {
+      const avgSandDensity = sandDensityValues.reduce((sum, val) => sum + val, 0) / sandDensityValues.length
+      return avgSandDensity.toFixed(3)
+    } else {
+      // 如果没有试坑耗砂质量数据，尝试根据试坑体积和试样质量计算
+      const calculatedSandDensityValues = []
+      for (let col = validStart; col <= validEnd; col++) {
+        for (let i = col * 2; i < col * 2 + 2; i++) {
+          const sampleMass = parseFloat(formData[`sampleMass_${i}`])
+          const pitVolume = parseFloat(formData[`pitVolume_${i}`])
+          if (!isNaN(sampleMass) && !isNaN(pitVolume) && pitVolume > 0) {
+            // 计算试样湿密度
+            const wetDensity = sampleMass / pitVolume
+            // 根据湿密度估算量砂密度（量砂密度通常在1.4-1.6 g/cm³之间）
+            let estimatedSandDensity
+            if (wetDensity < 1.9) {
+              estimatedSandDensity = 1.40
+            } else if (wetDensity < 2.0) {
+              estimatedSandDensity = 1.45
+            } else if (wetDensity < 2.1) {
+              estimatedSandDensity = 1.50
+            } else {
+              estimatedSandDensity = 1.55
+            }
+            calculatedSandDensityValues.push(estimatedSandDensity)
+          }
+        }
+      }
+      if (calculatedSandDensityValues.length > 0) {
+        const avgCalculatedSandDensity = calculatedSandDensityValues.reduce((sum, val) => sum + val, 0) / calculatedSandDensityValues.length
+        return avgCalculatedSandDensity.toFixed(3)
+      }
+    }
+    return null
+  }
+  
+  // 计算或验证量砂密度
+  const calculatedSandDensity = calculateSandDensity()
+  if (calculatedSandDensity) {
+    formData.sandDensity = calculatedSandDensity
+  }
+  // 不再使用默认值，只使用计算结果或用户输入
+  
+  // 收集实际的干密度、含水率和压实度数据
+  const actualDryDensities = []
+  const actualMoistures = []
+  const actualCompactions = []
+  
+  for (let col = validStart; col <= validEnd; col++) {
+    for (let i = col * 2; i < col * 2 + 2; i++) {
+      const dryDensity = parseFloat(formData[`dryDensity_${i}`])
+      if (!isNaN(dryDensity)) actualDryDensities.push(dryDensity)
+    }
+    
+    for (let j = col * 4; j < col * 4 + 4; j++) {
+      const moisture = parseFloat(formData[`moistureContent_${j}`])
+      if (!isNaN(moisture)) actualMoistures.push(moisture)
+    }
+    
+    const compaction = parseFloat(formData[`compaction_${col}`])
+    if (!isNaN(compaction)) actualCompactions.push(compaction)
+  }
+  
+  // 计算实际数据的范围
+  let actualDryDensityMin = null
+  let actualDryDensityMax = null
+  let actualMoistureMin = null
+  let actualMoistureMax = null
+  let actualCompactionMin = null
+  let actualCompactionMax = null
+  
+  if (actualDryDensities.length > 0) {
+    actualDryDensityMin = Math.min(...actualDryDensities)
+    actualDryDensityMax = Math.max(...actualDryDensities)
+  }
+  
+  if (actualMoistures.length > 0) {
+    actualMoistureMin = Math.min(...actualMoistures)
+    actualMoistureMax = Math.max(...actualMoistures)
+  }
+  
+  if (actualCompactions.length > 0) {
+    actualCompactionMin = Math.min(...actualCompactions)
+    actualCompactionMax = Math.max(...actualCompactions)
+  }
+  
+  // 填充设计参数（基于实际数据）
+  // 最大干密度
+  if (actualDryDensityMax) {
+    formData.maxDryDensity = actualDryDensityMax.toFixed(2)
+  } else if (!formData.maxDryDensity && analysisResults.dryDensityMax) {
+    formData.maxDryDensity = analysisResults.dryDensityMax
+  }
+  
+  // 最小干密度
+  if (actualDryDensityMin) {
+    formData.minDryDensity = actualDryDensityMin.toFixed(2)
+  } else if (!formData.minDryDensity && analysisResults.dryDensityMin) {
+    formData.minDryDensity = analysisResults.dryDensityMin
+  }
+  
+  // 最优含水率
+  if (actualMoistureMin && actualMoistureMax) {
+    const avgMoisture = (actualMoistureMin + actualMoistureMax) / 2
+    formData.optMoisture = avgMoisture.toFixed(1)
+  } else if (actualMoistureMax) {
+    formData.optMoisture = actualMoistureMax.toFixed(1)
+  } else if (actualMoistureMin) {
+    formData.optMoisture = actualMoistureMin.toFixed(1)
+  } else if (!formData.optMoisture) {
+    if (analysisResults.moistureContentMin && analysisResults.moistureContentMax) {
+      const min = parseFloat(analysisResults.moistureContentMin)
+      const max = parseFloat(analysisResults.moistureContentMax)
+      if (!isNaN(min) && !isNaN(max)) {
+        formData.optMoisture = ((min + max) / 2).toFixed(1)
+      }
+    } else if (analysisResults.moistureContentMax) {
+      formData.optMoisture = analysisResults.moistureContentMax
+    } else if (analysisResults.moistureContentMin) {
+      formData.optMoisture = analysisResults.moistureContentMin
+    }
+  }
+  
+  // 设计压实度
+  if (actualCompactionMax) {
+    formData.designCompaction = actualCompactionMax.toFixed(1)
+  } else if (actualCompactionMin) {
+    formData.designCompaction = actualCompactionMin.toFixed(1)
+  } else if (!formData.designCompaction) {
+    if (analysisResults.compactionMax) {
+      formData.designCompaction = analysisResults.compactionMax
+    } else if (analysisResults.compactionMin) {
+      formData.designCompaction = analysisResults.compactionMin
+    }
+  }
+  
+  // 填充数据
+  for (let col = validStart; col <= validEnd; col++) {
+    // 每列有2个重复的测试数据
+    for (let i = col * 2; i < col * 2 + 2; i++) {
+      // 填充基本参数
+      if (!formData[`totalSandMass_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.totalSandMassMin, analysisResults.totalSandMassMax, 1)
+        if (randomValue) formData[`totalSandMass_${i}`] = randomValue
+      }
+      
+      if (!formData[`remainingSandMass_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.remainingSandMassMin, analysisResults.remainingSandMassMax, 1)
+        if (randomValue) formData[`remainingSandMass_${i}`] = randomValue
+      }
+      
+      if (!formData[`coneSandMass_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.coneSandMassMin, analysisResults.coneSandMassMax, 1)
+        if (randomValue) formData[`coneSandMass_${i}`] = randomValue
+      }
+      
+      if (!formData[`pitSandMass_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.pitSandMassMin, analysisResults.pitSandMassMax, 1)
+        if (randomValue) formData[`pitSandMass_${i}`] = randomValue
+      }
+      
+      if (!formData[`pitVolume_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.pitVolumeMin, analysisResults.pitVolumeMax, 1)
+        if (randomValue) formData[`pitVolume_${i}`] = randomValue
+      }
+      
+      if (!formData[`sampleMass_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.sampleMassMin, analysisResults.sampleMassMax, 1)
+        if (randomValue) formData[`sampleMass_${i}`] = randomValue
+      }
+      
+      if (!formData[`wetDensity_${i}`]) {
+        const randomValue = getRandomInRange(analysisResults.wetDensityMin, analysisResults.wetDensityMax, 2)
+        if (randomValue) formData[`wetDensity_${i}`] = randomValue
+      }
+      
+      if (!formData[`dryDensity_${i}`]) {
+        let min, max
+        // 如果有最大干密度和最小干密度，使用它们作为范围
+        if (formData.maxDryDensity && formData.minDryDensity) {
+          min = parseFloat(formData.minDryDensity)
+          max = parseFloat(formData.maxDryDensity)
+          // 确保范围合理
+          if (!isNaN(min) && !isNaN(max) && min < max) {
+            // 实测干密度通常在最小和最大干密度之间
+            const randomValue = getRandomInRange(min, max, 2)
+            if (randomValue) formData[`dryDensity_${i}`] = randomValue
+          } else {
+            // 使用默认范围
+            const randomValue = getRandomInRange(analysisResults.dryDensityMin, analysisResults.dryDensityMax, 2)
+            if (randomValue) formData[`dryDensity_${i}`] = randomValue
+          }
+        } else {
+          // 使用默认范围
+          const randomValue = getRandomInRange(analysisResults.dryDensityMin, analysisResults.dryDensityMax, 2)
+          if (randomValue) formData[`dryDensity_${i}`] = randomValue
+        }
+      }
+      
+      // 填充含水率相关参数
+      for (let j = col * 4; j < col * 4 + 4; j++) {
+        if (!formData[`boxMass_${j}`]) {
+          const randomValue = getRandomInRange(analysisResults.boxMassMin, analysisResults.boxMassMax, 1)
+          if (randomValue) formData[`boxMass_${j}`] = randomValue
+        }
+        
+        if (!formData[`boxWetMass_${j}`]) {
+          const randomValue = getRandomInRange(analysisResults.boxWetMassMin, analysisResults.boxWetMassMax, 1)
+          if (randomValue) formData[`boxWetMass_${j}`] = randomValue
+        }
+        
+        if (!formData[`boxDryMass_${j}`]) {
+          const randomValue = getRandomInRange(analysisResults.boxDryMassMin, analysisResults.boxDryMassMax, 1)
+          if (randomValue) formData[`boxDryMass_${j}`] = randomValue
+        }
+        
+        if (!formData[`moistureContent_${j}`]) {
+          const randomValue = getRandomInRange(analysisResults.moistureContentMin, analysisResults.moistureContentMax, 1)
+          if (randomValue) formData[`moistureContent_${j}`] = randomValue
+        }
+      }
+    }
+    
+    // 计算并填充平均含水率（每列有2个平均值，每个基于2个含水率测试值）
+    for (let k = 0; k < 2; k++) {
+      const moistureValues = []
+      // 每组取2个含水率测试值
+      for (let j = col * 4 + k * 2; j < col * 4 + k * 2 + 2; j++) {
+        const moisture = parseFloat(formData[`moistureContent_${j}`])
+        if (!isNaN(moisture)) moistureValues.push(moisture)
+      }
+      if (moistureValues.length > 0 && !formData[`avgMoisture_${col * 2 + k}`]) {
+        const avg = moistureValues.reduce((sum, val) => sum + val, 0) / moistureValues.length
+        formData[`avgMoisture_${col * 2 + k}`] = avg.toFixed(1)
+      }
+    }
+    
+    // 计算并填充平均实测干密度
+    const dryDensityValues = []
+    for (let i = col * 2; i < col * 2 + 2; i++) {
+      const dryDensity = parseFloat(formData[`dryDensity_${i}`])
+      if (!isNaN(dryDensity)) dryDensityValues.push(dryDensity)
+    }
+    if (dryDensityValues.length > 0 && !formData[`avgDryDensity_${col}`]) {
+      const avg = dryDensityValues.reduce((sum, val) => sum + val, 0) / dryDensityValues.length
+      formData[`avgDryDensity_${col}`] = avg.toFixed(2)
+    }
+    
+    // 填充压实度
+    if (!formData[`compaction_${col}`]) {
+      // 如果有设计压实度，使用它作为参考
+      if (formData.designCompaction) {
+        const designValue = parseFloat(formData.designCompaction)
+        if (!isNaN(designValue)) {
+          // 压实度通常在设计值附近波动
+          const min = Math.max(90, designValue - 5)
+          const max = Math.min(100, designValue + 5)
+          const randomValue = getRandomInRange(min, max, 1)
+          if (randomValue) {
+            formData[`compaction_${col}`] = randomValue
+          } else {
+            formData[`compaction_${col}`] = formData.designCompaction
+          }
+        } else {
+          // 使用默认范围
+          const randomValue = getRandomInRange(analysisResults.compactionMin, analysisResults.compactionMax, 1)
+          if (randomValue) {
+            formData[`compaction_${col}`] = randomValue
+          }
+        }
+      } else {
+        // 使用默认范围
+        const randomValue = getRandomInRange(analysisResults.compactionMin, analysisResults.compactionMax, 1)
+        if (randomValue) {
+          formData[`compaction_${col}`] = randomValue
+        }
+      }
+    }
+  }
+  
+  alert('自动分析并填充完成')
+}
 </script>
 
 <style scoped>
@@ -1061,6 +1664,19 @@ const previewPdf = () => {
         input[type="text"]:disabled:focus, textarea:disabled:focus {
             background-color: transparent;
         }
+
+        /* 统一输入字段样式，确保与表格其他字段字体一致 */
+        input[type="text"], textarea {
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        input[type="text"]:disabled, textarea:disabled {
+            color: #000000;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+        }
         textarea {
             resize: none;
             overflow: hidden;
@@ -1092,6 +1708,151 @@ const previewPdf = () => {
             .no-print {
                 display: none;
             }
+        }
+        
+        /* 模态窗口样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f7fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .range-inputs input {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .analysis-results {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .analysis-results h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        
+        .result-item span:first-child {
+            font-weight: 500;
+            color: #555;
+            flex: 1;
+        }
+        
+        .result-item .range-inputs {
+            flex: 2;
+            margin-left: 15px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .modal-actions .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-actions .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+        }
+        
+        .modal-actions .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .modal-actions .btn-secondary {
+            background-color: #fff;
+            border-color: #d0d7de;
+            color: #34495e;
+        }
+        
+        .modal-actions .btn-secondary:hover {
+            background-color: #f5f7fa;
+        }
+        
+        /* 移除数值输入框的上下调节按钮 */
+        input[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
     
 </style>

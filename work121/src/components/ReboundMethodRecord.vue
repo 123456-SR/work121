@@ -129,31 +129,31 @@
         <!-- Header Info -->
         <tr>
             <td colspan="2" class="label">工程名称</td>
-            <td colspan="13" class="left-align"><textarea v-model="formData.projectName"   name="projectName" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
+            <td colspan="15" class="left-align"><textarea v-model="formData.projectName"   name="projectName" :disabled="!isEditable" class="table-textarea left-align"></textarea></td>
             <td colspan="3" class="label">委托日期</td>
-            <td colspan="3"><textarea v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td colspan="1"><textarea v-model="formData.commissionDate"   name="commissionDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">结构部位</td>
             <td colspan="5"><textarea v-model="formData.structurePart"   name="structurePart" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">检测类别</td>
-            <td colspan="4"><textarea v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td colspan="7"><textarea v-model="formData.testCategory"   name="testCategory" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">浇筑日期</td>
-            <td colspan="4"><textarea v-model="formData.pourDate"   name="pourDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td colspan="1"><textarea v-model="formData.pourDate"   name="pourDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">样品状态</td>
             <td colspan="5"><textarea v-model="formData.sampleStatus"   name="sampleStatus" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">测试角度</td>
-            <td colspan="4"><textarea v-model="formData.testAngle"   name="testAngle" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td colspan="7"><textarea v-model="formData.testAngle"   name="testAngle" :disabled="!isEditable" class="table-textarea"></textarea></td>
             <td colspan="3" class="label">检测日期</td>
-            <td colspan="4"><textarea v-model="formData.testDate"   name="testDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td colspan="1"><textarea v-model="formData.testDate"   name="testDate" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
         <tr>
             <td colspan="2" class="label">设计指标</td>
             <td colspan="5"><textarea v-model="formData.designIndex"   name="designIndex" :disabled="!isEditable" class="table-textarea"></textarea></td>
-            <td colspan="7" class="label">构件厚度或骨料最大粒径</td>
-            <td colspan="7"><textarea v-model="formData.aggregateSize"   name="aggregateSize" :disabled="!isEditable" class="table-textarea"></textarea></td>
+            <td colspan="10" class="label">构件厚度或骨料最大粒径</td>
+            <td colspan="4"><textarea v-model="formData.aggregateSize"   name="aggregateSize" :disabled="!isEditable" class="table-textarea"></textarea></td>
         </tr>
 
         <!-- Data Table Header -->
@@ -1338,6 +1338,19 @@ const handleSign = async () => {
             background-color: transparent;
             outline: none;
             border-color: black;
+        }
+
+        /* 统一输入字段样式，确保与表格其他字段字体一致 */
+        input[type="text"], textarea, .table-textarea {
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        input[type="text"]:disabled, textarea:disabled, .table-textarea:disabled {
+            color: #000000;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
         }
         .footer-info {
             display: flex;

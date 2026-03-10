@@ -164,9 +164,9 @@ const menuItems = {
           id: 'PendingTasks',
           name: '待处理任务',
           submenu: [
-            { id: 'PendingApprovalTasks', name: '待审核任务' },
-            { id: 'PendingApprovalTasks', name: '待批准任务' },
-            { id: 'PendingSubmitTasks', name: '待提交任务' }
+            { id: 'PendingAuditTasks', name: '待审核任务', component: 'PendingTasks', props: { taskType: 'audit' } },
+            { id: 'PendingApprovalTasks', name: '待批准任务', component: 'PendingTasks', props: { taskType: 'approval' } },
+            { id: 'PendingSubmitTasks', name: '待提交任务', component: 'PendingTasks', props: { taskType: 'submit' } }
           ]
         }
       ]
@@ -290,12 +290,26 @@ const menuItems = {
   report: []
 }
 
+// 递归查找菜单项（包括子菜单）
+const findMenuItem = (menus, targetId) => {
+  for (const item of menus) {
+    if (item.id === targetId) {
+      return item
+    }
+    if (item.submenu) {
+      const found = findMenuItem(item.submenu, targetId)
+      if (found) return found
+    }
+  }
+  return null
+}
+
 // 导航逻辑
 const navigateTo = (target, props = {}) => {
   if (typeof target === 'string') {
-    // 查找标题
+    // 查找标题（递归查找，包括子菜单）
     let title = ''
-    let menuItem = menuItems.preliminary.find(i => i.id === target) || menuItems.report.find(i => i.id === target)
+    let menuItem = findMenuItem(menuItems.preliminary, target) || findMenuItem(menuItems.report, target)
     
     if (menuItem) {
         title = menuItem.name
@@ -450,7 +464,15 @@ const accessibleMenus = computed(() => {
       // 修改子菜单，添加任务分配
       taskManagementMenu.submenu = [
         { id: 'DirectoryList', name: '任务分配' },
-        { id: 'PendingTasks', name: '待处理任务' }
+        {
+          id: 'PendingTasks',
+          name: '待处理任务',
+          submenu: [
+            { id: 'PendingAuditTasks', name: '待审核任务', component: 'PendingTasks', props: { taskType: 'audit' } },
+            { id: 'PendingApprovalTasks', name: '待批准任务', component: 'PendingTasks', props: { taskType: 'approval' } },
+            { id: 'PendingSubmitTasks', name: '待提交任务', component: 'PendingTasks', props: { taskType: 'submit' } }
+          ]
+        }
       ]
     }
     // 添加管理员菜单
