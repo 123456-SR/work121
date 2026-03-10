@@ -61,6 +61,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
     }
 
     @Override
+    public List<Map<String, Object>> getPendingTasksByUser(String userAccount) {
+        return pendingTasksMapper.getPendingTasksByUser(userAccount);
+    }
+
+    @Override
     public boolean approveTask(String taskType, String taskId, String userAccount) {
         try {
             String reviewSignPhoto = null;

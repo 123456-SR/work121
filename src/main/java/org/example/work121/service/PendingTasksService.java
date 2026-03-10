@@ -22,6 +22,13 @@ public interface PendingTasksService {
     List<Map<String, Object>> searchPendingTasks(String taskType);
 
     /**
+     * 获取当前用户的待审核任务列表
+     * @param userAccount 当前用户账号
+     * @return 待审核任务列表
+     */
+    List<Map<String, Object>> getPendingTasksByUser(String userAccount);
+
+    /**
      * 审核通过任务
      * @param taskType 任务类型
      * @param taskId 任务ID

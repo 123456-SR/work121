@@ -111,7 +111,10 @@ const approveTask = async (task) => {
 // 获取任务列表
 const loadTasks = async () => {
   try {
-    const response = await axios.get('/api/pending-tasks/get-all')
+    const userAccount = getCurrentUserAccount()
+    const response = await axios.get('/api/pending-tasks/get-by-user', {
+      params: { userAccount: userAccount }
+    })
     if (response.data.success) {
       tasks.value = response.data.data.map(item => ({
         id: item.data_id || item.DATA_ID || item.dataId || '未知ID',

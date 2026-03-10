@@ -213,4 +213,110 @@ public interface PendingTasksMapper {
             "AND '密度试验' LIKE CONCAT('%', #{taskType}, '%') " +
             "ORDER BY unified_number ASC")
     List<Map<String, Object>> searchPendingTasks(String taskType);
+
+    /**
+     * 获取当前用户的待审核任务列表
+     * @param userAccount 当前用户账号
+     * @return 待审核任务列表
+     */
+    @Select("SELECT " +
+            "'委托单' AS table_type, " +
+            "ID AS data_id, " +
+            "WT_NUM AS unified_number, " +
+            "STATUS AS status, " +
+            "REVIEWER AS reviewer " +
+            "FROM T_ENTRUSTMENT " +
+            "WHERE STATUS = '1' " +
+            "AND WT_NUM IS NOT NULL " +
+            "AND REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'贝克曼梁' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.entrustment_id AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_BECKMAN_BEAM t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'轻型动力触探' AS table_type, " +
+            "t.ID AS data_id, " +
+            "NVL(e.WT_NUM, t.ID) AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_LIGHT_DYNAMIC_PENETRATION t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'回弹法' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.entrustment_id AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_REBOUND_METHOD t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'环刀法' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.entrustment_id AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_CUTTING_RING t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'灌水法' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.entrustment_id AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_WATER_REPLACEMENT t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'灌砂法' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.entrustment_id AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_SAND_REPLACEMENT t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'核子密度' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.ENTRUSTMENT_ID AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_NUCLEAR_DENSITY t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "UNION ALL " +
+            "SELECT " +
+            "'密度试验' AS table_type, " +
+            "t.ID AS data_id, " +
+            "t.entrustment_id AS unified_number, " +
+            "t.STATUS AS status, " +
+            "t.REVIEWER AS reviewer " +
+            "FROM T_DENSITY_TEST t " +
+            "LEFT JOIN T_ENTRUSTMENT e ON t.ID = e.ID " +
+            "WHERE t.STATUS = '1' " +
+            "AND t.REVIEWER = #{userAccount} " +
+            "ORDER BY unified_number ASC")
+    List<Map<String, Object>> getPendingTasksByUser(String userAccount);
 }

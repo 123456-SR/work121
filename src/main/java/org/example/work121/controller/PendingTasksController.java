@@ -88,4 +88,25 @@ public class PendingTasksController {
         }
         return result;
     }
+
+    /**
+     * 获取当前用户的待审核任务列表
+     * @param userAccount 当前用户账号
+     * @return 响应结果
+     */
+    @GetMapping("/get-by-user")
+    public Map<String, Object> getPendingTasksByUser(@RequestParam String userAccount) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            logger.info("获取用户待审核任务列表，用户账号: {}", userAccount);
+            java.util.List<Map<String, Object>> tasks = pendingTasksService.getPendingTasksByUser(userAccount);
+            result.put("success", true);
+            result.put("data", tasks);
+        } catch (Exception e) {
+            logger.error("获取用户待审核任务列表失败", e);
+            result.put("success", false);
+            result.put("message", "获取用户待审核任务列表失败: " + e.getMessage());
+        }
+        return result;
+    }
 }

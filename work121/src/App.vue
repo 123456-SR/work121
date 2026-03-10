@@ -160,7 +160,15 @@ const menuItems = {
       id: 'TaskManagement',
       name: '任务管理',
       submenu: [
-        { id: 'PendingTasks', name: '待处理任务' }
+        {
+          id: 'PendingTasks',
+          name: '待处理任务',
+          submenu: [
+            { id: 'PendingApprovalTasks', name: '待审核任务' },
+            { id: 'PendingApprovalTasks', name: '待批准任务' },
+            { id: 'PendingSubmitTasks', name: '待提交任务' }
+          ]
+        }
       ]
     },
     {
