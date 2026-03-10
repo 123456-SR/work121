@@ -73,6 +73,13 @@
 
 
         <button
+          @click="showAnalysisModal"
+          class="btn btn-secondary btn-small"
+          :disabled="!isEditable"
+        >
+          数据分析
+        </button>
+        <button
           @click="saveData"
           class="btn btn-secondary btn-small"
           :disabled="!isEditable"
@@ -110,12 +117,11 @@
         <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
     </div>
     <div class="header-info">
-        <span>施工部位：<input type="text" v-model="formData.constructionLocation"   name="constructionLocation" style="width: 200px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
-        <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
-        <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>施工部位：<input type="text" v-model="formData.constructionLocation"   name="constructionLocation" style="width: 100px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
+        <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 50px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 50px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
+        <span>检测类别：<input type="text" v-model="formData.testType"   name="testType" style="width: 60px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
     </div>
-    <!-- 隐藏字段：检测类别不在页面上展示，但仍随表单提交 -->
-    <input type="hidden" v-model="formData.testType" name="testType" />
     <div class="header-info">
         <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;" :disabled="!isEditable"></span>
         <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;" :disabled="!isEditable"></span>
@@ -239,8 +245,92 @@
     </div>
     </form>
 
-
-
+    <!-- 数据分析模态窗口 -->
+    <div v-if="showModal" class="modal-overlay" @click="closeAnalysisModal">
+      <div class="modal-content" @click.stop style="position: relative;">
+        <h3>数据分析</h3>
+        <button class="close-btn" @click="closeAnalysisModal">&times;</button>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>数据范围：</label>
+            <input type="number" v-model.number="analysisRange.start" min="1" max="4" placeholder="从" class="modal-input">
+            <span>行</span>
+            <input type="number" v-model.number="analysisRange.end" min="1" max="4" placeholder="至" class="modal-input">
+            <span>行</span>
+          </div>
+          
+          <div class="form-group">
+            <label>环刀质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.ringMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.ringMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>环刀+湿土质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.ringWetMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.ringWetMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>环刀体积 (cm³)：</label>
+            <input type="number" v-model.number="analysisResults.ringVolumeMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.ringVolumeMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>盒质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.boxMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.boxMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>盒+湿土质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.boxWetMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.boxWetMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>盒+干土质量 (g)：</label>
+            <input type="number" v-model.number="analysisResults.boxDryMassMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.boxDryMassMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>含水率 (%)：</label>
+            <input type="number" v-model.number="analysisResults.moistureMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.moistureMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>平均含水率 (%)：</label>
+            <input type="number" v-model.number="analysisResults.avgMoistureMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.avgMoistureMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>湿密度 (g/cm³)：</label>
+            <input type="number" v-model.number="analysisResults.wetDensityMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.wetDensityMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>干密度 (g/cm³)：</label>
+            <input type="number" v-model.number="analysisResults.dryDensityMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.dryDensityMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+          
+          <div class="form-group">
+            <label>压实度 (%)：</label>
+            <input type="number" v-model.number="analysisResults.compactionMin" step="0.01" placeholder="最小值" class="modal-input">
+            <input type="number" v-model.number="analysisResults.compactionMax" step="0.01" placeholder="最大值" class="modal-input">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeAnalysisModal" class="btn btn-secondary">取消</button>
+          <button @click="autoAnalyzeAndFill" class="btn btn-primary">自动分析并填充</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -248,6 +338,34 @@
 <script setup>
 import { reactive, ref, onMounted, inject, defineProps, computed } from 'vue'
 import axios from 'axios'
+
+// 数据分析相关变量
+const showModal = ref(false)
+const analysisRange = reactive({ start: 1, end: 4 })
+const analysisResults = reactive({
+  ringMassMin: '',
+  ringMassMax: '',
+  ringWetMassMin: '',
+  ringWetMassMax: '',
+  ringVolumeMin: '',
+  ringVolumeMax: '',
+  boxMassMin: '',
+  boxMassMax: '',
+  boxWetMassMin: '',
+  boxWetMassMax: '',
+  boxDryMassMin: '',
+  boxDryMassMax: '',
+  moistureMin: '',
+  moistureMax: '',
+  avgMoistureMin: '',
+  avgMoistureMax: '',
+  wetDensityMin: '',
+  wetDensityMax: '',
+  dryDensityMin: '',
+  dryDensityMax: '',
+  compactionMin: '',
+  compactionMax: ''
+})
 
 const props = defineProps({
   id: {
@@ -1249,6 +1367,315 @@ const previewPdf = () => {
   }
 }
 
+// 数据分析相关函数
+const showAnalysisModal = () => {
+  showModal.value = true
+}
+
+const closeAnalysisModal = () => {
+  showModal.value = false
+}
+
+const autoAnalyzeAndFill = () => {
+  const start = analysisRange.start - 1 // 转换为数组索引
+  const end = analysisRange.end - 1
+  
+  // 收集现有数据用于分析
+  const ringMasses = []
+  const ringWetMasses = []
+  const ringVolumes = []
+  const boxMasses = []
+  const boxWetMasses = []
+  const boxDryMasses = []
+  const moistures = []
+  const avgMoistures = []
+  const wetDensities = []
+  const dryDensities = []
+  const compactions = []
+  
+  // 收集数据
+  for (let i = start; i <= end; i++) {
+    const pagePrefix = '_page' + currentPage.value + '_' + i
+    
+    // 环刀相关数据
+    if (formData['ringMass' + pagePrefix]) ringMasses.push(parseFloat(formData['ringMass' + pagePrefix]))
+    if (formData['ringWetMass' + pagePrefix]) ringWetMasses.push(parseFloat(formData['ringWetMass' + pagePrefix]))
+    if (formData['ringVolume' + pagePrefix]) ringVolumes.push(parseFloat(formData['ringVolume' + pagePrefix]))
+    
+    // 含水率盒数据
+    for (let j = 1; j <= 4; j++) {
+      if (formData['boxMass' + j + pagePrefix]) boxMasses.push(parseFloat(formData['boxMass' + j + pagePrefix]))
+      if (formData['boxWetMass' + j + pagePrefix]) boxWetMasses.push(parseFloat(formData['boxWetMass' + j + pagePrefix]))
+      if (formData['boxDryMass' + j + pagePrefix]) boxDryMasses.push(parseFloat(formData['boxDryMass' + j + pagePrefix]))
+      if (formData['moisture' + j + pagePrefix]) moistures.push(parseFloat(formData['moisture' + j + pagePrefix]))
+    }
+    
+    // 结果数据
+    if (formData['avgMoisture1' + pagePrefix]) avgMoistures.push(parseFloat(formData['avgMoisture1' + pagePrefix]))
+    if (formData['avgMoisture2' + pagePrefix]) avgMoistures.push(parseFloat(formData['avgMoisture2' + pagePrefix]))
+    if (formData['wetDensity1' + pagePrefix]) wetDensities.push(parseFloat(formData['wetDensity1' + pagePrefix]))
+    if (formData['wetDensity2' + pagePrefix]) wetDensities.push(parseFloat(formData['wetDensity2' + pagePrefix]))
+    if (formData['dryDensity1' + pagePrefix]) dryDensities.push(parseFloat(formData['dryDensity1' + pagePrefix]))
+    if (formData['dryDensity2' + pagePrefix]) dryDensities.push(parseFloat(formData['dryDensity2' + pagePrefix]))
+    if (formData['compaction1' + pagePrefix]) compactions.push(parseFloat(formData['compaction1' + pagePrefix]))
+    if (formData['compaction2' + pagePrefix]) compactions.push(parseFloat(formData['compaction2' + pagePrefix]))
+  }
+  
+  // 分析数据并设置默认值
+  if (!analysisResults.ringMassMin || !analysisResults.ringMassMax) {
+    if (ringMasses.length > 0) {
+      const min = Math.min(...ringMasses)
+      const max = Math.max(...ringMasses)
+      analysisResults.ringMassMin = min.toFixed(2)
+      analysisResults.ringMassMax = max.toFixed(2)
+    } else {
+      analysisResults.ringMassMin = '50.00'
+      analysisResults.ringMassMax = '100.00'
+    }
+  }
+  
+  if (!analysisResults.ringWetMassMin || !analysisResults.ringWetMassMax) {
+    if (ringWetMasses.length > 0) {
+      const min = Math.min(...ringWetMasses)
+      const max = Math.max(...ringWetMasses)
+      analysisResults.ringWetMassMin = min.toFixed(2)
+      analysisResults.ringWetMassMax = max.toFixed(2)
+    } else {
+      analysisResults.ringWetMassMin = '150.00'
+      analysisResults.ringWetMassMax = '300.00'
+    }
+  }
+  
+  if (!analysisResults.ringVolumeMin || !analysisResults.ringVolumeMax) {
+    if (ringVolumes.length > 0) {
+      const min = Math.min(...ringVolumes)
+      const max = Math.max(...ringVolumes)
+      analysisResults.ringVolumeMin = min.toFixed(2)
+      analysisResults.ringVolumeMax = max.toFixed(2)
+    } else {
+      analysisResults.ringVolumeMin = '100.00'
+      analysisResults.ringVolumeMax = '200.00'
+    }
+  }
+  
+  if (!analysisResults.boxMassMin || !analysisResults.boxMassMax) {
+    if (boxMasses.length > 0) {
+      const min = Math.min(...boxMasses)
+      const max = Math.max(...boxMasses)
+      analysisResults.boxMassMin = min.toFixed(2)
+      analysisResults.boxMassMax = max.toFixed(2)
+    } else {
+      analysisResults.boxMassMin = '10.00'
+      analysisResults.boxMassMax = '30.00'
+    }
+  }
+  
+  if (!analysisResults.boxWetMassMin || !analysisResults.boxWetMassMax) {
+    if (boxWetMasses.length > 0) {
+      const min = Math.min(...boxWetMasses)
+      const max = Math.max(...boxWetMasses)
+      analysisResults.boxWetMassMin = min.toFixed(2)
+      analysisResults.boxWetMassMax = max.toFixed(2)
+    } else {
+      analysisResults.boxWetMassMin = '30.00'
+      analysisResults.boxWetMassMax = '50.00'
+    }
+  }
+  
+  if (!analysisResults.boxDryMassMin || !analysisResults.boxDryMassMax) {
+    if (boxDryMasses.length > 0) {
+      const min = Math.min(...boxDryMasses)
+      const max = Math.max(...boxDryMasses)
+      analysisResults.boxDryMassMin = min.toFixed(2)
+      analysisResults.boxDryMassMax = max.toFixed(2)
+    } else {
+      analysisResults.boxDryMassMin = '25.00'
+      analysisResults.boxDryMassMax = '45.00'
+    }
+  }
+  
+  if (!analysisResults.moistureMin || !analysisResults.moistureMax) {
+    if (moistures.length > 0) {
+      const min = Math.min(...moistures)
+      const max = Math.max(...moistures)
+      analysisResults.moistureMin = min.toFixed(2)
+      analysisResults.moistureMax = max.toFixed(2)
+    } else {
+      analysisResults.moistureMin = '5.00'
+      analysisResults.moistureMax = '15.00'
+    }
+  }
+  
+  if (!analysisResults.avgMoistureMin || !analysisResults.avgMoistureMax) {
+    if (avgMoistures.length > 0) {
+      const min = Math.min(...avgMoistures)
+      const max = Math.max(...avgMoistures)
+      analysisResults.avgMoistureMin = min.toFixed(2)
+      analysisResults.avgMoistureMax = max.toFixed(2)
+    } else {
+      analysisResults.avgMoistureMin = '5.00'
+      analysisResults.avgMoistureMax = '15.00'
+    }
+  }
+  
+  if (!analysisResults.wetDensityMin || !analysisResults.wetDensityMax) {
+    if (wetDensities.length > 0) {
+      const min = Math.min(...wetDensities)
+      const max = Math.max(...wetDensities)
+      analysisResults.wetDensityMin = min.toFixed(3)
+      analysisResults.wetDensityMax = max.toFixed(3)
+    } else {
+      analysisResults.wetDensityMin = '1.500'
+      analysisResults.wetDensityMax = '2.000'
+    }
+  }
+  
+  if (!analysisResults.dryDensityMin || !analysisResults.dryDensityMax) {
+    if (dryDensities.length > 0) {
+      const min = Math.min(...dryDensities)
+      const max = Math.max(...dryDensities)
+      analysisResults.dryDensityMin = min.toFixed(3)
+      analysisResults.dryDensityMax = max.toFixed(3)
+    } else {
+      analysisResults.dryDensityMin = '1.300'
+      analysisResults.dryDensityMax = '1.800'
+    }
+  }
+  
+  if (!analysisResults.compactionMin || !analysisResults.compactionMax) {
+    if (compactions.length > 0) {
+      const min = Math.min(...compactions)
+      const max = Math.max(...compactions)
+      analysisResults.compactionMin = min.toFixed(2)
+      analysisResults.compactionMax = max.toFixed(2)
+    } else {
+      analysisResults.compactionMin = '90.00'
+      analysisResults.compactionMax = '100.00'
+    }
+  }
+  
+  // 填充数据
+  for (let i = start; i <= end; i++) {
+    const pagePrefix = '_page' + currentPage.value + '_' + i
+    
+    // 填充环刀相关数据
+    formData['ringMass' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.ringMassMax) - parseFloat(analysisResults.ringMassMin)) + parseFloat(analysisResults.ringMassMin)).toFixed(2)
+    formData['ringWetMass' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.ringWetMassMax) - parseFloat(analysisResults.ringWetMassMin)) + parseFloat(analysisResults.ringWetMassMin)).toFixed(2)
+    formData['ringVolume' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.ringVolumeMax) - parseFloat(analysisResults.ringVolumeMin)) + parseFloat(analysisResults.ringVolumeMin)).toFixed(2)
+    
+    // 填充第二把环刀数据
+    formData['ringMass2' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.ringMassMax) - parseFloat(analysisResults.ringMassMin)) + parseFloat(analysisResults.ringMassMin)).toFixed(2)
+    formData['ringWetMass2' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.ringWetMassMax) - parseFloat(analysisResults.ringWetMassMin)) + parseFloat(analysisResults.ringWetMassMin)).toFixed(2)
+    formData['ringVolume2' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.ringVolumeMax) - parseFloat(analysisResults.ringVolumeMin)) + parseFloat(analysisResults.ringVolumeMin)).toFixed(2)
+    
+    // 填充含水率盒数据
+    for (let j = 1; j <= 4; j++) {
+      formData['boxMass' + j + pagePrefix] = (Math.random() * (parseFloat(analysisResults.boxMassMax) - parseFloat(analysisResults.boxMassMin)) + parseFloat(analysisResults.boxMassMin)).toFixed(2)
+      formData['boxWetMass' + j + pagePrefix] = (Math.random() * (parseFloat(analysisResults.boxWetMassMax) - parseFloat(analysisResults.boxWetMassMin)) + parseFloat(analysisResults.boxWetMassMin)).toFixed(2)
+      formData['boxDryMass' + j + pagePrefix] = (Math.random() * (parseFloat(analysisResults.boxDryMassMax) - parseFloat(analysisResults.boxDryMassMin)) + parseFloat(analysisResults.boxDryMassMin)).toFixed(2)
+      formData['moisture' + j + pagePrefix] = (Math.random() * (parseFloat(analysisResults.moistureMax) - parseFloat(analysisResults.moistureMin)) + parseFloat(analysisResults.moistureMin)).toFixed(2)
+    }
+    
+    // 计算平均含水率
+    const moisture1 = parseFloat(formData['moisture1' + pagePrefix])
+    const moisture2 = parseFloat(formData['moisture2' + pagePrefix])
+    const moisture3 = parseFloat(formData['moisture3' + pagePrefix])
+    const moisture4 = parseFloat(formData['moisture4' + pagePrefix])
+    
+    formData['avgMoisture1' + pagePrefix] = ((moisture1 + moisture2) / 2).toFixed(2)
+    formData['avgMoisture2' + pagePrefix] = ((moisture3 + moisture4) / 2).toFixed(2)
+    
+    // 计算湿密度和干密度
+    const ringMass = parseFloat(formData['ringMass' + pagePrefix])
+    const ringWetMass = parseFloat(formData['ringWetMass' + pagePrefix])
+    const ringVolume = parseFloat(formData['ringVolume' + pagePrefix])
+    const avgMoisture1 = parseFloat(formData['avgMoisture1' + pagePrefix])
+    
+    const ringMass2 = parseFloat(formData['ringMass2' + pagePrefix])
+    const ringWetMass2 = parseFloat(formData['ringWetMass2' + pagePrefix])
+    const ringVolume2 = parseFloat(formData['ringVolume2' + pagePrefix])
+    const avgMoisture2 = parseFloat(formData['avgMoisture2' + pagePrefix])
+    
+    // 计算湿密度
+    const wetDensity1 = (ringWetMass - ringMass) / ringVolume
+    const wetDensity2 = (ringWetMass2 - ringMass2) / ringVolume2
+    
+    // 计算干密度
+    const dryDensity1 = wetDensity1 / (1 + avgMoisture1 / 100)
+    const dryDensity2 = wetDensity2 / (1 + avgMoisture2 / 100)
+    
+    formData['wetDensity1' + pagePrefix] = wetDensity1.toFixed(3)
+    formData['wetDensity2' + pagePrefix] = wetDensity2.toFixed(3)
+    formData['dryDensity1' + pagePrefix] = dryDensity1.toFixed(3)
+    formData['dryDensity2' + pagePrefix] = dryDensity2.toFixed(3)
+    
+    // 计算平均干密度
+    const avgDryDensity = (dryDensity1 + dryDensity2) / 2
+    formData['avgDryDensity1' + pagePrefix] = avgDryDensity.toFixed(3)
+    
+    // 计算压实度
+    if (formData.maxDryDensity) {
+      const maxDryDensity = parseFloat(formData.maxDryDensity)
+      const compaction1 = (dryDensity1 / maxDryDensity) * 100
+      const compaction2 = (dryDensity2 / maxDryDensity) * 100
+      formData['compaction1' + pagePrefix] = compaction1.toFixed(2)
+      formData['compaction2' + pagePrefix] = compaction2.toFixed(2)
+    } else {
+      formData['compaction1' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.compactionMax) - parseFloat(analysisResults.compactionMin)) + parseFloat(analysisResults.compactionMin)).toFixed(2)
+      formData['compaction2' + pagePrefix] = (Math.random() * (parseFloat(analysisResults.compactionMax) - parseFloat(analysisResults.compactionMin)) + parseFloat(analysisResults.compactionMin)).toFixed(2)
+    }
+  }
+  
+  // 填充全局数据
+  if (!formData.maxDryDensity) {
+    const dryDensityValues = []
+    for (let i = start; i <= end; i++) {
+      const pagePrefix = '_page' + currentPage.value + '_' + i
+      if (formData['dryDensity1' + pagePrefix]) dryDensityValues.push(parseFloat(formData['dryDensity1' + pagePrefix]))
+      if (formData['dryDensity2' + pagePrefix]) dryDensityValues.push(parseFloat(formData['dryDensity2' + pagePrefix]))
+    }
+    if (dryDensityValues.length > 0) {
+      const max = Math.max(...dryDensityValues)
+      formData.maxDryDensity = max.toFixed(3)
+    } else {
+      formData.maxDryDensity = '1.800'
+    }
+  }
+  
+  if (!formData.optMoisture) {
+    const moistureValues = []
+    for (let i = start; i <= end; i++) {
+      const pagePrefix = '_page' + currentPage.value + '_' + i
+      if (formData['avgMoisture1' + pagePrefix]) moistureValues.push(parseFloat(formData['avgMoisture1' + pagePrefix]))
+      if (formData['avgMoisture2' + pagePrefix]) moistureValues.push(parseFloat(formData['avgMoisture2' + pagePrefix]))
+    }
+    if (moistureValues.length > 0) {
+      const avg = moistureValues.reduce((sum, val) => sum + val, 0) / moistureValues.length
+      formData.optMoisture = avg.toFixed(2)
+    } else {
+      formData.optMoisture = '10.00'
+    }
+  }
+  
+  if (!formData.designCompaction) {
+    const compactionValues = []
+    for (let i = start; i <= end; i++) {
+      const pagePrefix = '_page' + currentPage.value + '_' + i
+      if (formData['compaction1' + pagePrefix]) compactionValues.push(parseFloat(formData['compaction1' + pagePrefix]))
+      if (formData['compaction2' + pagePrefix]) compactionValues.push(parseFloat(formData['compaction2' + pagePrefix]))
+    }
+    if (compactionValues.length > 0) {
+      const min = Math.min(...compactionValues)
+      formData.designCompaction = min.toFixed(2)
+    } else {
+      formData.designCompaction = '95.00'
+    }
+  }
+  
+  closeAnalysisModal()
+  alert('数据填充完成！')
+}
+
 // 将当前页面的数据和委托人数据添加到表单中
 const includeCurrentPageData = () => {
   // 首先移除所有现有的隐藏字段
@@ -1449,18 +1876,21 @@ const includeCurrentPageData = () => {
         }
 
         .btn-primary {
-            background-color: var(--color-blue);
-            color: white;
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
         }
 
         .btn-secondary {
-            background-color: var(--card-blue);
-            color: var(--color-blue);
+            background-color: #fff;
+            border-color: #d0d7de;
+            color: #34495e;
         }
 
         .btn-danger {
-            background-color: #FFCDD2;
-            color: #D32F2F;
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+            color: #fff;
         }
 
         .btn:disabled {
@@ -1485,7 +1915,7 @@ const includeCurrentPageData = () => {
 
         .cuttingRingRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 210mm;
+            width: 250mm;
             margin: 0 auto;
             padding: 24px;
             background-color: var(--bg-card);
@@ -1531,55 +1961,40 @@ const includeCurrentPageData = () => {
             text-align: left;
             padding-left: 10px;
         }
-        input[type="text"], textarea, select {
-            width: 100%;
+        input[type="text"], textarea, select, .table-textarea {
+            width: 98%;
             border: 1px solid #b3d9ff;
             border-radius: 4px;
             outline: none;
-            font-family: inherit;
-            font-size: inherit;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+            color: #000000;
             background-color: transparent;
             text-align: center;
-            padding: 2px;
-            margin: 0;
-        }
-        input[type="text"]:focus, textarea:focus, select:focus {
-            background-color: #f0f8ff;
-            border-color: #3498db;
-        }
-        input[type="text"]:disabled:focus {
-            background-color: transparent;
-            outline: none;
-            border-color: black;
-        }
-        textarea {
-            resize: none;
-            overflow: hidden;
-            text-align: left;
+            padding: 2px 4px;
         }
         .table-textarea {
             width: 100%;
             height: 100%;
-            border: 1px solid #b3d9ff;
-            border-radius: 4px;
-            outline: none;
-            font-family: inherit;
-            font-size: inherit;
-            background-color: transparent;
-            text-align: center;
-            padding: 2px;
-            margin: 0;
-            resize: none;
-            overflow: hidden;
         }
-        .table-textarea:focus {
+        input[type="text"]:focus, textarea:focus, select:focus, .table-textarea:focus {
             background-color: #f0f8ff;
             border-color: #3498db;
         }
-        .table-textarea:disabled:focus {
+        input[type="text"]:disabled, textarea:disabled, select:disabled, .table-textarea:disabled {
+            background-color: transparent;
+            color: #000000;
+            font-family: 'SimSun', 'Songti SC', serif;
+            font-size: 14px;
+        }
+        input[type="text"]:disabled:focus, textarea:disabled:focus, select:disabled:focus, .table-textarea:disabled:focus {
             background-color: transparent;
             outline: none;
             border-color: black;
+        }
+        textarea, .table-textarea {
+            resize: none;
+            overflow: hidden;
         }
         .footer-info {
             display: flex;
@@ -1587,6 +2002,138 @@ const includeCurrentPageData = () => {
             margin-top: 10px;
             font-size: 16px;
             font-weight: bold;
+        }
+        /* 模态窗口样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            position: absolute;
+            top: 15px;
+            right: 20px;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .modal-input {
+            width: 120px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        
+        /* 隐藏输入框的上下箭头按钮 */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .modal-actions .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-actions .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+        }
+        
+        .modal-actions .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .modal-actions .btn-secondary {
+            background-color: #f5f7fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .modal-actions .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
         }
         .page-footer {
             margin-top: 5px;

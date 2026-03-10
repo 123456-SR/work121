@@ -160,7 +160,15 @@ const menuItems = {
       id: 'TaskManagement',
       name: '任务管理',
       submenu: [
-        { id: 'PendingTasks', name: '待处理任务' }
+        {
+          id: 'PendingTasks',
+          name: '待处理任务',
+          submenu: [
+            { id: 'PendingAuditTasks', name: '待审核任务', component: 'PendingTasks', props: { taskType: 'audit' } },
+            { id: 'PendingApprovalTasks', name: '待批准任务', component: 'PendingTasks', props: { taskType: 'approval' } },
+            { id: 'PendingSubmitTasks', name: '待提交任务', component: 'PendingTasks', props: { taskType: 'submit' } }
+          ]
+        }
       ]
     },
     {
@@ -456,7 +464,15 @@ const accessibleMenus = computed(() => {
       // 修改子菜单，添加任务分配
       taskManagementMenu.submenu = [
         { id: 'DirectoryList', name: '任务分配' },
-        { id: 'PendingTasks', name: '待处理任务' }
+        {
+          id: 'PendingTasks',
+          name: '待处理任务',
+          submenu: [
+            { id: 'PendingAuditTasks', name: '待审核任务', component: 'PendingTasks', props: { taskType: 'audit' } },
+            { id: 'PendingApprovalTasks', name: '待批准任务', component: 'PendingTasks', props: { taskType: 'approval' } },
+            { id: 'PendingSubmitTasks', name: '待提交任务', component: 'PendingTasks', props: { taskType: 'submit' } }
+          ]
+        }
       ]
     }
     // 添加管理员菜单
