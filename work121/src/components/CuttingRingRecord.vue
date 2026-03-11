@@ -8,17 +8,17 @@
         <span v-if="!draftMode" class="record-nav">
           <button
             @click="prevPage"
-            :disabled="currentPage <= 0"
+            :disabled="totalPages <= 0 || currentPage <= 0"
             class="btn btn-secondary btn-small"
           >
             上一页
           </button>
           <span class="record-nav-info">
-            页面 {{ currentPage + 1 }} / {{ totalPages }}
+            页面 {{ totalPages > 0 ? currentPage + 1 : 0 }} / {{ totalPages }}
           </span>
           <button
             @click="nextPage"
-            :disabled="currentPage >= totalPages - 1"
+            :disabled="totalPages <= 0 || currentPage >= totalPages - 1"
             class="btn btn-secondary btn-small"
           >
             下一页
@@ -341,7 +341,7 @@ import axios from 'axios'
 
 // 数据分析相关变量
 const showModal = ref(false)
-const analysisRange = reactive({ start: 1, end: 4 })
+const analysisRange = reactive({ start: '', end: '' })
 const analysisResults = reactive({
   ringMassMin: '',
   ringMassMax: '',
@@ -1347,13 +1347,237 @@ const printDocument = () => {
   window.print()
 }
 
+const openBackendPdfPreview = (actionUrl) => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.cuttingRingRecord-container')
+  if (!container) return
+
+  const escapeAttr = (v) => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const toBase64Utf8 = (text) => {
+    const bytes = new TextEncoder().encode(text)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return btoa(binary)
+  }
+
+  const mmToPx = (mm) => mm * 96 / 25.4
+  const pageWidthMm = 210
+  const pageHeightMm = 297
+  const marginMm = 12
+  const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
+  const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
+  const rect = container.getBoundingClientRect()
+  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
+  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const scaledWidthPx = contentWidthPx * pdfScale
+  const scaledHeightPx = contentHeightPx * pdfScale
+  const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
+  const pdfOffsetYPx = Math.max(0, (availableHeightPx - scaledHeightPx) / 2)
+
+  const buildHtmlSnapshotBase64 = () => {
+    const clone = container.cloneNode(true)
+    clone.classList.add('pdf-preview')
+    clone.querySelectorAll('.no-print').forEach(el => el.remove())
+
+    const originalFields = container.querySelectorAll('input, textarea, select')
+    const clonedFields = clone.querySelectorAll('input, textarea, select')
+    const len = Math.min(originalFields.length, clonedFields.length)
+
+    for (let i = 0; i < len; i++) {
+      const src = originalFields[i]
+      const dst = clonedFields[i]
+      const tag = dst.tagName.toLowerCase()
+
+      if (tag === 'textarea') {
+        dst.textContent = src.value || ''
+        continue
+      }
+
+      if (tag === 'select') {
+        const srcValue = src.value
+        Array.from(dst.options).forEach(opt => {
+          opt.selected = opt.value === srcValue
+        })
+        continue
+      }
+
+      const type = (dst.getAttribute('type') || '').toLowerCase()
+      if (type === 'checkbox' || type === 'radio') {
+        if (src.checked) dst.setAttribute('checked', '')
+        else dst.removeAttribute('checked')
+        continue
+      }
+
+      dst.setAttribute('value', src.value ?? '')
+    }
+
+    clone.querySelectorAll('input, textarea, select').forEach(el => {
+      const tag = el.tagName.toLowerCase()
+      const style = el.getAttribute('style') || ''
+      const name = el.getAttribute('name') || ''
+
+      if (tag === 'input') {
+        const type = (el.getAttribute('type') || 'text').toLowerCase()
+        if (type === 'hidden') {
+          el.remove()
+          return
+        }
+
+        if (type === 'checkbox' || type === 'radio') {
+          const box = document.createElement('span')
+          const checked = el.checked || el.hasAttribute('checked')
+          box.className = checked ? 'pdf-box checked' : 'pdf-box'
+          box.setAttribute('aria-hidden', 'true')
+          box.setAttribute('style', style)
+          el.replaceWith(box)
+          return
+        }
+
+        const span = document.createElement('span')
+        span.textContent = el.getAttribute('value') || el.value || ''
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+        return
+      }
+
+      if (tag === 'textarea') {
+        const div = document.createElement('div')
+        div.textContent = el.textContent || el.value || ''
+        div.setAttribute('data-name', name)
+        div.setAttribute('style', `${style};white-space:pre-wrap;`)
+        el.replaceWith(div)
+        return
+      }
+
+      if (tag === 'select') {
+        const span = document.createElement('span')
+        const selected = el.querySelector('option:checked')
+        span.textContent = selected ? selected.textContent : (el.value || '')
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+      }
+    })
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+    const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${stylesHtml}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
+      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
+      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
+      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
+      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
+      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
+      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      .pdf-preview .pdf-box {
+        width: 13px;
+        height: 13px;
+        border: 1px solid #000;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-right: 6px;
+        box-sizing: border-box;
+      }
+      .pdf-preview .pdf-box.checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -65%) rotate(45deg);
+      }
+    </style>
+  </head>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+</html>`
+    return toBase64Utf8(html)
+  }
+
+  const fields = Array.from(pdfForm.value.querySelectorAll('input, textarea, select'))
+  const snapshotBase64 = buildHtmlSnapshotBase64()
+  const inputsHtml = fields.map((el) => {
+    const name = el.getAttribute('name')
+    if (!name) return ''
+
+    if (el.tagName.toLowerCase() === 'select') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    if (el.tagName.toLowerCase() === 'textarea') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'file' || type === 'button' || type === 'submit' || type === 'reset') return ''
+
+    if (type === 'checkbox' || type === 'radio') {
+      if (!el.checked) return ''
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value || 'on')}" />`
+    }
+
+    return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+  }).join('\n') + `\n<input type="hidden" name="__pdf_html_base64" value="${escapeAttr(snapshotBase64)}" />\n`
+
+  const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF预览</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { padding: 28px 60px; box-sizing: border-box; background: #f2f2f2; }
+      .frame-shell {
+        height: calc(100vh - 56px);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+      }
+      iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    </style>
+  </head>
+  <body onload="var f=document.getElementById('pdfPostForm'); if (f) f.submit();">
+    <div class="frame-shell">
+      <iframe name="pdfFrame" title="PDF预览"></iframe>
+    </div>
+    <form id="pdfPostForm" method="post" action="${escapeAttr(actionUrl)}" target="pdfFrame">
+      ${inputsHtml}
+    </form>
+  </body>
+</html>`
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+
 const generatePdf = () => {
   if (pdfForm.value) {
     // 确保当前页面的数据和委托人数据被包含在表单中
     includeCurrentPageData()
-    pdfForm.value.action = '/api/pdf/cutting_ring_record/generate'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+    openBackendPdfPreview('/api/pdf/cutting_ring_record/generate')
   }
 }
 
@@ -1361,9 +1585,7 @@ const previewPdf = () => {
   if (pdfForm.value) {
     // 确保当前页面的数据和委托人数据被包含在表单中
     includeCurrentPageData()
-    pdfForm.value.action = '/api/pdf/cutting_ring_record/preview'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+    openBackendPdfPreview('/api/pdf/cutting_ring_record/preview')
   }
 }
 
@@ -1377,8 +1599,8 @@ const closeAnalysisModal = () => {
 }
 
 const autoAnalyzeAndFill = () => {
-  const start = analysisRange.start - 1 // 转换为数组索引
-  const end = analysisRange.end - 1
+  const start = (parseInt(analysisRange.start) || 1) - 1
+  const end = (parseInt(analysisRange.end) || 4) - 1
   
   // 收集现有数据用于分析
   const ringMasses = []
@@ -1915,7 +2137,7 @@ const includeCurrentPageData = () => {
 
         .cuttingRingRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 250mm;
+            width: 210mm;
             margin: 0 auto;
             padding: 24px;
             background-color: var(--bg-card);
@@ -2142,6 +2364,10 @@ const includeCurrentPageData = () => {
             font-size: 14px;
         }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
             .cuttingRingRecord-container {
                 width: 100%;
                 margin: 0;

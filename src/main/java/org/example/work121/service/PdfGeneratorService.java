@@ -2,22 +2,101 @@ package org.example.work121.service;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class PdfGeneratorService {
+
+    @Value("${pdf.chromium.path:}")
+    private String chromiumPath;
+
+    @Value("${pdf.chromium.timeoutSeconds:40}")
+    private long chromiumTimeoutSeconds;
+
+    private static float mmToPt(float mm) {
+        return mm * 72f / 25.4f;
+    }
+
+    private static Document createA4Document() {
+        float margin = mmToPt(12f);
+        return new Document(PageSize.A4, margin, margin, margin, margin);
+    }
+
+    private static byte[] rotatePdfBytesCounterClockwise90(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) return pdfBytes;
+        try {
+            PdfReader reader = new PdfReader(pdfBytes);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfStamper stamper = new PdfStamper(reader, baos);
+            int pages = reader.getNumberOfPages();
+            for (int i = 1; i <= pages; i++) {
+                PdfDictionary pageDict = reader.getPageN(i);
+                int rotation = reader.getPageRotation(i);
+                int newRotation = (rotation + 270) % 360;
+                pageDict.put(PdfName.ROTATE, new PdfNumber(newRotation));
+            }
+            stamper.close();
+            reader.close();
+            return baos.toByteArray();
+        } catch (Exception ignored) {
+            return pdfBytes;
+        }
+    }
+
+    private static class CheckboxCellEvent implements PdfPCellEvent {
+        private final boolean checked;
+
+        private CheckboxCellEvent(boolean checked) {
+            this.checked = checked;
+        }
+
+        @Override
+        public void cellLayout(PdfPCell cell, Rectangle position, PdfContentByte[] canvases) {
+            PdfContentByte canvas = canvases[PdfPTable.LINECANVAS];
+            float size = Math.min(position.getWidth(), position.getHeight()) - 2f;
+            float x = position.getLeft() + 1f;
+            float y = position.getBottom() + (position.getHeight() - size) / 2f;
+
+            canvas.saveState();
+            canvas.setLineWidth(0.8f);
+            canvas.rectangle(x, y, size, size);
+            canvas.stroke();
+
+            if (checked) {
+                canvas.moveTo(x + size * 0.18f, y + size * 0.55f);
+                canvas.lineTo(x + size * 0.42f, y + size * 0.30f);
+                canvas.lineTo(x + size * 0.82f, y + size * 0.78f);
+                canvas.stroke();
+            }
+            canvas.restoreState();
+        }
+    }
 
     private void addBackgroundAndFooter(Document document, PdfWriter writer, String version, String date, String currentPage, String totalPages) {
         // Footer removed as per requirement
     }
 
     public byte[] generateEntrustmentPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -35,6 +114,115 @@ public class PdfGeneratorService {
         }
 
         return baos.toByteArray();
+    }
+
+    private byte[] tryGeneratePdfFromHtml(HttpServletRequest request) {
+        String htmlBase64 = request.getParameter("__pdf_html_base64");
+        if (htmlBase64 == null || htmlBase64.trim().isEmpty()) return null;
+        try {
+            return generatePdfFromHtmlBase64(htmlBase64);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private byte[] generatePdfFromHtmlBase64(String htmlBase64) throws Exception {
+        byte[] htmlBytes = Base64.getDecoder().decode(htmlBase64);
+        String html = normalizeHtmlPageMargin(new String(htmlBytes, StandardCharsets.UTF_8));
+
+        String executable = resolveChromiumExecutable();
+        Path tempDir = Files.createTempDirectory("pdf-html-");
+        Path htmlFile = tempDir.resolve("input.html");
+        Path pdfFile = tempDir.resolve("output.pdf");
+
+        try {
+            Files.write(htmlFile, html.getBytes(StandardCharsets.UTF_8));
+
+            List<String> cmd = new ArrayList<>();
+            cmd.add(executable);
+            cmd.add("--headless=new");
+            cmd.add("--disable-gpu");
+            cmd.add("--no-sandbox");
+            cmd.add("--print-to-pdf-no-header");
+            cmd.add("--print-to-pdf=" + pdfFile.toAbsolutePath().toString());
+            cmd.add(htmlFile.toUri().toString());
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            String output = readAll(p.getInputStream());
+
+            boolean finished = p.waitFor(chromiumTimeoutSeconds, TimeUnit.SECONDS);
+            if (!finished) {
+                p.destroyForcibly();
+                throw new RuntimeException("Chromium PDF timed out");
+            }
+            if (p.exitValue() != 0) {
+                throw new RuntimeException("Chromium PDF failed: " + output);
+            }
+
+            if (!Files.exists(pdfFile) || Files.size(pdfFile) == 0) {
+                throw new RuntimeException("Chromium PDF empty: " + output);
+            }
+
+            return Files.readAllBytes(pdfFile);
+        } finally {
+            try {
+                Files.deleteIfExists(pdfFile);
+            } catch (Exception ignored) {
+            }
+            try {
+                Files.deleteIfExists(htmlFile);
+            } catch (Exception ignored) {
+            }
+            try {
+                Files.deleteIfExists(tempDir);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private String normalizeHtmlPageMargin(String html) {
+        if (html == null || html.isEmpty()) return html;
+        String normalized = html;
+        normalized = normalized.replace("margin: 12mm 22mm;", "margin: 12mm;");
+        normalized = normalized.replace("margin:12mm 22mm;", "margin: 12mm;");
+        normalized = normalized.replace("margin: 12mm 22mm 12mm 22mm;", "margin: 12mm;");
+        normalized = normalized.replace("margin:12mm 22mm 12mm 22mm;", "margin: 12mm;");
+        normalized = normalized.replaceAll("(@page\\s*\\{[^}]*?)margin\\s*:\\s*[^;\\}]+\\s*;?", "$1margin: 12mm;");
+        normalized = normalized.replaceAll("(@page\\s*\\{)(?![^}]*\\bmargin\\s*:)", "$1 margin: 12mm;");
+        return normalized;
+    }
+
+    private String resolveChromiumExecutable() {
+        if (chromiumPath != null && !chromiumPath.trim().isEmpty()) {
+            File f = new File(chromiumPath.trim());
+            if (f.exists() && f.isFile()) return f.getAbsolutePath();
+        }
+
+        String[] candidates = new String[]{
+                System.getenv("PDF_CHROMIUM_PATH"),
+                "C:\\\\Program Files (x86)\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe",
+                "C:\\\\Program Files\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe",
+                "C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe",
+                "C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe"
+        };
+        for (String c : candidates) {
+            if (c == null || c.trim().isEmpty()) continue;
+            File f = new File(c.trim());
+            if (f.exists() && f.isFile()) return f.getAbsolutePath();
+        }
+        throw new RuntimeException("Chromium executable not found");
+    }
+
+    private static String readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) >= 0) {
+            out.write(buf, 0, n);
+        }
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     private void addEntrustmentContent(Document document, HttpServletRequest request, BaseFont chineseFont) throws DocumentException, IOException {
@@ -225,30 +413,71 @@ public class PdfGeneratorService {
         cell12.setHorizontalAlignment(Element.ALIGN_LEFT);
         
         String mode = request.getParameter("deliveryMode") != null ? request.getParameter("deliveryMode") : "3";
-        
-        String check1 = "1".equals(mode) ? "☑" : "□";
-        String check2 = "2".equals(mode) ? "☑" : "□";
-        String check3 = "3".equals(mode) ? "☑" : "□";
-        
-        Paragraph pDates = new Paragraph();
-        pDates.setLeading(14f); 
-        
-        // Option 1
-        pDates.add(new Chunk(check1 + " 可以为：    ", valueFont));
+
+        boolean checked1 = "1".equals(mode);
+        boolean checked2 = "2".equals(mode);
+        boolean checked3 = "3".equals(mode);
+
+        PdfPTable deliveryTable = new PdfPTable(2);
+        deliveryTable.setWidthPercentage(100);
+        deliveryTable.setWidths(new float[]{1f, 20f});
+
+        PdfPCell cb1 = new PdfPCell();
+        cb1.setBorder(Rectangle.NO_BORDER);
+        cb1.setFixedHeight(14f);
+        cb1.setCellEvent(new CheckboxCellEvent(checked1));
+        cb1.setPadding(0);
+        cb1.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        deliveryTable.addCell(cb1);
+
         String deliveryDate1 = request.getParameter("deliveryDate1") != null ? request.getParameter("deliveryDate1") : "";
-        pDates.add(new Chunk(deliveryDate1.isEmpty() ? "            " : deliveryDate1, valueFont));
-        pDates.add(new Chunk("\n", valueFont));
-        
-        // Option 2
-        pDates.add(new Chunk(check2 + " 严格限定为：", valueFont));
+        Paragraph t1 = new Paragraph();
+        t1.setLeading(14f);
+        t1.add(new Chunk("可以为：    ", valueFont));
+        t1.add(new Chunk(deliveryDate1.isEmpty() ? "            " : deliveryDate1, valueFont));
+        PdfPCell t1c = new PdfPCell(t1);
+        t1c.setBorder(Rectangle.NO_BORDER);
+        t1c.setPadding(0);
+        t1c.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        deliveryTable.addCell(t1c);
+
+        PdfPCell cb2 = new PdfPCell();
+        cb2.setBorder(Rectangle.NO_BORDER);
+        cb2.setFixedHeight(14f);
+        cb2.setCellEvent(new CheckboxCellEvent(checked2));
+        cb2.setPadding(0);
+        cb2.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        deliveryTable.addCell(cb2);
+
         String deliveryDate2 = request.getParameter("deliveryDate2") != null ? request.getParameter("deliveryDate2") : "";
-        pDates.add(new Chunk(deliveryDate2.isEmpty() ? "            " : deliveryDate2, valueFont));
-        pDates.add(new Chunk("\n", valueFont));
-        
-        // Option 3
-        pDates.add(new Chunk(check3 + " 不要求", valueFont));
-        
-        cell12.addElement(pDates);
+        Paragraph t2 = new Paragraph();
+        t2.setLeading(14f);
+        t2.add(new Chunk("严格限定为：", valueFont));
+        t2.add(new Chunk(deliveryDate2.isEmpty() ? "            " : deliveryDate2, valueFont));
+        PdfPCell t2c = new PdfPCell(t2);
+        t2c.setBorder(Rectangle.NO_BORDER);
+        t2c.setPadding(0);
+        t2c.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        deliveryTable.addCell(t2c);
+
+        PdfPCell cb3 = new PdfPCell();
+        cb3.setBorder(Rectangle.NO_BORDER);
+        cb3.setFixedHeight(14f);
+        cb3.setCellEvent(new CheckboxCellEvent(checked3));
+        cb3.setPadding(0);
+        cb3.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        deliveryTable.addCell(cb3);
+
+        Paragraph t3 = new Paragraph();
+        t3.setLeading(14f);
+        t3.add(new Chunk("不要求", valueFont));
+        PdfPCell t3c = new PdfPCell(t3);
+        t3c.setBorder(Rectangle.NO_BORDER);
+        t3c.setPadding(0);
+        t3c.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        deliveryTable.addCell(t3c);
+
+        cell12.addElement(deliveryTable);
         mainTable.addCell(cell12);
 
         String fee = request.getParameter("fee") != null ? request.getParameter("fee") : "";
@@ -413,7 +642,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateLightDynamicPenetrationPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -830,7 +1062,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateLightDynamicPenetrationResultPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1136,7 +1371,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateLightDynamicPenetrationRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1439,7 +1677,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateNuclearDensityRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1668,7 +1909,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateCuttingRingRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return rotatePdfBytesCounterClockwise90(htmlPdf);
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -1900,11 +2144,14 @@ public class PdfGeneratorService {
             e.printStackTrace();
         }
 
-        return baos.toByteArray();
+        return rotatePdfBytesCounterClockwise90(baos.toByteArray());
     }
 
     public byte[] generateDensityTestReportPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -2288,7 +2535,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateDensityTestResultPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -2550,7 +2800,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateReboundMethodRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return rotatePdfBytesCounterClockwise90(htmlPdf);
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -2816,11 +3069,14 @@ public class PdfGeneratorService {
             e.printStackTrace();
         }
 
-        return baos.toByteArray();
+        return rotatePdfBytesCounterClockwise90(baos.toByteArray());
     }
 
     public byte[] generateSandReplacementRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return rotatePdfBytesCounterClockwise90(htmlPdf);
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -3055,11 +3311,14 @@ public class PdfGeneratorService {
             e.printStackTrace();
         }
 
-        return baos.toByteArray();
+        return rotatePdfBytesCounterClockwise90(baos.toByteArray());
     }
 
     public byte[] generateWaterReplacementRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return rotatePdfBytesCounterClockwise90(htmlPdf);
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -3294,11 +3553,14 @@ public class PdfGeneratorService {
             e.printStackTrace();
         }
 
-        return baos.toByteArray();
+        return rotatePdfBytesCounterClockwise90(baos.toByteArray());
     }
 
     public byte[] generateBeckmanBeamResultPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -3492,7 +3754,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateBeckmanBeamRecordPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 10, 10, 10, 10);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -3724,7 +3989,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateBeckmanBeamReportPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -4041,7 +4309,10 @@ public class PdfGeneratorService {
     }
 
     public byte[] generateReboundMethodReportPdf(HttpServletRequest request) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        byte[] htmlPdf = tryGeneratePdfFromHtml(request);
+        if (htmlPdf != null) return htmlPdf;
+
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -4366,7 +4637,7 @@ public class PdfGeneratorService {
     }
 
     private byte[] generateGenericPdf(HttpServletRequest request, String title) {
-        Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+        Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
