@@ -165,15 +165,25 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     directory.setStatus("1");
                 }
 
-                // 自动创建关联表记录
-                createAndLinkRecords(directory);
+                // 确保委托单记录存在，保证 T_ENTRUSTMENT 表里有数据
+                ensureMasterRecord(directory.getDirName(), directory.getCreateBy(), determineAllTestCategories(directory), directory);
+                
+                // 获取创建的委托单记录的 ID，并更新 table1Id 字段
+                JcCoreWtInfo entrustment = jcCoreWtInfoService.getByWtNum(directory.getDirName());
+                if (entrustment != null && directory.getTable1Type() != null && directory.getTable1Type().equals("ENTRUSTMENT_LIST")) {
+                    directory.setTable1Id(entrustment.getId());
+                    System.out.println("更新 table1Id 为: " + entrustment.getId());
+                }
+                
+                // 不再自动创建记录表，改为在委托单状态变为5时创建
+                // createAndLinkRecords(directory);
 
                 result = simpleDirectoryMapper.insert(directory);
             }
 
             if (result > 0) {
-                // 同步委托单数据到关联表
-                syncEntrustmentData(directory);
+                // 不再自动同步委托单数据，改为在委托单状态变为5时创建记录表
+                // syncEntrustmentData(directory);
                 // 同步角色信息到所有关联表
                 syncRoles(directory);
                 return true;
@@ -218,7 +228,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         for (String type : types) {
             if (type == null) continue;
             String upper = type.toUpperCase();
-            if (upper.contains("NUCLEAR")) categories.add("核子法");
+            if (upper.contains("ENTRUSTMENT")) categories.add("ENTRUSTMENT_LIST");
+            else if (upper.contains("NUCLEAR")) categories.add("核子法");
             else if (upper.contains("SAND")) categories.add("灌砂法");
             else if (upper.contains("WATER")) categories.add("灌水法");
             else if (upper.contains("CUTTING")) categories.add("环刀法");
@@ -236,28 +247,40 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         try {
             JcCoreWtInfo existing = jcCoreWtInfoService.getByWtNum(wtNum);
             if (existing == null) {
+                // 场景1：完全没有委托记录（JC_CORE_WT_INFO / T_ENTRUSTMENT 都没有）
+                // -> 新建一条委托，自动同时写 JC_CORE_WT_INFO 和 T_ENTRUSTMENT
                 JcCoreWtInfo info = new JcCoreWtInfo();
                 info.setId(UUID.randomUUID().toString());
                 info.setWtNum(wtNum);
                 info.setCreateBy(creator);
                 info.setCreateTime(new java.util.Date());
-                
+
                 setDefaultValues(info, directory, category);
-                
+
                 boolean saved = false;
                 try {
+                    // save 会同时插入 JC_CORE_WT_INFO 和 T_ENTRUSTMENT（通过 insert / insertExt）
                     jcCoreWtInfoService.save(info);
                     saved = true;
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
-                
+
                 if (!saved) {
                     try {
+                        // 兜底：至少保证 T_ENTRUSTMENT 有一条记录
                         jcCoreWtInfoMapper.insertExt(info);
                     } catch (Exception ex2) {
                         ex2.printStackTrace();
                     }
+                }
+            } else {
+                // 场景2：已有老数据，只存在 JC_CORE_WT_INFO（或其它老表），但 T_ENTRUSTMENT 可能还没建出来
+                // 任务分配时需要补建一条 T_ENTRUSTMENT 记录，保证委托单主表完整
+                try {
+                    jcCoreWtInfoService.save(existing);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
             }
         } catch (Exception e) {
@@ -343,10 +366,12 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
              // Note: Entrustment entity might use different field names, need to check Entrustment/JcCoreWtInfo
              if (entity instanceof JcCoreWtInfo) {
                  JcCoreWtInfo info = (JcCoreWtInfo) entity;
-                 // Assuming JcCoreWtInfo uses tester/reviewer for process flow or specific fields?
                  // User requirement: "委托单单独使用自己的承接人和审核人"
-                 // Map wtUndertaker -> receiver (YY_MAN)
-                 // Map wtReviewer -> reviewer
+                 // Map wtUndertaker -> TESTER field
+                 // Map wtReviewer -> REVIEWER field
+                 if (directory.getWtUndertaker() != null) info.setTester(directory.getWtUndertaker()); 
+                 if (directory.getWtReviewer() != null) info.setReviewer(directory.getWtReviewer());
+                 // Also set original fields for compatibility
                  if (directory.getWtUndertaker() != null) info.setReceiver(directory.getWtUndertaker()); 
                  if (directory.getWtReviewer() != null) info.setWtReviewer(directory.getWtReviewer());
              }
@@ -1596,7 +1621,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setTester(tester);
                     entity.setReviewer(reviewer);
                     // entity.setApprover(approver);
-                    jcCoreWtInfoMapper.update(entity);
+                    jcCoreWtInfoMapper.updateExt(entity);
                 }
             } else if (isTypeMatch(type, "DENSITY_TEST_RECORD", "原位密度检测记录表")) {
                 DensityTestRecord entity = densityTestRecordMapper.selectById(id);

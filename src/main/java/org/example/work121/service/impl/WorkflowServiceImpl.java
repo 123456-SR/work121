@@ -456,6 +456,26 @@ public class WorkflowServiceImpl implements WorkflowService {
             be.setTestBasis("未填写依据");
             be.setEquipment("未填写设备");
             be.setTestMethod("未填写方法");
+            
+            // 映射角色信息
+            if (directory != null) {
+                if (category.contains("RECORD") || category.contains("记录表")) {
+                    // 对于记录表：使用 jcFiller, jcTester, jcReviewer
+                    be.setFiller(directory.getJcFiller());
+                    be.setRecordTester(directory.getJcTester());
+                    be.setRecordReviewer(directory.getJcReviewer());
+                    
+                    // 映射到标准字段
+                    if (directory.getJcTester() != null) be.setTester(directory.getJcTester());
+                    if (directory.getJcReviewer() != null) be.setReviewer(directory.getJcReviewer());
+                    if (directory.getJcTester() != null) be.setApprover(directory.getJcTester()); // 使用 jcTester 填充 APPROVER 字段
+                } else if (category.contains("REPORT") || category.contains("报告") || category.contains("RESULT") || category.contains("结果")) {
+                    // 对于报告/结果：使用 bgTester, bgReviewer, bgApprover
+                    if (directory.getBgTester() != null) be.setTester(directory.getBgTester());
+                    if (directory.getBgReviewer() != null) be.setReviewer(directory.getBgReviewer());
+                    if (directory.getBgApprover() != null) be.setApprover(directory.getBgApprover());
+                }
+            }
         }
     }
     

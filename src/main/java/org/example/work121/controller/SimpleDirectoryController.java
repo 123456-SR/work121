@@ -43,6 +43,8 @@ public class SimpleDirectoryController {
             System.out.println("table9Type: " + directory.getTable9Type());
             System.out.println("table10Type: " + directory.getTable10Type());
             System.out.println("角色信息:");
+            System.out.println("wtUndertaker: " + directory.getWtUndertaker());
+            System.out.println("wtReviewer: " + directory.getWtReviewer());
             System.out.println("jcFiller: " + directory.getJcFiller());
             System.out.println("jcTester: " + directory.getJcTester());
             System.out.println("jcReviewer: " + directory.getJcReviewer());

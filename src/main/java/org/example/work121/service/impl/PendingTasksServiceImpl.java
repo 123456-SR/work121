@@ -51,18 +51,37 @@ public class PendingTasksServiceImpl implements PendingTasksService {
     private JzsSignatureService jzsSignatureService;
 
     @Override
-    public List<Map<String, Object>> getAllPendingTasks() {
-        return pendingTasksMapper.getAllPendingTasks();
+    public List<Map<String, Object>> getAllPendingTasks(String status, String userAccount) {
+        if (userAccount != null && !userAccount.trim().isEmpty()) {
+            return pendingTasksMapper.getPendingTasksByUser(userAccount.trim(), status);
+        }
+        return pendingTasksMapper.getAllPendingTasks(status);
     }
 
     @Override
-    public List<Map<String, Object>> searchPendingTasks(String taskType) {
-        return pendingTasksMapper.searchPendingTasks(taskType);
+    public List<Map<String, Object>> searchPendingTasks(String taskType, String status, String userAccount) {
+        // 现阶段 search SQL 只按 taskType 文本匹配（与历史实现保持一致），附带 status 过滤
+        // userAccount 如有传入，复用 get-by-user 的 reviewer 过滤逻辑（结果再在内存中过滤类型）
+        if (userAccount != null && !userAccount.trim().isEmpty()) {
+            List<Map<String, Object>> base = pendingTasksMapper.getPendingTasksByUser(userAccount.trim(), status);
+            if (taskType == null || taskType.trim().isEmpty()) return base;
+            String kw = taskType.trim();
+            return base.stream()
+                    .filter(m -> {
+                        Object t = m.get("table_type");
+                        return t != null && String.valueOf(t).contains(kw);
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        return pendingTasksMapper.searchPendingTasks(taskType, status);
     }
 
     @Override
-    public List<Map<String, Object>> getPendingTasksByUser(String userAccount) {
-        return pendingTasksMapper.getPendingTasksByUser(userAccount);
+    public List<Map<String, Object>> getPendingTasksByUser(String userAccount, String status) {
+        System.out.println("PendingTasksServiceImpl.getPendingTasksByUser: userAccount=" + userAccount + ", status=" + status);
+        List<Map<String, Object>> result = pendingTasksMapper.getPendingTasksByUser(userAccount, status);
+        System.out.println("PendingTasksServiceImpl.getPendingTasksByUser: 返回 " + result.size() + " 个任务");
+        return result;
     }
 
     @Override

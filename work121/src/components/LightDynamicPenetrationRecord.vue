@@ -1093,21 +1093,46 @@ const saveData = async () => {
     // 确保状态字段被传递给后端
     record.status = formData.status
     
+    console.log('=== 开始保存记录表 ===')
+    console.log('保存的记录数据:', {
+        id: record.id,
+        entrustmentId: record.entrustmentId,
+        wtNum: record.wtNum,
+        status: record.status,
+        clientUnit: record.clientUnit,
+        projectName: record.projectName,
+        filler: record.filler,
+        recordTester: record.recordTester,
+        recordReviewer: record.recordReviewer,
+        tester: record.tester,
+        reviewer: record.reviewer,
+        dataJson: record.dataJson ? JSON.parse(record.dataJson) : null
+    })
+    
     try {
+        console.log('调用后端保存接口: /api/light-dynamic-penetration/save')
         const res = await axios.post('/api/light-dynamic-penetration/save', record)
+        console.log('后端返回结果:', res.data)
+        
         if (res.data.success) {
+            console.log('保存成功，返回数据:', res.data.data)
             alert('保存成功')
             // Update record with returned data (especially ID)
             if (res.data.data) {
                 records.value[currentIndex.value] = res.data.data
                 // Update formData in case backend normalized something
                 mapRecordToFormData(records.value[currentIndex.value])
+                console.log('更新本地记录后的数据:', records.value[currentIndex.value])
             }
         } else {
+            console.error('保存失败:', res.data.message)
             alert('保存失败: ' + (res.data.message || '未知错误'))
         }
     } catch (e) {
+        console.error('保存过程中发生错误:', e)
         alert('保存失败: ' + e.message)
+    } finally {
+        console.log('=== 保存记录表操作完成 ===')
     }
 }
 </script>

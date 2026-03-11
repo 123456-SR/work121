@@ -12,10 +12,10 @@
         <tr>
           <th>任务编号</th>
           <th>任务名称</th>
-          <th>审核人</th>
+          <th>{{ taskType === 'submit' ? '填写人' : taskType === 'approval' ? '批准人' : '审核人' }}</th>
           <th>创建时间</th>
           <th>状态</th>
-          <th>操作</th>
+          <th v-if="taskType !== 'submit'">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -29,11 +29,9 @@
               {{ task.status }}
             </span>
           </td>
-          <td>
+          <td v-if="taskType !== 'submit'">
             <button v-if="taskType === 'audit'" class="btn btn-primary btn-small" @click="approveTask(task)">审核通过</button>
             <button v-else-if="taskType === 'approval'" class="btn btn-primary btn-small" @click="approveTask(task)">批准</button>
-            <button v-else-if="taskType === 'submit'" class="btn btn-primary btn-small" @click="submitTask(task)">提交</button>
-            <button v-else class="btn btn-primary btn-small" @click="approveTask(task)">审核通过</button>
           </td>
         </tr>
       </tbody>
@@ -42,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineProps } from 'vue'
+import { ref, computed, onMounted, watch, defineProps, inject } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -54,6 +52,16 @@ const props = defineProps({
 
 const searchQuery = ref('')
 const tasks = ref([])
+const navigateTo = inject('navigateTo')
+
+// 将页面类型映射为后端表的状态值：待提交=0，待审核=1，待批准=5
+const statusParam = computed(() => {
+  if (props.taskType === 'submit') return '0'
+  if (props.taskType === 'audit') return '1'
+  if (props.taskType === 'approval') return '5'
+  // 默认返回待审核状态
+  return '1'
+})
 
 const getCurrentUserAccount = () => {
   const userInfoStr = localStorage.getItem('userInfo')
@@ -78,15 +86,20 @@ const filteredTasks = computed(() => {
 // 搜索任务
 const searchTasks = async () => {
   try {
+    const userAccount = getCurrentUserAccount()
     const response = await axios.get('/api/pending-tasks/search', {
       params: {
-        taskType: searchQuery.value,
-        taskStatus: props.taskType
+        // 兼容后端：常见会要求 taskStatus/taskType；同时附带 keyword/userAccount 以适配“多表查询展示”接口
+        taskStatus: statusParam.value,
+        taskType: props.taskType,
+        keyword: searchQuery.value,
+        userAccount: userAccount
       }
     })
     if (response.data.success) {
       tasks.value = response.data.data.map(item => ({
         id: item.data_id || item.DATA_ID || item.dataId || '未知ID',
+        tableType: item.table_type || item.TABLE_TYPE || item.tableType || '未知类型',
         name: (item.table_type || item.TABLE_TYPE || item.tableType || '未知类型') + (props.taskType === 'audit' ? '审核任务' : props.taskType === 'approval' ? '批准任务' : props.taskType === 'submit' ? '提交任务' : '审核任务'),
         reviewer: item.reviewer || item.REVIEWER || '',
         createTime: new Date().toLocaleString(),
@@ -99,12 +112,46 @@ const searchTasks = async () => {
   }
 }
 
+// 打开任务对应的表单页面
+const openTask = (task) => {
+  if (!navigateTo) return
+  const type = String(task.tableType || '').toUpperCase()
+  const componentMap = {
+    // 委托单
+    'ENTRUSTMENT': 'Entrustment',
+    'ENTRUSTMENT_LIST': 'Entrustment',
+    // 记录表
+    'NUCLEAR_DENSITY': 'NuclearDensityRecord',
+    'SAND_REPLACEMENT': 'SandReplacementRecord',
+    'WATER_REPLACEMENT': 'WaterReplacementRecord',
+    'CUTTING_RING': 'CuttingRingRecord',
+    'REBOUND_METHOD': 'ReboundMethodRecord',
+    'LIGHT_DYNAMIC_PENETRATION': 'LightDynamicPenetrationRecord',
+    'BECKMAN_BEAM': 'BeckmanBeamRecord',
+    // 报告/结果（如有待办）
+    'DENSITY_TEST': 'DensityTestReport'
+  }
+
+  const component = componentMap[type]
+  if (!component) {
+    alert('暂不支持打开该任务类型：' + (task.tableType || type))
+    return
+  }
+
+  // 优先用统一编号做联动（各表基本都支持 wtNum），id 作为兜底
+  const propsToPass = {
+    wtNum: task.unifiedNumber && task.unifiedNumber !== '未知编号' ? task.unifiedNumber : undefined,
+    id: task.id && task.id !== '未知ID' ? task.id : undefined
+  }
+  navigateTo(component, propsToPass)
+}
+
 // 审核通过任务
 const approveTask = async (task) => {
   try {
     const userAccount = getCurrentUserAccount()
     const response = await axios.post('/api/pending-tasks/approve', {
-      taskType: task.name.replace(/审核任务|批准任务|提交任务/, ''),
+      taskType: task.tableType || task.name.replace(/审核任务|批准任务|提交任务/, ''),
       taskId: task.id,
       userAccount: userAccount,
       taskStatus: props.taskType
@@ -127,7 +174,7 @@ const submitTask = async (task) => {
   try {
     const userAccount = getCurrentUserAccount()
     const response = await axios.post('/api/pending-tasks/submit', {
-      taskType: task.name.replace(/审核任务|批准任务|提交任务/, ''),
+      taskType: task.tableType || task.name.replace(/审核任务|批准任务|提交任务/, ''),
       taskId: task.id,
       userAccount: userAccount
     })
@@ -147,14 +194,17 @@ const submitTask = async (task) => {
 // 获取任务列表
 const loadTasks = async () => {
   try {
-    const response = await axios.get('/api/pending-tasks/get-all', {
+    const userAccount = getCurrentUserAccount()
+    const response = await axios.get('/api/pending-tasks/get-by-user', {
       params: {
-        taskStatus: props.taskType
+        userAccount: userAccount,
+        taskStatus: statusParam.value
       }
     })
     if (response.data.success) {
       tasks.value = response.data.data.map(item => ({
         id: item.data_id || item.DATA_ID || item.dataId || '未知ID',
+        tableType: item.table_type || item.TABLE_TYPE || item.tableType || '未知类型',
         name: (item.table_type || item.TABLE_TYPE || item.tableType || '未知类型') + (props.taskType === 'audit' ? '审核任务' : props.taskType === 'approval' ? '批准任务' : props.taskType === 'submit' ? '提交任务' : '审核任务'),
         reviewer: item.reviewer || item.REVIEWER || '',
         createTime: new Date().toLocaleString(),
@@ -171,6 +221,11 @@ const loadTasks = async () => {
 onMounted(async () => {
   await loadTasks()
 })
+
+// 监听taskType变化，重新加载任务列表
+watch(() => props.taskType, async (newType) => {
+  await loadTasks()
+}, { immediate: false })
 </script>
 
 <style scoped>

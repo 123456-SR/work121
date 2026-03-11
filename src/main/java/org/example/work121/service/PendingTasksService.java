@@ -10,23 +10,28 @@ public interface PendingTasksService {
 
     /**
      * 获取所有待审核任务列表
+     * @param status 状态（例如：0=待提交，1=待审核）
+     * @param userAccount 可选：当前用户账号（用于按审核人/处理人过滤）
      * @return 待审核任务列表
      */
-    List<Map<String, Object>> getAllPendingTasks();
+    List<Map<String, Object>> getAllPendingTasks(String status, String userAccount);
 
     /**
      * 根据任务类型搜索待审核任务
      * @param taskType 任务类型
+     * @param status 状态（例如：0=待提交，1=待审核）
+     * @param userAccount 可选：当前用户账号
      * @return 待审核任务列表
      */
-    List<Map<String, Object>> searchPendingTasks(String taskType);
+    List<Map<String, Object>> searchPendingTasks(String taskType, String status, String userAccount);
 
     /**
      * 获取当前用户的待审核任务列表
      * @param userAccount 当前用户账号
+     * @param status 状态（例如：0=待提交，1=待审核）
      * @return 待审核任务列表
      */
-    List<Map<String, Object>> getPendingTasksByUser(String userAccount);
+    List<Map<String, Object>> getPendingTasksByUser(String userAccount, String status);
 
     /**
      * 审核通过任务

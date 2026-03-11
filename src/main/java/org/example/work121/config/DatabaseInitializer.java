@@ -194,6 +194,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             addColumnSafe(table, "RECORD_TESTER", "VARCHAR2(64)");
             addColumnSafe(table, "RECORD_REVIEWER", "VARCHAR2(64)");
             addColumnSafe(table, "RECORD_REVIEW_SIGN", "CLOB");
+            // 记录表检测人签名（之前缺失会导致 ORA-00904: RECORD_TESTER_SIGN）
+            addColumnSafe(table, "RECORD_TESTER_SIGN", "CLOB");
             addColumnSafe(table, "REVIEW_SIGNATURE_PHOTO", "CLOB");
             addColumnSafe(table, "INSPECT_SIGNATURE_PHOTO", "CLOB");
             addColumnSafe(table, "APPROVE_SIGNATURE_PHOTO", "CLOB");
@@ -494,7 +496,8 @@ public class DatabaseInitializer implements CommandLineRunner {
                             "    FILLER VARCHAR2(64)," +
                             "    RECORD_TESTER VARCHAR2(64)," +
                             "    RECORD_REVIEWER VARCHAR2(64)," +
-                            "    RECORD_REVIEW_SIGN CLOB" +
+                            "    RECORD_REVIEW_SIGN CLOB," +
+                            "    RECORD_TESTER_SIGN CLOB" +
                             ")";
                     jdbcTemplate.execute(sql);
                     System.out.println("Table " + tableName + " created successfully.");
