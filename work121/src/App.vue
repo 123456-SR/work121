@@ -759,4 +759,29 @@ border-radius: 4px;
 ::-webkit-scrollbar-thumb:hover {
 background: #a8a8a8;
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  #app, .app-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .sidebar, .content-header {
+    display: none !important;
+  }
+  .main-content, .content-wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+}
 </style>

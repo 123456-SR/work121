@@ -8,17 +8,17 @@
         <span v-if="!draftMode" class="record-nav">
           <button
             @click="prevRecord"
-            :disabled="currentIndex <= 0"
+            :disabled="totalRecords <= 0 || currentIndex <= 0"
             class="btn btn-secondary btn-small"
           >
             上一页
           </button>
           <span class="record-nav-info">
-            记录 {{ currentIndex + 1 }} / {{ totalRecords }}
+            记录 {{ totalRecords > 0 ? currentIndex + 1 : 0 }} / {{ totalRecords }}
           </span>
           <button
             @click="nextRecord"
-            :disabled="currentIndex >= totalRecords - 1"
+            :disabled="totalRecords <= 0 || currentIndex >= totalRecords - 1"
             class="btn btn-secondary btn-small"
           >
             下一页
@@ -31,6 +31,7 @@
           </button>
           <button
             @click="deleteRecord"
+            :disabled="totalRecords <= 0"
             class="btn btn-danger btn-small"
           >
             删除当前记录
@@ -114,21 +115,21 @@
     <h2>原位密度检测记录表（灌砂法）</h2>
 
     <div class="header-info">
-        <span>单元工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 200px; border-bottom: 1px solid black; text-align: left;"></span>
-        <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 150px; border-bottom: 1px solid black;" disabled></span>
+        <span>单元工程名称：<input type="text" v-model="formData.projectName"   name="projectName" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>试验日期：<input type="text" v-model="formData.testDate"   name="testDate" style="width: 120px; border-bottom: 1px solid black;"></span>
+        <span>统一编号：<input type="text" v-model="formData.unifiedNumber"   name="unifiedNumber" style="width: 120px; border-bottom: 1px solid black;" disabled></span>
     </div>
      <div class="header-info">
-        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 150px; border-bottom: 1px solid black; text-align: left;"></span>
+        <span>依据标准：<input type="text" v-model="formData.standard"   name="standard" style="width: 100px; border-bottom: 1px solid black; text-align: left;"></span>
         <span>最大干密度 (g/cm³)：<input type="text" v-model="formData.maxDryDensity"   name="maxDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
         <span>最优含水率 (%)：<input type="text" v-model="formData.optMoisture"   name="optMoisture" style="width: 80px; border-bottom: 1px solid black;"></span>
         <span>最小干密度 (g/cm³)：<input type="text" v-model="formData.minDryDensity"   name="minDryDensity" style="width: 80px; border-bottom: 1px solid black;"></span>
     </div>
     <div class="header-info">
         <span>量砂密度：<input type="text" v-model="formData.sandDensity"   name="sandDensity" style="width: 80px; border-bottom: 1px solid black;"> g/cm³</span>
-        <span>仪器设备：<input type="text" v-model="formData.equipment"   name="equipment" style="width: 150px; border-bottom: 1px solid black;"></span>
-        <span>检测类别：<input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 100px; border-bottom: 1px solid black;"></span>
-        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 100px; border-bottom: 1px solid black;"></span>
+        <span>仪器设备：<input type="text" v-model="formData.equipment"   name="equipment" style="width: 120px; border-bottom: 1px solid black;"></span>
+        <span>检测类别：<input type="text" v-model="formData.testCategory"   name="testCategory" style="width: 80px; border-bottom: 1px solid black;"></span>
+        <span>设计压实度：<input type="text" v-model="formData.designCompaction"   name="designCompaction" style="width: 80px; border-bottom: 1px solid black;"></span>
     </div>
 
 
@@ -475,7 +476,7 @@ const formData = reactive({
 
 // 数据分析相关状态
 const showAnalysisModal = ref(false)
-const analysisRange = reactive({ start: 1, end: 4 })
+const analysisRange = reactive({ start: '', end: '' })
 const analysisResults = reactive({
   totalSandMassMin: '',
   totalSandMassMax: '',
@@ -1036,29 +1037,248 @@ const goToList = () => {
   }
 }
 
-const generatePdf = () => {
-  if (pdfForm.value) {
-    pdfForm.value.action = '/api/pdf/sand_replacement_record/generate'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+const openBackendPdfPreview = (actionUrl) => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.sandReplacementRecord-container')
+  if (!container) return
+
+  const escapeAttr = (v) => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const toBase64Utf8 = (text) => {
+    const bytes = new TextEncoder().encode(text)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return btoa(binary)
   }
+
+  const mmToPx = (mm) => mm * 96 / 25.4
+  const pageWidthMm = 210
+  const pageHeightMm = 297
+  const marginMm = 12
+  const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
+  const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
+  const rect = container.getBoundingClientRect()
+  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
+  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const scaledWidthPx = contentWidthPx * pdfScale
+  const scaledHeightPx = contentHeightPx * pdfScale
+  const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
+  const pdfOffsetYPx = Math.max(0, (availableHeightPx - scaledHeightPx) / 2)
+
+  const buildHtmlSnapshotBase64 = () => {
+    const clone = container.cloneNode(true)
+    clone.classList.add('pdf-preview')
+    clone.querySelectorAll('.no-print').forEach(el => el.remove())
+
+    const originalFields = container.querySelectorAll('input, textarea, select')
+    const clonedFields = clone.querySelectorAll('input, textarea, select')
+    const len = Math.min(originalFields.length, clonedFields.length)
+
+    for (let i = 0; i < len; i++) {
+      const src = originalFields[i]
+      const dst = clonedFields[i]
+      const tag = dst.tagName.toLowerCase()
+
+      if (tag === 'textarea') {
+        dst.textContent = src.value || ''
+        continue
+      }
+
+      if (tag === 'select') {
+        const srcValue = src.value
+        Array.from(dst.options).forEach(opt => {
+          opt.selected = opt.value === srcValue
+        })
+        continue
+      }
+
+      const type = (dst.getAttribute('type') || '').toLowerCase()
+      if (type === 'checkbox' || type === 'radio') {
+        if (src.checked) dst.setAttribute('checked', '')
+        else dst.removeAttribute('checked')
+        continue
+      }
+
+      dst.setAttribute('value', src.value ?? '')
+    }
+
+    clone.querySelectorAll('input, textarea, select').forEach(el => {
+      const tag = el.tagName.toLowerCase()
+      const style = el.getAttribute('style') || ''
+      const name = el.getAttribute('name') || ''
+
+      if (tag === 'input') {
+        const type = (el.getAttribute('type') || 'text').toLowerCase()
+        if (type === 'hidden') {
+          el.remove()
+          return
+        }
+
+        if (type === 'checkbox' || type === 'radio') {
+          const box = document.createElement('span')
+          const checked = el.checked || el.hasAttribute('checked')
+          box.className = checked ? 'pdf-box checked' : 'pdf-box'
+          box.setAttribute('aria-hidden', 'true')
+          box.setAttribute('style', style)
+          el.replaceWith(box)
+          return
+        }
+
+        const span = document.createElement('span')
+        span.textContent = el.getAttribute('value') || el.value || ''
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+        return
+      }
+
+      if (tag === 'textarea') {
+        const div = document.createElement('div')
+        div.textContent = el.textContent || el.value || ''
+        div.setAttribute('data-name', name)
+        div.setAttribute('style', `${style};white-space:pre-wrap;`)
+        el.replaceWith(div)
+        return
+      }
+
+      if (tag === 'select') {
+        const span = document.createElement('span')
+        const selected = el.querySelector('option:checked')
+        span.textContent = selected ? selected.textContent : (el.value || '')
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+      }
+    })
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+    const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${stylesHtml}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
+      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
+      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
+      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
+      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
+      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
+      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      .pdf-preview .pdf-box {
+        width: 13px;
+        height: 13px;
+        border: 1px solid #000;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-right: 6px;
+        box-sizing: border-box;
+      }
+      .pdf-preview .pdf-box.checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -65%) rotate(45deg);
+      }
+    </style>
+  </head>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+</html>`
+    return toBase64Utf8(html)
+  }
+
+  const fields = Array.from(pdfForm.value.querySelectorAll('input, textarea, select'))
+  const snapshotBase64 = buildHtmlSnapshotBase64()
+  const inputsHtml = fields.map((el) => {
+    const name = el.getAttribute('name')
+    if (!name) return ''
+
+    if (el.tagName.toLowerCase() === 'select') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    if (el.tagName.toLowerCase() === 'textarea') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'file' || type === 'button' || type === 'submit' || type === 'reset') return ''
+
+    if (type === 'checkbox' || type === 'radio') {
+      if (!el.checked) return ''
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value || 'on')}" />`
+    }
+
+    return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+  }).join('\n') + `\n<input type="hidden" name="__pdf_html_base64" value="${escapeAttr(snapshotBase64)}" />\n`
+
+  const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF预览</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { padding: 28px 60px; box-sizing: border-box; background: #f2f2f2; }
+      .frame-shell {
+        height: calc(100vh - 56px);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+      }
+      iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    </style>
+  </head>
+  <body onload="var f=document.getElementById('pdfPostForm'); if (f) f.submit();">
+    <div class="frame-shell">
+      <iframe name="pdfFrame" title="PDF预览"></iframe>
+    </div>
+    <form id="pdfPostForm" method="post" action="${escapeAttr(actionUrl)}" target="pdfFrame">
+      ${inputsHtml}
+    </form>
+  </body>
+</html>`
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+
+const generatePdf = () => {
+  openBackendPdfPreview('/api/pdf/sand_replacement_record/generate')
 }
 
 const previewPdf = () => {
-  if (pdfForm.value) {
-    pdfForm.value.action = '/api/pdf/sand_replacement_record/preview'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
-  }
+  openBackendPdfPreview('/api/pdf/sand_replacement_record/preview')
 }
 
 // 数据分析相关方法
 const openAnalysisModal = () => {
   showAnalysisModal.value = true
-  // 重置分析结果
   Object.keys(analysisResults).forEach(key => {
     analysisResults[key] = ''
   })
+  analysisRange.start = ''
+  analysisRange.end = ''
 }
 
 const closeAnalysisModal = () => {
@@ -1604,7 +1824,8 @@ const autoAnalyzeAndFill = () => {
 
         .sandReplacementRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 260mm;
+            width: 100%;
+            max-width: 260mm;
             margin: 0 auto;
             padding: 24px;
             background-color: var(--bg-card);
@@ -1634,7 +1855,7 @@ const autoAnalyzeAndFill = () => {
         }
         td {
             border: 1px solid black;
-            padding: 5px;
+            padding: 6px 5px;
             vertical-align: middle;
             text-align: center;
         }
@@ -1648,21 +1869,44 @@ const autoAnalyzeAndFill = () => {
         }
         input[type="text"], textarea {
             width: 98%;
-            border: none;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
             outline: none;
             font-family: inherit;
             font-size: inherit;
             background-color: transparent;
             text-align: center;
+            padding: 1px 3px;
+            box-sizing: border-box;
+        }
+        table input[type="text"], table textarea {
+            width: 100%;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 1px 3px;
+            box-sizing: border-box;
+            display: block;
+            min-height: 26px;
         }
         .left-align input[type="text"] {
             text-align: left;
         }
         input[type="text"]:focus, textarea:focus {
             background-color: #f0f8ff;
+            border-color: #3498db;
+        }
+        .header-info input[type="text"]:focus {
+            border-bottom-color: black;
+        }
+        table input[type="text"]:focus, table textarea:focus {
+            border-color: #3498db;
         }
         input[type="text"]:disabled:focus, textarea:disabled:focus {
             background-color: transparent;
+            border-color: black;
+        }
+        table input[type="text"]:disabled:focus, table textarea:disabled:focus {
+            border-color: black;
         }
 
         /* 统一输入字段样式，确保与表格其他字段字体一致 */
@@ -1697,8 +1941,13 @@ const autoAnalyzeAndFill = () => {
             font-size: 14px;
         }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
             .sandReplacementRecord-container {
-                width: 100%;
+                width: 210mm;
+                max-width: none;
                 margin: 0;
                 padding: 0;
             }

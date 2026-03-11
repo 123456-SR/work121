@@ -84,23 +84,23 @@
         <!-- Row 1 -->
         <tr>
             <td class="label" style="width: 15%;">委托单位：</td>
-            <td style="width: 25%;"><input type="text" v-model="formData.clientUnit"   name="clientUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 35%;"><input type="text" v-model="formData.clientUnit"   name="clientUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
             <td class="label" style="width: 20%;">委托日期：</td>
-            <td style="width: 40%;"><input type="text" v-model="formData.clientDate"   name="clientDate" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 30%;"><input type="text" v-model="formData.clientDate"   name="clientDate" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 2 -->
         <tr>
             <td class="label" style="width: 15%;">施工单位：</td>
-            <td style="width: 25%;"><input type="text" v-model="formData.constructionUnit"   name="constructionUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 35%;"><input type="text" v-model="formData.constructionUnit"   name="constructionUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
             <td class="label" style="width: 20%;">建设单位：</td>
-            <td style="width: 40%;"><input type="text" v-model="formData.buildingUnit"   name="buildingUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 30%;"><input type="text" v-model="formData.buildingUnit"   name="buildingUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 3 -->
         <tr>
             <td class="label" style="width: 15%;">工程名称：</td>
-            <td style="width: 25%;"><input type="text" v-model="formData.projectName"   name="projectName" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 35%;"><input type="text" v-model="formData.projectName"   name="projectName" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
             <td class="label" style="width: 20%;">施工 (使用) 部位：</td>
-            <td style="width: 40%;"><input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 30%;"><input type="text" v-model="formData.constructionPart"   name="constructionPart" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 4 -->
         <tr>
@@ -177,7 +177,7 @@
         <!-- Row 9: 报告发送 & 样品处置 -->
         <tr>
             <td class="label" style="width: 15%;">报告发送</td>
-            <td style="width: 25%;">
+            <td style="width: 35%;">
                 <div class="checkbox-group">
                     <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="1" :disabled="!isEditable">1.自取</label>
                     <label><input type="checkbox" v-model="formData.reportSend"   name="reportSend" value="2" :disabled="!isEditable">2.邮寄</label>
@@ -186,7 +186,7 @@
 
             </td>
             <td class="label" style="width: 20%;">样品处置</td>
-            <td style="width: 40%;">
+            <td style="width: 30%;">
                 <div class="checkbox-group">
                     <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="1" :disabled="!isEditable">1.取回</label>
                     <label><input type="checkbox" v-model="formData.sampleDisposal"   name="sampleDisposal" value="2" :disabled="!isEditable">2.不取回</label>
@@ -196,34 +196,34 @@
         <!-- Row 10: 见证人 -->
         <tr>
             <td class="label" style="width: 15%;">见证人</td>
-            <td style="width: 25%;"><input type="text" v-model="formData.witness"   name="witness" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 35%;"><input type="text" v-model="formData.witness"   name="witness" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
             <td class="label" style="width: 20%;">见证单位</td>
-            <td style="width: 40%;"><input type="text" v-model="formData.witnessUnit"   name="witnessUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 30%;"><input type="text" v-model="formData.witnessUnit"   name="witnessUnit" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
 
         <!-- Row 11: 交付日期 & 费用 -->
         <tr>
             <td class="label" style="width: 15%;">检测报告<br>交付日期</td>
-            <td style="width: 25%;">
+            <td style="width: 35%;">
                 <div class="checkbox-group">
                     <div style="margin-bottom: 5px;">
                         <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="1" :disabled="!isEditable">可以为:</label>
                         <input type="text" v-model="formData.deliveryDate1"   name="deliveryDate1" style="width: 120px; border-bottom: 1px solid black;" :disabled="!isEditable">
-                        <input type="hidden" name="deliveryMode_1" :value="formData.deliveryMode === '1' ? '1' : ''">
+                        <input type="hidden" name="deliveryMode_1" :value="String(formData.deliveryMode) === '1' ? '1' : ''">
                     </div>
                     <div style="margin-bottom: 5px;">
                         <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="2" :disabled="!isEditable">严格限定为:</label>
                         <input type="text" v-model="formData.deliveryDate2"   name="deliveryDate2" style="width: 120px; border-bottom: 1px solid black;" :disabled="!isEditable">
-                        <input type="hidden" name="deliveryMode_2" :value="formData.deliveryMode === '2' ? '1' : ''">
+                        <input type="hidden" name="deliveryMode_2" :value="String(formData.deliveryMode) === '2' ? '1' : ''">
                     </div>
                     <div>
                         <label><input type="radio" v-model="formData.deliveryMode" name="deliveryMode" value="3" :disabled="!isEditable">不要求</label>
-                        <input type="hidden" name="deliveryMode_3" :value="formData.deliveryMode === '3' ? '1' : ''">
+                        <input type="hidden" name="deliveryMode_3" :value="String(formData.deliveryMode) === '3' ? '1' : ''">
                     </div>
                 </div>
             </td>
             <td class="label" style="width: 20%;">应缴检测(验)费(元)</td>
-            <td style="width: 40%;"><input type="text" v-model="formData.fee"   name="fee" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
+            <td style="width: 30%;"><input type="text" v-model="formData.fee"   name="fee" style="width: 100%; box-sizing: border-box;" :disabled="!isEditable"></td>
         </tr>
         <!-- Row 12: 备注 -->
         <tr>
@@ -607,7 +607,7 @@ const mapDataToForm = (data) => {
   formData.clientAddressPhone = data.clientAddressPhone || data.clientUnitTel || ''
   formData.reportSend = data.reportSendMode ? data.reportSendMode.split(',') : []
   formData.sampleDisposal = data.sampleDisposal ? data.sampleDisposal.split(',') : []
-  formData.deliveryMode = data.deliveryMode || '3'
+  formData.deliveryMode = data.deliveryMode === null || data.deliveryMode === undefined || data.deliveryMode === '' ? '3' : String(data.deliveryMode)
   if (data.deliveryDate) {
       if (formData.deliveryMode === '1') {
           formData.deliveryDate1 = data.deliveryDate
@@ -942,9 +942,9 @@ const saveForm = async (silent = false) => {
     clientAddressPhone: formData.clientAddressPhone,
     reportSendMode: formData.reportSend ? formData.reportSend.join(',') : '',
     sampleDisposal: formData.sampleDisposal ? formData.sampleDisposal.join(',') : '',
-    deliveryMode: formData.deliveryMode || '3',
-    deliveryDate: (formData.deliveryMode === '1' && formData.deliveryDate1) ? formData.deliveryDate1 : 
-                  (formData.deliveryMode === '2' && formData.deliveryDate2) ? formData.deliveryDate2 : '',
+    deliveryMode: formData.deliveryMode === null || formData.deliveryMode === undefined || formData.deliveryMode === '' ? '3' : String(formData.deliveryMode),
+    deliveryDate: (String(formData.deliveryMode) === '1' && formData.deliveryDate1) ? formData.deliveryDate1 : 
+                  (String(formData.deliveryMode) === '2' && formData.deliveryDate2) ? formData.deliveryDate2 : '',
     testItems: formData.testItems
   }
   
@@ -1422,20 +1422,339 @@ const printDocument = () => {
   window.print()
 }
 
+const openPreviewWindow = () => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.entrustment-container')
+  if (!container) return
+
+  const clone = container.cloneNode(true)
+  clone.classList.add('pdf-preview')
+  clone.querySelectorAll('.no-print').forEach(el => el.remove())
+
+  const originalFields = container.querySelectorAll('input, textarea, select')
+  const clonedFields = clone.querySelectorAll('input, textarea, select')
+  const len = Math.min(originalFields.length, clonedFields.length)
+
+  for (let i = 0; i < len; i++) {
+    const src = originalFields[i]
+    const dst = clonedFields[i]
+    const tag = dst.tagName.toLowerCase()
+
+    if (tag === 'textarea') {
+      dst.textContent = src.value || ''
+      continue
+    }
+
+    if (tag === 'select') {
+      const srcValue = src.value
+      Array.from(dst.options).forEach(opt => {
+        opt.selected = opt.value === srcValue
+      })
+      continue
+    }
+
+    const type = (dst.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio') {
+      if (src.checked) dst.setAttribute('checked', '')
+      else dst.removeAttribute('checked')
+      continue
+    }
+
+    dst.setAttribute('value', src.value ?? '')
+  }
+
+  clone.querySelectorAll('input[type="radio"][name="deliveryMode"]').forEach(el => {
+    const box = document.createElement('span')
+    box.className = el.checked ? 'pdf-box checked' : 'pdf-box'
+    box.setAttribute('aria-hidden', 'true')
+    el.replaceWith(box)
+  })
+
+  const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+  const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+  const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF预览</title>
+    ${stylesHtml}
+    <style>
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .pdf-preview .pdf-box {
+        width: 13px;
+        height: 13px;
+        border: 1px solid #000;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-right: 6px;
+        box-sizing: border-box;
+      }
+      .pdf-preview .pdf-box.checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -65%) rotate(45deg);
+      }
+    </style>
+  </head>
+  <body>${clone.outerHTML}</body>
+</html>`
+
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+  return w
+}
+
 const generatePdf = () => {
-  if (pdfForm.value) {
-    pdfForm.value.action = '/api/pdf/generate'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+  const w = openPreviewWindow()
+  if (!w) return
+  w.onload = () => {
+    w.focus()
+    w.print()
   }
 }
 
-const previewPdf = () => {
-  if (pdfForm.value) {
-    pdfForm.value.action = '/api/pdf/preview'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+const openBackendPdfPreview = (actionUrl) => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.entrustment-container')
+  if (!container) return
+
+  const escapeAttr = (v) => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const toBase64Utf8 = (text) => {
+    const bytes = new TextEncoder().encode(text)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return btoa(binary)
   }
+
+  const mmToPx = (mm) => mm * 96 / 25.4
+  const pageWidthMm = 210
+  const pageHeightMm = 297
+  const marginMm = 12
+  const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
+  const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
+  const rect = container.getBoundingClientRect()
+  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
+  const contentHeightPxForPdf = Math.max(contentHeightPx, availableHeightPx)
+  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPxForPdf)
+  const scaledWidthPx = contentWidthPx * pdfScale
+  const scaledHeightPx = contentHeightPxForPdf * pdfScale
+  const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
+  const pdfOffsetYPx = Math.max(0, (availableHeightPx - scaledHeightPx) / 2)
+
+  const buildHtmlSnapshotBase64 = () => {
+    const clone = container.cloneNode(true)
+    clone.classList.add('pdf-preview')
+    clone.querySelectorAll('.no-print').forEach(el => el.remove())
+
+    const originalFields = container.querySelectorAll('input, textarea, select')
+    const clonedFields = clone.querySelectorAll('input, textarea, select')
+    const len = Math.min(originalFields.length, clonedFields.length)
+
+    for (let i = 0; i < len; i++) {
+      const src = originalFields[i]
+      const dst = clonedFields[i]
+      const tag = dst.tagName.toLowerCase()
+
+      if (tag === 'textarea') {
+        dst.textContent = src.value || ''
+        continue
+      }
+
+      if (tag === 'select') {
+        const srcValue = src.value
+        Array.from(dst.options).forEach(opt => {
+          opt.selected = opt.value === srcValue
+        })
+        continue
+      }
+
+      const type = (dst.getAttribute('type') || '').toLowerCase()
+      if (type === 'checkbox' || type === 'radio') {
+        if (src.checked) dst.setAttribute('checked', '')
+        else dst.removeAttribute('checked')
+        continue
+      }
+
+      dst.setAttribute('value', src.value ?? '')
+    }
+
+    clone.querySelectorAll('input, textarea, select').forEach(el => {
+      const tag = el.tagName.toLowerCase()
+      const style = el.getAttribute('style') || ''
+      const name = el.getAttribute('name') || ''
+
+      if (tag === 'input') {
+        const type = (el.getAttribute('type') || 'text').toLowerCase()
+        if (type === 'hidden') {
+          el.remove()
+          return
+        }
+
+        if (type === 'checkbox' || type === 'radio') {
+          const box = document.createElement('span')
+          const checked = el.checked || el.hasAttribute('checked')
+          box.className = checked ? 'pdf-box checked' : 'pdf-box'
+          box.setAttribute('aria-hidden', 'true')
+          box.setAttribute('style', style)
+          el.replaceWith(box)
+          return
+        }
+
+        const span = document.createElement('span')
+        span.textContent = el.getAttribute('value') || el.value || ''
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+        return
+      }
+
+      if (tag === 'textarea') {
+        const div = document.createElement('div')
+        div.textContent = el.textContent || el.value || ''
+        div.setAttribute('data-name', name)
+        div.setAttribute('style', `${style};white-space:pre-wrap;`)
+        el.replaceWith(div)
+        return
+      }
+
+      if (tag === 'select') {
+        const span = document.createElement('span')
+        const selected = el.querySelector('option:checked')
+        span.textContent = selected ? selected.textContent : (el.value || '')
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+      }
+    })
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+    const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${stylesHtml}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
+      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
+      .pdf-preview.entrustment-container { height: 273mm; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview #entrustmentForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .pdf-preview #entrustmentForm > table { flex: 1; }
+      .pdf-preview #entrustmentForm .footer-info { margin-top: auto !important; margin-bottom: 0 !important; align-items: flex-end; }
+      .pdf-preview #entrustmentForm .footer-info [data-name="client"] { height: 30px; line-height: 30px; vertical-align: bottom; }
+      .pdf-preview .pdf-box {
+        width: 13px;
+        height: 13px;
+        border: 1px solid #000;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-right: 6px;
+        box-sizing: border-box;
+      }
+      .pdf-preview .pdf-box.checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -65%) rotate(45deg);
+      }
+    </style>
+  </head>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+</html>`
+    return toBase64Utf8(html)
+  }
+
+  const fields = Array.from(pdfForm.value.querySelectorAll('input, textarea, select'))
+  const snapshotBase64 = buildHtmlSnapshotBase64()
+  const inputsHtml = fields.map((el) => {
+    const name = el.getAttribute('name')
+    if (!name) return ''
+
+    if (el.tagName.toLowerCase() === 'select') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    if (el.tagName.toLowerCase() === 'textarea') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    const type = (el.getAttribute('type') || '').toLowerCase()
+
+    if (type === 'file' || type === 'button' || type === 'submit' || type === 'reset') return ''
+
+    if (type === 'checkbox' || type === 'radio') {
+      if (!el.checked) return ''
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value || 'on')}" />`
+    }
+
+    return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+  }).join('\n') + `\n<input type="hidden" name="__pdf_html_base64" value="${escapeAttr(snapshotBase64)}" />\n`
+
+  const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF预览</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { padding: 28px 60px; box-sizing: border-box; background: #f2f2f2; }
+      .frame-shell {
+        height: calc(100vh - 56px);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+      }
+      iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    </style>
+  </head>
+  <body onload="var f=document.getElementById('pdfPostForm'); if (f) f.submit();">
+    <div class="frame-shell">
+      <iframe name="pdfFrame" title="PDF预览"></iframe>
+    </div>
+    <form id="pdfPostForm" method="post" action="${escapeAttr(actionUrl)}" target="pdfFrame">
+      ${inputsHtml}
+    </form>
+  </body>
+</html>`
+
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+
+const previewPdf = () => {
+  openBackendPdfPreview('/api/pdf/preview')
 }
 
 
@@ -1513,6 +1832,34 @@ const goToList = () => {
             margin-right: 15px;
             cursor: pointer;
         }
+        .entrustment-container.pdf-preview input[type="radio"][name="deliveryMode"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border: 1px solid #000;
+            border-radius: 0;
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            margin-right: 6px;
+            background: transparent;
+        }
+        .entrustment-container.pdf-preview input[type="radio"][name="deliveryMode"]::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 8px;
+            border: solid #000;
+            border-width: 0 2px 2px 0;
+            transform: translate(-50%, -65%) rotate(45deg);
+            opacity: 0;
+        }
+        .entrustment-container.pdf-preview input[type="radio"][name="deliveryMode"]:checked::after {
+            opacity: 1;
+        }
         .footer-info {
             display: flex;
             justify-content: space-between;
@@ -1538,13 +1885,50 @@ const goToList = () => {
             overflow: hidden;
         }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 22mm;
+            }
             .entrustment-container {
-                width: 100%;
+                width: auto;
                 margin: 0;
                 padding: 0;
+                background-color: transparent;
+                border-radius: 0;
+                box-shadow: none;
             }
             input[type="text"], textarea {
                 background-color: transparent !important;
+            }
+            .entrustment-container input[type="radio"][name="deliveryMode"] {
+                appearance: none;
+                -webkit-appearance: none;
+                width: 13px;
+                height: 13px;
+                border: 1px solid #000;
+                border-radius: 0;
+                display: inline-block;
+                position: relative;
+                vertical-align: middle;
+                margin-right: 6px;
+                background: transparent;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .entrustment-container input[type="radio"][name="deliveryMode"]::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 4px;
+                height: 8px;
+                border: solid #000;
+                border-width: 0 2px 2px 0;
+                transform: translate(-50%, -65%) rotate(45deg);
+                opacity: 0;
+            }
+            .entrustment-container input[type="radio"][name="deliveryMode"]:checked::after {
+                opacity: 1;
             }
             .no-print {
                 display: none;

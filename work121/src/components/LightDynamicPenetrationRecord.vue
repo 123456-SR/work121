@@ -101,7 +101,7 @@
           预览PDF
         </button>
         <button
-          @click="fillPenetrationDepth"
+          @click="openAnalysisModal"
           class="btn btn-secondary btn-small"
           :disabled="!isEditable"
         >
@@ -250,6 +250,44 @@
     </form>
 
     
+    <div v-if="showAnalysisModal" class="modal-overlay no-print">
+      <div class="modal-content">
+        <h3>数据分析</h3>
+
+        <div class="form-group">
+          <label>区间范围（从第几区到第几区，最大1-4）：</label>
+          <div class="range-inputs">
+            <span>从</span>
+            <input type="number" v-model.number="analysisResults.startBlock" min="1" max="4" placeholder="起始区" />
+            <span>至</span>
+            <input type="number" v-model.number="analysisResults.endBlock" min="1" max="4" placeholder="结束区" />
+            <span>区</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>填充顺序：</label>
+          <div class="range-inputs" style="gap: 18px;">
+            <label><input type="radio" v-model="analysisResults.order" value="LR" /> 从左到右</label>
+            <label><input type="radio" v-model="analysisResults.order" value="TB" /> 从上到下</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>实测锤击数（必填范围）：</label>
+          <div class="range-inputs">
+            <input type="number" v-model="analysisResults.actualMin" placeholder="最小值" step="1" />
+            <span>至</span>
+            <input type="number" v-model="analysisResults.actualMax" placeholder="最大值" step="1" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="autoAnalyzeAndFill" class="btn btn-primary btn-small">自动分析并填充</button>
+          <button @click="closeAnalysisModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -260,6 +298,15 @@ import axios from 'axios'
 
 // 注入导航方法
 const navigateTo = inject('navigateTo')
+
+const showAnalysisModal = ref(false)
+const analysisResults = reactive({
+  startBlock: '',
+  endBlock: '',
+  order: '',
+  actualMin: '',
+  actualMax: ''
+})
 
 const props = defineProps({
   id: String,
@@ -980,6 +1027,232 @@ const goToList = () => {
   }
 }
 
+const openBackendPdfPreview = (actionUrl) => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.lightDynamicPenetrationRecord-container')
+  if (!container) return
+
+  const escapeAttr = (v) => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const toBase64Utf8 = (text) => {
+    const bytes = new TextEncoder().encode(text)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return btoa(binary)
+  }
+
+  const mmToPx = (mm) => mm * 96 / 25.4
+  const pageWidthMm = 210
+  const pageHeightMm = 297
+  const marginMm = 12
+  const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
+  const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
+  const rect = container.getBoundingClientRect()
+  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
+  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const scaledWidthPx = contentWidthPx * pdfScale
+  const scaledHeightPx = contentHeightPx * pdfScale
+  const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
+  const pdfOffsetYPx = Math.max(0, (availableHeightPx - scaledHeightPx) / 2)
+
+  const buildHtmlSnapshotBase64 = () => {
+    const clone = container.cloneNode(true)
+    clone.classList.add('pdf-preview')
+    clone.querySelectorAll('.no-print').forEach(el => el.remove())
+
+    const originalFields = container.querySelectorAll('input, textarea, select')
+    const clonedFields = clone.querySelectorAll('input, textarea, select')
+    const len = Math.min(originalFields.length, clonedFields.length)
+
+    for (let i = 0; i < len; i++) {
+      const src = originalFields[i]
+      const dst = clonedFields[i]
+      const tag = dst.tagName.toLowerCase()
+
+      if (tag === 'textarea') {
+        dst.textContent = src.value || ''
+        continue
+      }
+
+      if (tag === 'select') {
+        const srcValue = src.value
+        Array.from(dst.options).forEach(opt => {
+          opt.selected = opt.value === srcValue
+        })
+        continue
+      }
+
+      const type = (dst.getAttribute('type') || '').toLowerCase()
+      if (type === 'checkbox' || type === 'radio') {
+        if (src.checked) dst.setAttribute('checked', '')
+        else dst.removeAttribute('checked')
+        continue
+      }
+
+      dst.setAttribute('value', src.value ?? '')
+    }
+
+    clone.querySelectorAll('input, textarea, select').forEach(el => {
+      const tag = el.tagName.toLowerCase()
+      const style = el.getAttribute('style') || ''
+      const name = el.getAttribute('name') || ''
+
+      if (tag === 'input') {
+        const type = (el.getAttribute('type') || 'text').toLowerCase()
+        if (type === 'hidden') {
+          el.remove()
+          return
+        }
+
+        if (type === 'checkbox' || type === 'radio') {
+          const box = document.createElement('span')
+          const checked = el.checked || el.hasAttribute('checked')
+          box.className = checked ? 'pdf-box checked' : 'pdf-box'
+          box.setAttribute('aria-hidden', 'true')
+          box.setAttribute('style', style)
+          el.replaceWith(box)
+          return
+        }
+
+        const span = document.createElement('span')
+        span.textContent = el.getAttribute('value') || el.value || ''
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+        return
+      }
+
+      if (tag === 'textarea') {
+        const div = document.createElement('div')
+        div.textContent = el.textContent || el.value || ''
+        div.setAttribute('data-name', name)
+        div.setAttribute('style', `${style};white-space:pre-wrap;`)
+        el.replaceWith(div)
+        return
+      }
+
+      if (tag === 'select') {
+        const span = document.createElement('span')
+        const selected = el.querySelector('option:checked')
+        span.textContent = selected ? selected.textContent : (el.value || '')
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+      }
+    })
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+    const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${stylesHtml}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
+      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
+      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
+      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
+      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
+      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
+      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      .pdf-preview .pdf-box {
+        width: 13px;
+        height: 13px;
+        border: 1px solid #000;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-right: 6px;
+        box-sizing: border-box;
+      }
+      .pdf-preview .pdf-box.checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -65%) rotate(45deg);
+      }
+    </style>
+  </head>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+</html>`
+    return toBase64Utf8(html)
+  }
+
+  const fields = Array.from(pdfForm.value.querySelectorAll('input, textarea, select'))
+  const snapshotBase64 = buildHtmlSnapshotBase64()
+  const inputsHtml = fields.map((el) => {
+    const name = el.getAttribute('name')
+    if (!name) return ''
+
+    if (el.tagName.toLowerCase() === 'select') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    if (el.tagName.toLowerCase() === 'textarea') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'file' || type === 'button' || type === 'submit' || type === 'reset') return ''
+
+    if (type === 'checkbox' || type === 'radio') {
+      if (!el.checked) return ''
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value || 'on')}" />`
+    }
+
+    return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+  }).join('\n') + `\n<input type="hidden" name="__pdf_html_base64" value="${escapeAttr(snapshotBase64)}" />\n`
+
+  const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF预览</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { padding: 28px 60px; box-sizing: border-box; background: #f2f2f2; }
+      .frame-shell {
+        height: calc(100vh - 56px);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+      }
+      iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    </style>
+  </head>
+  <body onload="var f=document.getElementById('pdfPostForm'); if (f) f.submit();">
+    <div class="frame-shell">
+      <iframe name="pdfFrame" title="PDF预览"></iframe>
+    </div>
+    <form id="pdfPostForm" method="post" action="${escapeAttr(actionUrl)}" target="pdfFrame">
+      ${inputsHtml}
+    </form>
+  </body>
+</html>`
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+
 const generatePdf = () => {
   if (pdfForm.value) {
     saveCurrentToState() // Ensure current state is up to date
@@ -991,18 +1264,14 @@ const generatePdf = () => {
     // Since we are showing one record, it will print that record.
     // If we want to print ALL, we need a different approach.
     // For now, "Download PDF" prints current sheet.
-    pdfForm.value.action = '/api/pdf/light_dynamic_penetration_record/generate'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+    openBackendPdfPreview('/api/pdf/light_dynamic_penetration_record/generate')
   }
 }
 
 const previewPdf = () => {
   if (pdfForm.value) {
     saveCurrentToState()
-    pdfForm.value.action = '/api/pdf/light_dynamic_penetration_record/preview'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+    openBackendPdfPreview('/api/pdf/light_dynamic_penetration_record/preview')
   }
 }
 
@@ -1066,6 +1335,15 @@ const handleSign = async () => {
     }
 }
 
+const openAnalysisModal = () => {
+  showAnalysisModal.value = true
+  Object.keys(analysisResults).forEach(k => analysisResults[k] = '')
+}
+
+const closeAnalysisModal = () => {
+  showAnalysisModal.value = false
+}
+
 const fillPenetrationDepth = () => {
     // 贯入深度值数组
     const depths = ['0-30', '30-60', '60-90', '90-120', '120-150', '150-180', '180-210']
@@ -1083,6 +1361,134 @@ const fillPenetrationDepth = () => {
     }
     
     alert('贯入深度已自动填充')
+}
+
+const autoAnalyzeAndFill = () => {
+  const toInt = (v) => {
+    if (v === null || v === undefined || v === '') return null
+    const n = parseInt(String(v), 10)
+    return Number.isFinite(n) ? n : null
+  }
+
+  const pointCount = currentIndex.value === 0 ? 2 : 3
+  const sb = toInt(analysisResults.startBlock) ?? 1
+  const eb = toInt(analysisResults.endBlock) ?? pointCount
+  const validStartBlock = Math.max(1, Math.min(4, sb))
+  const validEndBlock = Math.max(1, Math.min(4, eb))
+  if (validStartBlock > validEndBlock) {
+    alert('起始区不能大于结束区')
+    return
+  }
+  const blocksIndices = []
+  for (let b = validStartBlock - 1; b <= validEndBlock - 1; b++) {
+    if (b < pointCount) blocksIndices.push(b)
+  }
+  if (!blocksIndices.length) {
+    alert('当前页面可填的区数为 ' + pointCount + '，请调整选择范围')
+    return
+  }
+  const order = analysisResults.order || 'LR'
+
+  const actualMin = toInt(analysisResults.actualMin)
+  const actualMax = toInt(analysisResults.actualMax)
+  if (actualMin === null || actualMax === null) {
+    alert('请填写“实测锤击数”的最小值和最大值')
+    return
+  }
+
+  const minVal = Math.min(actualMin, actualMax)
+  const maxVal = Math.max(actualMin, actualMax)
+  if (minVal <= 0 || maxVal <= 0) {
+    alert('“实测锤击数”范围需为正整数')
+    return
+  }
+
+  const randomIntBetween = (min, max) => {
+    const lo = Math.min(min, max)
+    const hi = Math.max(min, max)
+    return Math.floor(Math.random() * (hi - lo + 1)) + lo
+  }
+
+  const setIfEmpty = (key, value) => {
+    if (formData[key] === '' || formData[key] === null || formData[key] === undefined) {
+      formData[key] = value
+    }
+  }
+
+  const depths = ['0-30', '30-60', '60-90', '90-120', '120-150', '150-180', '180-210']
+  setIfEmpty('hammerWeight', '10')
+  setIfEmpty('dropDistance', '50')
+
+  for (const b of blocksIndices) {
+    for (let s = 0; s < 7; s++) {
+      const idx = b * 7 + s
+      setIfEmpty(`depth_L_${idx}`, depths[s])
+      setIfEmpty(`depth_R_${idx}`, depths[s])
+
+      const sides = order === 'LR' ? ['L', 'R'] : ['L', 'R'] // 行顺序“从上到下”已内置按 s=0..6
+      for (const side of sides) {
+        const key = `actual_${side}_${idx}`
+        if (formData[key] === '' || formData[key] === null || formData[key] === undefined) {
+          formData[key] = String(randomIntBetween(minVal, maxVal))
+        }
+      }
+    }
+
+    const calcBlockAvg = (sidePrefix) => {
+      const values = []
+      for (let s = 0; s < 7; s++) {
+        const idx = b * 7 + s
+        const v = toInt(formData[`${sidePrefix}_${idx}`])
+        if (v !== null) values.push(v)
+      }
+      if (!values.length) return null
+      return values.reduce((sum, v) => sum + v, 0) / values.length
+    }
+
+    const avgL = calcBlockAvg('actual_L')
+    const avgR = calcBlockAvg('actual_R')
+
+    if (avgL !== null) setIfEmpty(`avg_L_${b}`, avgL.toFixed(1))
+    if (avgR !== null) setIfEmpty(`avg_R_${b}`, avgR.toFixed(1))
+
+    const capacityFromAvg = (avg) => {
+      if (avg === null) return null
+      const v = Math.round(avg * 15 + 50)
+      return Math.max(50, Math.min(1000, v))
+    }
+
+    const avgLNum = avgL ?? (() => {
+      const n = parseFloat(String(formData[`avg_L_${b}`] || ''))
+      return Number.isFinite(n) ? n : null
+    })()
+    const avgRNum = avgR ?? (() => {
+      const n = parseFloat(String(formData[`avg_R_${b}`] || ''))
+      return Number.isFinite(n) ? n : null
+    })()
+
+    const capL = capacityFromAvg(avgLNum)
+    const capR = capacityFromAvg(avgRNum)
+
+    if (capL !== null) setIfEmpty(`capacity_L_${b}`, String(capL))
+    if (capR !== null) setIfEmpty(`capacity_R_${b}`, String(capR))
+  }
+
+  if (!formData.designCapacity) {
+    const caps = []
+    for (let b = 0; b < pointCount; b++) {
+      const l = parseFloat(String(formData[`capacity_L_${b}`] || ''))
+      const r = parseFloat(String(formData[`capacity_R_${b}`] || ''))
+      if (Number.isFinite(l)) caps.push(l)
+      if (Number.isFinite(r)) caps.push(r)
+    }
+    if (caps.length) {
+      const minCap = Math.min(...caps)
+      formData.designCapacity = String(Math.max(50, Math.round(minCap * 0.9)))
+    }
+  }
+
+  showAnalysisModal.value = false
+  alert('自动分析并填充完成')
 }
 
 const saveData = async () => {
@@ -1248,6 +1654,73 @@ const saveData = async () => {
         .btn-secondary {
             background-color: var(--card-blue);
             color: var(--color-blue);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 450px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f7fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .range-inputs input {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
         }
 
         .btn-danger {

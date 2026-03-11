@@ -7,17 +7,17 @@
         <span v-if="!draftMode" class="record-nav">
           <button
             @click="prevRecord"
-            :disabled="currentIndex <= 0"
+            :disabled="totalRecords <= 0 || currentIndex <= 0"
             class="btn btn-secondary btn-small"
           >
             上一页
           </button>
           <span class="record-nav-info">
-            记录 {{ currentIndex + 1 }} / {{ totalRecords }}
+            记录 {{ totalRecords > 0 ? currentIndex + 1 : 0 }} / {{ totalRecords }}
           </span>
           <button
             @click="nextRecord"
-            :disabled="currentIndex >= totalRecords - 1"
+            :disabled="totalRecords <= 0 || currentIndex >= totalRecords - 1"
             class="btn btn-secondary btn-small"
           >
             下一页
@@ -30,6 +30,7 @@
           </button>
           <button
             @click="deleteRecord"
+            :disabled="totalRecords <= 0"
             class="btn btn-danger btn-small"
           >
             删除当前记录
@@ -76,6 +77,12 @@
           class="btn btn-secondary btn-small"
         >
           保存
+        </button>
+        <button
+          @click="openAnalysisModal"
+          class="btn btn-primary btn-small"
+        >
+          数据分析
         </button>
         <button
           v-if="!draftMode"
@@ -335,6 +342,89 @@
 
     </form>
 
+    <div v-if="analysisModalVisible" class="modal-overlay no-print">
+      <div class="modal-content">
+        <h3>数据分析</h3>
+
+        <div class="form-group">
+          <label>数据范围：</label>
+          <div class="range-inputs">
+            <span>从</span>
+            <input type="number" v-model.number="analysisRange.start" min="1" max="15" placeholder="起始" />
+            <span>行至</span>
+            <input type="number" v-model.number="analysisRange.end" min="1" max="15" placeholder="结束" />
+            <span>行</span>
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          <div class="form-group">
+            <label>路表温度(℃)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.surfaceTempMin" placeholder="最小值" step="0.1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.surfaceTempMax" placeholder="最大值" step="0.1" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>左侧初读数(0.01mm)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.leftInitialMin" placeholder="最小值" step="1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.leftInitialMax" placeholder="最大值" step="1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>左侧终读数(0.01mm)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.leftFinalMin" placeholder="最小值" step="1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.leftFinalMax" placeholder="最大值" step="1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>左侧回弹弯沉(0.01mm)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.leftDeflectionMin" placeholder="最小值" step="1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.leftDeflectionMax" placeholder="最大值" step="1" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>右侧初读数(0.01mm)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.rightInitialMin" placeholder="最小值" step="1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.rightInitialMax" placeholder="最大值" step="1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>右侧终读数(0.01mm)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.rightFinalMin" placeholder="最小值" step="1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.rightFinalMax" placeholder="最大值" step="1" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>右侧回弹弯沉(0.01mm)（必填范围）：</label>
+            <div class="range-inputs">
+              <input type="number" v-model.number="analysisResults.rightDeflectionMin" placeholder="最小值" step="1" />
+              <span>至</span>
+              <input type="number" v-model.number="analysisResults.rightDeflectionMax" placeholder="最大值" step="1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="autoAnalyzeAndFill" class="btn btn-primary btn-small">自动分析并填充</button>
+          <button @click="closeAnalysisModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
+
 
 
   </div>
@@ -343,6 +433,25 @@
 <script setup>
 import { reactive, ref, onMounted, inject, computed } from 'vue'
 import axios from 'axios'
+
+const analysisModalVisible = ref(false)
+const analysisRange = reactive({ start: '', end: '' })
+const analysisResults = reactive({
+  surfaceTempMin: '',
+  surfaceTempMax: '',
+  leftInitialMin: '',
+  leftInitialMax: '',
+  leftFinalMin: '',
+  leftFinalMax: '',
+  leftDeflectionMin: '',
+  leftDeflectionMax: '',
+  rightInitialMin: '',
+  rightInitialMax: '',
+  rightFinalMin: '',
+  rightFinalMax: '',
+  rightDeflectionMin: '',
+  rightDeflectionMax: ''
+})
 
 const props = defineProps({
   id: String,
@@ -1161,20 +1270,527 @@ const goToList = () => {
   }
 }
 
+const openBackendPdfPreview = (actionUrl) => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.beckmanBeamRecord-container')
+  if (!container) return
+
+  const escapeAttr = (v) => String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const toBase64Utf8 = (text) => {
+    const bytes = new TextEncoder().encode(text)
+    let binary = ''
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+    return btoa(binary)
+  }
+
+  const mmToPx = (mm) => mm * 96 / 25.4
+  const pageWidthMm = 210
+  const pageHeightMm = 297
+  const marginMm = 12
+  const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
+  const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
+  const rect = container.getBoundingClientRect()
+  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
+  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const scaledWidthPx = contentWidthPx * pdfScale
+  const scaledHeightPx = contentHeightPx * pdfScale
+  const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
+  const pdfOffsetYPx = Math.max(0, (availableHeightPx - scaledHeightPx) / 2)
+
+  const buildHtmlSnapshotBase64 = () => {
+    const clone = container.cloneNode(true)
+    clone.classList.add('pdf-preview')
+    clone.querySelectorAll('.no-print').forEach(el => el.remove())
+
+    const originalFields = container.querySelectorAll('input, textarea, select')
+    const clonedFields = clone.querySelectorAll('input, textarea, select')
+    const len = Math.min(originalFields.length, clonedFields.length)
+
+    for (let i = 0; i < len; i++) {
+      const src = originalFields[i]
+      const dst = clonedFields[i]
+      const tag = dst.tagName.toLowerCase()
+
+      if (tag === 'textarea') {
+        dst.textContent = src.value || ''
+        continue
+      }
+
+      if (tag === 'select') {
+        const srcValue = src.value
+        Array.from(dst.options).forEach(opt => {
+          opt.selected = opt.value === srcValue
+        })
+        continue
+      }
+
+      const type = (dst.getAttribute('type') || '').toLowerCase()
+      if (type === 'checkbox' || type === 'radio') {
+        if (src.checked) dst.setAttribute('checked', '')
+        else dst.removeAttribute('checked')
+        continue
+      }
+
+      dst.setAttribute('value', src.value ?? '')
+    }
+
+    clone.querySelectorAll('input, textarea, select').forEach(el => {
+      const tag = el.tagName.toLowerCase()
+      const style = el.getAttribute('style') || ''
+      const name = el.getAttribute('name') || ''
+
+      if (tag === 'input') {
+        const type = (el.getAttribute('type') || 'text').toLowerCase()
+        if (type === 'hidden') {
+          el.remove()
+          return
+        }
+
+        if (type === 'checkbox' || type === 'radio') {
+          const box = document.createElement('span')
+          const checked = el.checked || el.hasAttribute('checked')
+          box.className = checked ? 'pdf-box checked' : 'pdf-box'
+          box.setAttribute('aria-hidden', 'true')
+          box.setAttribute('style', style)
+          el.replaceWith(box)
+          return
+        }
+
+        const span = document.createElement('span')
+        span.textContent = el.getAttribute('value') || el.value || ''
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+        return
+      }
+
+      if (tag === 'textarea') {
+        const div = document.createElement('div')
+        div.textContent = el.textContent || el.value || ''
+        div.setAttribute('data-name', name)
+        div.setAttribute('style', `${style};white-space:pre-wrap;`)
+        el.replaceWith(div)
+        return
+      }
+
+      if (tag === 'select') {
+        const span = document.createElement('span')
+        const selected = el.querySelector('option:checked')
+        span.textContent = selected ? selected.textContent : (el.value || '')
+        span.setAttribute('data-name', name)
+        span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
+        el.replaceWith(span)
+      }
+    })
+
+    const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+    const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${stylesHtml}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
+      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
+      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
+      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
+      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
+      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
+      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      .pdf-preview .pdf-box {
+        width: 13px;
+        height: 13px;
+        border: 1px solid #000;
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+        margin-right: 6px;
+        box-sizing: border-box;
+      }
+      .pdf-preview .pdf-box.checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid #000;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -65%) rotate(45deg);
+      }
+    </style>
+  </head>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+</html>`
+    return toBase64Utf8(html)
+  }
+
+  const fields = Array.from(pdfForm.value.querySelectorAll('input, textarea, select'))
+  const snapshotBase64 = buildHtmlSnapshotBase64()
+  const inputsHtml = fields.map((el) => {
+    const name = el.getAttribute('name')
+    if (!name) return ''
+
+    if (el.tagName.toLowerCase() === 'select') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    if (el.tagName.toLowerCase() === 'textarea') {
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+    }
+
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'file' || type === 'button' || type === 'submit' || type === 'reset') return ''
+
+    if (type === 'checkbox' || type === 'radio') {
+      if (!el.checked) return ''
+      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value || 'on')}" />`
+    }
+
+    return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
+  }).join('\n') + `\n<input type="hidden" name="__pdf_html_base64" value="${escapeAttr(snapshotBase64)}" />\n`
+
+  const html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PDF预览</title>
+    <style>
+      html, body { height: 100%; margin: 0; }
+      body { padding: 28px 60px; box-sizing: border-box; background: #f2f2f2; }
+      .frame-shell {
+        height: calc(100vh - 56px);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+      }
+      iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    </style>
+  </head>
+  <body onload="var f=document.getElementById('pdfPostForm'); if (f) f.submit();">
+    <div class="frame-shell">
+      <iframe name="pdfFrame" title="PDF预览"></iframe>
+    </div>
+    <form id="pdfPostForm" method="post" action="${escapeAttr(actionUrl)}" target="pdfFrame">
+      ${inputsHtml}
+    </form>
+  </body>
+</html>`
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+
 const generatePdf = () => {
   if (pdfForm.value) {
-    pdfForm.value.action = '/api/pdf/beckman_beam_record/generate'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+    openBackendPdfPreview('/api/pdf/beckman_beam_record/generate')
   }
 }
 
 const previewPdf = () => {
   if (pdfForm.value) {
-    pdfForm.value.action = '/api/pdf/beckman_beam_record/preview'
-    pdfForm.value.target = '_blank'
-    pdfForm.value.submit()
+    openBackendPdfPreview('/api/pdf/beckman_beam_record/preview')
   }
+}
+
+const openAnalysisModal = () => {
+  analysisModalVisible.value = true
+  analysisRange.start = ''
+  analysisRange.end = ''
+  Object.keys(analysisResults).forEach(k => analysisResults[k] = '')
+}
+
+const closeAnalysisModal = () => {
+  analysisModalVisible.value = false
+}
+
+const autoAnalyzeAndFill = () => {
+  const toNumber = (v) => {
+    if (v === null || v === undefined || v === '') return null
+    const n = typeof v === 'number' ? v : parseFloat(String(v))
+    return Number.isFinite(n) ? n : null
+  }
+
+  const startIdx = (parseInt(analysisRange.start) || 1)
+  const endIdx = (parseInt(analysisRange.end) || 15)
+  const validStart = Math.max(1, startIdx)
+  const validEnd = Math.min(15, endIdx)
+  if (validStart > validEnd) {
+    alert('起始行不能大于结束行')
+    return
+  }
+
+  const randomBetween = (min, max, decimals = 0) => {
+    if (min === null || max === null) return null
+    const lo = Math.min(min, max)
+    const hi = Math.max(min, max)
+    const r = Math.random() * (hi - lo) + lo
+    return +r.toFixed(decimals)
+  }
+
+  const formatStation = (meters) => {
+    const m = Math.max(0, Math.round(meters))
+    const km = Math.floor(m / 1000)
+    const rest = m % 1000
+    return `K${km}+${String(rest).padStart(3, '0')}`
+  }
+
+  const setIfEmpty = (key, value) => {
+    if (formData[key] === '' || formData[key] === null || formData[key] === undefined) {
+      formData[key] = value
+    }
+  }
+
+  const computeMean = (values) => {
+    if (!values.length) return null
+    return values.reduce((sum, v) => sum + v, 0) / values.length
+  }
+
+  const computeStdDevSample = (values, mean) => {
+    if (values.length < 2 || mean === null) return 0
+    const variance = values.reduce((sum, v) => sum + (v - mean) * (v - mean), 0) / (values.length - 1)
+    return Math.sqrt(variance)
+  }
+
+  const generateReadings = ({ initialMin, initialMax, finalMin, finalMax, deflectionMin, deflectionMax }) => {
+    const tries = 30
+    const iMin = toNumber(initialMin)
+    const iMax = toNumber(initialMax)
+    const fMin = toNumber(finalMin)
+    const fMax = toNumber(finalMax)
+    const dMin = toNumber(deflectionMin)
+    const dMax = toNumber(deflectionMax)
+
+    for (let t = 0; t < tries; t++) {
+      const initial = randomBetween(iMin, iMax, 0)
+      const deflection = randomBetween(dMin, dMax, 0)
+      if (initial === null || deflection === null) break
+      const final = initial - deflection
+      if (fMin !== null && fMax !== null) {
+        const lo = Math.min(fMin, fMax)
+        const hi = Math.max(fMin, fMax)
+        if (final < lo || final > hi) continue
+      }
+      return { initial, final, deflection }
+    }
+
+    const initial = randomBetween(iMin, iMax, 0)
+    const final = randomBetween(fMin, fMax, 0)
+    if (initial !== null && final !== null) {
+      const deflection = Math.max(0, Math.round(initial - final))
+      if (dMin !== null && dMax !== null) {
+        const lo = Math.min(dMin, dMax)
+        const hi = Math.max(dMin, dMax)
+        if (deflection < lo || deflection > hi) {
+          const def2 = randomBetween(dMin, dMax, 0)
+          return { initial, final: initial - def2, deflection: def2 }
+        }
+      }
+      return { initial, final, deflection }
+    }
+
+    return {
+      initial: initial ?? '',
+      final: final ?? '',
+      deflection: randomBetween(dMin, dMax, 0) ?? ''
+    }
+  }
+
+  setIfEmpty('designDeflection', String(Math.round(randomBetween(180, 280, 0))))
+  if (toNumber(formData.tempCorrectionK) === null) {
+    setIfEmpty('tempCorrectionK', randomBetween(0.95, 1.05, 3).toFixed(3))
+  }
+  setIfEmpty('vehicleModel', '标准测试车')
+  setIfEmpty('tireArea', String(Math.round(randomBetween(650, 850, 0))))
+  setIfEmpty('avgTempPrev5Days', randomBetween(15, 35, 1).toFixed(1))
+  setIfEmpty('pavementType', '沥青路面')
+  setIfEmpty('pavementThickness', String(Math.round(randomBetween(120, 240, 0))))
+  setIfEmpty('rearAxleWeight', randomBetween(95, 105, 1).toFixed(1))
+  setIfEmpty('tirePressureLeft', randomBetween(0.65, 0.75, 2).toFixed(2))
+  setIfEmpty('tirePressureRight', randomBetween(0.65, 0.75, 2).toFixed(2))
+  if (toNumber(formData.testInterval) === null) {
+    setIfEmpty('testInterval', '10')
+  }
+  if (toNumber(formData.laneCount) === null) {
+    setIfEmpty('laneCount', '1')
+  }
+
+  const interval = toNumber(formData.testInterval) ?? 10
+  const laneCountNum = Math.max(1, Math.round(toNumber(formData.laneCount) ?? 1))
+
+  const surfaceTempMin = toNumber(analysisResults.surfaceTempMin)
+  const surfaceTempMax = toNumber(analysisResults.surfaceTempMax)
+
+  const surfaceTemps = []
+
+  for (let idx = validStart; idx <= validEnd; idx++) {
+    const stationKey = `station_${idx}`
+    const laneKey = `lane_${idx}`
+    const surfaceTempKey = `surfaceTemp_${idx}`
+
+    setIfEmpty(stationKey, formatStation((idx - 1) * interval))
+    setIfEmpty(laneKey, String(((idx - 1) % laneCountNum) + 1))
+
+    if (formData[surfaceTempKey] === '' || formData[surfaceTempKey] === null || formData[surfaceTempKey] === undefined) {
+      const tVal = randomBetween(surfaceTempMin, surfaceTempMax, 1)
+      if (tVal !== null) {
+        formData[surfaceTempKey] = tVal.toFixed(1)
+      }
+    }
+    const tempNum = toNumber(formData[surfaceTempKey])
+    if (tempNum !== null) surfaceTemps.push(tempNum)
+
+    const leftKeys = {
+      initialKey: `leftInitial_${idx}`,
+      finalKey: `leftFinal_${idx}`,
+      deflectionKey: `leftDeflection_${idx}`
+    }
+    const rightKeys = {
+      initialKey: `rightInitial_${idx}`,
+      finalKey: `rightFinal_${idx}`,
+      deflectionKey: `rightDeflection_${idx}`
+    }
+
+    const fillSide = (sideKeys, ranges) => {
+      const existingInitial = toNumber(formData[sideKeys.initialKey])
+      const existingFinal = toNumber(formData[sideKeys.finalKey])
+      const existingDef = toNumber(formData[sideKeys.deflectionKey])
+
+      if (existingInitial !== null && existingFinal !== null && existingDef === null) {
+        const d = Math.max(0, Math.round(existingInitial - existingFinal))
+        formData[sideKeys.deflectionKey] = String(d)
+        return
+      }
+
+      if (existingDef !== null && existingInitial !== null && existingFinal === null) {
+        formData[sideKeys.finalKey] = String(Math.round(existingInitial - existingDef))
+        return
+      }
+
+      if (existingDef !== null && existingFinal !== null && existingInitial === null) {
+        formData[sideKeys.initialKey] = String(Math.round(existingFinal + existingDef))
+        return
+      }
+
+      if (existingInitial !== null && existingFinal !== null && existingDef !== null) return
+
+      const generated = generateReadings(ranges)
+      if (generated.initial !== '' && (formData[sideKeys.initialKey] === '' || formData[sideKeys.initialKey] === null || formData[sideKeys.initialKey] === undefined)) {
+        formData[sideKeys.initialKey] = String(generated.initial)
+      }
+      if (generated.final !== '' && (formData[sideKeys.finalKey] === '' || formData[sideKeys.finalKey] === null || formData[sideKeys.finalKey] === undefined)) {
+        formData[sideKeys.finalKey] = String(Math.round(generated.final))
+      }
+      if (generated.deflection !== '' && (formData[sideKeys.deflectionKey] === '' || formData[sideKeys.deflectionKey] === null || formData[sideKeys.deflectionKey] === undefined)) {
+        formData[sideKeys.deflectionKey] = String(generated.deflection)
+      }
+    }
+
+    fillSide(leftKeys, {
+      initialMin: analysisResults.leftInitialMin,
+      initialMax: analysisResults.leftInitialMax,
+      finalMin: analysisResults.leftFinalMin,
+      finalMax: analysisResults.leftFinalMax,
+      deflectionMin: analysisResults.leftDeflectionMin,
+      deflectionMax: analysisResults.leftDeflectionMax
+    })
+
+    fillSide(rightKeys, {
+      initialMin: analysisResults.rightInitialMin,
+      initialMax: analysisResults.rightInitialMax,
+      finalMin: analysisResults.rightFinalMin,
+      finalMax: analysisResults.rightFinalMax,
+      deflectionMin: analysisResults.rightDeflectionMin,
+      deflectionMax: analysisResults.rightDeflectionMax
+    })
+  }
+
+  if (toNumber(formData.avgAsphaltTemp) === null && surfaceTemps.length > 0) {
+    const avgTemp = computeMean(surfaceTemps)
+    if (avgTemp !== null) formData.avgAsphaltTemp = avgTemp.toFixed(1)
+  }
+
+  const pointMeans = []
+  for (let idx = validStart; idx <= validEnd; idx++) {
+    const l = toNumber(formData[`leftDeflection_${idx}`])
+    const r = toNumber(formData[`rightDeflection_${idx}`])
+    if (l !== null && r !== null) {
+      pointMeans.push((l + r) / 2)
+    } else if (l !== null) {
+      pointMeans.push(l)
+    } else if (r !== null) {
+      pointMeans.push(r)
+    }
+  }
+
+  setIfEmpty('totalPoints', String(pointMeans.length))
+  if (toNumber(formData.testKm) === null) {
+    const km = (pointMeans.length * interval) / 1000
+    setIfEmpty('testKm', km.toFixed(3))
+  }
+
+  const avg = computeMean(pointMeans)
+  if (avg !== null) {
+    formData.totalAvgDeflection = avg.toFixed(2)
+  }
+
+  const std = computeStdDevSample(pointMeans, avg)
+  formData.stdDev = std.toFixed(2)
+
+  const rep = (avg ?? 0) + 1.645 * std
+  formData.repDeflection = rep.toFixed(2)
+
+  const k = toNumber(formData.tempCorrectionK) ?? 1
+  formData.tempCorrectedAvg = ((avg ?? 0) * k).toFixed(2)
+
+  let lower = toNumber(formData.outlierLower)
+  let upper = toNumber(formData.outlierUpper)
+  if (lower === null || upper === null) {
+    const baseAvg = avg ?? 0
+    lower = baseAvg - 2 * std
+    upper = baseAvg + 2 * std
+    formData.outlierLower = lower.toFixed(2)
+    formData.outlierUpper = upper.toFixed(2)
+  }
+
+  const outliers = pointMeans.filter(v => v < lower || v > upper)
+  formData.outlierCount = String(outliers.length)
+
+  const cleanValues = pointMeans.filter(v => v >= lower && v <= upper)
+  const cleanAvg = computeMean(cleanValues) ?? 0
+  const cleanStd = computeStdDevSample(cleanValues, cleanAvg)
+  const cleanRep = cleanAvg + 1.645 * cleanStd
+
+  formData.cleanAvg = cleanAvg.toFixed(2)
+  formData.cleanStdDev = cleanStd.toFixed(2)
+  formData.cleanRepDeflection = cleanRep.toFixed(2)
+  formData.cleanTempCorrectedAvg = (cleanAvg * k).toFixed(2)
+
+  const design = toNumber(formData.designDeflection)
+  const repToUse = cleanValues.length ? cleanRep : rep
+  if (design !== null) {
+    formData.isQualified = repToUse <= design ? '合格' : '不合格'
+  } else {
+    formData.isQualified = ''
+  }
+
+  analysisModalVisible.value = false
+  alert('自动分析并填充完成')
 }
 </script>
 
@@ -1410,7 +2026,7 @@ const previewPdf = () => {
             }
             @page {
                 size: A4 portrait;
-                margin: 1cm;
+                margin: 0;
             }
         }
         .nav-button {
@@ -1421,6 +2037,81 @@ const previewPdf = () => {
             color: white;
             text-decoration: none;
             border-radius: 5px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 450px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .analysis-grid {
+            display: block;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f7fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .range-inputs input {
+            width: 80px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
         }
 
 </style>
