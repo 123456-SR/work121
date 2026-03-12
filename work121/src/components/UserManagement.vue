@@ -7,26 +7,29 @@
     <table class="user-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>用户名</th>
+          <th>账号</th>
           <th>姓名</th>
           <th>职务</th>
+          <th>电话号码</th>
+          <th>邮箱</th>
           <th>操作</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="user in users" :key="user.id">
-          <td>{{ user.id }}</td>
           <td>{{ user.userAccount }}</td>
           <td>{{ user.userName }}</td>
           <td>{{ user.position }}</td>
+          <td>{{ user.userTel || '-' }}</td>
+          <td>{{ user.userEmail || '-' }}</td>
           <td>
             <button class="btn btn-edit" @click="editUser(user)">编辑</button>
+            <button class="btn btn-delete" @click="deleteUser(user)">删除</button>
           </td>
         </tr>
       </tbody>
     </table>
-    
+
     <!-- 添加/编辑用户对话框 -->
     <div v-if="showDialog" class="dialog-overlay">
       <div class="dialog">
@@ -37,23 +40,41 @@
         <div class="dialog-body">
           <form @submit.prevent="saveUser">
             <div class="form-group">
-              <label>用户名</label>
+              <label>账号</label>
               <input v-model="formData.userAccount" type="text" required>
             </div>
             <div class="form-group">
               <label>姓名</label>
               <input v-model="formData.userName" type="text" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" v-if="editingUser">
               <label>密码</label>
-              <input v-model="formData.password" type="password" :required="!editingUser">
+              <input v-model="formData.password" type="password" placeholder="留空表示不修改密码">
             </div>
             <div class="form-group">
               <label>职务</label>
               <select v-model="formData.position" required>
-                <option value="员工">员工</option>
+                <option value="员工">检测人员</option>
+                <option value="任务分配人员">任务分配人员</option>
+                <option value="审核人员">审核人员</option>
                 <option value="管理员">管理员</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label>电话号码</label>
+              <input v-model="formData.userTel" type="text">
+            </div>
+            <div class="form-group">
+              <label>邮箱</label>
+              <input v-model="formData.userEmail" type="email">
+            </div>
+            <div class="form-group">
+              <label>部门</label>
+              <input v-model="formData.organizationName" type="text">
+            </div>
+            <div class="form-group">
+              <label>3H对接标识</label>
+              <input v-model="formData.shType" type="text">
             </div>
             <div class="form-actions">
               <button type="button" class="btn btn-cancel" @click="showDialog = false">取消</button>
@@ -76,7 +97,11 @@ const formData = ref({
   userAccount: '',
   userName: '',
   password: '',
-  position: '员工'
+  position: '员工',
+  userTel: '',
+  userEmail: '',
+  organizationName: '',
+  shType: ''
 })
 
 // 获取用户列表
@@ -100,10 +125,40 @@ const addUser = () => {
   formData.value = {
     userAccount: '',
     userName: '',
-    password: '',
-    position: '员工'
+    password: '000000',
+    position: '员工',
+    userTel: '',
+    userEmail: '',
+    organizationName: '',
+    shType: ''
   }
   showDialog.value = true
+}
+
+// 删除用户
+const deleteUser = async (user) => {
+  if (confirm(`确定要删除用户 ${user.userName} 吗？`)) {
+    try {
+      const response = await fetch('/api/user/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: user.id })
+      })
+      const result = await response.json()
+      if (result.success) {
+        alert('删除用户成功')
+        // 重新获取用户列表
+        fetchUsers()
+      } else {
+        alert('删除用户失败: ' + result.message)
+      }
+    } catch (error) {
+      console.error('删除用户失败:', error)
+      alert('操作失败: 网络错误')
+    }
+  }
 }
 
 // 编辑用户
@@ -113,7 +168,11 @@ const editUser = (user) => {
     userAccount: user.userAccount,
     userName: user.userName,
     password: '',
-    position: user.position
+    position: user.position,
+    userTel: user.userTel || '',
+    userEmail: user.userEmail || '',
+    organizationName: user.organizationName || '',
+    shType: user.shType || ''
   }
   showDialog.value = true
 }
@@ -124,14 +183,18 @@ const saveUser = async () => {
     let apiUrl = '/api/user/add'
     let successMessage = '添加用户成功'
     let errorMessage = '添加用户失败'
-    
+
     const requestBody = {
       userAccount: formData.value.userAccount,
-      userPass: formData.value.password,
+      userPass: editingUser.value ? formData.value.password : '000000',
       userName: formData.value.userName,
-      position: formData.value.position
+      position: formData.value.position,
+      userTel: formData.value.userTel,
+      userEmail: formData.value.userEmail,
+      organizationName: formData.value.organizationName,
+      shType: formData.value.shType
     }
-    
+
     // 如果是编辑用户，调用更新API
     if (editingUser.value) {
       apiUrl = '/api/user/update'
@@ -139,7 +202,7 @@ const saveUser = async () => {
       errorMessage = '更新用户失败'
       requestBody.userId = editingUser.value.id
     }
-    
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -178,13 +241,21 @@ onMounted(() => {
 
 .toolbar {
   display: flex;
-  justify-content: flex-start;
-  margin-bottom: 24px;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  margin-top: -10px;
+}
+
+.toolbar .btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .user-table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 8px;
 }
 
 .user-table th,
@@ -208,6 +279,11 @@ onMounted(() => {
   background-color: #FFE0B2;
   color: #F57C00;
   margin-right: 8px;
+}
+
+.btn-delete {
+  background-color: #FFCDD2;
+  color: #C62828;
 }
 
 /* 对话框样式 */

@@ -46,11 +46,6 @@ public class UserController {
         try {
             boolean success = userService.registerUser(user);
             if (success) {
-                // 如果有position字段，保存到JZS_USER_EXT表
-                if (user.getPosition() != null && !user.getPosition().isEmpty()) {
-                    String extSql = "INSERT INTO JZS_USER_EXT (ID, POSITION) VALUES (?, ?)";
-                    jdbcTemplate.update(extSql, user.getUserAccount(), user.getPosition());
-                }
                 result.put("success", true);
                 result.put("message", "添加用户成功");
             } else {
@@ -93,17 +88,6 @@ public class UserController {
                 existingUser.getUserPass(),
                 existingUser.getUserName(),
                 existingUser.getUserId()
-            );
-            
-            // 更新JZS_USER_EXT表中的position字段
-            String extSql = "MERGE INTO JZS_USER_EXT j USING DUAL ON (j.ID = ?) " +
-                           "WHEN MATCHED THEN UPDATE SET j.POSITION = ? " +
-                           "WHEN NOT MATCHED THEN INSERT (ID, POSITION) VALUES (?, ?)";
-            jdbcTemplate.update(extSql, 
-                existingUser.getUserAccount(),
-                existingUser.getPosition(),
-                existingUser.getUserAccount(),
-                existingUser.getPosition()
             );
             
             if (rows > 0) {

@@ -112,4 +112,11 @@ public interface SandReplacementMapper {
 
     @Update("UPDATE T_SAND_REPLACEMENT SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
+
+    @Update("UPDATE T_SAND_REPLACEMENT SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
+
+    @Update("UPDATE T_SAND_REPLACEMENT SET REPORT_STATUS = #{reportStatus}, RESULT_STATUS = #{resultStatus} WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+    int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 }
+

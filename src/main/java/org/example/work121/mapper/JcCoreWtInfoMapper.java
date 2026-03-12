@@ -103,6 +103,9 @@ public interface JcCoreWtInfoMapper {
     @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
+    @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
+    int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
+
     @Select("<script>" +
             "SELECT DISTINCT " +
             "t2.WT_ID as id, " +
@@ -154,7 +157,8 @@ public interface JcCoreWtInfoMapper {
             "t1.REPORT_SEND_USER as reportSendUser, " +
             "t1.WITNESS_ID_CARD as witnessIdCard, " +
             "t1.SAMPLING_MAN_ID_CARD as samplingManIdCard, " +
-            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " +
+            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone, " +
+            "t1.CREATE_TIME as createTime " +
             "FROM JC_CORE_WT_INFO t2 " +
             "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
             "LEFT JOIN JZS_USERS u_create ON u_create.USER_ACCOUNT = TO_CHAR(t1.CREATE_BY) " +
@@ -284,7 +288,7 @@ public interface JcCoreWtInfoMapper {
             ")" +
             "</if>" +
             "</where>" +
-            "ORDER BY commissionDate DESC" +
+            "ORDER BY t1.CREATE_TIME DESC" +
             "</script>")
     List<JcCoreWtInfo> selectByRegName(@Param("names") List<String> names, @Param("wtNum") String wtNum);
 
@@ -499,7 +503,7 @@ public interface JcCoreWtInfoMapper {
             ")" +
             "</if>" +
             "</where>" +
-            "ORDER BY commissionDate DESC" +
+            "ORDER BY t1.CREATE_TIME DESC" +
             "</script>")
     List<JcCoreWtInfo> selectByCategory(@Param("categories") List<String> categories, @Param("names") List<String> names, @Param("wtNum") String wtNum);
 
@@ -602,7 +606,8 @@ public interface JcCoreWtInfoMapper {
             "t1.REPORT_SEND_USER as reportSendUser, " +
             "t1.WITNESS_ID_CARD as witnessIdCard, " +
             "t1.SAMPLING_MAN_ID_CARD as samplingManIdCard, " +
-            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone " +
+            "t2.CLIENT_ADDRESS_PHONE as clientAddressPhone, " +
+            "t1.CREATE_TIME as createTime " +
             "FROM JC_CORE_WT_INFO t2 " +
             "LEFT JOIN T_ENTRUSTMENT t1 ON t2.WT_ID = t1.ID " +
             "LEFT JOIN JZS_USERS u_create ON u_create.USER_ACCOUNT = TO_CHAR(t1.CREATE_BY) " +
@@ -689,7 +694,7 @@ public interface JcCoreWtInfoMapper {
             ")" +
             "</if>" +
             "</where>" +
-            "ORDER BY commissionDate DESC" +
+            "ORDER BY t1.CREATE_TIME DESC" +
             "</script>")
     List<JcCoreWtInfo> selectRecordsByCategory(@Param("categories") java.util.List<String> categories,
                                                @Param("names") java.util.List<String> names,

@@ -125,4 +125,11 @@ public interface NuclearDensityMapper {
 
     @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
+
+    @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
+
+    @Update("UPDATE T_NUCLEAR_DENSITY SET REPORT_STATUS = TO_CHAR(#{reportStatus,jdbcType=INTEGER}), RESULT_STATUS = TO_CHAR(#{resultStatus,jdbcType=INTEGER}) WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+    int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 }
+
