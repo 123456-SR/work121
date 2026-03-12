@@ -156,4 +156,11 @@ public interface ReboundMethodMapper {
 
     @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
+
+    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
+    int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
+
+    @Update("UPDATE T_REBOUND_METHOD SET REPORT_STATUS = #{reportStatus,jdbcType=VARCHAR}, RESULT_STATUS = #{resultStatus,jdbcType=VARCHAR} WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+    int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 }
+

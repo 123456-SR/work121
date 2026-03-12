@@ -10,12 +10,12 @@
         </div>
 
         <div class="form-group">
-          <label for="username">用户名</label>
+          <label for="username">账号</label>
           <input
             type="text"
             id="username"
             v-model="userForm.username"
-            placeholder="请输入用户名"
+            placeholder="请输入账号"
             class="form-control"
           >
         </div>
@@ -65,6 +65,46 @@
       </div>
 
     </div>
+
+    <!-- 强制修改密码弹窗 -->
+    <div v-if="showChangePasswordDialog" class="dialog-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3>修改密码</h3>
+        </div>
+        <div class="dialog-body">
+          <p>您正在使用默认密码登录，请修改密码以确保账户安全。</p>
+          <div class="form-group">
+            <label for="newPassword">新密码</label>
+            <input
+              type="password"
+              id="newPassword"
+              v-model="changePasswordForm.newPassword"
+              placeholder="请输入新密码"
+              class="form-control"
+            >
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">确认新密码</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              v-model="changePasswordForm.confirmPassword"
+              placeholder="请确认新密码"
+              class="form-control"
+            >
+          </div>
+          <div v-if="changePasswordError" class="error-message">
+            {{ changePasswordError }}
+          </div>
+          <div class="form-actions">
+            <button @click="changePassword" class="login-button" :disabled="isLoading">
+              {{ isLoading ? '处理中...' : '确认修改' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -78,11 +118,18 @@ const emit = defineEmits(['login-success'])
 const isRegister = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const showChangePasswordDialog = ref(false)
+const changePasswordError = ref('')
 
 const userForm = reactive({
   username: '',
   password: '',
   fullName: ''
+})
+
+const changePasswordForm = reactive({
+  newPassword: '',
+  confirmPassword: ''
 })
 
 // 切换注册/登录模式
@@ -121,8 +168,17 @@ const handleUserAction = async () => {
         errorMessage.value = ''
       } else {
         // 登录成功
-        localStorage.setItem('userInfo', JSON.stringify(response.data.data))
-        emit('login-success', response.data.data)
+        const userInfo = response.data.data
+        localStorage.setItem('userInfo', JSON.stringify(userInfo))
+        
+        // 检查密码是否为默认密码
+        if (userForm.password === '000000') {
+          // 显示强制修改密码弹窗
+          showChangePasswordDialog.value = true
+        } else {
+          // 正常登录
+          emit('login-success', userInfo)
+        }
       }
     } else {
       errorMessage.value = response.data.message || (isRegister.value ? '注册失败' : '登录失败')
@@ -130,6 +186,52 @@ const handleUserAction = async () => {
   } catch (error) {
     console.error('请求错误:', error)
     errorMessage.value = '连接服务器失败'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 修改密码
+const changePassword = async () => {
+  if (!changePasswordForm.newPassword || !changePasswordForm.confirmPassword) {
+    changePasswordError.value = '新密码和确认密码不能为空'
+    return
+  }
+
+  if (changePasswordForm.newPassword !== changePasswordForm.confirmPassword) {
+    changePasswordError.value = '两次输入的密码不一致'
+    return
+  }
+
+  try {
+    isLoading.value = true
+    changePasswordError.value = ''
+
+    const response = await axios.post('/api/user/change-password', {
+      username: userForm.username,
+      oldPassword: '000000',
+      newPassword: changePasswordForm.newPassword
+    })
+
+    if (response.data.success) {
+      alert('密码修改成功')
+      showChangePasswordDialog.value = false
+      // 重新登录
+      const loginResponse = await axios.post('/api/login', {
+        username: userForm.username,
+        password: changePasswordForm.newPassword,
+        fullName: ''
+      })
+      if (loginResponse.data.success) {
+        localStorage.setItem('userInfo', JSON.stringify(loginResponse.data.data))
+        emit('login-success', loginResponse.data.data)
+      }
+    } else {
+      changePasswordError.value = response.data.message || '密码修改失败'
+    }
+  } catch (error) {
+    console.error('修改密码失败:', error)
+    changePasswordError.value = '连接服务器失败'
   } finally {
     isLoading.value = false
   }
@@ -278,5 +380,56 @@ const handleUserAction = async () => {
   .login-title {
     font-size: 20px;
   }
+}
+
+/* 弹窗样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background-color: white;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.dialog-body {
+  padding: 24px;
+}
+
+.dialog-body p {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 }
 </style>

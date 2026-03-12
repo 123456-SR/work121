@@ -163,11 +163,7 @@ const menuItems = {
         {
           id: 'PendingTasks',
           name: '待处理任务',
-          submenu: [
-            { id: 'PendingAuditTasks', name: '待审核任务', component: 'PendingTasks', props: { taskType: 'audit' } },
-            { id: 'PendingApprovalTasks', name: '待批准任务', component: 'PendingTasks', props: { taskType: 'approval' } },
-            { id: 'PendingSubmitTasks', name: '待提交任务', component: 'PendingTasks', props: { taskType: 'submit' } }
-          ]
+          component: 'PendingTasks'
         }
       ]
     },
@@ -467,11 +463,7 @@ const accessibleMenus = computed(() => {
         {
           id: 'PendingTasks',
           name: '待处理任务',
-          submenu: [
-            { id: 'PendingAuditTasks', name: '待审核任务', component: 'PendingTasks', props: { taskType: 'audit' } },
-            { id: 'PendingApprovalTasks', name: '待批准任务', component: 'PendingTasks', props: { taskType: 'approval' } },
-            { id: 'PendingSubmitTasks', name: '待提交任务', component: 'PendingTasks', props: { taskType: 'submit' } }
-          ]
+          component: 'PendingTasks'
         }
       ]
     }

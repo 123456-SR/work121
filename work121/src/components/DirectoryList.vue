@@ -63,23 +63,7 @@
                   <input type="text" v-model="formData.dirName" required placeholder="请输入委托单统一编号">
                 </div>
                 
-                <div class="form-group">
-                  <label>已选表单队列：</label>
-                  <div class="queue-container">
-                    <div v-if="selectedForms.length === 0" class="empty-queue">
-                      点击右侧表单选项添加到队列
-                    </div>
-                    <div v-else class="queue-items">
-                      <div v-for="(form, index) in selectedForms" :key="index" class="queue-item">
-                        <span class="queue-item-index">{{ index + 1 }}.</span>
-                        <span class="queue-item-name">{{ form.name }}</span>
-                        <button type="button" class="queue-item-remove" @click="removeFromQueue(index)">
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+
                 
                 <div class="form-group">
                   <label>状态：</label>
@@ -176,22 +160,6 @@
                   </div>
                 </div>
               </div>
-              
-              <!-- 右侧：表类型选项按钮列表 -->
-              <div class="right-panel">
-                <h4>可选表单类型</h4>
-                <div class="form-buttons">
-                  <button 
-                    v-for="formType in formTypes" 
-                    :key="formType.value"
-                    type="button" 
-                    class="form-button"
-                    @click="addToQueue(formType)"
-                  >
-                    {{ formType.name }}
-                  </button>
-                </div>
-              </div>
             </div>
             
             <div class="form-actions">
@@ -230,46 +198,19 @@ const pageSize = ref(10)
 const total = ref(0)
 const loading = ref(false)
 
-// 选中的表单队列
-const selectedForms = ref([])
-
-// 计算属性：根据选中的表单类型决定需要显示的角色选择框
+// 计算属性：决定需要显示的角色选择框
 const needsEntrustmentRoles = computed(() => {
-  return selectedForms.value.some(f => f.value === 'ENTRUSTMENT_LIST')
+  return true
 })
 
 const needsRecordRoles = computed(() => {
-  return selectedForms.value.some(f => f.value.includes('RECORD'))
-})
-
-const needsReportRoles = computed(() => {
-  return selectedForms.value.some(f => 
-    f.value.includes('REPORT') || 
-    f.value.includes('RESULT')
-  )
+  return true
 })
 
 // needsSharedApprover removed as it is now part of needsReportRoles
 
 
-// 表单类型列表
-const formTypes = [
-  { value: 'ENTRUSTMENT_LIST', name: '检测委托单' },
-  { value: 'REBOUND_METHOD_RECORD', name: '回弹法检测混凝土抗压强度记录表' },
-  { value: 'LIGHT_DYNAMIC_PENETRATION_RECORD', name: '轻型动力触探检测记录表' },
-  { value: 'NUCLEAR_DENSITY_RECORD', name: '原位密度检测记录表（核子法）' },
-  { value: 'SAND_REPLACEMENT_RECORD', name: '原位密度检测记录表（灌砂法）' },
-  { value: 'WATER_REPLACEMENT_RECORD', name: '相对密度试验记录表（灌水法）' },
-  { value: 'CUTTING_RING_RECORD', name: '原位密度检测记录表（环刀法）' },
-  { value: 'BECKMAN_BEAM_RECORD', name: '路基路面回弹弯沉试验检测记录表' },
-  { value: 'DENSITY_TEST_REPORT', name: '原位密度检测报告' },
-  { value: 'DENSITY_TEST_RESULT', name: '原位密度检测结果' },
-  { value: 'LIGHT_DYNAMIC_PENETRATION_REPORT', name: '轻型动力触探检测报告' },
-  { value: 'LIGHT_DYNAMIC_PENETRATION_RESULT', name: '轻型动力触探检测结果' },
-  { value: 'REBOUND_METHOD_REPORT', name: '回弹法检测混凝土抗压强度报告' },
-  { value: 'BECKMAN_BEAM_REPORT', name: '路基路面回弹弯沉检测报告' },
-  { value: 'BECKMAN_BEAM_RESULT', name: '路基路面回弹弯沉检测结果' }
-]
+
 
 const formData = reactive({
   id: '',
@@ -363,17 +304,7 @@ const editProcess = (item) => {
   formData.bgReviewer = item.bgReviewer || ''
   formData.bgApprover = item.bgApprover || ''
   
-  // 从table1Type-table10Type构建队列
-  selectedForms.value = []
-  for (let i = 1; i <= 10; i++) {
-    const type = item[`table${i}Type`]
-    if (type) {
-      const formType = formTypes.find(ft => ft.value === type)
-      if (formType) {
-        selectedForms.value.push({ ...formType })
-      }
-    }
-  }
+
   
   isEditing.value = true
   showModal.value = true
@@ -407,25 +338,9 @@ const resetForm = () => {
   formData.bgTester = ''
   formData.bgReviewer = ''
   formData.bgApprover = ''
-  selectedForms.value = []
 }
 
-// 添加到队列
-const addToQueue = (formType) => {
-  // 检查队列是否已满（最多10个）
-  if (selectedForms.value.length >= 10) {
-    alert('队列最多只能添加10个表单类型')
-    return
-  }
-  
-  // 允许重复添加相同类型的表单
-  selectedForms.value.push({ ...formType })
-}
 
-// 从队列中移除
-const removeFromQueue = (index) => {
-  selectedForms.value.splice(index, 1)
-}
 
 const saveProcess = async () => {
   // 避免用户连续点击导致重复提交
@@ -434,10 +349,7 @@ const saveProcess = async () => {
   try {
     console.log('开始保存流程')
 
-    // 将队列中的表单类型映射到table1Type-table10Type
-    for (let i = 1; i <= 10; i++) {
-      formData[`table${i}Type`] = selectedForms.value[i - 1]?.value || ''
-    }
+
 
     // 获取当前登录用户信息
     try {
@@ -736,13 +648,6 @@ tr:hover {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.right-panel {
-  width: 260px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
 }
 
 .form-group label {

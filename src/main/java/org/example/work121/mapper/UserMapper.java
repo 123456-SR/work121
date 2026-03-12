@@ -20,10 +20,8 @@ public interface UserMapper {
             "u.USER_EMAIL as userEmail, " +
             "u.ORGNIZATION_NAME as orgnizationName, " +
             "u.SH_TYPE as shType, " +
-            "'1' as userStatus, " +
-            "j.POSITION as position " +
+            "'1' as userStatus " +
             "FROM JZS_USERS u " +
-            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID " +
             "WHERE u.USER_NAME = #{userName}")
     List<User> selectByName(String userName);
 
@@ -36,10 +34,8 @@ public interface UserMapper {
             "u.USER_EMAIL as userEmail, " +
             "u.ORGNIZATION_NAME as orgnizationName, " +
             "u.SH_TYPE as shType, " +
-            "'1' as userStatus, " +
-            "j.POSITION as position " +
-            "FROM JZS_USERS u " +
-            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID")
+            "'1' as userStatus " +
+            "FROM JZS_USERS u")
     List<User> selectAll();
 
     @Select("SELECT " +
@@ -51,10 +47,8 @@ public interface UserMapper {
             "u.USER_EMAIL as userEmail, " +
             "u.ORGNIZATION_NAME as orgnizationName, " +
             "u.SH_TYPE as shType, " +
-            "'1' as userStatus, " +
-            "j.POSITION as position " +
+            "'1' as userStatus " +
             "FROM JZS_USERS u " +
-            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID " +
             "WHERE u.USER_ACCOUNT = #{userAccount}")
     User selectByAccount(String userAccount);
 
@@ -67,10 +61,8 @@ public interface UserMapper {
             "u.USER_EMAIL as userEmail, " +
             "u.ORGNIZATION_NAME as orgnizationName, " +
             "u.SH_TYPE as shType, " +
-            "'1' as userStatus, " +
-            "j.POSITION as position " +
+            "'1' as userStatus " +
             "FROM JZS_USERS u " +
-            "LEFT JOIN JZS_USER_EXT j ON u.USER_ACCOUNT = j.ID " +
             "WHERE u.ID = #{id}")
     User selectById(String id);
 

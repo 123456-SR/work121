@@ -82,19 +82,35 @@ public class PendingTasksController {
             String taskType = params.get("taskType");
             String taskId = params.get("taskId");
             String userAccount = params.get("userAccount");
-            logger.info("审核通过任务，任务类型: {}, 任务ID: {}, 用户账号: {}", taskType, taskId, userAccount);
+            String taskStatus = params.get("taskStatus");
+            
+            // 根据任务状态显示不同的日志信息
+            if ("approval".equals(taskStatus)) {
+                logger.info("批准任务，任务类型: {}, 任务ID: {}, 用户账号: {}", taskType, taskId, userAccount);
+            } else {
+                logger.info("审核通过任务，任务类型: {}, 任务ID: {}, 用户账号: {}", taskType, taskId, userAccount);
+            }
+            
             boolean success = pendingTasksService.approveTask(taskType, taskId, userAccount);
             if (success) {
                 result.put("success", true);
-                result.put("message", "审核通过成功");
+                if ("approval".equals(taskStatus)) {
+                    result.put("message", "批准成功");
+                } else {
+                    result.put("message", "审核通过成功");
+                }
             } else {
                 result.put("success", false);
-                result.put("message", "审核通过失败");
+                if ("approval".equals(taskStatus)) {
+                    result.put("message", "批准失败");
+                } else {
+                    result.put("message", "审核通过失败");
+                }
             }
         } catch (Exception e) {
-            logger.error("审核通过任务失败", e);
+            logger.error("操作任务失败", e);
             result.put("success", false);
-            result.put("message", "审核通过任务失败: " + e.getMessage());
+            result.put("message", "操作任务失败: " + e.getMessage());
         }
         return result;
     }

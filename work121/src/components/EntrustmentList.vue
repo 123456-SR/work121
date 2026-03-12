@@ -24,6 +24,7 @@
             <th>工程名称</th>
             <th>委托单位</th>
             <th>委托日期</th>
+            <th>创建时间</th>
             <th>登记人</th>
             <th>检测人</th>
             <th>状态</th>
@@ -31,10 +32,10 @@
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="7" class="text-center">加载中...</td>
+            <td colspan="8" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="7" class="text-center">暂无数据</td>
+            <td colspan="8" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -47,6 +48,7 @@
             <td>{{ item.projectName }}</td>
             <td>{{ item.clientUnit }}</td>
             <td>{{ formatDate(item.commissionDate) }}</td>
+            <td>{{ formatDate(item.createTime) }}</td>
             <td>{{ item.clientRegRealName || item.clientRegName }}</td>
             <td>{{ item.testerName }}</td>
             <td>
