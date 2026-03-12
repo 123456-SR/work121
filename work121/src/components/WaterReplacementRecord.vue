@@ -1293,15 +1293,33 @@ const openBackendPdfPreview = (actionUrl) => {
   }
 
   const mmToPx = (mm) => mm * 96 / 25.4
-  const pageWidthMm = 210
-  const pageHeightMm = 297
-  const marginMm = 12
+  const pageWidthMm = 297
+  const pageHeightMm = 210
+  const marginMm = 6
   const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
   const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
-  const rect = container.getBoundingClientRect()
-  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
-  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
-  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const measureNode = container.cloneNode(true)
+  measureNode.classList.add('pdf-preview')
+  measureNode.querySelectorAll('.no-print').forEach(el => el.remove())
+  measureNode.style.position = 'fixed'
+  measureNode.style.left = '-100000px'
+  measureNode.style.top = '0'
+  measureNode.style.visibility = 'hidden'
+  measureNode.style.width = `${pageWidthMm}mm`
+  measureNode.style.height = 'auto'
+  measureNode.style.maxHeight = 'none'
+  measureNode.style.overflow = 'visible'
+  measureNode.style.maxWidth = '100%'
+  measureNode.style.minWidth = '0'
+  measureNode.style.margin = '0'
+  measureNode.style.padding = '0'
+  measureNode.style.boxSizing = 'border-box'
+  document.body.appendChild(measureNode)
+  const rect = measureNode.getBoundingClientRect()
+  const contentWidthPx = Math.max(measureNode.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(measureNode.scrollHeight || 0, rect.height || 0, 1)
+  measureNode.remove()
+  const pdfScale = Math.min(availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
   const scaledWidthPx = contentWidthPx * pdfScale
   const scaledHeightPx = contentHeightPx * pdfScale
   const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
@@ -1402,16 +1420,23 @@ const openBackendPdfPreview = (actionUrl) => {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     ${stylesHtml}
     <style>
-      @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
-      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
-      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
-      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
+      @page { size: A4 landscape; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; width: 297mm; height: 210mm; overflow: hidden; }
+      .pdf-sheet { width: 297mm; height: 210mm; padding: 6mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 285mm; height: 198mm; overflow: hidden; box-sizing: border-box; position: relative; }
+      .pdf-content { position: absolute; left: 0; top: 0; transform-origin: top left; }
       .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
-      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
+      .pdf-preview { font-family: 'SimSun', 'Songti SC', serif; font-size: 16px; overflow: visible; }
+      .pdf-preview * { page-break-inside: avoid; break-inside: avoid; }
+      .pdf-preview h1, .pdf-preview h2 { font-size: 24px; font-weight: bold; }
+      .pdf-preview [data-name] { display: inline-block; width: auto !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; word-break: break-all; white-space: pre-wrap; }
       .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
       .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
       .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      .pdf-preview.waterReplacementRecord-container { width: 285mm; height: 198mm; max-width: 285mm; min-width: 0; margin: 0; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm > table { flex: 0 0 auto; height: auto; }
+      .pdf-preview table { width: 100%; height: auto; box-sizing: border-box; font-size: 16px; table-layout: fixed; word-break: break-all; }
       .pdf-preview .pdf-box {
         width: 13px;
         height: 13px;
@@ -1435,7 +1460,7 @@ const openBackendPdfPreview = (actionUrl) => {
       }
     </style>
   </head>
-  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-content" style="width: ${contentWidthPx}px; height: ${contentHeightPx}px; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale});">${clone.outerHTML}</div></div></div></body>
 </html>`
     return toBase64Utf8(html)
   }
@@ -2129,12 +2154,17 @@ const autoAnalyzeAndFill = () => {
 
         .waterReplacementRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
-            width: 210mm;
+            width: 297mm;
+            font-size: 16px;
+            color: #000;
+            max-width: 100%;
+            min-width: 800px;
             margin: 0 auto;
-            padding: 24px;
+            padding: 16px;
             background-color: var(--bg-card);
             border-radius: 8px;
             box-shadow: var(--shadow);
+            box-sizing: border-box;
         }
         h2 {
             text-align: center;
@@ -2159,17 +2189,21 @@ const autoAnalyzeAndFill = () => {
             width: 100%;
             border-collapse: collapse;
             border: 2px solid black;
+            table-layout: fixed;
+            word-break: break-all;
         }
         td {
             border: 1px solid black;
-            padding: 5px;
+            padding: 8px 5px;
             vertical-align: middle;
             text-align: center;
-            font-size: 14px;
+            font-size: inherit;
         }
         .label {
             font-weight: bold;
-            white-space: nowrap;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            word-break: break-all;
         }
         .left-align {
             text-align: left;
@@ -2180,9 +2214,9 @@ const autoAnalyzeAndFill = () => {
             border: 1px solid #b3d9ff;
             border-radius: 4px;
             outline: none;
-            font-family: 'SimSun', 'Songti SC', serif;
-            font-size: 14px;
-            color: #000000;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
             background-color: transparent;
             text-align: center;
             padding: 2px 4px;
@@ -2197,9 +2231,9 @@ const autoAnalyzeAndFill = () => {
         }
         input[type="text"]:disabled, textarea:disabled, select:disabled, .table-textarea:disabled {
             background-color: transparent;
-            color: #000000;
-            font-family: 'SimSun', 'Songti SC', serif;
-            font-size: 14px;
+            color: inherit;
+            font-family: inherit;
+            font-size: inherit;
         }
         input[type="text"]:disabled:focus, textarea:disabled:focus, select:disabled:focus, .table-textarea:disabled:focus {
             background-color: transparent;
@@ -2353,7 +2387,7 @@ const autoAnalyzeAndFill = () => {
             justify-content: space-between;
             margin-top: 10px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: normal;
         }
         .page-footer {
             margin-top: 5px;
@@ -2363,7 +2397,7 @@ const autoAnalyzeAndFill = () => {
         }
         @media print {
             @page {
-                size: A4 portrait;
+                size: A4 landscape;
                 margin: 0;
             }
             .waterReplacementRecord-container {

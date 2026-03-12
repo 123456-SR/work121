@@ -128,7 +128,7 @@ public class PdfGeneratorService {
 
     private byte[] generatePdfFromHtmlBase64(String htmlBase64) throws Exception {
         byte[] htmlBytes = Base64.getDecoder().decode(htmlBase64);
-        String html = normalizeHtmlPageMargin(new String(htmlBytes, StandardCharsets.UTF_8));
+        String html = normalizeHtmlForChromiumPdf(new String(htmlBytes, StandardCharsets.UTF_8));
 
         String executable = resolveChromiumExecutable();
         Path tempDir = Files.createTempDirectory("pdf-html-");
@@ -143,6 +143,7 @@ public class PdfGeneratorService {
             cmd.add("--headless=new");
             cmd.add("--disable-gpu");
             cmd.add("--no-sandbox");
+            cmd.add("--virtual-time-budget=5000");
             cmd.add("--print-to-pdf-no-header");
             cmd.add("--print-to-pdf=" + pdfFile.toAbsolutePath().toString());
             cmd.add(htmlFile.toUri().toString());
@@ -184,14 +185,98 @@ public class PdfGeneratorService {
 
     private String normalizeHtmlPageMargin(String html) {
         if (html == null || html.isEmpty()) return html;
-        String normalized = html;
-        normalized = normalized.replace("margin: 12mm 22mm;", "margin: 12mm;");
-        normalized = normalized.replace("margin:12mm 22mm;", "margin: 12mm;");
-        normalized = normalized.replace("margin: 12mm 22mm 12mm 22mm;", "margin: 12mm;");
-        normalized = normalized.replace("margin:12mm 22mm 12mm 22mm;", "margin: 12mm;");
-        normalized = normalized.replaceAll("(@page\\s*\\{[^}]*?)margin\\s*:\\s*[^;\\}]+\\s*;?", "$1margin: 12mm;");
-        normalized = normalized.replaceAll("(@page\\s*\\{)(?![^}]*\\bmargin\\s*:)", "$1 margin: 12mm;");
+        return html.replaceAll("(@page\\s*\\{)(?![^}]*\\bmargin\\s*:)", "$1 margin: 0;");
+    }
+
+    private String normalizeHtmlForChromiumPdf(String html) {
+        if (html == null || html.isEmpty()) return html;
+        String normalized = normalizeHtmlPageMargin(html);
+        if (isA4CanvasSnapshot(normalized)) {
+            return normalized;
+        }
+        normalized = relaxHtmlForPagination(normalized);
+        normalized = injectFitOnePageIfNeeded(normalized);
         return normalized;
+    }
+
+    private boolean isA4CanvasSnapshot(String html) {
+        if (html == null || html.isEmpty()) return false;
+        String lower = html.toLowerCase();
+        return lower.contains("class=\"pdf-sheet\"")
+                || lower.contains("class='pdf-sheet'")
+                || lower.contains(".pdf-sheet")
+                || lower.contains(".pdf-page")
+                || lower.contains("pdf-inner-scale");
+    }
+
+    private String relaxHtmlForPagination(String html) {
+        if (html == null || html.isEmpty()) return html;
+        String relaxed = html;
+        relaxed = relaxed.replace("overflow: hidden;", "overflow: visible;");
+        relaxed = relaxed.replaceAll("height\\s*:\\s*(210|285|297)mm\\s*;", "min-height: $1mm; height: auto;");
+        return relaxed;
+    }
+
+    private String injectFitOnePageIfNeeded(String html) {
+        if (html == null || html.isEmpty()) return html;
+        if (!shouldFitOnePage(html)) return html;
+        if (html.contains("__pdf_fit_one_page_script")) return html;
+
+        boolean landscape = isLandscape(html);
+        String pageWidthMm = landscape ? "297" : "210";
+        String pageHeightMm = landscape ? "210" : "297";
+
+        String injection =
+                "<style id=\"__pdf_fit_one_page_style\">" +
+                        "html, body { margin: 0 !important; padding: 0 !important; }" +
+                        "@media print { html, body { height: auto !important; } }" +
+                        "</style>" +
+                        "<script id=\"__pdf_fit_one_page_script\">" +
+                        "(function(){try{" +
+                        "var MM_TO_PX=96/25.4;" +
+                        "var pageW=" + pageWidthMm + "*MM_TO_PX;" +
+                        "var pageH=" + pageHeightMm + "*MM_TO_PX;" +
+                        "var safety=0.98;" +
+                        "function apply(){" +
+                        "try{" +
+                        "var target=document.querySelector('.pdf-sheet')||document.querySelector('.pdf-preview')||document.body||document.documentElement;" +
+                        "if(!target)return;" +
+                        "var w=Math.max(target.scrollWidth||0,target.offsetWidth||0);" +
+                        "var h=Math.max(target.scrollHeight||0,target.offsetHeight||0);" +
+                        "if(!w||!h)return;" +
+                        "var scale=Math.min(1,(pageW*safety)/w,(pageH*safety)/h);" +
+                        "if(scale<1){(document.documentElement||target).style.zoom=String(scale);}" +
+                        "}catch(e){}" +
+                        "}" +
+                        "if(document.readyState==='complete'){" +
+                        "setTimeout(apply,0);setTimeout(apply,50);setTimeout(apply,200);" +
+                        "}else{" +
+                        "window.addEventListener('load',function(){setTimeout(apply,0);setTimeout(apply,50);setTimeout(apply,200);});" +
+                        "}" +
+                        "}catch(e){}})();" +
+                        "</script>";
+
+        int bodyCloseIdx = html.toLowerCase().lastIndexOf("</body>");
+        if (bodyCloseIdx >= 0) {
+            return html.substring(0, bodyCloseIdx) + injection + html.substring(bodyCloseIdx);
+        }
+
+        int headCloseIdx = html.toLowerCase().lastIndexOf("</head>");
+        if (headCloseIdx >= 0) {
+            return html.substring(0, headCloseIdx) + injection + html.substring(headCloseIdx);
+        }
+
+        return html + injection;
+    }
+
+    private boolean shouldFitOnePage(String html) {
+        String lower = html.toLowerCase();
+        return lower.contains("pdf-preview") || lower.contains("pdf预览") || lower.contains("pdf_preview");
+    }
+
+    private boolean isLandscape(String html) {
+        String lower = html.toLowerCase();
+        return lower.contains("a4 landscape") || lower.contains("size:a4 landscape") || lower.contains("size: a4 landscape");
     }
 
     private String resolveChromiumExecutable() {
@@ -2801,7 +2886,7 @@ public class PdfGeneratorService {
 
     public byte[] generateReboundMethodRecordPdf(HttpServletRequest request) {
         byte[] htmlPdf = tryGeneratePdfFromHtml(request);
-        if (htmlPdf != null) return rotatePdfBytesCounterClockwise90(htmlPdf);
+        if (htmlPdf != null) return htmlPdf;
 
         Document document = createA4Document();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -3069,7 +3154,7 @@ public class PdfGeneratorService {
             e.printStackTrace();
         }
 
-        return rotatePdfBytesCounterClockwise90(baos.toByteArray());
+        return baos.toByteArray();
     }
 
     public byte[] generateSandReplacementRecordPdf(HttpServletRequest request) {

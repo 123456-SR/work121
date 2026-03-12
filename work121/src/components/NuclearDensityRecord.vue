@@ -49,6 +49,7 @@
         <button v-if="!draftMode" @click="printDocument" class="btn btn-secondary btn-small">打印此单</button>
         <button v-if="!draftMode" @click="generatePdf" class="btn btn-secondary btn-small">下载PDF</button>
         <button v-if="!draftMode" @click="previewPdf" class="btn btn-secondary btn-small">预览PDF</button>
+        <button v-if="!draftMode" @click="exportExcel" class="btn btn-secondary btn-small">导出数据</button>
         <button @click="openAnalysisModal" class="btn btn-secondary btn-small">数据分析</button>
       </div>
     </div>
@@ -856,6 +857,29 @@ const saveData = async () => {
   }
 }
 
+const exportExcel = async () => {
+  try {
+    const dataJsonObj = { ...formData }
+    delete dataJsonObj.id
+    delete dataJsonObj.status
+    delete dataJsonObj.tester
+    delete dataJsonObj.reviewer
+    const response = await axios.post('/api/nuclear-density/export-excel', {
+      id: formData.id,
+      entrustmentId: formData.entrustmentId || props.id,
+      data: dataJsonObj
+    })
+    if (response.data && response.data.success) {
+      alert(`导出成功：${response.data.path}`)
+    } else {
+      alert('导出失败: ' + (response.data && response.data.message ? response.data.message : '未知错误'))
+    }
+  } catch (error) {
+    console.error('Export error:', error)
+    alert('导出失败')
+  }
+}
+
 const handleSign = async () => {
   const user = JSON.parse(localStorage.getItem('userInfo'))
   if (!user) {
@@ -960,13 +984,31 @@ const openBackendPdfPreview = (actionUrl) => {
   const mmToPx = (mm) => mm * 96 / 25.4
   const pageWidthMm = 210
   const pageHeightMm = 297
-  const marginMm = 12
+  const marginMm = 6
   const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
   const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
-  const rect = container.getBoundingClientRect()
-  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
-  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
-  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const measureNode = container.cloneNode(true)
+  measureNode.classList.add('pdf-preview')
+  measureNode.querySelectorAll('.no-print').forEach(el => el.remove())
+  measureNode.style.position = 'fixed'
+  measureNode.style.left = '-100000px'
+  measureNode.style.top = '0'
+  measureNode.style.visibility = 'hidden'
+  measureNode.style.width = `${pageWidthMm}mm`
+  measureNode.style.height = 'auto'
+  measureNode.style.maxHeight = 'none'
+  measureNode.style.overflow = 'visible'
+  measureNode.style.maxWidth = '100%'
+  measureNode.style.minWidth = '0'
+  measureNode.style.margin = '0'
+  measureNode.style.padding = '0'
+  measureNode.style.boxSizing = 'border-box'
+  document.body.appendChild(measureNode)
+  const rect = measureNode.getBoundingClientRect()
+  const contentWidthPx = Math.max(measureNode.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(measureNode.scrollHeight || 0, rect.height || 0, 1)
+  measureNode.remove()
+  const pdfScale = Math.min(availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
   const scaledWidthPx = contentWidthPx * pdfScale
   const scaledHeightPx = contentHeightPx * pdfScale
   const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
@@ -1068,15 +1110,18 @@ const openBackendPdfPreview = (actionUrl) => {
     ${stylesHtml}
     <style>
       @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
-      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
-      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
-      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
-      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
-      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
-      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
-      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
-      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: 297mm; overflow: hidden; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 6mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 198mm; height: 285mm; overflow: hidden; box-sizing: border-box; position: relative; }
+      .pdf-content { position: absolute; left: 0; top: 0; transform-origin: top left; }
+      .pdf-preview.nuclearDensityRecord-container { width: 198mm; height: 285mm; max-width: 198mm; min-width: 0; margin: 0; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview { overflow: visible; }
+      .pdf-preview * { page-break-inside: avoid; break-inside: avoid; }
+      .pdf-preview [data-name] { width: auto !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; word-break: break-all; white-space: pre-wrap; }
+      .pdf-preview #pdfForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm > table { flex: 0 0 auto; height: auto; }
+      .pdf-preview table { width: 100%; height: auto; }
+      .pdf-preview #pdfForm .footer-info { margin-top: auto !important; margin-bottom: 0 !important; align-items: flex-end; }
       .pdf-preview .pdf-box {
         width: 13px;
         height: 13px;
@@ -1100,7 +1145,7 @@ const openBackendPdfPreview = (actionUrl) => {
       }
     </style>
   </head>
-  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-content" style="width: ${contentWidthPx}px; height: ${contentHeightPx}px; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale});">${clone.outerHTML}</div></div></div></body>
 </html>`
     return toBase64Utf8(html)
   }
@@ -1546,11 +1591,16 @@ const autoAnalyzeAndFill = () => {
         .nuclearDensityRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
             width: 210mm;
+            font-size: 16px;
+            color: #000;
+            max-width: 100%;
+            min-width: 800px;
             margin: 0 auto;
-            padding: 24px;
+            padding: 16px;
             background-color: var(--bg-card);
             border-radius: 8px;
             box-shadow: var(--shadow);
+            box-sizing: border-box;
         }
         h2 {
             text-align: center;
@@ -1569,10 +1619,12 @@ const autoAnalyzeAndFill = () => {
             width: 100%;
             border-collapse: collapse;
             border: 2px solid black;
+            table-layout: fixed;
+            word-break: break-all;
         }
         td {
             border: 1px solid black;
-            padding: 5px;
+            padding: 8px 5px;
             vertical-align: middle;
             text-align: center;
         }
@@ -1609,15 +1661,15 @@ const autoAnalyzeAndFill = () => {
 
         /* 统一输入字段样式，确保与表格其他字段字体一致 */
         input[type="text"], textarea, select {
-            font-family: 'SimSun', 'Songti SC', serif;
-            font-size: 14px;
-            color: #000000;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
         }
 
         input[type="text"]:disabled, textarea:disabled, select:disabled {
-            color: #000000;
-            font-family: 'SimSun', 'Songti SC', serif;
-            font-size: 14px;
+            color: inherit;
+            font-family: inherit;
+            font-size: inherit;
         }
         
         /* 移除数值输入框的上下调节按钮 */
@@ -1642,7 +1694,7 @@ const autoAnalyzeAndFill = () => {
             margin-top: 30px;
             margin-bottom: 20px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: normal;
             padding: 0 50px;
         }
         .page-footer {

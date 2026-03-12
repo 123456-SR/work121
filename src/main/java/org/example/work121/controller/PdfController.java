@@ -1,425 +1,220 @@
 package org.example.work121.controller;
 
 import org.example.work121.service.PdfGeneratorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/pdf")
+@CrossOrigin(origins = "*")
 public class PdfController {
+    private static final Logger logger = LoggerFactory.getLogger(PdfController.class);
 
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
 
-    @PostMapping("/generate")
-    public ResponseEntity<byte[]> generatePdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateEntrustmentPdf(request);
-
+    private ResponseEntity<byte[]> asInlinePdf(byte[] bytes, String filename) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "entrustment.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"");
+        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
 
-    @PostMapping("/preview")
-    public ResponseEntity<byte[]> previewPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateEntrustmentPdf(request);
-
+    private ResponseEntity<byte[]> asAttachmentPdf(byte[] bytes, String filename) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"");
+        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
 
-    @PostMapping("/light_dynamic_penetration/generate")
-    public ResponseEntity<byte[]> generateLightDynamicPenetrationPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "light_dynamic_penetration.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    @PostMapping("/entrustment/preview")
+    public ResponseEntity<byte[]> previewEntrustment(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateEntrustmentPdf(request);
+        return asInlinePdf(pdf, "entrustment.pdf");
     }
 
-    @PostMapping("/light_dynamic_penetration/preview")
-    public ResponseEntity<byte[]> previewLightDynamicPenetrationPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/light_dynamic_penetration_result/generate")
-    public ResponseEntity<byte[]> generateLightDynamicPenetrationResultPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationResultPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "light_dynamic_penetration_result.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/light_dynamic_penetration_result/preview")
-    public ResponseEntity<byte[]> previewLightDynamicPenetrationResultPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationResultPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/light_dynamic_penetration_record/generate")
-    public ResponseEntity<byte[]> generateLightDynamicPenetrationRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "light_dynamic_penetration_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/light_dynamic_penetration_record/preview")
-    public ResponseEntity<byte[]> previewLightDynamicPenetrationRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateLightDynamicPenetrationRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/nuclear_density_record/generate")
-    public ResponseEntity<byte[]> generateNuclearDensityRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateNuclearDensityRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "nuclear_density_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/nuclear_density_record/preview")
-    public ResponseEntity<byte[]> previewNuclearDensityRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateNuclearDensityRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/cutting_ring_record/generate")
-    public ResponseEntity<byte[]> generateCuttingRingRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateCuttingRingRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "cutting_ring_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/cutting_ring_record/preview")
-    public ResponseEntity<byte[]> previewCuttingRingRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateCuttingRingRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/density_test_report/generate")
-    public ResponseEntity<byte[]> generateDensityTestReportPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateDensityTestReportPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "density_test_report.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    @PostMapping("/entrustment/generate")
+    public ResponseEntity<byte[]> generateEntrustment(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateEntrustmentPdf(request);
+        return asAttachmentPdf(pdf, "entrustment.pdf");
     }
 
     @PostMapping("/density_test_report/preview")
-    public ResponseEntity<byte[]> previewDensityTestReportPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateDensityTestReportPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    public ResponseEntity<byte[]> previewDensityTestReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateDensityTestReportPdf(request);
+        return asInlinePdf(pdf, "density_test_report.pdf");
     }
 
-    @PostMapping("/density_test_result/generate")
-    public ResponseEntity<byte[]> generateDensityTestResultPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateDensityTestResultPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "density_test_result.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    @PostMapping("/density_test_report/generate")
+    public ResponseEntity<byte[]> generateDensityTestReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateDensityTestReportPdf(request);
+        return asAttachmentPdf(pdf, "density_test_report.pdf");
     }
 
     @PostMapping("/density_test_result/preview")
-    public ResponseEntity<byte[]> previewDensityTestResultPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateDensityTestResultPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    public ResponseEntity<byte[]> previewDensityTestResult(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateDensityTestResultPdf(request);
+        return asInlinePdf(pdf, "density_test_result.pdf");
     }
 
-    @PostMapping("/rebound_method_record/generate")
-    public ResponseEntity<byte[]> generateReboundMethodRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "rebound_method_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    @PostMapping("/density_test_result/generate")
+    public ResponseEntity<byte[]> generateDensityTestResult(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateDensityTestResultPdf(request);
+        return asAttachmentPdf(pdf, "density_test_result.pdf");
     }
 
     @PostMapping("/rebound_method_record/preview")
-    public ResponseEntity<byte[]> previewReboundMethodRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    public ResponseEntity<byte[]> previewReboundMethodRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateReboundMethodRecordPdf(request);
+        return asInlinePdf(pdf, "rebound_method_record.pdf");
     }
 
-    @PostMapping("/sand_replacement_record/generate")
-    public ResponseEntity<byte[]> generateSandReplacementRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateSandReplacementRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "sand_replacement_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/sand_replacement_record/preview")
-    public ResponseEntity<byte[]> previewSandReplacementRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateSandReplacementRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/water_replacement_record/generate")
-    public ResponseEntity<byte[]> generateWaterReplacementRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateWaterReplacementRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "water_replacement_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/water_replacement_record/preview")
-    public ResponseEntity<byte[]> previewWaterReplacementRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateWaterReplacementRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/beckman_beam_result/generate")
-    public ResponseEntity<byte[]> generateBeckmanBeamResultPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamResultPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "beckman_beam_result.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/beckman_beam_result/preview")
-    public ResponseEntity<byte[]> previewBeckmanBeamResultPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamResultPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/beckman_beam_record/generate")
-    public ResponseEntity<byte[]> generateBeckmanBeamRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "beckman_beam_record.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/beckman_beam_record/preview")
-    public ResponseEntity<byte[]> previewBeckmanBeamRecordPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamRecordPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/beckman_beam_report/generate")
-    public ResponseEntity<byte[]> generateBeckmanBeamReportPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamReportPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "beckman_beam_report.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/beckman_beam_report/preview")
-    public ResponseEntity<byte[]> previewBeckmanBeamReportPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateBeckmanBeamReportPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
-    }
-
-    @PostMapping("/rebound_method_report/generate")
-    public ResponseEntity<byte[]> generateReboundMethodReportPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodReportPdf(request);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentDispositionFormData("attachment", "rebound_method_report.pdf");
-        headers.setContentLength(pdfBytes.length);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    @PostMapping("/rebound_method_record/generate")
+    public ResponseEntity<byte[]> generateReboundMethodRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateReboundMethodRecordPdf(request);
+        return asAttachmentPdf(pdf, "rebound_method_record.pdf");
     }
 
     @PostMapping("/rebound_method_report/preview")
-    public ResponseEntity<byte[]> previewReboundMethodReportPdf(HttpServletRequest request) {
-        byte[] pdfBytes = pdfGeneratorService.generateReboundMethodReportPdf(request);
+    public ResponseEntity<byte[]> previewReboundMethodReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateReboundMethodReportPdf(request);
+        return asInlinePdf(pdf, "rebound_method_report.pdf");
+    }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        headers.setContentLength(pdfBytes.length);
+    @PostMapping("/rebound_method_report/generate")
+    public ResponseEntity<byte[]> generateReboundMethodReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateReboundMethodReportPdf(request);
+        return asAttachmentPdf(pdf, "rebound_method_report.pdf");
+    }
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfBytes);
+    @PostMapping("/nuclear_density_record/preview")
+    public ResponseEntity<byte[]> previewNuclearDensityRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateNuclearDensityRecordPdf(request);
+        return asInlinePdf(pdf, "nuclear_density_record.pdf");
+    }
+
+    @PostMapping("/nuclear_density_record/generate")
+    public ResponseEntity<byte[]> generateNuclearDensityRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateNuclearDensityRecordPdf(request);
+        return asAttachmentPdf(pdf, "nuclear_density_record.pdf");
+    }
+
+    @PostMapping("/sand_replacement_record/preview")
+    public ResponseEntity<byte[]> previewSandReplacementRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateSandReplacementRecordPdf(request);
+        return asInlinePdf(pdf, "sand_replacement_record.pdf");
+    }
+
+    @PostMapping("/sand_replacement_record/generate")
+    public ResponseEntity<byte[]> generateSandReplacementRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateSandReplacementRecordPdf(request);
+        return asAttachmentPdf(pdf, "sand_replacement_record.pdf");
+    }
+
+    @PostMapping("/water_replacement_record/preview")
+    public ResponseEntity<byte[]> previewWaterReplacementRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateWaterReplacementRecordPdf(request);
+        return asInlinePdf(pdf, "water_replacement_record.pdf");
+    }
+
+    @PostMapping("/water_replacement_record/generate")
+    public ResponseEntity<byte[]> generateWaterReplacementRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateWaterReplacementRecordPdf(request);
+        return asAttachmentPdf(pdf, "water_replacement_record.pdf");
+    }
+
+    @PostMapping("/cutting_ring_record/preview")
+    public ResponseEntity<byte[]> previewCuttingRingRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateCuttingRingRecordPdf(request);
+        return asInlinePdf(pdf, "cutting_ring_record.pdf");
+    }
+
+    @PostMapping("/cutting_ring_record/generate")
+    public ResponseEntity<byte[]> generateCuttingRingRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateCuttingRingRecordPdf(request);
+        return asAttachmentPdf(pdf, "cutting_ring_record.pdf");
+    }
+
+    @PostMapping("/beckman_beam_record/preview")
+    public ResponseEntity<byte[]> previewBeckmanBeamRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateBeckmanBeamRecordPdf(request);
+        return asInlinePdf(pdf, "beckman_beam_record.pdf");
+    }
+
+    @PostMapping("/beckman_beam_record/generate")
+    public ResponseEntity<byte[]> generateBeckmanBeamRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateBeckmanBeamRecordPdf(request);
+        return asAttachmentPdf(pdf, "beckman_beam_record.pdf");
+    }
+
+    @PostMapping("/beckman_beam_report/preview")
+    public ResponseEntity<byte[]> previewBeckmanBeamReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateBeckmanBeamReportPdf(request);
+        return asInlinePdf(pdf, "beckman_beam_report.pdf");
+    }
+
+    @PostMapping("/beckman_beam_report/generate")
+    public ResponseEntity<byte[]> generateBeckmanBeamReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateBeckmanBeamReportPdf(request);
+        return asAttachmentPdf(pdf, "beckman_beam_report.pdf");
+    }
+
+    @PostMapping("/beckman_beam_result/preview")
+    public ResponseEntity<byte[]> previewBeckmanBeamResult(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateBeckmanBeamResultPdf(request);
+        return asInlinePdf(pdf, "beckman_beam_result.pdf");
+    }
+
+    @PostMapping("/beckman_beam_result/generate")
+    public ResponseEntity<byte[]> generateBeckmanBeamResult(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateBeckmanBeamResultPdf(request);
+        return asAttachmentPdf(pdf, "beckman_beam_result.pdf");
+    }
+
+    @PostMapping("/light_dynamic_penetration/preview")
+    public ResponseEntity<byte[]> previewLightDynamicPenetrationReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateLightDynamicPenetrationPdf(request);
+        return asInlinePdf(pdf, "light_dynamic_penetration_report.pdf");
+    }
+
+    @PostMapping("/light_dynamic_penetration/generate")
+    public ResponseEntity<byte[]> generateLightDynamicPenetrationReport(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateLightDynamicPenetrationPdf(request);
+        return asAttachmentPdf(pdf, "light_dynamic_penetration_report.pdf");
+    }
+
+    @PostMapping("/light_dynamic_penetration_result/preview")
+    public ResponseEntity<byte[]> previewLightDynamicPenetrationResult(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateLightDynamicPenetrationResultPdf(request);
+        return asInlinePdf(pdf, "light_dynamic_penetration_result.pdf");
+    }
+
+    @PostMapping("/light_dynamic_penetration_result/generate")
+    public ResponseEntity<byte[]> generateLightDynamicPenetrationResult(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateLightDynamicPenetrationResultPdf(request);
+        return asAttachmentPdf(pdf, "light_dynamic_penetration_result.pdf");
+    }
+
+    @PostMapping("/light_dynamic_penetration_record/preview")
+    public ResponseEntity<byte[]> previewLightDynamicPenetrationRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateLightDynamicPenetrationRecordPdf(request);
+        return asInlinePdf(pdf, "light_dynamic_penetration_record.pdf");
+    }
+
+    @PostMapping("/light_dynamic_penetration_record/generate")
+    public ResponseEntity<byte[]> generateLightDynamicPenetrationRecord(HttpServletRequest request) {
+        byte[] pdf = pdfGeneratorService.generateLightDynamicPenetrationRecordPdf(request);
+        return asAttachmentPdf(pdf, "light_dynamic_penetration_record.pdf");
     }
 }

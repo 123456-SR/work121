@@ -46,12 +46,6 @@
           打印此单
         </button>
         <button
-          @click="generatePdf"
-          class="btn btn-secondary btn-small"
-        >
-          下载PDF
-        </button>
-        <button
           @click="previewPdf"
           class="btn btn-secondary btn-small"
         >
@@ -1422,109 +1416,9 @@ const printDocument = () => {
   window.print()
 }
 
-const openPreviewWindow = () => {
-  if (!pdfForm.value) return
-  const container = pdfForm.value.closest('.entrustment-container')
-  if (!container) return
+ 
 
-  const clone = container.cloneNode(true)
-  clone.classList.add('pdf-preview')
-  clone.querySelectorAll('.no-print').forEach(el => el.remove())
-
-  const originalFields = container.querySelectorAll('input, textarea, select')
-  const clonedFields = clone.querySelectorAll('input, textarea, select')
-  const len = Math.min(originalFields.length, clonedFields.length)
-
-  for (let i = 0; i < len; i++) {
-    const src = originalFields[i]
-    const dst = clonedFields[i]
-    const tag = dst.tagName.toLowerCase()
-
-    if (tag === 'textarea') {
-      dst.textContent = src.value || ''
-      continue
-    }
-
-    if (tag === 'select') {
-      const srcValue = src.value
-      Array.from(dst.options).forEach(opt => {
-        opt.selected = opt.value === srcValue
-      })
-      continue
-    }
-
-    const type = (dst.getAttribute('type') || '').toLowerCase()
-    if (type === 'checkbox' || type === 'radio') {
-      if (src.checked) dst.setAttribute('checked', '')
-      else dst.removeAttribute('checked')
-      continue
-    }
-
-    dst.setAttribute('value', src.value ?? '')
-  }
-
-  clone.querySelectorAll('input[type="radio"][name="deliveryMode"]').forEach(el => {
-    const box = document.createElement('span')
-    box.className = el.checked ? 'pdf-box checked' : 'pdf-box'
-    box.setAttribute('aria-hidden', 'true')
-    el.replaceWith(box)
-  })
-
-  const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
-  const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
-  const html = `<!doctype html>
-<html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PDF预览</title>
-    ${stylesHtml}
-    <style>
-      html, body { margin: 0; padding: 0; background: #fff; }
-      .pdf-preview .pdf-box {
-        width: 13px;
-        height: 13px;
-        border: 1px solid #000;
-        display: inline-block;
-        position: relative;
-        vertical-align: middle;
-        margin-right: 6px;
-        box-sizing: border-box;
-      }
-      .pdf-preview .pdf-box.checked::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 4px;
-        height: 8px;
-        border: solid #000;
-        border-width: 0 2px 2px 0;
-        transform: translate(-50%, -65%) rotate(45deg);
-      }
-    </style>
-  </head>
-  <body>${clone.outerHTML}</body>
-</html>`
-
-  const w = window.open('', '_blank')
-  if (!w) return
-  w.document.open()
-  w.document.write(html)
-  w.document.close()
-  return w
-}
-
-const generatePdf = () => {
-  const w = openPreviewWindow()
-  if (!w) return
-  w.onload = () => {
-    w.focus()
-    w.print()
-  }
-}
-
-const openBackendPdfPreview = (actionUrl) => {
+const openBackendPdfPreview = () => {
   if (!pdfForm.value) return
   const container = pdfForm.value.closest('.entrustment-container')
   if (!container) return
@@ -1535,30 +1429,16 @@ const openBackendPdfPreview = (actionUrl) => {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
 
-  const toBase64Utf8 = (text) => {
-    const bytes = new TextEncoder().encode(text)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-    return btoa(binary)
-  }
-
   const mmToPx = (mm) => mm * 96 / 25.4
   const pageWidthMm = 210
   const pageHeightMm = 297
-  const marginMm = 12
-  const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
-  const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
-  const rect = container.getBoundingClientRect()
-  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
-  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
-  const contentHeightPxForPdf = Math.max(contentHeightPx, availableHeightPx)
-  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPxForPdf)
-  const scaledWidthPx = contentWidthPx * pdfScale
-  const scaledHeightPx = contentHeightPxForPdf * pdfScale
-  const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
-  const pdfOffsetYPx = Math.max(0, (availableHeightPx - scaledHeightPx) / 2)
+  const availableWidthPx = mmToPx(pageWidthMm)
+  const availableHeightPx = mmToPx(pageHeightMm)
+  const fitSafety = 0.995
+  const baseWidthMm = 198
+  const baseHeightMm = 285
 
-  const buildHtmlSnapshotBase64 = () => {
+  const buildHtmlSnapshotHtml = () => {
     const clone = container.cloneNode(true)
     clone.classList.add('pdf-preview')
     clone.querySelectorAll('.no-print').forEach(el => el.remove())
@@ -1644,6 +1524,28 @@ const openBackendPdfPreview = (actionUrl) => {
       }
     })
 
+    const innerScale = document.createElement('div')
+    innerScale.className = 'pdf-inner-scale'
+    while (clone.firstChild) innerScale.appendChild(clone.firstChild)
+    clone.appendChild(innerScale)
+
+    const measureNode = clone.cloneNode(true)
+    measureNode.style.position = 'fixed'
+    measureNode.style.left = '-100000px'
+    measureNode.style.top = '0'
+    measureNode.style.visibility = 'hidden'
+    measureNode.style.width = `${pageWidthMm}mm`
+    measureNode.style.height = `${pageHeightMm}mm`
+    measureNode.style.overflow = 'hidden'
+    document.body.appendChild(measureNode)
+    const innerEl = measureNode.querySelector('.pdf-inner-scale')
+    const innerRect = innerEl ? innerEl.getBoundingClientRect() : { width: 1, height: 1 }
+    const innerWidthPx = Math.max(innerEl?.scrollWidth || 0, innerRect.width || 0, 1)
+    const innerHeightPx = Math.max(innerEl?.scrollHeight || 0, innerRect.height || 0, 1)
+    measureNode.remove()
+    const pdfScale = Math.min(availableWidthPx / innerWidthPx, availableHeightPx / innerHeightPx) * fitSafety
+    innerScale.setAttribute('style', `transform-origin:center center; transform: scale(${pdfScale});`)
+
     const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
     const html = `<!doctype html>
@@ -1654,13 +1556,15 @@ const openBackendPdfPreview = (actionUrl) => {
     ${stylesHtml}
     <style>
       @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
-      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
-      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
-      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
-      .pdf-preview.entrustment-container { height: 273mm; box-sizing: border-box; display: flex; flex-direction: column; }
-      .pdf-preview #entrustmentForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-      .pdf-preview #entrustmentForm > table { flex: 1; }
+      html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: 297mm; overflow: hidden; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 0; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 210mm; height: 297mm; overflow: hidden; box-sizing: border-box; display: flex; align-items: center; justify-content: center; }
+      .pdf-preview.entrustment-container { width: 210mm; height: 297mm; margin: 0; padding: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; overflow: hidden; min-width: 0; background: transparent; border-radius: 0; box-shadow: none; }
+      .pdf-inner-scale { width: ${baseWidthMm}mm; height: ${baseHeightMm}mm; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview { overflow: hidden; }
+      .pdf-preview * { page-break-inside: avoid; break-inside: avoid; }
+      .pdf-preview h2 { margin: 0; }
+      .pdf-preview .page-footer { margin-top: 0 !important; margin-bottom: 0 !important; }
       .pdf-preview #entrustmentForm .footer-info { margin-top: auto !important; margin-bottom: 0 !important; align-items: flex-end; }
       .pdf-preview #entrustmentForm .footer-info [data-name="client"] { height: 30px; line-height: 30px; vertical-align: bottom; }
       .pdf-preview .pdf-box {
@@ -1686,38 +1590,15 @@ const openBackendPdfPreview = (actionUrl) => {
       }
     </style>
   </head>
-  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+  <body><div class="pdf-sheet"><div class="pdf-page">${clone.outerHTML}</div></div></body>
 </html>`
-    return toBase64Utf8(html)
+    return html
   }
 
-  const fields = Array.from(pdfForm.value.querySelectorAll('input, textarea, select'))
-  const snapshotBase64 = buildHtmlSnapshotBase64()
-  const inputsHtml = fields.map((el) => {
-    const name = el.getAttribute('name')
-    if (!name) return ''
-
-    if (el.tagName.toLowerCase() === 'select') {
-      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
-    }
-
-    if (el.tagName.toLowerCase() === 'textarea') {
-      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
-    }
-
-    const type = (el.getAttribute('type') || '').toLowerCase()
-
-    if (type === 'file' || type === 'button' || type === 'submit' || type === 'reset') return ''
-
-    if (type === 'checkbox' || type === 'radio') {
-      if (!el.checked) return ''
-      return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value || 'on')}" />`
-    }
-
-    return `<input type="hidden" name="${escapeAttr(name)}" value="${escapeAttr(el.value)}" />`
-  }).join('\n') + `\n<input type="hidden" name="__pdf_html_base64" value="${escapeAttr(snapshotBase64)}" />\n`
-
-  const html = `<!doctype html>
+  const html = buildHtmlSnapshotHtml()
+  const htmlBase64 = btoa(unescape(encodeURIComponent(html)))
+  const actionUrl = '/api/pdf/entrustment/preview'
+  const wrapper = `<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
@@ -1740,21 +1621,20 @@ const openBackendPdfPreview = (actionUrl) => {
     <div class="frame-shell">
       <iframe name="pdfFrame" title="PDF预览"></iframe>
     </div>
-    <form id="pdfPostForm" method="post" action="${escapeAttr(actionUrl)}" target="pdfFrame">
-      ${inputsHtml}
+    <form id="pdfPostForm" method="post" action="${actionUrl}" target="pdfFrame">
+      <input type="hidden" name="__pdf_html_base64" value="${htmlBase64}" />
     </form>
   </body>
 </html>`
-
   const w = window.open('', '_blank')
   if (!w) return
   w.document.open()
-  w.document.write(html)
+  w.document.write(wrapper)
   w.document.close()
 }
 
 const previewPdf = () => {
-  openBackendPdfPreview('/api/pdf/preview')
+  openBackendPdfPreview()
 }
 
 

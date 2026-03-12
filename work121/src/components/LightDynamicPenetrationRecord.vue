@@ -1048,13 +1048,13 @@ const openBackendPdfPreview = (actionUrl) => {
   const mmToPx = (mm) => mm * 96 / 25.4
   const pageWidthMm = 210
   const pageHeightMm = 297
-  const marginMm = 12
+  const marginMm = 6
   const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
   const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
   const rect = container.getBoundingClientRect()
   const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
   const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
-  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const pdfScale = Math.min(availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
   const scaledWidthPx = contentWidthPx * pdfScale
   const scaledHeightPx = contentHeightPx * pdfScale
   const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
@@ -1121,6 +1121,7 @@ const openBackendPdfPreview = (actionUrl) => {
 
         const span = document.createElement('span')
         span.textContent = el.getAttribute('value') || el.value || ''
+        span.className = el.className || ''
         span.setAttribute('data-name', name)
         span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
         el.replaceWith(span)
@@ -1130,6 +1131,7 @@ const openBackendPdfPreview = (actionUrl) => {
       if (tag === 'textarea') {
         const div = document.createElement('div')
         div.textContent = el.textContent || el.value || ''
+        div.className = el.className || ''
         div.setAttribute('data-name', name)
         div.setAttribute('style', `${style};white-space:pre-wrap;`)
         el.replaceWith(div)
@@ -1140,6 +1142,7 @@ const openBackendPdfPreview = (actionUrl) => {
         const span = document.createElement('span')
         const selected = el.querySelector('option:checked')
         span.textContent = selected ? selected.textContent : (el.value || '')
+        span.className = el.className || ''
         span.setAttribute('data-name', name)
         span.setAttribute('style', `${style};display:inline-block;white-space:pre-wrap;`)
         el.replaceWith(span)
@@ -1156,15 +1159,17 @@ const openBackendPdfPreview = (actionUrl) => {
     ${stylesHtml}
     <style>
       @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
-      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
-      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
-      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
-      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
-      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
-      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
-      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
-      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: 297mm; overflow: hidden; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 6mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 198mm; height: 285mm; overflow: hidden; box-sizing: border-box; }
+      .pdf-preview { overflow: hidden; }
+      .pdf-preview * { page-break-inside: avoid; break-inside: avoid; }
+      .pdf-preview [data-name] { width: auto !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; word-break: break-all; white-space: pre-wrap; }
+      .pdf-preview.lightDynamicPenetrationRecord-container { width: 198mm; height: 285mm; margin: 0; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm > table { flex: 1; height: 100%; }
+      .pdf-preview table { width: 100%; height: 100%; }
+      .pdf-preview #pdfForm .footer-info { margin-top: auto !important; margin-bottom: 0 !important; align-items: flex-end; }
       .pdf-preview .pdf-box {
         width: 13px;
         height: 13px;
@@ -1188,7 +1193,7 @@ const openBackendPdfPreview = (actionUrl) => {
       }
     </style>
   </head>
-  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+  <body><div class="pdf-sheet"><div class="pdf-page">${clone.outerHTML}</div></div></body>
 </html>`
     return toBase64Utf8(html)
   }
@@ -1740,16 +1745,19 @@ const saveData = async () => {
         .lightDynamicPenetrationRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
             width: 210mm;
+            font-size: 16px;
+            color: #000;
             margin: 0 auto;
-            padding: 16px;
+            padding: 24px;
             background-color: var(--bg-card);
             border-radius: 8px;
             box-shadow: var(--shadow);
+            box-sizing: border-box;
         }
         h2 {
             text-align: center;
             margin-bottom: 12px;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             color: black;
         }
@@ -1763,10 +1771,12 @@ const saveData = async () => {
             width: 100%;
             border-collapse: collapse;
             border: 2px solid black;
+            table-layout: fixed;
+            word-break: break-all;
         }
         td {
             border: 1px solid black;
-            padding: 3px;
+            padding: 8px 5px;
             vertical-align: middle;
             text-align: center;
             line-height: 1.2;
@@ -1785,7 +1795,7 @@ const saveData = async () => {
             border-radius: 4px;
             outline: none;
             font-family: inherit;
-            font-size: 14px;
+            font-size: inherit;
             background-color: transparent;
             text-align: center;
             padding: 1px 3px;
@@ -1816,7 +1826,7 @@ const saveData = async () => {
             border-radius: 4px;
             outline: none;
             font-family: inherit;
-            font-size: 14px;
+            font-size: inherit;
             background-color: transparent;
             text-align: center;
             padding: 1px 3px;
@@ -1839,23 +1849,23 @@ const saveData = async () => {
 
         /* 统一输入字段样式，确保与表格其他字段字体一致 */
         input[type="text"], textarea, .table-textarea {
-            font-family: 'SimSun', 'Songti SC', serif;
-            font-size: 14px;
-            color: #000000;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
         }
 
         input[type="text"]:disabled, textarea:disabled, .table-textarea:disabled {
-            color: #000000;
-            font-family: 'SimSun', 'Songti SC', serif;
-            font-size: 14px;
+            color: inherit;
+            font-family: inherit;
+            font-size: inherit;
         }
         .footer-info {
             display: flex;
             justify-content: space-between;
             margin-top: 15px;
             margin-bottom: 10px;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: normal;
             padding: 0 30px;
         }
         .page-footer {

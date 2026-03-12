@@ -101,4 +101,20 @@ public class NuclearDensityController {
         }
         return result;
     }
+
+    @PostMapping("/export-excel")
+    public Map<String, Object> exportExcel(@RequestBody Map<String, Object> payload) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            String savedPath = service.exportRecordToExcel(payload);
+            result.put("success", true);
+            result.put("path", savedPath);
+            result.put("message", "导出成功");
+        } catch (Exception e) {
+            logger.error("导出Excel失败", e);
+            result.put("success", false);
+            result.put("message", "导出Excel失败: " + e.getMessage());
+        }
+        return result;
+    }
 }

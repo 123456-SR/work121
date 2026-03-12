@@ -1291,13 +1291,31 @@ const openBackendPdfPreview = (actionUrl) => {
   const mmToPx = (mm) => mm * 96 / 25.4
   const pageWidthMm = 210
   const pageHeightMm = 297
-  const marginMm = 12
+  const marginMm = 6
   const availableWidthPx = mmToPx(pageWidthMm - marginMm * 2)
   const availableHeightPx = mmToPx(pageHeightMm - marginMm * 2)
-  const rect = container.getBoundingClientRect()
-  const contentWidthPx = Math.max(container.scrollWidth || 0, rect.width || 0, 1)
-  const contentHeightPx = Math.max(container.scrollHeight || 0, rect.height || 0, 1)
-  const pdfScale = Math.min(1, availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
+  const measureNode = container.cloneNode(true)
+  measureNode.classList.add('pdf-preview')
+  measureNode.querySelectorAll('.no-print').forEach(el => el.remove())
+  measureNode.style.position = 'fixed'
+  measureNode.style.left = '-100000px'
+  measureNode.style.top = '0'
+  measureNode.style.visibility = 'hidden'
+  measureNode.style.width = `${pageWidthMm}mm`
+  measureNode.style.height = 'auto'
+  measureNode.style.maxHeight = 'none'
+  measureNode.style.overflow = 'visible'
+  measureNode.style.maxWidth = '100%'
+  measureNode.style.minWidth = '0'
+  measureNode.style.margin = '0'
+  measureNode.style.padding = '0'
+  measureNode.style.boxSizing = 'border-box'
+  document.body.appendChild(measureNode)
+  const rect = measureNode.getBoundingClientRect()
+  const contentWidthPx = Math.max(measureNode.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(measureNode.scrollHeight || 0, rect.height || 0, 1)
+  measureNode.remove()
+  const pdfScale = Math.min(availableWidthPx / contentWidthPx, availableHeightPx / contentHeightPx)
   const scaledWidthPx = contentWidthPx * pdfScale
   const scaledHeightPx = contentHeightPx * pdfScale
   const pdfOffsetXPx = Math.max(0, (availableWidthPx - scaledWidthPx) / 2)
@@ -1399,15 +1417,18 @@ const openBackendPdfPreview = (actionUrl) => {
     ${stylesHtml}
     <style>
       @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0; padding: 0; background: #fff; }
-      .pdf-sheet { width: 210mm; height: 297mm; padding: 12mm; box-sizing: border-box; overflow: hidden; }
-      .pdf-page { width: 186mm; height: 273mm; overflow: hidden; position: relative; }
-      .pdf-transform { position: absolute; left: 0; top: 0; display: inline-block; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale}); transform-origin: top left; }
-      .pdf-preview input, .pdf-preview textarea, .pdf-preview select { display: none !important; }
-      .pdf-preview table [data-name] { display: block; width: 100% !important; box-sizing: border-box; }
-      .pdf-preview .header-info { width: 100%; box-sizing: border-box; }
-      .pdf-preview .header-info > span { display: flex; align-items: flex-end; flex: 1; min-width: 0; gap: 4px; }
-      .pdf-preview .header-info > span > [data-name] { flex: 1; min-width: 0; width: auto !important; box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: 297mm; overflow: hidden; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 6mm; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 198mm; height: 285mm; overflow: hidden; box-sizing: border-box; position: relative; }
+      .pdf-content { position: absolute; left: 0; top: 0; transform-origin: top left; }
+      .pdf-preview.beckmanBeamRecord-container { width: 198mm; height: 285mm; max-width: 198mm; min-width: 0; margin: 0; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview { overflow: visible; }
+      .pdf-preview * { page-break-inside: avoid; break-inside: avoid; }
+      .pdf-preview [data-name] { width: auto !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; word-break: break-all; white-space: pre-wrap; }
+      .pdf-preview #pdfForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm > table { flex: 0 0 auto; height: auto; }
+      .pdf-preview table { width: 100%; height: auto; }
+      .pdf-preview #pdfForm .footer-info { margin-top: auto !important; margin-bottom: 0 !important; align-items: flex-end; }
       .pdf-preview .pdf-box {
         width: 13px;
         height: 13px;
@@ -1431,7 +1452,7 @@ const openBackendPdfPreview = (actionUrl) => {
       }
     </style>
   </head>
-  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-transform">${clone.outerHTML}</div></div></div></body>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-content" style="width: ${contentWidthPx}px; height: ${contentHeightPx}px; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale});">${clone.outerHTML}</div></div></div></body>
 </html>`
     return toBase64Utf8(html)
   }
@@ -1494,6 +1515,78 @@ const openBackendPdfPreview = (actionUrl) => {
   w.document.open()
   w.document.write(html)
   w.document.close()
+}
+
+const openClientPdfPreview = () => {
+  if (!pdfForm.value) return
+  const container = pdfForm.value.closest('.beckmanBeamRecord-container')
+  if (!container) return
+  const mmToPx = (mm) => mm * 96 / 25.4
+  const pageWidthMm = 210
+  const pageHeightMm = 297
+  const availableWidthPx = mmToPx(pageWidthMm)
+  const availableHeightPx = mmToPx(pageHeightMm)
+  const measureNode = container.cloneNode(true)
+  measureNode.classList.add('pdf-preview')
+  measureNode.querySelectorAll('.no-print').forEach(el => el.remove())
+  measureNode.style.position = 'fixed'
+  measureNode.style.left = '-100000px'
+  measureNode.style.top = '0'
+  measureNode.style.visibility = 'hidden'
+  measureNode.style.width = `${pageWidthMm}mm`
+  measureNode.style.height = 'auto'
+  measureNode.style.maxHeight = 'none'
+  measureNode.style.overflow = 'visible'
+  measureNode.style.maxWidth = '100%'
+  measureNode.style.minWidth = '0'
+  measureNode.style.margin = '0'
+  measureNode.style.padding = '0'
+  measureNode.style.boxSizing = 'border-box'
+  document.body.appendChild(measureNode)
+  const rect = measureNode.getBoundingClientRect()
+  const contentWidthPx = Math.max(measureNode.scrollWidth || 0, rect.width || 0, 1)
+  const contentHeightPx = Math.max(measureNode.scrollHeight || 0, rect.height || 0, 1)
+  measureNode.remove()
+  const marginWantedMm = 2
+  const marginWantedPx = mmToPx(marginWantedMm)
+  const targetWidthPx = Math.max(availableWidthPx - marginWantedPx * 2, 1)
+  const targetHeightPx = Math.max(availableHeightPx - marginWantedPx * 2, 1)
+  const pdfScale = Math.min(targetWidthPx / contentWidthPx, targetHeightPx / contentHeightPx)
+  const scaledWidthPx = contentWidthPx * pdfScale
+  const scaledHeightPx = contentHeightPx * pdfScale
+  const pdfOffsetXPx = Math.max(marginWantedPx, (availableWidthPx - scaledWidthPx) / 2)
+  const pdfOffsetYPx = Math.max(marginWantedPx, (availableHeightPx - scaledHeightPx) / 2)
+  const clone = container.cloneNode(true)
+  clone.classList.add('pdf-preview')
+  clone.querySelectorAll('.no-print').forEach(el => el.remove())
+  const styleNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+  const stylesHtml = styleNodes.map(n => n.outerHTML).join('\n')
+  const a4Html = `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${stylesHtml}
+    <style>
+      @page { size: A4 portrait; margin: 0; }
+      html, body { margin: 0; padding: 0; background: #fff; width: 210mm; height: 297mm; overflow: hidden; }
+      .pdf-sheet { width: 210mm; height: 297mm; padding: 0; box-sizing: border-box; overflow: hidden; }
+      .pdf-page { width: 210mm; height: 297mm; overflow: hidden; box-sizing: border-box; position: relative; }
+      .pdf-content { position: absolute; left: 0; top: 0; transform-origin: top left; }
+      .pdf-preview.beckmanBeamRecord-container { width: 100%; height: 100%; margin: 0; padding: 0; box-sizing: border-box; display: flex; flex-direction: column; }
+      .pdf-preview { overflow: visible; }
+      .pdf-preview * { page-break-inside: avoid; break-inside: avoid; }
+      .pdf-preview #pdfForm { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      .pdf-preview #pdfForm > table { flex: 0 0 auto; height: auto; margin-top: auto; margin-bottom: auto; }
+    </style>
+  </head>
+  <body><div class="pdf-sheet"><div class="pdf-page"><div class="pdf-content" style="width: ${contentWidthPx}px; height: ${contentHeightPx}px; transform: translate(${pdfOffsetXPx}px, ${pdfOffsetYPx}px) scale(${pdfScale});">${clone.outerHTML}</div></div></div></body>
+</html>`
+  const w2 = window.open('', '_blank')
+  if (!w2) return
+  w2.document.open()
+  w2.document.write(a4Html)
+  w2.document.close()
 }
 
 const generatePdf = () => {
@@ -1798,11 +1891,14 @@ const autoAnalyzeAndFill = () => {
     .beckmanBeamRecord-container {
         font-family: 'SimSun', 'Songti SC', serif;
         width: 210mm;
+        max-width: 100%;
+        min-width: 800px;
         margin: 0 auto;
-        padding: 24px;
+        padding: 16px;
         background-color: var(--bg-card);
         border-radius: 8px;
         box-shadow: var(--shadow);
+        box-sizing: border-box;
     }
 
     .no-print {
@@ -1933,35 +2029,42 @@ const autoAnalyzeAndFill = () => {
         .beckmanBeamRecord-container {
             font-family: 'SimSun', 'Songti SC', serif;
             width: 210mm;
+            font-size: 16px;
+            color: #000;
+            max-width: 100%;
+            min-width: 800px;
             margin: 0 auto;
-            padding: 24px;
+            padding: 16px;
             background-color: var(--bg-card);
             border-radius: 8px;
             box-shadow: var(--shadow);
+            box-sizing: border-box;
         }
         h1 {
             text-align: center;
             font-size: 24px;
             margin-bottom: 20px;
-            color: var(--text-primary);
+            color: #000;
         }
         .header-info {
             display: flex;
             justify-content: space-between;
             margin-bottom: 5px;
+            font-weight: bold;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid black;
+            border: 2px solid black;
             table-layout: fixed;
+            word-break: break-all;
             margin-bottom: -1px; /* Collapse borders between tables */
         }
         td, th {
             border: 1px solid black;
-            padding: 5px;
+            padding: 8px 5px;
             text-align: center;
-            font-size: 14px;
+            font-size: inherit;
             vertical-align: middle;
             word-wrap: break-word;
         }
