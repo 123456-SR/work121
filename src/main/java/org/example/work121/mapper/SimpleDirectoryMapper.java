@@ -20,8 +20,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, TESTER, REVIEWER, APPROVER, " +
-            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "STATUS, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_TESTER, JC_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -42,8 +42,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, TESTER, REVIEWER, APPROVER, " +
-            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "STATUS, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_TESTER, JC_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -64,8 +64,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, TESTER, REVIEWER, APPROVER, " +
-            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "STATUS, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_TESTER, JC_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -86,8 +86,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, TESTER, REVIEWER, APPROVER, " +
-            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "STATUS, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_TESTER, JC_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN as createBy, " +
             "CREATE_TIME, " +
             "UPDATE_MAN as updateBy, " +
@@ -108,8 +108,8 @@ public interface SimpleDirectoryMapper {
             "TABLE8_TYPE, TABLE8_ID, " +
             "TABLE9_TYPE, TABLE9_ID, " +
             "TABLE10_TYPE, TABLE10_ID, " +
-            "STATUS, TESTER, REVIEWER, APPROVER, " +
-            "WT_UNDERTAKER, WT_REVIEWER, JC_FILLER, JC_TESTER, JC_REVIEWER, BG_TESTER, BG_REVIEWER, BG_APPROVER, " +
+            "STATUS, " +
+            "WT_UNDERTAKER, WT_REVIEWER, JC_TESTER, JC_REVIEWER, BG_APPROVER, " +
             "CREATE_MAN, CREATE_TIME, UPDATE_MAN, UPDATE_TIME" +
             ") VALUES (" +
             "#{id, jdbcType=VARCHAR}, #{dirId, jdbcType=VARCHAR}, #{dirName, jdbcType=VARCHAR}, " +
@@ -123,10 +123,10 @@ public interface SimpleDirectoryMapper {
             "#{table8Type, jdbcType=VARCHAR}, #{table8Id, jdbcType=VARCHAR}, " +
             "#{table9Type, jdbcType=VARCHAR}, #{table9Id, jdbcType=VARCHAR}, " +
             "#{table10Type, jdbcType=VARCHAR}, #{table10Id, jdbcType=VARCHAR}, " +
-            "#{status, jdbcType=INTEGER}, #{tester, jdbcType=VARCHAR}, #{reviewer, jdbcType=VARCHAR}, #{approver, jdbcType=VARCHAR}, " +
+            "#{status, jdbcType=INTEGER}, " +
             "#{wtUndertaker, jdbcType=VARCHAR}, #{wtReviewer, jdbcType=VARCHAR}, " +
-            "#{jcFiller, jdbcType=VARCHAR}, #{jcTester, jdbcType=VARCHAR}, #{jcReviewer, jdbcType=VARCHAR}, " +
-            "#{bgTester, jdbcType=VARCHAR}, #{bgReviewer, jdbcType=VARCHAR}, #{bgApprover, jdbcType=VARCHAR}, " +
+            "#{jcTester, jdbcType=VARCHAR}, #{jcReviewer, jdbcType=VARCHAR}, " +
+            "#{bgApprover, jdbcType=VARCHAR}, " +
             "#{createBy, jdbcType=VARCHAR}, #{createTime, jdbcType=TIMESTAMP}, #{updateBy, jdbcType=VARCHAR}, #{updateTime, jdbcType=TIMESTAMP}" +
             ")")
     int insert(SimpleDirectory directory);
@@ -144,16 +144,10 @@ public interface SimpleDirectoryMapper {
             "TABLE9_TYPE = #{table9Type, jdbcType=VARCHAR}, TABLE9_ID = #{table9Id, jdbcType=VARCHAR}, " +
             "TABLE10_TYPE = #{table10Type, jdbcType=VARCHAR}, TABLE10_ID = #{table10Id, jdbcType=VARCHAR}, " +
             "STATUS = #{status, jdbcType=INTEGER}, " +
-            "TESTER = #{tester, jdbcType=VARCHAR}, " +
-            "REVIEWER = #{reviewer, jdbcType=VARCHAR}, " +
-            "APPROVER = #{approver, jdbcType=VARCHAR}, " +
             "WT_UNDERTAKER = #{wtUndertaker, jdbcType=VARCHAR}, " +
             "WT_REVIEWER = #{wtReviewer, jdbcType=VARCHAR}, " +
-            "JC_FILLER = #{jcFiller, jdbcType=VARCHAR}, " +
             "JC_TESTER = #{jcTester, jdbcType=VARCHAR}, " +
             "JC_REVIEWER = #{jcReviewer, jdbcType=VARCHAR}, " +
-            "BG_TESTER = #{bgTester, jdbcType=VARCHAR}, " +
-            "BG_REVIEWER = #{bgReviewer, jdbcType=VARCHAR}, " +
             "BG_APPROVER = #{bgApprover, jdbcType=VARCHAR}, " +
             "UPDATE_MAN = #{updateBy, jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime, jdbcType=TIMESTAMP} " +

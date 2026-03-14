@@ -24,18 +24,15 @@
             <th>工程名称</th>
             <th>委托单位</th>
             <th>委托日期</th>
-            <th>创建时间</th>
-            <th>登记人</th>
-            <th>检测人</th>
             <th>状态</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="8" class="text-center">加载中...</td>
+            <td colspan="5" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="8" class="text-center">暂无数据</td>
+            <td colspan="5" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -48,9 +45,6 @@
             <td>{{ item.projectName }}</td>
             <td>{{ item.clientUnit }}</td>
             <td>{{ formatDate(item.commissionDate) }}</td>
-            <td>{{ formatDate(item.createTime) }}</td>
-            <td>{{ item.clientRegRealName || item.clientRegName }}</td>
-            <td>{{ item.testerName }}</td>
             <td>
               <span :class="['status-badge', getStatusClass(item.status)]">
                 {{ getStatusText(item.status) }}
@@ -70,8 +64,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import axios from 'axios'
+
+const props = defineProps({
+  presetWtNum: {
+    type: String,
+    default: ''
+  }
+})
 
 const list = ref([])
 const loading = ref(false)
@@ -80,6 +81,8 @@ const pageNum = ref(1)
 const pageSize = ref(7)
 const total = ref(0)
 const searchWtNum = ref('')
+const isInitializing = ref(true)
+let searchTimer = null
 
 // 获取当前用户信息
 const getCurrentUser = () => {
@@ -185,11 +188,23 @@ const changePage = (newPage) => {
   loadData()
 }
 
-// 搜索
-const handleSearch = () => {
-  pageNum.value = 1
-  loadData()
+const triggerSearch = (immediate = false) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
+  if (immediate) {
+    pageNum.value = 1
+    loadData()
+    return
+  }
+  searchTimer = setTimeout(() => {
+    pageNum.value = 1
+    loadData()
+  }, 300)
 }
+
+const handleSearch = () => triggerSearch(true)
 
 // 格式化日期
 const formatDate = (dateStr) => {
@@ -227,8 +242,26 @@ const handleDelete = async (id) => {
   }
 }
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  if (props.presetWtNum) {
+    searchWtNum.value = props.presetWtNum
+    pageNum.value = 1
+  }
+  await loadData()
+  isInitializing.value = false
+})
+
+watch(() => props.presetWtNum, (val) => {
+  if (!val) return
+  if (val === searchWtNum.value) return
+  searchWtNum.value = val
+  triggerSearch(true)
+})
+
+watch(searchWtNum, (val, oldVal) => {
+  if (isInitializing.value) return
+  if (val === oldVal) return
+  triggerSearch(false)
 })
 </script>
 

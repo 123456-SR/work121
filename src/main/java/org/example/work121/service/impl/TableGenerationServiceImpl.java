@@ -689,7 +689,7 @@ public class TableGenerationServiceImpl implements TableGenerationService {
     /**
      * 校验某个委托（统一编号）下所有“密度类记录表”的状态：
      * - 至少存在一条密度类记录（核子法 / 灌砂法 / 灌水法 / 环刀法中的任意一种）
-     * - 只要存在的密度类记录，其 STATUS 必须全部为 "5"
+     * - 只要存在的密度类记录，其 STATUS 必须全部为 "4" 或 "5"
      * - 如果完全没有密度类记录，返回 false（不生成报告）
      */
     private boolean areAllDensityRecordsApproved(String entrustmentId, String wtNum) {
@@ -701,8 +701,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (nuclearList != null && !nuclearList.isEmpty()) {
                 hasAnyDensityRecord = true;
                 for (NuclearDensity n : nuclearList) {
-                    if (n.getStatus() == null || !"5".equals(n.getStatus().toString())) {
-                        System.out.println("Skip DensityTest report/result generation: NuclearDensity not all APPROVED for wtNum " + wtNum);
+                    if (!isPendingApprovalOrApproved(n.getStatus())) {
+                        System.out.println("Skip DensityTest report/result generation: NuclearDensity not all PENDING_APPROVAL/APPROVED for wtNum " + wtNum);
                         return false;
                     }
                 }
@@ -718,8 +718,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (sandList != null && !sandList.isEmpty()) {
                 hasAnyDensityRecord = true;
                 for (SandReplacement s : sandList) {
-                    if (s.getStatus() == null || !"5".equals(s.getStatus().toString())) {
-                        System.out.println("Skip DensityTest report/result generation: SandReplacement not all APPROVED for wtNum " + wtNum);
+                    if (!isPendingApprovalOrApproved(s.getStatus())) {
+                        System.out.println("Skip DensityTest report/result generation: SandReplacement not all PENDING_APPROVAL/APPROVED for wtNum " + wtNum);
                         return false;
                     }
                 }
@@ -735,8 +735,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (waterList != null && !waterList.isEmpty()) {
                 hasAnyDensityRecord = true;
                 for (WaterReplacement w : waterList) {
-                    if (w.getStatus() == null || !"5".equals(w.getStatus().toString())) {
-                        System.out.println("Skip DensityTest report/result generation: WaterReplacement not all APPROVED for wtNum " + wtNum);
+                    if (!isPendingApprovalOrApproved(w.getStatus())) {
+                        System.out.println("Skip DensityTest report/result generation: WaterReplacement not all PENDING_APPROVAL/APPROVED for wtNum " + wtNum);
                         return false;
                     }
                 }
@@ -752,8 +752,8 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (cuttingList != null && !cuttingList.isEmpty()) {
                 hasAnyDensityRecord = true;
                 for (CuttingRing c : cuttingList) {
-                    if (c.getStatus() == null || !"5".equals(c.getStatus().toString())) {
-                        System.out.println("Skip DensityTest report/result generation: CuttingRing not all APPROVED for wtNum " + wtNum);
+                    if (!isPendingApprovalOrApproved(c.getStatus())) {
+                        System.out.println("Skip DensityTest report/result generation: CuttingRing not all PENDING_APPROVAL/APPROVED for wtNum " + wtNum);
                         return false;
                     }
                 }
@@ -771,6 +771,12 @@ public class TableGenerationServiceImpl implements TableGenerationService {
         return true;
     }
 
+    private boolean isPendingApprovalOrApproved(Object status) {
+        if (status == null) return false;
+        String s = String.valueOf(status).trim();
+        return "4".equals(s) || "5".equals(s);
+    }
+
     private void generateReboundMethodReportAndResult(String entrustmentId) {
         try {
             List<ReboundMethod> records = reboundMethodMapper.selectByEntrustmentId(entrustmentId);
@@ -780,9 +786,9 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             ReboundMethod record = records.get(0);
-            // 检查记录表状态是否为审核通过（状态值为5）
-            if (record.getStatus() == null || !"5".equals(record.getStatus())) {
-                System.err.println("Warning: ReboundMethod record is not approved for entrustmentId " + entrustmentId);
+            // 检查记录表状态是否为待批准/已批准（状态值为4/5）
+            if (!isPendingApprovalOrApproved(record.getStatus())) {
+                System.err.println("Warning: ReboundMethod record is not pending approval/approved for entrustmentId " + entrustmentId);
                 return;
             }
             
@@ -1016,7 +1022,7 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (reboundRecords != null && !reboundRecords.isEmpty()) {
                 ReboundMethod reboundRecord = reboundRecords.get(0);
                 String reboundStatus = reboundRecord.getStatus();
-                if (reboundStatus != null && "5".equals(reboundStatus.toString())) {
+                if (isPendingApprovalOrApproved(reboundStatus)) {
                     reboundApproved = true;
                 }
             }
@@ -1026,7 +1032,7 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             if (beckmanRecords != null && !beckmanRecords.isEmpty()) {
                 BeckmanBeam beckmanRecord = beckmanRecords.get(0);
                 String beckmanStatus = beckmanRecord.getStatus();
-                if (beckmanStatus != null && "5".equals(beckmanStatus.toString())) {
+                if (isPendingApprovalOrApproved(beckmanStatus)) {
                     beckmanApproved = true;
                 }
             }

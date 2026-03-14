@@ -60,4 +60,9 @@ public interface JcCoreWtInfoService {
      * @return 是否成功
      */
     boolean delete(String id);
+
+    /**
+     * 未分配承接人/审核人的委托单列表（委托单直查）
+     */
+    com.github.pagehelper.PageInfo<JcCoreWtInfo> getUnassigned(String wtNum, int pageNum, int pageSize);
 }

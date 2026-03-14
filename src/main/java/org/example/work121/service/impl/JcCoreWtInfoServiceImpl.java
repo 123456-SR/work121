@@ -137,7 +137,7 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
                     info.setStatus("0");
                     logger.info("设置新委托单默认状态为草稿（0）");
                 }
-                // 同时插入 JC_CORE_WT_INFO 和 JC_CORE_WT_INFO_EXT
+                // 同时插入 JC_CORE_WT_INFO 和 T_ENTRUSTMENT
                 jcCoreWtInfoMapper.insert(info);
                 jcCoreWtInfoMapper.insertExt(info);
                 return true;
@@ -150,10 +150,10 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
                 jcCoreWtInfoMapper.insert(info);
             }
 
-            // 更新 JC_CORE_WT_INFO_EXT
+            // 更新 T_ENTRUSTMENT
             int rowsExt = jcCoreWtInfoMapper.updateExt(info);
             if (rowsExt == 0) {
-                logger.info("JC_CORE_WT_INFO_EXT记录不存在，执行插入操作");
+                logger.info("T_ENTRUSTMENT记录不存在，执行插入操作");
                 jcCoreWtInfoMapper.insertExt(info);
             }
             
@@ -171,7 +171,7 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
         try {
             // Delete from extension table
             int extRows = jcCoreWtInfoMapper.deleteExtById(id);
-            logger.info("Deleted {} rows from JC_CORE_WT_INFO_EXT", extRows);
+            logger.info("Deleted {} rows from T_ENTRUSTMENT", extRows);
             
             // Delete from core table
             int coreRows = jcCoreWtInfoMapper.deleteCoreById(id);
@@ -182,5 +182,13 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
             logger.error("删除委托信息失败，ID: {}", id, e);
             throw e;
         }
+    }
+
+    @Override
+    public com.github.pagehelper.PageInfo<JcCoreWtInfo> getUnassigned(String wtNum, int pageNum, int pageSize) {
+        logger.info("正在查询未分配的委托单列表，WT_NUM: {}, pageNum: {}, pageSize: {}", wtNum, pageNum, pageSize);
+        com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
+        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectUnassigned(wtNum);
+        return new com.github.pagehelper.PageInfo<>(list);
     }
 }

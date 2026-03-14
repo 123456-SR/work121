@@ -74,40 +74,17 @@ public class SimpleDirectory extends BaseEntity {
     /** 状态：6个数字状态（0-5） */
     private String status;
 
-    /** 检测人 (Deprecated) */
-    private String tester;
-
-    /** 复核人 (Deprecated) */
-    private String reviewer;
-
-    /** 批准人 (Deprecated) */
-    private String approver;
-
-    // --- New Granular Roles ---
-
     /** 委托承接人 */
     private String wtUndertaker;
 
     /** 委托审核人 */
     private String wtReviewer;
 
-    /** 记录表填写人 */
-    private String jcFiller;
-
     /** 记录表检验人 */
     private String jcTester;
 
     /** 记录审核人 */
     private String jcReviewer;
-
-    /** 记录批准人 */
-    private String jcApprover;
-
-    /** 报告检验人 */
-    private String bgTester;
-
-    /** 报告审核人 */
-    private String bgReviewer;
 
     /** 报告批准人 */
     private String bgApprover;
@@ -134,14 +111,6 @@ public class SimpleDirectory extends BaseEntity {
         this.wtReviewer = wtReviewer;
     }
 
-    public String getJcFiller() {
-        return jcFiller;
-    }
-
-    public void setJcFiller(String jcFiller) {
-        this.jcFiller = jcFiller;
-    }
-
     public String getJcTester() {
         return jcTester;
     }
@@ -158,53 +127,12 @@ public class SimpleDirectory extends BaseEntity {
         this.jcReviewer = jcReviewer;
     }
 
-    public String getBgTester() {
-        return bgTester;
-    }
-
-    public void setBgTester(String bgTester) {
-        this.bgTester = bgTester;
-    }
-
-    public String getBgReviewer() {
-        return bgReviewer;
-    }
-
-    public void setBgReviewer(String bgReviewer) {
-        this.bgReviewer = bgReviewer;
-    }
-
     public String getBgApprover() {
         return bgApprover;
     }
 
     public void setBgApprover(String bgApprover) {
         this.bgApprover = bgApprover;
-    }
-
-    // getter和setter方法
-    public String getTester() {
-        return tester;
-    }
-
-    public void setTester(String tester) {
-        this.tester = tester;
-    }
-
-    public String getReviewer() {
-        return reviewer;
-    }
-
-    public void setReviewer(String reviewer) {
-        this.reviewer = reviewer;
-    }
-
-    public String getApprover() {
-        return approver;
-    }
-
-    public void setApprover(String approver) {
-        this.approver = approver;
     }
 
     public String getDirId() {

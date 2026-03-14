@@ -24,7 +24,7 @@
           <th>{{ selectedTaskType === 'submit' ? '填写人' : selectedTaskType === 'approval' ? '批准人' : '审核人' }}</th>
           <th>创建时间</th>
           <th>状态</th>
-          <th v-if="selectedTaskType !== 'submit'">操作</th>
+          <th>操作</th>
         </tr>
       </thead>
       <tbody>
@@ -40,7 +40,8 @@
               {{ task.status }}
             </span>
           </td>
-          <td v-if="selectedTaskType !== 'submit'">
+          <td>
+            <button class="btn btn-secondary btn-small" @click="viewDetails(task)">查看详情</button>
             <button v-if="selectedTaskType === 'audit'" class="btn btn-primary btn-small" @click="approveTask(task)">审核通过</button>
             <button v-else-if="selectedTaskType === 'approval'" class="btn btn-primary btn-small" @click="approveTask(task)">批准</button>
           </td>
@@ -57,11 +58,55 @@
       <button class="btn btn-small" @click="currentPage++" :disabled="currentPage === totalPages">下一页</button>
       <button class="btn btn-small" @click="currentPage = totalPages" :disabled="currentPage === totalPages">末页</button>
     </div>
+
+    <div v-if="showAssignRolesModal" class="dialog-overlay">
+      <div class="dialog">
+        <div class="dialog-header">
+          <h3>委托单审核通过：指定角色</h3>
+          <button class="dialog-close" @click="closeAssignRoles">&times;</button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <div class="form-item">
+              <label>记录表检测人</label>
+              <select v-model="assignRoles.jcTester">
+                <option value="" disabled>请选择</option>
+                <option v-for="u in userList" :key="u.id" :value="u.userAccount">
+                  {{ u.userName }}（{{ u.userAccount }}）
+                </option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>记录表审核人</label>
+              <select v-model="assignRoles.jcReviewer">
+                <option value="" disabled>请选择</option>
+                <option v-for="u in userList" :key="u.id" :value="u.userAccount">
+                  {{ u.userName }}（{{ u.userAccount }}）
+                </option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>报告/结果批准人</label>
+              <select v-model="assignRoles.bgApprover">
+                <option value="" disabled>请选择</option>
+                <option v-for="u in userList" :key="u.id" :value="u.userAccount">
+                  {{ u.userName }}（{{ u.userAccount }}）
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button class="btn btn-secondary" @click="closeAssignRoles">取消</button>
+            <button class="btn btn-primary" @click="confirmApproveWithRoles">确认并审核通过</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, defineProps, inject } from 'vue'
+import { ref, computed, onMounted, watch, defineProps, inject, reactive } from 'vue'
 import axios from 'axios'
 
 // 格式化时间函数
@@ -89,12 +134,50 @@ const pageSize = ref(13)
 const totalItems = ref(0)
 const navigateTo = inject('navigateTo')
 const selectedTaskType = ref(props.taskType || 'audit')
+const userList = ref([])
+const showAssignRolesModal = ref(false)
+const taskToApprove = ref(null)
+const assignRoles = reactive({
+  jcTester: '',
+  jcReviewer: '',
+  bgApprover: ''
+})
 
-// 将页面类型映射为后端表的状态值：待提交=0，待审核=1，待批准=5
+const getListIdByTableType = (tableType) => {
+  const raw = String(tableType || '').trim()
+  const upper = raw.toUpperCase()
+  if (raw === '委托单' || upper === 'ENTRUSTMENT' || upper === 'ENTRUSTMENT_LIST') return 'EntrustmentList'
+  if (raw === '轻型动力触探' || upper === 'LIGHT_DYNAMIC_PENETRATION') return 'LightDynamicPenetrationRecordList'
+  if (raw === '核子密度' || raw === '核子法' || upper === 'NUCLEAR_DENSITY') return 'NuclearDensityRecordList'
+  if (raw === '灌砂法' || upper === 'SAND_REPLACEMENT') return 'SandReplacementRecordList'
+  if (raw === '灌水法' || upper === 'WATER_REPLACEMENT') return 'WaterReplacementRecordList'
+  if (raw === '环刀法' || upper === 'CUTTING_RING') return 'CuttingRingRecordList'
+  if (raw === '回弹法' || upper === 'REBOUND_METHOD') return 'ReboundMethodRecordList'
+  if (raw === '贝克曼梁' || upper === 'BECKMAN_BEAM') return 'BeckmanBeamRecordList'
+  if (raw === '密度试验' || upper === 'DENSITY_TEST') return 'DensityTestReportList'
+  return ''
+}
+
+const viewDetails = (task) => {
+  if (!navigateTo) return
+  const wtNum = task?.unifiedNumber
+  if (!wtNum || wtNum === '未知编号') {
+    alert('统一编号为空，无法查询')
+    return
+  }
+  const listId = getListIdByTableType(task?.tableType)
+  if (!listId) {
+    alert('暂不支持查看该任务类型的列表：' + (task?.tableType || '未知类型'))
+    return
+  }
+  navigateTo(listId, { presetWtNum: wtNum })
+}
+
+// 将页面类型映射为后端表的状态值：待提交=0，待审核=1，待批准=4
 const statusParam = computed(() => {
   if (selectedTaskType.value === 'submit') return '0'
   if (selectedTaskType.value === 'audit') return '1'
-  if (selectedTaskType.value === 'approval') return '5'
+  if (selectedTaskType.value === 'approval') return '4'
   // 默认返回待审核状态
   return '1'
 })
@@ -208,16 +291,55 @@ const openTask = (task) => {
 // 审核通过任务
 const approveTask = async (task) => {
   try {
+    if (selectedTaskType.value === 'audit' && isEntrustmentTask(task)) {
+      taskToApprove.value = task
+      showAssignRolesModal.value = true
+      return
+    }
     const userAccount = getCurrentUserAccount()
     const response = await axios.post('/api/pending-tasks/approve', {
       taskType: task.tableType || task.name.replace(/审核任务|批准任务|提交任务/, ''),
       taskId: task.id,
       userAccount: userAccount,
-      taskStatus: selectedTaskType.value
+      taskStatus: selectedTaskType.value,
+      jcTester: '',
+      jcReviewer: '',
+      bgApprover: ''
     })
     if (response.data.success) {
       alert(selectedTaskType.value === 'audit' ? '审核通过成功' : selectedTaskType.value === 'approval' ? '批准成功' : '操作成功')
       // 重新获取任务列表
+      await loadTasks()
+    } else {
+      alert('操作失败: ' + response.data.message)
+    }
+  } catch (e) {
+    console.error('操作失败', e)
+    alert('操作失败')
+  }
+}
+
+const confirmApproveWithRoles = async () => {
+  const task = taskToApprove.value
+  if (!task) return
+  if (!assignRoles.jcTester || !assignRoles.jcReviewer || !assignRoles.bgApprover) {
+    alert('请先选择记录表检测人、记录表审核人、报告/结果批准人')
+    return
+  }
+  try {
+    const userAccount = getCurrentUserAccount()
+    const response = await axios.post('/api/pending-tasks/approve', {
+      taskType: task.tableType || task.name.replace(/审核任务|批准任务|提交任务/, ''),
+      taskId: task.id,
+      userAccount: userAccount,
+      taskStatus: selectedTaskType.value,
+      jcTester: assignRoles.jcTester,
+      jcReviewer: assignRoles.jcReviewer,
+      bgApprover: assignRoles.bgApprover
+    })
+    if (response.data.success) {
+      closeAssignRoles()
+      alert('审核通过成功')
       await loadTasks()
     } else {
       alert('操作失败: ' + response.data.message)
@@ -279,9 +401,36 @@ const loadTasks = async () => {
   }
 }
 
+const loadUsers = async () => {
+  try {
+    const response = await axios.get('/api/user/list')
+    if (response.data?.success) {
+      userList.value = Array.isArray(response.data.data) ? response.data.data : []
+    }
+  } catch (error) {
+    console.error('加载用户列表失败:', error)
+    userList.value = []
+  }
+}
+
+const isEntrustmentTask = (task) => {
+  const raw = String(task?.tableType || '').trim()
+  const upper = raw.toUpperCase()
+  return raw === '委托单' || upper === 'ENTRUSTMENT' || upper === 'ENTRUSTMENT_LIST'
+}
+
+const closeAssignRoles = () => {
+  showAssignRolesModal.value = false
+  taskToApprove.value = null
+  assignRoles.jcTester = ''
+  assignRoles.jcReviewer = ''
+  assignRoles.bgApprover = ''
+}
+
 // 组件挂载时获取任务列表
 onMounted(async () => {
   await loadTasks()
+  await loadUsers()
 })
 
 // 监听selectedTaskType变化，重新加载任务列表
@@ -404,6 +553,82 @@ watch(() => selectedTaskType.value, async (newType) => {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.dialog {
+  width: 520px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dialog-close {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dialog-body {
+  padding: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-item select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
 }
 
 </style>

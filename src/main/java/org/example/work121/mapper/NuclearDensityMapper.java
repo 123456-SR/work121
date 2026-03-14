@@ -16,14 +16,16 @@ public interface NuclearDensityMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
             "t2.APPROVER as approver, " +
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
+            "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -50,14 +52,12 @@ public interface NuclearDensityMapper {
     @Update("UPDATE T_NUCLEAR_DENSITY SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "TESTER = #{tester,jdbcType=VARCHAR}, " +
-            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
-            "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
-            "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "RECORD_TESTER = NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
@@ -71,14 +71,16 @@ public interface NuclearDensityMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
             "t2.APPROVER as approver, " +
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
+            "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "TO_NUMBER(t2.STATUS) as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -106,16 +108,16 @@ public interface NuclearDensityMapper {
 
     @Insert("INSERT INTO T_NUCLEAR_DENSITY (" +
             "ID, ENTRUSTMENT_ID, DATA_JSON, " +
-            "TESTER, REVIEWER, APPROVER, " +
+            "RECORD_TESTER, RECORD_REVIEWER, APPROVER, " +
             "FILLER, RECORD_TESTER, RECORD_REVIEWER, " +
-            "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, " +
             "#{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, " +
             "#{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, " +
-            "#{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "TO_CHAR(#{status,jdbcType=INTEGER}), #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
             "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(NuclearDensity nuclearDensity);
@@ -123,7 +125,7 @@ public interface NuclearDensityMapper {
     @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}) WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Update("UPDATE T_NUCLEAR_DENSITY SET STATUS = TO_CHAR(#{status,jdbcType=INTEGER}), APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")

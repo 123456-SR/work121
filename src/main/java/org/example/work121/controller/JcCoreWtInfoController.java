@@ -40,16 +40,11 @@ public class JcCoreWtInfoController {
             Map<String, List<String>> colValues = new HashMap<>();
             for (String col : cols) {
                 try {
-                     String table = "JC_CORE_WT_INFO"; // Try extension table first for most fields
-                     if ("BUILDING_MAN".equals(col) || "SAMPLING_MAN".equals(col) || "YW_MAN".equals(col)) {
-                         table = "JC_CORE_WT_INFO_EXT";
-                     }
-                     // Check if column exists
-                     try {
-                        jdbcTemplate.queryForList("SELECT " + col + " FROM " + table + " WHERE ROWNUM <= 1");
-                     } catch (Exception e) {
-                         if (table.equals("JC_CORE_WT_INFO")) table = "JC_CORE_WT_INFO_EXT";
-                         else table = "JC_CORE_WT_INFO";
+                     String table;
+                     if ("TESTER".equals(col) || "REVIEWER".equals(col) || "APPROVER".equals(col)) {
+                         table = "T_ENTRUSTMENT";
+                     } else {
+                         table = "JC_CORE_WT_INFO";
                      }
                      
                      List<String> vals = jdbcTemplate.queryForList("SELECT DISTINCT " + col + " FROM " + table + " WHERE " + col + " IS NOT NULL AND ROWNUM <= 10", String.class);
@@ -146,6 +141,24 @@ public class JcCoreWtInfoController {
         } catch (Exception e) {
             result.put("success", false);
             result.put("message", e.getMessage());
+        }
+        return result;
+    }
+
+    @GetMapping("/unassigned")
+    public Map<String, Object> getUnassigned(@RequestParam(value = "wtNum", required = false) String wtNum,
+                                             @RequestParam(value = "pageNum", defaultValue = "1") int pageNum,
+                                             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            com.github.pagehelper.PageInfo<JcCoreWtInfo> pageInfo = jcCoreWtInfoService.getUnassigned(wtNum, pageNum, pageSize);
+            result.put("success", true);
+            result.put("message", "查询成功");
+            result.put("data", pageInfo);
+        } catch (Exception e) {
+            logger.error("查询未分配委托单失败", e);
+            result.put("success", false);
+            result.put("message", "查询失败: " + e.getMessage());
         }
         return result;
     }

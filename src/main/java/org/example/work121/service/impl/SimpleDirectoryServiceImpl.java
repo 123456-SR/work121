@@ -142,6 +142,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 // 设置更新信息
                 directory.setUpdateBy(directory.getUpdateBy() != null ? directory.getUpdateBy() : "admin"); // Or get from context
                 directory.setUpdateTime(new java.util.Date());
+
+                // 确保委托单记录存在，避免“只更新目录角色但委托主表(T_ENTRUSTMENT)没记录”导致待提交列表查不到
+                ensureMasterRecord(directory.getDirName(), directory.getCreateBy(), determineAllTestCategories(directory), directory);
                 
                 result = simpleDirectoryMapper.update(directory);
             } else {
@@ -376,22 +379,17 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                  if (directory.getWtReviewer() != null) info.setWtReviewer(directory.getWtReviewer());
              }
         } else if (category.contains("RECORD") || category.contains("记录表")) {
-            // For Records: use jcFiller, jcTester, jcReviewer, bgApprover (shared)
-            entity.setFiller(directory.getJcFiller());
+            entity.setFiller(directory.getJcTester());
             entity.setRecordTester(directory.getJcTester()); // Use recordTester field
             entity.setRecordReviewer(directory.getJcReviewer()); // Use recordReviewer field
             
             // Map to standard fields for compatibility if needed, OR keep them separate
             // User said: "记录表单独使用自己的审核人和检验人" -> So we use recordTester/recordReviewer
-            // Use jcTester for approver as requested
             if (directory.getJcTester() != null) entity.setTester(directory.getJcTester()); // Map to tester for workflow?
             if (directory.getJcReviewer() != null) entity.setReviewer(directory.getJcReviewer()); // Map to reviewer for workflow?
-            if (directory.getJcTester() != null) entity.setApprover(directory.getJcTester()); // Use jcTester for approver
+            if (directory.getBgApprover() != null) entity.setApprover(directory.getBgApprover());
             
         } else if (category.contains("REPORT") || category.contains("报告") || category.contains("RESULT") || category.contains("结果")) {
-            // For Reports/Results: use bgTester, bgReviewer, bgApprover
-            if (directory.getBgTester() != null) entity.setTester(directory.getBgTester());
-            if (directory.getBgReviewer() != null) entity.setReviewer(directory.getBgReviewer());
             if (directory.getBgApprover() != null) entity.setApprover(directory.getBgApprover());
         }
     }
@@ -1559,7 +1557,6 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     private void syncRoles(SimpleDirectory directory) {
         System.out.println("=== syncRoles 开始 ===");
         System.out.println("Directory DIR_NAME: " + directory.getDirName());
-        System.out.println("JC_FILLER: " + directory.getJcFiller());
         System.out.println("JC_TESTER: " + directory.getJcTester());
         System.out.println("JC_REVIEWER: " + directory.getJcReviewer());
         System.out.println("TABLE1_TYPE: " + directory.getTable1Type() + ", TABLE1_ID: " + directory.getTable1Id());
@@ -1602,16 +1599,12 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 reviewer = directory.getWtReviewer();
                 // Entrustment approver?
             } else if (type.toUpperCase().contains("RECORD")) {
-                // For Record: Use Record-specific roles + jcTester for Approver
                 recordTester = directory.getJcTester();     // 记录表检验人
                 recordReviewer = directory.getJcReviewer(); // 记录表审核人
-                filler = directory.getJcFiller();           // 记录表填写人
-                    approver = directory.getJcTester();       // Use jcTester for approver
+                filler = directory.getJcTester();           // 记录表填写人
+                approver = directory.getBgApprover();
                     System.out.println("Record roles - Filler: " + filler + ", Tester: " + recordTester + ", Reviewer: " + recordReviewer + ", Approver: " + approver);
             } else {
-                // Report/Result: Use Background roles
-                tester = directory.getBgTester();
-                reviewer = directory.getBgReviewer();
                 approver = directory.getBgApprover();
             }
 
@@ -1631,19 +1624,25 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     densityTestRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "DENSITY_TEST_REPORT", "原位密度检测报告")) {
                 DensityTestReport entity = densityTestReportMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     densityTestReportMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "DENSITY_TEST_RESULT", "原位密度检测结果")) {
                 DensityTestResult entity = densityTestResultMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     densityTestResultMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "REBOUND_METHOD_RECORD", "回弹法检测混凝土抗压强度记录表")) {
@@ -1654,13 +1653,17 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     reboundMethodRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "REBOUND_METHOD_REPORT", "回弹法检测混凝土抗压强度报告")) {
                 ReboundMethodReport entity = reboundMethodReportMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     reboundMethodReportMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "SAND_REPLACEMENT_RECORD", "原位密度检测记录表（灌砂法）")) {
@@ -1671,7 +1674,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     sandReplacementRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RECORD", "轻型动力触探检测记录表")) {
@@ -1682,19 +1687,25 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     lightDynamicPenetrationRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION", "轻型动力触探检测报告")) {
                 LightDynamicPenetrationReport entity = lightDynamicPenetrationReportMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     lightDynamicPenetrationReportMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "LIGHT_DYNAMIC_PENETRATION_RESULT", "轻型动力触探检测结果")) {
                 LightDynamicPenetrationResult entity = lightDynamicPenetrationResultMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     lightDynamicPenetrationResultMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "BECKMAN_BEAM_RECORD", "路基路面回弹弯沉试验检测记录表")) {
@@ -1705,19 +1716,25 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     beckmanBeamRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "BECKMAN_BEAM_REPORT", "路基路面回弹弯沉检测报告")) {
                 BeckmanBeamReport entity = beckmanBeamReportMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     beckmanBeamReportMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "BECKMAN_BEAM_RESULT", "路基路面回弹弯沉检测结果")) {
                 BeckmanBeamResult entity = beckmanBeamResultMapper.selectById(id);
                 if (entity != null) {
-                    entity.setTester(tester); entity.setReviewer(reviewer); entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     beckmanBeamResultMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "CUTTING_RING_RECORD", "原位密度检测记录表（环刀法）")) {
@@ -1728,7 +1745,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     cuttingRingRecordMapper.updateById(entity);
                 }
             } else if (isTypeMatch(type, "NUCLEAR_DENSITY_RECORD", "原位密度检测记录表（核子法）")) {
@@ -1741,7 +1760,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     int result = nuclearDensityRecordMapper.updateById(entity);
                     System.out.println("更新核子法记录角色信息，结果: " + result + ", 新 Filler: " + filler + ", 新 Tester: " + recordTester + ", 新 Reviewer: " + recordReviewer);
                 } else {
@@ -1755,7 +1776,9 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                     entity.setRecordReviewer(recordReviewer);
                     entity.setTester(recordTester);
                     entity.setReviewer(recordReviewer);
-                    entity.setApprover(approver);
+                    if (approver != null && !approver.isEmpty()) {
+                        entity.setApprover(approver);
+                    }
                     waterReplacementRecordMapper.updateById(entity);
                 }
             }

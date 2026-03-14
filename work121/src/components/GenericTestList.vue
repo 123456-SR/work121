@@ -20,20 +20,19 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>统一编号</th>
+            <th>委托单编号</th>
             <th>工程名称</th>
             <th>委托单位</th>
             <th>委托日期</th>
-            <th>创建时间</th>
             <th>状态</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="6" class="text-center">加载中...</td>
+            <td colspan="5" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="6" class="text-center">暂无数据</td>
+            <td colspan="5" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -47,7 +46,6 @@
             <td>{{ item.projectName }}</td>
             <td>{{ item.clientUnit }}</td>
             <td>{{ formatDate(item.commissionDate) }}</td>
-            <td>{{ formatDate(item.createTime) }}</td>
             <td>
               <span :class="['status-badge', getStatusClass(getEffectiveStatus(item))]">
                 {{ getStatusText(getEffectiveStatus(item)) }}
@@ -75,6 +73,10 @@ const props = defineProps({
     type: String,
     default: '记录'
   },
+  presetWtNum: {
+    type: String,
+    default: ''
+  },
   category: {
     type: String,
     required: true
@@ -99,6 +101,8 @@ const pageNum = ref(1)
 const pageSize = ref(7)
 const total = ref(0)
 const searchWtNum = ref('')
+const isInitializing = ref(true)
+let searchTimer = null
 
 // 计算API端点
 const apiEndpoint = computed(() => {
@@ -174,10 +178,33 @@ const loadData = async () => {
   }
 }
 
+const triggerSearch = (immediate = false) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
+  if (immediate) {
+    pageNum.value = 1
+    loadData()
+    return
+  }
+  searchTimer = setTimeout(() => {
+    pageNum.value = 1
+    loadData()
+  }, 300)
+}
+
 // 监听category变化，重新加载
 watch(() => props.category, () => {
   pageNum.value = 1
   loadData()
+})
+
+watch(() => props.presetWtNum, (val) => {
+  if (!val) return
+  if (val === searchWtNum.value) return
+  searchWtNum.value = val
+  triggerSearch(true)
 })
 
 // 监听props变化，当导航到该组件时重新加载数据
@@ -186,6 +213,12 @@ watch(() => props, () => {
   loadData()
 }, { deep: true })
 
+watch(searchWtNum, (val, oldVal) => {
+  if (isInitializing.value) return
+  if (val === oldVal) return
+  triggerSearch(false)
+})
+
 // 翻页
 const changePage = (newPage) => {
   pageNum.value = newPage
@@ -193,10 +226,7 @@ const changePage = (newPage) => {
 }
 
 // 搜索
-const handleSearch = () => {
-  pageNum.value = 1
-  loadData()
-}
+const handleSearch = () => triggerSearch(true)
 
 // 格式化日期
 const formatDate = (dateStr) => {
@@ -319,8 +349,13 @@ const handleDelete = async (item) => {
   }
 }
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  if (props.presetWtNum) {
+    searchWtNum.value = props.presetWtNum
+    pageNum.value = 1
+  }
+  await loadData()
+  isInitializing.value = false
 })
 </script>
 

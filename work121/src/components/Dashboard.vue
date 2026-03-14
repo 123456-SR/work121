@@ -115,31 +115,26 @@ const loadUserTasks = async () => {
   if (!userAccount) return
   
   try {
-    // 调用API获取所有任务，然后在前端过滤
-    const response = await axios.post('/api/directory/getAll')
-    
-    if (response.data.success && response.data.data) {
-      const allTasks = response.data.data
-      
-      // 过滤出分配给当前用户的任务（检查所有角色字段）
-      const userTasks = allTasks.filter(task => {
-        return task.wtUndertaker === userAccount ||
-               task.wtReviewer === userAccount ||
-               task.jcTester === userAccount ||
-               task.jcReviewer === userAccount ||
-               task.bgTester === userAccount ||
-               task.bgReviewer === userAccount ||
-               task.bgApprover === userAccount
+    const fetchCount = async (status) => {
+      const res = await axios.get('/api/pending-tasks/get-all', {
+        params: { taskStatus: status, userAccount }
       })
-      
-      totalTasks.value = userTasks.length
-      
-      // 计算待处理任务数（状态为1-3）
-      pendingTasks.value = userTasks.filter(task => [1, 2, 3].includes(task.status)).length
-      
-      // 计算已完成任务数（状态为4-5）
-      completedTasks.value = userTasks.filter(task => [4, 5].includes(task.status)).length
+      if (res.data && res.data.success && Array.isArray(res.data.data)) {
+        return res.data.data.length
+      }
+      return 0
     }
+
+    const [submitCount, auditCount, approvalCount, doneCount] = await Promise.all([
+      fetchCount('0'),
+      fetchCount('1'),
+      fetchCount('4'),
+      fetchCount('5')
+    ])
+
+    pendingTasks.value = submitCount + auditCount + approvalCount
+    completedTasks.value = doneCount
+    totalTasks.value = pendingTasks.value + completedTasks.value
   } catch (error) {
     console.error('加载用户任务失败:', error)
   }

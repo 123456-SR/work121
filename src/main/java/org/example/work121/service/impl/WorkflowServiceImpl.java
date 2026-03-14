@@ -15,16 +15,20 @@ import org.example.work121.service.DensityTestService;
 import org.example.work121.service.ReboundMethodService;
 import org.example.work121.service.SimpleDirectoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class WorkflowServiceImpl implements WorkflowService {
 
     @Autowired private JcCoreWtInfoMapper jcCoreWtInfoMapper;
+    @Autowired private JdbcTemplate jdbcTemplate;
     @Autowired private SimpleDirectoryService simpleDirectoryService;
     @Autowired private SimpleDirectoryMapper simpleDirectoryMapper;
     @Autowired private DensityTestMapper densityTestMapper;
@@ -112,13 +116,16 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleEntrustment(String id, WorkflowRequest request) {
         JcCoreWtInfo entity = jcCoreWtInfoMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
 
         // ==== 权限校验：根据目录里配置的委托承接人 / 委托审核人限制操作人 ====
         validateEntrustmentPermission(entity, request);
         
         applyChanges(entity, request);
-        // Update both tables to ensure status consistency
         int extResult = jcCoreWtInfoMapper.updateExt(entity);
+        if (extResult == 0) {
+            extResult = jcCoreWtInfoMapper.insertExt(entity);
+        }
         
         // Map status to sampleStatus for legacy support if needed
         if (entity.getStatus() != null) {
@@ -126,23 +133,11 @@ public class WorkflowServiceImpl implements WorkflowService {
             // entity.setSampleStatus(String.valueOf(entity.getStatus()));
         }
         
-        // Sync data to other tables if Entrustment is approved or passes audit (Pending Sign)
-        if (entity.getStatus() != null
-                && (STATUS_APPROVED.equals(entity.getStatus()) || STATUS_PENDING_SIGN.equals(entity.getStatus()))) {
-            simpleDirectoryService.syncEntrustmentDataByWtNum(entity.getWtNum());
-        }
+        // 目录仅作为任务分配：不再在委托单审核阶段派生/创建其它记录表，也不做跨表同步
 
-        // 委托单审核通过时，自动创建记录表
-        if (entity.getStatus() != null && STATUS_APPROVED.equals(entity.getStatus())) {
-            SimpleDirectory directory = simpleDirectoryService.getDirectoryByDirName(entity.getWtNum());
-            if (directory != null) {
-                // 创建记录表
-                createRecordsForDirectory(directory);
-                // 同步角色信息到记录表
-                syncRolesToRecords(directory);
-            }
+        if (extResult > 0) {
+            insertWorkflowActionLog("ENTRUSTMENT", id, entity, request, fromStatus, entity.getStatus());
         }
-
         return extResult > 0;
     }
 
@@ -460,8 +455,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             // 映射角色信息
             if (directory != null) {
                 if (category.contains("RECORD") || category.contains("记录表")) {
-                    // 对于记录表：使用 jcFiller, jcTester, jcReviewer
-                    be.setFiller(directory.getJcFiller());
+                    be.setFiller(directory.getJcTester());
                     be.setRecordTester(directory.getJcTester());
                     be.setRecordReviewer(directory.getJcReviewer());
                     
@@ -470,9 +464,6 @@ public class WorkflowServiceImpl implements WorkflowService {
                     if (directory.getJcReviewer() != null) be.setReviewer(directory.getJcReviewer());
                     if (directory.getJcTester() != null) be.setApprover(directory.getJcTester()); // 使用 jcTester 填充 APPROVER 字段
                 } else if (category.contains("REPORT") || category.contains("报告") || category.contains("RESULT") || category.contains("结果")) {
-                    // 对于报告/结果：使用 bgTester, bgReviewer, bgApprover
-                    if (directory.getBgTester() != null) be.setTester(directory.getBgTester());
-                    if (directory.getBgReviewer() != null) be.setReviewer(directory.getBgReviewer());
                     if (directory.getBgApprover() != null) be.setApprover(directory.getBgApprover());
                 }
             }
@@ -592,12 +583,16 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleDensityTest(String id, WorkflowRequest request) {
         DensityTest entity = densityTestMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
 
         applyChanges(entity, request);
         boolean success = densityTestMapper.updateById(entity) > 0;
 
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             densityTestService.generateReportAndResult(entity.getEntrustmentId());
+        }
+        if (success) {
+            insertWorkflowActionLog("DENSITY_TEST", id, entity, request, fromStatus, entity.getStatus());
         }
         return success;
     }
@@ -619,11 +614,14 @@ public class WorkflowServiceImpl implements WorkflowService {
             boolean success = reboundMethodRecordMapper.updateById(recordEntity) > 0;
             System.out.println("ReboundMethodRecord update result: " + success);
 
-            if (success && STATUS_APPROVED.equals(recordEntity.getStatus())) {
+            if (success && shouldGenerateReportAndResultByStatus(recordEntity.getStatus())) {
                 reboundMethodService.generateReportAndResult(recordEntity.getEntrustmentId());
                 // 回弹法记录表审核通过时，检查贝克曼梁法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
                 // （generateBeckmanBeamReportAndResult 内部会检查双检验是否都通过）
                 beckmanBeamService.generateReportAndResult(recordEntity.getEntrustmentId());
+            }
+            if (success) {
+                insertWorkflowActionLog("REBOUND_METHOD", id, recordEntity, request, oldStatus, recordEntity.getStatus());
             }
             return success;
         }
@@ -631,15 +629,19 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 如果记录表查不到，尝试用 ReboundMethodMapper 查询（兼容旧数据）
         ReboundMethod entity = reboundMethodMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
         
         applyChanges(entity, request);
         boolean success = reboundMethodMapper.updateById(entity) > 0;
 
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             reboundMethodService.generateReportAndResult(entity.getEntrustmentId());
             // 回弹法记录表审核通过时，检查贝克曼梁法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
             // （generateBeckmanBeamReportAndResult 内部会检查双检验是否都通过）
             beckmanBeamService.generateReportAndResult(entity.getEntrustmentId());
+        }
+        if (success) {
+            insertWorkflowActionLog("REBOUND_METHOD", id, entity, request, fromStatus, entity.getStatus());
         }
         return success;
     }
@@ -647,13 +649,17 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleSandReplacement(String id, WorkflowRequest request) {
         SandReplacement entity = sandReplacementMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = sandReplacementMapper.update(entity) > 0;
 
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             sandReplacementService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
             densityTestService.generateReportAndResult(entity.getEntrustmentId());
+        }
+        if (success) {
+            insertWorkflowActionLog("SAND_REPLACEMENT", id, entity, request, fromStatus, entity.getStatus());
         }
         return success;
     }
@@ -670,15 +676,19 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
         if (entity == null)
             return false;
+        String fromStatus = entity.getStatus();
         
         applyChanges(entity, request);
         // 工作流这里只需要更新状态/签名等流程字段，避免误改 DATA_JSON
         boolean success = waterReplacementMapper.updateWorkflowFields(entity) > 0;
         
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             waterReplacementService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
             densityTestService.generateReportAndResult(entity.getEntrustmentId());
+        }
+        if (success) {
+            insertWorkflowActionLog("WATER_REPLACEMENT", id, entity, request, fromStatus, entity.getStatus());
         }
         return success;
     }
@@ -686,10 +696,11 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleNuclearDensity(String id, WorkflowRequest request) {
         NuclearDensity entity = nuclearDensityMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = nuclearDensityMapper.updateById(entity) > 0;
 
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             // 核子法自己的报告/结果生成
             nuclearDensityService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
@@ -717,19 +728,26 @@ public class WorkflowServiceImpl implements WorkflowService {
                 // 然而，它是同事务运行的。
             }
         }
+        if (success) {
+            insertWorkflowActionLog("NUCLEAR_DENSITY", id, entity, request, fromStatus, entity.getStatus());
+        }
         return success;
     }
 
     private boolean handleCuttingRing(String id, WorkflowRequest request) {
         CuttingRing entity = cuttingRingMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = cuttingRingMapper.updateById(entity) > 0;
 
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             cuttingRingService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
             densityTestService.generateReportAndResult(entity.getEntrustmentId());
+        }
+        if (success) {
+            insertWorkflowActionLog("CUTTING_RING", id, entity, request, fromStatus, entity.getStatus());
         }
         return success;
     }
@@ -737,14 +755,18 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleBeckmanBeam(String id, WorkflowRequest request) {
         BeckmanBeam entity = beckmanBeamMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
         
         applyChanges(entity, request);
         boolean success = beckmanBeamMapper.updateById(entity) > 0;
         
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             beckmanBeamService.generateReportAndResult(entity.getEntrustmentId());
             // 贝克曼梁法记录表审核通过时，检查回弹法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
             // （generateBeckmanBeamReportAndResult 内部会检查双检验是否都通过）
+        }
+        if (success) {
+            insertWorkflowActionLog("BECKMAN_BEAM", id, entity, request, fromStatus, entity.getStatus());
         }
         return success;
     }
@@ -752,13 +774,123 @@ public class WorkflowServiceImpl implements WorkflowService {
     private boolean handleLightDynamicPenetration(String id, WorkflowRequest request) {
         LightDynamicPenetration entity = lightDynamicPenetrationMapper.selectById(id);
         if (entity == null) return false;
+        String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = lightDynamicPenetrationMapper.updateById(entity) > 0;
 
-        if (success && STATUS_APPROVED.equals(entity.getStatus())) {
+        if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             lightDynamicPenetrationService.generateReportAndResult(entity.getEntrustmentId());
         }
+        if (success) {
+            insertWorkflowActionLog("LIGHT_DYNAMIC_PENETRATION", id, entity, request, fromStatus, entity.getStatus());
+        }
         return success;
+    }
+
+    private boolean shouldGenerateReportAndResultByStatus(String status) {
+        return STATUS_PENDING_APPROVAL.equals(status) || STATUS_APPROVED.equals(status);
+    }
+
+    private void insertWorkflowActionLog(String tableType,
+                                         String recordId,
+                                         Object entity,
+                                         WorkflowRequest request,
+                                         String fromStatus,
+                                         String toStatus) {
+        String wtNum = resolveWtNum(entity);
+        String assignee = resolveAssignee(tableType, entity, request, wtNum, toStatus);
+        try {
+            jdbcTemplate.update(
+                    "INSERT INTO T_WORKFLOW_ACTION_LOG (ID, WT_NUM, TABLE_TYPE, RECORD_ID, ACTION, FROM_STATUS, TO_STATUS, ASSIGNEE, ACTOR, REJECT_REASON, ACTION_TIME) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    UUID.randomUUID().toString(),
+                    wtNum,
+                    tableType,
+                    recordId,
+                    request.getAction(),
+                    fromStatus,
+                    toStatus,
+                    assignee,
+                    request.getUserAccount(),
+                    request.getRejectReason(),
+                    new Timestamp(System.currentTimeMillis())
+            );
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String resolveWtNum(Object entity) {
+        if (entity instanceof BusinessEntity) {
+            String wtNum = ((BusinessEntity) entity).getWtNum();
+            if (wtNum != null && !wtNum.trim().isEmpty()) return wtNum;
+        }
+
+        String entrustmentId = resolveEntrustmentId(entity);
+        if (entrustmentId != null && !entrustmentId.trim().isEmpty()) {
+            try {
+                JcCoreWtInfo info = jcCoreWtInfoMapper.selectById(entrustmentId);
+                if (info != null) {
+                    String wtNum = info.getWtNum();
+                    if (wtNum != null && !wtNum.trim().isEmpty()) return wtNum;
+                }
+            } catch (Exception ignored) {
+            }
+            return entrustmentId;
+        }
+        return null;
+    }
+
+    private String resolveEntrustmentId(Object entity) {
+        if (entity == null) return null;
+        try {
+            java.lang.reflect.Method m = entity.getClass().getMethod("getEntrustmentId");
+            Object v = m.invoke(entity);
+            return v == null ? null : String.valueOf(v);
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private String resolveAssignee(String tableType, Object entity, WorkflowRequest request, String wtNum, String toStatus) {
+        String nextHandler = request.getNextHandler();
+        if (nextHandler != null && !nextHandler.trim().isEmpty()) return nextHandler;
+
+        if (entity instanceof BusinessEntity) {
+            String nh = ((BusinessEntity) entity).getNextHandler();
+            if (nh != null && !nh.trim().isEmpty()) return nh;
+        }
+
+        String action = request.getAction();
+        if ("ENTRUSTMENT".equalsIgnoreCase(tableType) && wtNum != null && !wtNum.trim().isEmpty()) {
+            try {
+                SimpleDirectory directory = simpleDirectoryMapper.selectByDirName(wtNum);
+                if (directory != null) {
+                    if ("SUBMIT".equals(action) && directory.getWtReviewer() != null && !directory.getWtReviewer().trim().isEmpty()) {
+                        return directory.getWtReviewer();
+                    }
+                    if ("REJECT".equals(action) && directory.getWtUndertaker() != null && !directory.getWtUndertaker().trim().isEmpty()) {
+                        return directory.getWtUndertaker();
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if ("SUBMIT".equals(action) && STATUS_PENDING_AUDIT.equals(toStatus) && entity instanceof BusinessEntity) {
+            BusinessEntity be = (BusinessEntity) entity;
+            if (be.getRecordReviewer() != null && !be.getRecordReviewer().trim().isEmpty()) return be.getRecordReviewer();
+            if (be.getReviewer() != null && !be.getReviewer().trim().isEmpty()) return be.getReviewer();
+            if (be.getWtReviewer() != null && !be.getWtReviewer().trim().isEmpty()) return be.getWtReviewer();
+        }
+
+        if ("REJECT".equals(action) && STATUS_RETURNED.equals(toStatus) && entity instanceof BusinessEntity) {
+            BusinessEntity be = (BusinessEntity) entity;
+            if (be.getFiller() != null && !be.getFiller().trim().isEmpty()) return be.getFiller();
+            if (be.getRecordTester() != null && !be.getRecordTester().trim().isEmpty()) return be.getRecordTester();
+            if (be.getTester() != null && !be.getTester().trim().isEmpty()) return be.getTester();
+        }
+
+        return null;
     }
 
     private void applyChanges(BusinessEntity entity, WorkflowRequest request) {
@@ -832,8 +964,12 @@ public class WorkflowServiceImpl implements WorkflowService {
                 entity.setNextHandler(nextHandler);
                 break;
             
-            case "AUDIT_PASS": // 审核通过 -> 完成 (复核人审核通过，无签字)
-                entity.setStatus(STATUS_APPROVED);
+            case "AUDIT_PASS": // 审核通过 -> 待批准（记录表）；委托单直接完成
+                if (entity instanceof JcCoreWtInfo) {
+                    entity.setStatus(STATUS_APPROVED);
+                } else {
+                    entity.setStatus(STATUS_PENDING_APPROVAL);
+                }
                 entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature); // Report Reviewer Sign
@@ -842,11 +978,15 @@ public class WorkflowServiceImpl implements WorkflowService {
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
                     entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
-                entity.setNextHandler(null);
+                entity.setNextHandler(entity instanceof JcCoreWtInfo ? null : nextHandler);
                 break;
 
             case "SIGN_REVIEW": // Deprecated or mapped to APPROVED
-                entity.setStatus(STATUS_APPROVED);
+                if (entity instanceof JcCoreWtInfo) {
+                    entity.setStatus(STATUS_APPROVED);
+                } else {
+                    entity.setStatus(STATUS_PENDING_APPROVAL);
+                }
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
                     entity.setRecordReviewSign(signature); // Record Reviewer Sign
@@ -855,7 +995,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
                     entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
-                entity.setNextHandler(null);
+                entity.setNextHandler(entity instanceof JcCoreWtInfo ? null : nextHandler);
                 break;
 
             case "SIGN_APPROVE": // 批准 -> 完成

@@ -38,7 +38,10 @@ public interface PendingTasksService {
      * @param taskType 任务类型
      * @param taskId 任务ID
      * @param userAccount 用户账号（用于获取签名）
+     * @param jcTester 记录表检测人（委托单审核通过后指定）
+     * @param jcReviewer 记录表审核人（委托单审核通过后指定）
+     * @param bgApprover 报告/结果批准人（委托单审核通过后指定）
      * @return 是否审核成功
      */
-    boolean approveTask(String taskType, String taskId, String userAccount);
+    boolean approveTask(String taskType, String taskId, String userAccount, String jcTester, String jcReviewer, String bgApprover);
 }

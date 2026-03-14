@@ -14,16 +14,16 @@ public interface LightDynamicPenetrationMapper {
             "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
             "t2.APPROVER as approver, " +
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
             "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.SOIL_PROPERTY as soilProperty, " +
             "t2.DESIGN_CAPACITY as designCapacity, " +
@@ -58,16 +58,16 @@ public interface LightDynamicPenetrationMapper {
             "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
             "t2.NEXT_HANDLER as nextHandler, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
             "t2.APPROVER as approver, " +
             "t2.FILLER as filler, " +
             "t2.RECORD_TESTER as recordTester, " +
             "t2.RECORD_TESTER_SIGN as recordTesterSign, " +
             "t2.RECORD_REVIEWER as recordReviewer, " +
             "t2.RECORD_REVIEW_SIGN as recordReviewSign, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.SOIL_PROPERTY as soilProperty, " +
             "t2.DESIGN_CAPACITY as designCapacity, " +
@@ -97,15 +97,15 @@ public interface LightDynamicPenetrationMapper {
 
     @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION " +
             "(ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, " +
-            "TESTER, REVIEWER, APPROVER, FILLER, RECORD_TESTER, RECORD_TESTER_SIGN, RECORD_REVIEWER, RECORD_REVIEW_SIGN, " +
-            "INSPECT_SIGNATURE_PHOTO, REVIEW_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "APPROVER, FILLER, RECORD_TESTER, RECORD_TESTER_SIGN, RECORD_REVIEWER, RECORD_REVIEW_SIGN, " +
+            "APPROVE_SIGNATURE_PHOTO, " +
             "SOIL_PROPERTY, DESIGN_CAPACITY, HAMMER_WEIGHT, DROP_DISTANCE, TEST_BASIS, EQUIPMENT, CONCLUSION, " +
             "TEST_DATE, REPORT_DATE, DATA_BLOCKS, REMARKS, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES " +
             "(#{id}, #{entrustmentId}, #{dataJson}, #{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{tester}, #{reviewer}, #{approver}, #{filler}, #{recordTester}, #{recordTesterSign}, #{recordReviewer}, #{recordReviewSign}, " +
-            "#{inspectSignaturePhoto}, #{reviewSignaturePhoto}, #{approveSignaturePhoto}, " +
+            "#{approver}, #{filler}, NVL(#{recordTester}, #{tester}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), NVL(#{recordReviewer}, #{reviewer}), NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "#{approveSignaturePhoto}, " +
             "#{soilProperty}, #{designCapacity}, #{hammerWeight}, #{dropDistance}, #{testBasis}, #{equipment}, #{conclusion}, " +
             "#{testDate}, #{reportDate}, #{dataBlocks}, #{remarks}, " +
             "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
@@ -116,16 +116,12 @@ public interface LightDynamicPenetrationMapper {
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
             "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_TESTER_SIGN = #{recordTesterSign}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
+            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "SOIL_PROPERTY = #{soilProperty}, " +
             "DESIGN_CAPACITY = #{designCapacity}, " +
@@ -152,16 +148,12 @@ public interface LightDynamicPenetrationMapper {
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
             "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_TESTER_SIGN = #{recordTesterSign}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
+            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "SOIL_PROPERTY = #{soilProperty}, " +
             "DESIGN_CAPACITY = #{designCapacity}, " +
@@ -188,7 +180,7 @@ public interface LightDynamicPenetrationMapper {
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")

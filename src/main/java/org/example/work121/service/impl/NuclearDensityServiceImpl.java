@@ -130,7 +130,7 @@ public class NuclearDensityServiceImpl implements NuclearDensityService {
         SimpleDirectory directory = simpleDirectoryMapper.selectByDirName(entrustmentId);
         if (directory != null) {
             if (nuclearDensity.getFiller() == null || nuclearDensity.getFiller().isEmpty()) {
-                nuclearDensity.setFiller(directory.getJcFiller());
+                nuclearDensity.setFiller(directory.getJcTester());
             }
             if (nuclearDensity.getRecordTester() == null || nuclearDensity.getRecordTester().isEmpty()) {
                 nuclearDensity.setRecordTester(directory.getJcTester());

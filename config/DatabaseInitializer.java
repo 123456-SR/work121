@@ -26,6 +26,10 @@ public class DatabaseInitializer implements CommandLineRunner {
         
         // Fix JZS_SIGNATURE schema if needed
         fixJzsSignatureSchema();
+
+        // Ensure workflow action log exists (for dashboard statistics)
+        ensureWorkflowActionLogExists();
+        ensureWorkflowActionLogIndexes();
         
         // Ensure JC_CORE_WT_INFO_EXT exists
         ensureJcCoreWtInfoExtExists();
@@ -36,10 +40,12 @@ public class DatabaseInitializer implements CommandLineRunner {
         // Ensure Test Tables exist
         ensureTestTablesExist();
 
-        // Add columns to T_SIMPLE_DIRECTORY
-        addColumnSafe("T_SIMPLE_DIRECTORY", "TESTER", "VARCHAR2(64)");
-        addColumnSafe("T_SIMPLE_DIRECTORY", "REVIEWER", "VARCHAR2(64)");
-        addColumnSafe("T_SIMPLE_DIRECTORY", "APPROVER", "VARCHAR2(64)");
+        // Add columns to T_SIMPLE_DIRECTORY (keep only required roles)
+        addColumnSafe("T_SIMPLE_DIRECTORY", "WT_UNDERTAKER", "VARCHAR2(64)");
+        addColumnSafe("T_SIMPLE_DIRECTORY", "WT_REVIEWER", "VARCHAR2(64)");
+        addColumnSafe("T_SIMPLE_DIRECTORY", "JC_TESTER", "VARCHAR2(64)");
+        addColumnSafe("T_SIMPLE_DIRECTORY", "JC_REVIEWER", "VARCHAR2(64)");
+        addColumnSafe("T_SIMPLE_DIRECTORY", "BG_APPROVER", "VARCHAR2(64)");
 
         // Add columns to JC_CORE_WT_INFO_EXT (Main table)
         addColumnSafe("JC_CORE_WT_INFO_EXT", "BUILDING_MAN", "VARCHAR2(64)");
@@ -196,11 +202,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             addColumnSafe(table, "RECORD_REVIEW_SIGN", "CLOB");
             // 记录表检测人签名（之前缺失会导致 ORA-00904: RECORD_TESTER_SIGN）
             addColumnSafe(table, "RECORD_TESTER_SIGN", "CLOB");
-            addColumnSafe(table, "REVIEW_SIGNATURE_PHOTO", "CLOB");
-            addColumnSafe(table, "INSPECT_SIGNATURE_PHOTO", "CLOB");
             addColumnSafe(table, "APPROVE_SIGNATURE_PHOTO", "CLOB");
-            addColumnSafe(table, "TESTER", "VARCHAR2(64)");
-            addColumnSafe(table, "REVIEWER", "VARCHAR2(64)");
             addColumnSafe(table, "APPROVER", "VARCHAR2(64)");
             
             // Ensure standard columns exist for all test tables
@@ -216,6 +218,12 @@ public class DatabaseInitializer implements CommandLineRunner {
             // Add report and result status columns
             addColumnSafe(table, "REPORT_STATUS", "VARCHAR2(64)");
             addColumnSafe(table, "RESULT_STATUS", "VARCHAR2(64)");
+
+            dropColumnSafe(table, "TESTER");
+            dropColumnSafe(table, "REVIEWER");
+            dropColumnSafe(table, "TESTER_SIGNATURE_PHOTO");
+            dropColumnSafe(table, "REVIEW_SIGNATURE_PHOTO");
+            dropColumnSafe(table, "INSPECT_SIGNATURE_PHOTO");
         }
         addColumnSafe("T_REBOUND_METHOD", "STRUCTURE_PART", "VARCHAR2(255)");
         addColumnSafe("T_REBOUND_METHOD", "CONCRETE_GRADE", "VARCHAR2(64)");
@@ -254,6 +262,36 @@ public class DatabaseInitializer implements CommandLineRunner {
         addColumnSafe("T_BECKMAN_BEAM", "AXLE_WEIGHT", "VARCHAR2(64)");
         addColumnSafe("T_BECKMAN_BEAM", "TIRE_PRESSURE", "VARCHAR2(64)");
         addColumnSafe("T_BECKMAN_BEAM", "TEST_LENGTH", "VARCHAR2(64)");
+        
+        // Create/refresh unified view for Light Dynamic Penetration
+        ensureLightDynamicUnifiedViewExists();
+    }
+    
+    private boolean viewExists(String viewName) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM user_views WHERE view_name = ?", 
+                Integer.class, 
+                viewName.toUpperCase()
+            );
+            return count != null && count > 0;
+        } catch (Exception e) {
+            System.out.println("Error checking view existence: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    private void ensureLightDynamicUnifiedViewExists() {
+        try {
+            String sql = "CREATE OR REPLACE VIEW T_LIGHT_DYNAMIC_PENETRATION_UNIFIED AS " +
+                         "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION " +
+                         "UNION ALL " +
+                         "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION_RESULT";
+            jdbcTemplate.execute(sql);
+            System.out.println("View T_LIGHT_DYNAMIC_PENETRATION_UNIFIED created/updated successfully.");
+        } catch (Exception e) {
+            System.out.println("Failed to create view T_LIGHT_DYNAMIC_PENETRATION_UNIFIED: " + e.getMessage());
+        }
     }
     
     private void fixSimpleDirectorySchema() {
@@ -284,9 +322,11 @@ public class DatabaseInitializer implements CommandLineRunner {
                         "    TABLE9_TYPE VARCHAR2(64), TABLE9_ID VARCHAR2(64)," +
                         "    TABLE10_TYPE VARCHAR2(64), TABLE10_ID VARCHAR2(64)," +
                         "    STATUS NUMBER," +
-                        "    TESTER VARCHAR2(64)," +
-                        "    REVIEWER VARCHAR2(64)," +
-                        "    APPROVER VARCHAR2(64)," +
+                        "    WT_UNDERTAKER VARCHAR2(64)," +
+                        "    WT_REVIEWER VARCHAR2(64)," +
+                        "    JC_TESTER VARCHAR2(64)," +
+                        "    JC_REVIEWER VARCHAR2(64)," +
+                        "    BG_APPROVER VARCHAR2(64)," +
                         "    CREATE_MAN VARCHAR2(64)," +
                         "    CREATE_TIME TIMESTAMP," +
                         "    UPDATE_MAN VARCHAR2(64)," +
@@ -298,6 +338,40 @@ public class DatabaseInitializer implements CommandLineRunner {
                 System.out.println("Failed to recreate T_SIMPLE_DIRECTORY: " + createEx.getMessage());
             }
         }
+    }
+
+    private void ensureWorkflowActionLogExists() {
+        if (tableExists("T_WORKFLOW_ACTION_LOG")) {
+            return;
+        }
+        try {
+            String sql = "CREATE TABLE T_WORKFLOW_ACTION_LOG (" +
+                    "    ID VARCHAR2(64) NOT NULL PRIMARY KEY," +
+                    "    WT_NUM VARCHAR2(64)," +
+                    "    TABLE_TYPE VARCHAR2(64)," +
+                    "    RECORD_ID VARCHAR2(64)," +
+                    "    ACTION VARCHAR2(64)," +
+                    "    FROM_STATUS VARCHAR2(64)," +
+                    "    TO_STATUS VARCHAR2(64)," +
+                    "    ASSIGNEE VARCHAR2(64)," +
+                    "    ACTOR VARCHAR2(64)," +
+                    "    REJECT_REASON VARCHAR2(500)," +
+                    "    ACTION_TIME TIMESTAMP" +
+                    ")";
+            jdbcTemplate.execute(sql);
+        } catch (Exception e) {
+            System.out.println("Failed to create T_WORKFLOW_ACTION_LOG: " + e.getMessage());
+        }
+    }
+
+    private void ensureWorkflowActionLogIndexes() {
+        if (!tableExists("T_WORKFLOW_ACTION_LOG")) {
+            return;
+        }
+        createIndexSafe("IDX_WF_LOG_ASSIGNEE_TIME", "T_WORKFLOW_ACTION_LOG", "(ASSIGNEE, ACTION_TIME)");
+        createIndexSafe("IDX_WF_LOG_ACTOR_TIME", "T_WORKFLOW_ACTION_LOG", "(ACTOR, ACTION_TIME)");
+        createIndexSafe("IDX_WF_LOG_WT_NUM", "T_WORKFLOW_ACTION_LOG", "(WT_NUM)");
+        createIndexSafe("IDX_WF_LOG_RECORD", "T_WORKFLOW_ACTION_LOG", "(TABLE_TYPE, RECORD_ID)");
     }
 
     private void fixJzsSignatureSchema() {
@@ -482,16 +556,11 @@ public class DatabaseInitializer implements CommandLineRunner {
                             "    STATUS VARCHAR2(64)," +
                             "    REJECT_REASON VARCHAR2(500)," +
                             "    NEXT_HANDLER VARCHAR2(64)," +
-                            "    TESTER_SIGNATURE_PHOTO CLOB," +
-                            "    REVIEW_SIGNATURE_PHOTO CLOB," +
-                            "    INSPECT_SIGNATURE_PHOTO CLOB," +
                             "    APPROVE_SIGNATURE_PHOTO CLOB," +
                             "    CREATE_BY VARCHAR2(64)," +
                             "    CREATE_TIME TIMESTAMP," +
                             "    UPDATE_BY VARCHAR2(64)," +
                             "    UPDATE_TIME TIMESTAMP," +
-                            "    TESTER VARCHAR2(64)," +
-                            "    REVIEWER VARCHAR2(64)," +
                             "    APPROVER VARCHAR2(64)," +
                             "    FILLER VARCHAR2(64)," +
                             "    RECORD_TESTER VARCHAR2(64)," +
@@ -539,6 +608,30 @@ public class DatabaseInitializer implements CommandLineRunner {
         }
     }
 
+    private boolean indexExists(String indexName) {
+        try {
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT count(*) FROM user_indexes WHERE index_name = ?",
+                    Integer.class,
+                    indexName.toUpperCase()
+            );
+            return count != null && count > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void createIndexSafe(String indexName, String tableName, String columnsSql) {
+        if (indexExists(indexName)) {
+            return;
+        }
+        try {
+            jdbcTemplate.execute("CREATE INDEX " + indexName + " ON " + tableName + " " + columnsSql);
+        } catch (Exception e) {
+            System.out.println("Failed to create index " + indexName + " on " + tableName + ": " + e.getMessage());
+        }
+    }
+
     private void addColumnSafe(String tableName, String columnName, String type) {
         if (columnExists(tableName, columnName)) {
             System.out.println("Column " + columnName + " already exists in " + tableName + " (checked via user_tab_columns)");
@@ -552,6 +645,18 @@ public class DatabaseInitializer implements CommandLineRunner {
         } catch (Exception e) {
             System.out.println("Failed to add column " + columnName + " to " + tableName + ": " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void dropColumnSafe(String tableName, String columnName) {
+        if (!columnExists(tableName, columnName)) {
+            return;
+        }
+        try {
+            jdbcTemplate.execute("ALTER TABLE " + tableName + " DROP COLUMN " + columnName);
+            System.out.println("Dropped column " + columnName + " from " + tableName);
+        } catch (Exception e) {
+            System.out.println("Failed to drop column " + columnName + " from " + tableName + ": " + e.getMessage());
         }
     }
 }

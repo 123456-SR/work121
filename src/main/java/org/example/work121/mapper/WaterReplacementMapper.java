@@ -12,10 +12,10 @@ public interface WaterReplacementMapper {
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             // 业务明细字段统一保存在 DATA_JSON，这里不再单独取列
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -44,8 +44,8 @@ public interface WaterReplacementMapper {
     @Update("UPDATE T_WATER_REPLACEMENT SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -60,8 +60,8 @@ public interface WaterReplacementMapper {
      * 避免在审核通过时因为实体字段为 null 而把已有的 JSON 数据覆盖掉。
      */
     @Update("UPDATE T_WATER_REPLACEMENT SET " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -75,10 +75,10 @@ public interface WaterReplacementMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -106,25 +106,25 @@ public interface WaterReplacementMapper {
 
     @Insert("INSERT INTO T_WATER_REPLACEMENT (" +
             "ID, ENTRUSTMENT_ID, DATA_JSON, " +
-            "TESTER, REVIEWER, APPROVER, " +
-            "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "RECORD_TESTER, RECORD_REVIEWER, APPROVER, " +
+            "RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id}, #{entrustmentId}, #{dataJson}, " +
             "#{tester}, #{reviewer}, #{approver}, " +
-            "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
+            "NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), #{approveSignaturePhoto}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
             "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(WaterReplacement waterReplacement);
 
     @Update("UPDATE T_WATER_REPLACEMENT SET " +
             "DATA_JSON = #{dataJson}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -140,7 +140,7 @@ public interface WaterReplacementMapper {
     @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")

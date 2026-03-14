@@ -14,11 +14,11 @@ public interface DensityTestResultMapper {
             "ID as id, " +
             "ENTRUSTMENT_ID as entrustmentId, " +
             "DATA_JSON as dataJson, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver " +
             "FROM T_DENSITY_TEST " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
@@ -28,11 +28,11 @@ public interface DensityTestResultMapper {
             "ID as id, " +
             "ENTRUSTMENT_ID as entrustmentId, " +
             "DATA_JSON as dataJson, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver " +
             "FROM T_DENSITY_TEST " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId} " +
@@ -43,27 +43,27 @@ public interface DensityTestResultMapper {
             "ID as id, " +
             "ENTRUSTMENT_ID as entrustmentId, " +
             "DATA_JSON as dataJson, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver " +
             "FROM T_DENSITY_TEST " +
             "WHERE ID = #{id}")
     DensityTestResult selectById(@Param("id") String id);
 
-    @Insert("INSERT INTO T_DENSITY_TEST (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
+    @Insert("INSERT INTO T_DENSITY_TEST (ID, ENTRUSTMENT_ID, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(DensityTestResult result);
 
     @Update("UPDATE T_DENSITY_TEST SET " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "TESTER = #{tester,jdbcType=VARCHAR}, " +
-            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
@@ -73,11 +73,11 @@ public interface DensityTestResultMapper {
     @Update("UPDATE T_DENSITY_TEST SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "TESTER = #{tester,jdbcType=VARCHAR}, " +
-            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +

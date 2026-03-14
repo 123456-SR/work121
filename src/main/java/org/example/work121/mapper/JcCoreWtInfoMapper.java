@@ -50,7 +50,7 @@ public interface JcCoreWtInfoMapper {
             "t2.GC_GCPQ as spec, " +
             "t2.PD_PASS_CODE as manufacturer, " +
             "t2.OL_WT_NUM as batchNumber, " +
-            "t2.WT_JCCS as testItems, " +
+            "COALESCE(t1.TEST_ITEMS, t2.WT_JCCS) as testItems, " +
             "t2.SAMPLE_QUANTITY as sampleQuantity, " +
             "t2.REPRESENTATIVE_BATCH as representativeBatch, " +
             "t2.SAMPLE_DISPOSAL as sampleDisposal, " +
@@ -106,6 +106,12 @@ public interface JcCoreWtInfoMapper {
     @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
+    @Update("UPDATE T_ENTRUSTMENT SET APPROVER = #{approver}, UPDATE_BY = #{updateBy}, UPDATE_TIME = #{updateTime} WHERE ID = #{id}")
+    int updateApproverById(@Param("id") String id,
+                           @Param("approver") String approver,
+                           @Param("updateBy") String updateBy,
+                           @Param("updateTime") java.util.Date updateTime);
+
     @Select("<script>" +
             "SELECT DISTINCT " +
             "t2.WT_ID as id, " +
@@ -145,7 +151,7 @@ public interface JcCoreWtInfoMapper {
             "t2.GC_GCPQ as spec, " +
             "t2.PD_PASS_CODE as manufacturer, " +
             "t2.OL_WT_NUM as batchNumber, " +
-            "t2.WT_JCCS as testItems, " +
+            "COALESCE(t1.TEST_ITEMS, t2.WT_JCCS) as testItems, " +
             "t2.SAMPLE_QUANTITY as sampleQuantity, " +
             "t2.REPRESENTATIVE_BATCH as representativeBatch, " +
             "t2.SAMPLE_DISPOSAL as sampleDisposal, " +
@@ -213,71 +219,71 @@ public interface JcCoreWtInfoMapper {
             "OR UPPER(TRIM(TO_CHAR(t1.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t1.CLIENT))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t1.WITNESS))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t3.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t3.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t3.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.JC_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.JC_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.BG_APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.WT_UNDERTAKER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.WT_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.CREATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.UPDATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_density.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_density.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_nuclear.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_nuclear.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_sand.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_sand.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_water.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_water.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_cutting.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_cutting.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_rebound.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_rebound.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_light.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_light.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_beckman.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_beckman.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
@@ -331,7 +337,7 @@ public interface JcCoreWtInfoMapper {
             "t2.GC_GCPQ as spec, " +
             "t2.PD_PASS_CODE as manufacturer, " +
             "t2.OL_WT_NUM as batchNumber, " +
-            "t2.WT_JCCS as testItems, " +
+            "COALESCE(t1.TEST_ITEMS, t2.WT_JCCS) as testItems, " +
             "t2.SAMPLE_QUANTITY as sampleQuantity, " +
             "t2.REPRESENTATIVE_BATCH as representativeBatch, " +
             "t2.SAMPLE_DISPOSAL as sampleDisposal, " +
@@ -358,8 +364,8 @@ public interface JcCoreWtInfoMapper {
             "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
             "    (SELECT MAX(TO_CHAR(r.REPORT_STATUS)) FROM T_REBOUND_METHOD r " +
             "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(l.REPORT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION l " +
-            "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(ldu.REPORT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION_UNIFIED ldu " +
+            "      WHERE ldu.ENTRUSTMENT_ID = t2.WT_NUM OR ldu.ENTRUSTMENT_ID = t2.WT_ID), " +
             "    (SELECT MAX(TO_CHAR(b.REPORT_STATUS)) FROM T_BECKMAN_BEAM b " +
             "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID) " +
             "  ), " +
@@ -383,8 +389,8 @@ public interface JcCoreWtInfoMapper {
             "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
             "    (SELECT MAX(TO_CHAR(b.RESULT_STATUS)) FROM T_BECKMAN_BEAM b " +
             "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID), " +
-            "    (SELECT MAX(TO_CHAR(ldp.RESULT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION_RESULT ldp " +
-            "      WHERE ldp.ENTRUSTMENT_ID = t2.WT_NUM OR ldp.ENTRUSTMENT_ID = t2.WT_ID) " +
+            "    (SELECT MAX(TO_CHAR(ldu.RESULT_STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION_UNIFIED ldu " +
+            "      WHERE ldu.ENTRUSTMENT_ID = t2.WT_NUM OR ldu.ENTRUSTMENT_ID = t2.WT_ID) " +
             "  ), " +
             "  '0' " +
             ") as resultStatus " +
@@ -449,53 +455,53 @@ public interface JcCoreWtInfoMapper {
             "OR UPPER(TRIM(TO_CHAR(t1.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t1.CLIENT))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t1.WITNESS))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t3.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t3.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t3.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.JC_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.JC_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t3.BG_APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.WT_UNDERTAKER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.WT_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.CREATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.UPDATE_MAN))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_density.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_density.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_nuclear.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_nuclear.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_sand.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_sand.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_water.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_water.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_cutting.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_cutting.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_rebound.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_rebound.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_light.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_light.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_beckman.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_beckman.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.CREATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.UPDATE_BY))) LIKE '%' || UPPER(#{name}) || '%' " +
@@ -594,7 +600,7 @@ public interface JcCoreWtInfoMapper {
             "t2.GC_GCPQ as spec, " +
             "t2.PD_PASS_CODE as manufacturer, " +
             "t2.OL_WT_NUM as batchNumber, " +
-            "t2.WT_JCCS as testItems, " +
+            "COALESCE(t1.TEST_ITEMS, t2.WT_JCCS) as testItems, " +
             "t2.SAMPLE_QUANTITY as sampleQuantity, " +
             "t2.REPRESENTATIVE_BATCH as representativeBatch, " +
             "t2.SAMPLE_DISPOSAL as sampleDisposal, " +
@@ -643,50 +649,50 @@ public interface JcCoreWtInfoMapper {
             "   UPPER(TRIM(TO_CHAR(t_density.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_density.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_density.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_density.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_density.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_nuclear.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_nuclear.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_nuclear.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_nuclear.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_sand.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_sand.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_sand.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_sand.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_water.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_water.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_water.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_water.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_cutting.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_cutting.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_cutting.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_cutting.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_rebound.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_rebound.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_rebound.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_rebound.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_light.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_light.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_light.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_light.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.FILLER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_beckman.TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
-            "OR UPPER(TRIM(TO_CHAR(t_beckman.REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_TESTER))) LIKE '%' || UPPER(#{name}) || '%' " +
+            "OR UPPER(TRIM(TO_CHAR(t_beckman.RECORD_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t_beckman.APPROVER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.WT_UNDERTAKER))) LIKE '%' || UPPER(#{name}) || '%' " +
             "OR UPPER(TRIM(TO_CHAR(t3.WT_REVIEWER))) LIKE '%' || UPPER(#{name}) || '%' " +
@@ -740,7 +746,7 @@ public interface JcCoreWtInfoMapper {
             "t2.GC_GCPQ as spec, " +
             "t2.PD_PASS_CODE as manufacturer, " +
             "t2.OL_WT_NUM as batchNumber, " +
-            "t2.WT_JCCS as testItems, " +
+            "COALESCE(t1.TEST_ITEMS, t2.WT_JCCS) as testItems, " +
             "t2.SAMPLE_QUANTITY as sampleQuantity, " +
             "t2.REPRESENTATIVE_BATCH as representativeBatch, " +
             "t2.SAMPLE_DISPOSAL as sampleDisposal, " +
@@ -897,4 +903,47 @@ public interface JcCoreWtInfoMapper {
             "GC_BEIZHU = #{projectRemarks, jdbcType=VARCHAR} " +
             "WHERE WT_ID = #{id, jdbcType=VARCHAR}")
     int update(JcCoreWtInfo info);
+
+    @org.apache.ibatis.annotations.Select("<script>" +
+            "SELECT DISTINCT " +
+            "t2.WT_ID as id, " +
+            "t2.WT_NUM as wtNum, " +
+            "t2.GC_NAME as projectName, " +
+            "t2.WT_UNIT as clientUnit, " +
+            "t2.WT_DATE as commissionDate, " +
+            "COALESCE(TO_CHAR(t2.WT_STATUS), '0') as status, " +
+            "NVL( " +
+            "  COALESCE( " +
+            "    (SELECT MAX(TO_CHAR(d.STATUS)) FROM T_DENSITY_TEST d " +
+            "      WHERE d.ENTRUSTMENT_ID = t2.WT_NUM OR d.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(n.STATUS)) FROM T_NUCLEAR_DENSITY n " +
+            "      WHERE n.ENTRUSTMENT_ID = t2.WT_NUM OR n.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(s.STATUS)) FROM T_SAND_REPLACEMENT s " +
+            "      WHERE s.ENTRUSTMENT_ID = t2.WT_NUM OR s.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(w.STATUS)) FROM T_WATER_REPLACEMENT w " +
+            "      WHERE w.ENTRUSTMENT_ID = t2.WT_NUM OR w.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(c.STATUS)) FROM T_CUTTING_RING c " +
+            "      WHERE c.ENTRUSTMENT_ID = t2.WT_NUM OR c.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(r.STATUS)) FROM T_REBOUND_METHOD r " +
+            "      WHERE r.ENTRUSTMENT_ID = t2.WT_NUM OR r.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(l.STATUS)) FROM T_LIGHT_DYNAMIC_PENETRATION l " +
+            "      WHERE l.ENTRUSTMENT_ID = t2.WT_NUM OR l.ENTRUSTMENT_ID = t2.WT_ID), " +
+            "    (SELECT MAX(TO_CHAR(b.STATUS)) FROM T_BECKMAN_BEAM b " +
+            "      WHERE b.ENTRUSTMENT_ID = t2.WT_NUM OR b.ENTRUSTMENT_ID = t2.WT_ID) " +
+            "  ), " +
+            "  '0' " +
+            ") as recordStatus, " +
+            "'0' as reportStatus, " +
+            "'' as tester, " +
+            "'' as reviewer " +
+            "FROM JC_CORE_WT_INFO t2 " +
+            "<where>" +
+            "  NOT EXISTS (SELECT 1 FROM T_ENTRUSTMENT e WHERE e.WT_NUM = t2.WT_NUM) " +
+            "  <if test='wtNum != null and wtNum != \"\"'> " +
+            "    AND t2.WT_NUM = #{wtNum} " +
+            "  </if> " +
+            "</where>" +
+            "ORDER BY t2.WT_DATE DESC NULLS LAST" +
+            "</script>")
+    java.util.List<JcCoreWtInfo> selectUnassigned(@Param("wtNum") String wtNum);
 }

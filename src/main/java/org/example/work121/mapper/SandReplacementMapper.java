@@ -15,10 +15,10 @@ public interface SandReplacementMapper {
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             // 业务字段统一放到 DATA_JSON 里，这里只取 DATA_JSON 及通用字段
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.STATUS as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -49,10 +49,10 @@ public interface SandReplacementMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "t2.CREATE_BY as createBy, " +
             "t2.CREATE_TIME as createTime, " +
@@ -78,8 +78,8 @@ public interface SandReplacementMapper {
 
     @Insert("INSERT INTO T_SAND_REPLACEMENT " +
             "(ID, ENTRUSTMENT_ID, DATA_JSON, " +
-            "TESTER, REVIEWER, APPROVER, " +
-            "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "RECORD_TESTER, RECORD_REVIEWER, APPROVER, " +
+            "RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES " +
@@ -93,11 +93,11 @@ public interface SandReplacementMapper {
     @Update("UPDATE T_SAND_REPLACEMENT SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "DATA_JSON = #{dataJson}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
+            "RECORD_TESTER = #{tester}, " +
+            "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto}, " +
+            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -110,7 +110,7 @@ public interface SandReplacementMapper {
     @Update("UPDATE T_SAND_REPLACEMENT SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_SAND_REPLACEMENT SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_SAND_REPLACEMENT SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Update("UPDATE T_SAND_REPLACEMENT SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
