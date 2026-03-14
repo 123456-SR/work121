@@ -164,13 +164,18 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 if (directory.getStatus() == null) {
                     directory.setStatus("1");
                 }
+                
+                // 确保第一张表是委托检测单
+                directory.setTable1Type("ENTRUSTMENT_LIST");
+                // 第二张表暂时为空，等待后续根据委托检测单内容创建
+                directory.setTable2Type("");
 
                 // 确保委托单记录存在，保证 T_ENTRUSTMENT 表里有数据
                 ensureMasterRecord(directory.getDirName(), directory.getCreateBy(), determineAllTestCategories(directory), directory);
                 
                 // 获取创建的委托单记录的 ID，并更新 table1Id 字段
                 JcCoreWtInfo entrustment = jcCoreWtInfoService.getByWtNum(directory.getDirName());
-                if (entrustment != null && directory.getTable1Type() != null && directory.getTable1Type().equals("ENTRUSTMENT_LIST")) {
+                if (entrustment != null) {
                     directory.setTable1Id(entrustment.getId());
                     System.out.println("更新 table1Id 为: " + entrustment.getId());
                 }
@@ -278,6 +283,8 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
                 // 场景2：已有老数据，只存在 JC_CORE_WT_INFO（或其它老表），但 T_ENTRUSTMENT 可能还没建出来
                 // 任务分配时需要补建一条 T_ENTRUSTMENT 记录，保证委托单主表完整
                 try {
+                    // 更新角色信息
+                    setDefaultValues(existing, directory, category);
                     jcCoreWtInfoService.save(existing);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -360,22 +367,21 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         
         if (directory == null) return;
         
+        // 首先处理委托单角色信息，无论category是什么
+        if (entity instanceof JcCoreWtInfo) {
+             JcCoreWtInfo info = (JcCoreWtInfo) entity;
+             // User requirement: "委托单单独使用自己的承接人和审核人"
+             // Map wtUndertaker -> TESTER field
+             // Map wtReviewer -> REVIEWER field
+             if (directory.getWtUndertaker() != null) info.setTester(directory.getWtUndertaker()); 
+             if (directory.getWtReviewer() != null) info.setReviewer(directory.getWtReviewer());
+             // Also set original fields for compatibility
+             if (directory.getWtUndertaker() != null) info.setReceiver(directory.getWtUndertaker()); 
+             if (directory.getWtReviewer() != null) info.setWtReviewer(directory.getWtReviewer());
+        }
+        
         // Map granular roles based on category
-        if ("ENTRUSTMENT_LIST".equals(category) || "检测委托单".equals(category)) {
-             // For Entrustment, use wtUndertaker and wtReviewer
-             // Note: Entrustment entity might use different field names, need to check Entrustment/JcCoreWtInfo
-             if (entity instanceof JcCoreWtInfo) {
-                 JcCoreWtInfo info = (JcCoreWtInfo) entity;
-                 // User requirement: "委托单单独使用自己的承接人和审核人"
-                 // Map wtUndertaker -> TESTER field
-                 // Map wtReviewer -> REVIEWER field
-                 if (directory.getWtUndertaker() != null) info.setTester(directory.getWtUndertaker()); 
-                 if (directory.getWtReviewer() != null) info.setReviewer(directory.getWtReviewer());
-                 // Also set original fields for compatibility
-                 if (directory.getWtUndertaker() != null) info.setReceiver(directory.getWtUndertaker()); 
-                 if (directory.getWtReviewer() != null) info.setWtReviewer(directory.getWtReviewer());
-             }
-        } else if (category.contains("RECORD") || category.contains("记录表")) {
+        if (category.contains("RECORD") || category.contains("记录表")) {
             // For Records: use jcFiller, jcTester, jcReviewer, bgApprover (shared)
             entity.setFiller(directory.getJcFiller());
             entity.setRecordTester(directory.getJcTester()); // Use recordTester field
@@ -706,6 +712,21 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         SimpleDirectory directory = simpleDirectoryMapper.selectByDirName(wtNum);
         if (directory != null) {
             syncEntrustmentData(directory);
+        }
+    }
+    
+    @Override
+    public boolean update(SimpleDirectory directory) {
+        try {
+            // 设置更新信息
+            directory.setUpdateBy(directory.getUpdateBy() != null ? directory.getUpdateBy() : "admin");
+            directory.setUpdateTime(new java.util.Date());
+            
+            int result = simpleDirectoryMapper.update(directory);
+            return result > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

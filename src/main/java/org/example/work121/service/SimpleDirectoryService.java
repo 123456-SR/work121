@@ -62,4 +62,11 @@ public interface SimpleDirectoryService {
      * @param wtNum 统一编号
      */
     void syncEntrustmentDataByWtNum(String wtNum);
+    
+    /**
+     * 更新目录
+     * @param directory 目录实体
+     * @return 是否更新成功
+     */
+    boolean update(SimpleDirectory directory);
 }

@@ -169,18 +169,19 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                         System.out.println("=== 开始创建记录表 ===");
                                         System.out.println("统一编号: " + unifiedNumber);
                                         
+                                        // 获取检测项目及依据
+                                        String testItems = entrustment.getTestItems();
+                                        System.out.println("检测项目及依据: " + testItems);
+                                        
+                                        // 根据检测项目及依据确定表类型
+                                        java.util.List<String> tableTypes = determineTableTypesByTestItems(testItems);
+                                        System.out.println("根据检测项目确定的表类型: " + tableTypes);
+                                        
                                         // 确定检测类别
                                         java.util.Set<String> categories = new java.util.LinkedHashSet<>();
-                                        String[] types = {
-                                            directory.getTable1Type(), directory.getTable2Type(), directory.getTable3Type(),
-                                            directory.getTable4Type(), directory.getTable5Type(), directory.getTable6Type(),
-                                            directory.getTable7Type(), directory.getTable8Type(), directory.getTable9Type(),
-                                            directory.getTable10Type()
-                                        };
-                                        
-                                        for (String type : types) {
-                                            if (type == null) continue;
-                                            String upper = type.toUpperCase();
+                                        for (String tableType : tableTypes) {
+                                            if (tableType == null) continue;
+                                            String upper = tableType.toUpperCase();
                                             if (upper.contains("NUCLEAR")) categories.add("核子法");
                                             else if (upper.contains("SAND")) categories.add("灌砂法");
                                             else if (upper.contains("WATER")) categories.add("灌水法");
@@ -199,79 +200,33 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                             creator = "admin";
                                         }
                                         
-                                        // 创建表1
-                                        if (directory.getTable1Type() != null && directory.getTable1Id() == null) {
-                                            System.out.println("创建表1 - 类型: " + directory.getTable1Type());
-                                            String table1Id = createRelatedRecord(directory.getTable1Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable1Id(table1Id);
-                                            System.out.println("表1创建成功，ID: " + table1Id);
+                                        // 根据确定的表类型创建记录表
+                                        for (int i = 0; i < tableTypes.size(); i++) {
+                                            String tableType = tableTypes.get(i);
+                                            if (tableType != null) {
+                                                System.out.println("创建表" + (i + 1) + " - 类型: " + tableType);
+                                                String tableId = createRelatedRecord(tableType, unifiedNumber, creator, category, directory);
+                                                // 根据索引设置相应的表ID
+                                                switch (i) {
+                                                    case 0: directory.setTable1Id(tableId); break;
+                                                    case 1: directory.setTable2Id(tableId); break;
+                                                    case 2: directory.setTable3Id(tableId); break;
+                                                    case 3: directory.setTable4Id(tableId); break;
+                                                    case 4: directory.setTable5Id(tableId); break;
+                                                    case 5: directory.setTable6Id(tableId); break;
+                                                    case 6: directory.setTable7Id(tableId); break;
+                                                    case 7: directory.setTable8Id(tableId); break;
+                                                    case 8: directory.setTable9Id(tableId); break;
+                                                    case 9: directory.setTable10Id(tableId); break;
+                                                }
+                                                System.out.println("表" + (i + 1) + "创建成功，ID: " + tableId);
+                                            }
                                         }
                                         
-                                        // 创建表2
-                                        if (directory.getTable2Type() != null && directory.getTable2Id() == null) {
-                                            System.out.println("创建表2 - 类型: " + directory.getTable2Type());
-                                            String table2Id = createRelatedRecord(directory.getTable2Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable2Id(table2Id);
-                                            System.out.println("表2创建成功，ID: " + table2Id);
-                                        }
-                                        
-                                        // 创建表3
-                                        if (directory.getTable3Type() != null && directory.getTable3Id() == null) {
-                                            System.out.println("创建表3 - 类型: " + directory.getTable3Type());
-                                            String table3Id = createRelatedRecord(directory.getTable3Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable3Id(table3Id);
-                                            System.out.println("表3创建成功，ID: " + table3Id);
-                                        }
-                                        
-                                        // 创建表4
-                                        if (directory.getTable4Type() != null && directory.getTable4Id() == null) {
-                                            System.out.println("创建表4 - 类型: " + directory.getTable4Type());
-                                            String table4Id = createRelatedRecord(directory.getTable4Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable4Id(table4Id);
-                                            System.out.println("表4创建成功，ID: " + table4Id);
-                                        }
-                                        
-                                        // 创建表5
-                                        if (directory.getTable5Type() != null && directory.getTable5Id() == null) {
-                                            System.out.println("创建表5 - 类型: " + directory.getTable5Type());
-                                            String table5Id = createRelatedRecord(directory.getTable5Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable5Id(table5Id);
-                                            System.out.println("表5创建成功，ID: " + table5Id);
-                                        }
-                                        
-                                        // 创建表6
-                                        if (directory.getTable6Type() != null && directory.getTable6Id() == null) {
-                                            System.out.println("创建表6 - 类型: " + directory.getTable6Type());
-                                            String table6Id = createRelatedRecord(directory.getTable6Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable6Id(table6Id);
-                                            System.out.println("表6创建成功，ID: " + table6Id);
-                                        }
-                                        
-                                        // 创建表7
-                                        if (directory.getTable7Type() != null && directory.getTable7Id() == null) {
-                                            System.out.println("创建表7 - 类型: " + directory.getTable7Type());
-                                            String table7Id = createRelatedRecord(directory.getTable7Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable7Id(table7Id);
-                                            System.out.println("表7创建成功，ID: " + table7Id);
-                                        }
-                                        
-                                        // 创建表8
-                                        if (directory.getTable8Type() != null && directory.getTable8Id() == null) {
-                                            System.out.println("创建表8 - 类型: " + directory.getTable8Type());
-                                            String table8Id = createRelatedRecord(directory.getTable8Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable8Id(table8Id);
-                                            System.out.println("表8创建成功，ID: " + table8Id);
-                                        }
-                                        
-                                        // 创建表9
-                                        if (directory.getTable9Type() != null && directory.getTable9Id() == null) {
-                                            System.out.println("创建表9 - 类型: " + directory.getTable9Type());
-                                            String table9Id = createRelatedRecord(directory.getTable9Type(), unifiedNumber, creator, category, directory);
-                                            directory.setTable9Id(table9Id);
-                                            System.out.println("表9创建成功，ID: " + table9Id);
-                                        }
-                                        
-                                        System.out.println("=== 记录表创建完成 ===");
+                                        // 更新目录
+                                        simpleDirectoryService.update(directory);
+                                        System.out.println("目录更新成功");
+                                        System.out.println("=== 记录表创建完成 ====");
                                     }
                                 }
                             }
@@ -416,6 +371,50 @@ public class PendingTasksServiceImpl implements PendingTasksService {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    /**
+     * 根据检测项目及依据确定表类型
+     * @param testItems 检测项目及依据
+     * @return 表类型列表
+     */
+    private java.util.List<String> determineTableTypesByTestItems(String testItems) {
+        java.util.List<String> tableTypes = new java.util.ArrayList<>();
+        
+        if (testItems == null || testItems.isEmpty()) {
+            return tableTypes;
+        }
+        
+        // 转换为大写进行匹配
+        String upperTestItems = testItems.toUpperCase();
+        
+        // 模糊匹配表类型
+        if (upperTestItems.contains("核子") || upperTestItems.contains("NUCLEAR")) {
+            tableTypes.add("NUCLEAR_DENSITY");
+        }
+        if (upperTestItems.contains("灌砂") || upperTestItems.contains("SAND")) {
+            tableTypes.add("SAND_REPLACEMENT");
+        }
+        if (upperTestItems.contains("灌水") || upperTestItems.contains("WATER")) {
+            tableTypes.add("WATER_REPLACEMENT");
+        }
+        if (upperTestItems.contains("环刀") || upperTestItems.contains("CUTTING")) {
+            tableTypes.add("CUTTING_RING");
+        }
+        if (upperTestItems.contains("回弹") || upperTestItems.contains("REBOUND")) {
+            tableTypes.add("REBOUND_METHOD");
+        }
+        if (upperTestItems.contains("轻型动力触探") || upperTestItems.contains("PENETRATION")) {
+            tableTypes.add("LIGHT_DYNAMIC_PENETRATION");
+        }
+        if (upperTestItems.contains("贝克曼梁") || upperTestItems.contains("BECKMAN")) {
+            tableTypes.add("BECKMAN_BEAM");
+        }
+        if (upperTestItems.contains("密度") || upperTestItems.contains("DENSITY")) {
+            tableTypes.add("DENSITY_TEST");
+        }
+        
+        return tableTypes;
     }
     
     private String createRelatedRecord(String tableType, String dirName, String creator, String category, SimpleDirectory directory) {
