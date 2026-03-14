@@ -160,7 +160,13 @@
         <tr>
             <td colspan="4" style="height: 60px; vertical-align: top;">
                 <div class="label">检测(验)项目及依据：</div>
-                <textarea v-model="formData.testItems"  name="testItems" rows="2" style="width: 100%; height: 40px;" :disabled="!isEditable"></textarea>
+                <textarea v-model="formData.testItems"  name="testItems" rows="2" style="width: 100%; height: 40px;" :disabled="!isEditable || showTestItemCheckboxes"></textarea>
+                <div v-if="showTestItemCheckboxes" class="checkbox-group" style="margin-top: 6px; flex-wrap: wrap;">
+                  <label v-for="opt in testItemOptions" :key="opt.value" style="margin-right: 12px;">
+                    <input type="checkbox" v-model="selectedTestItems" :value="opt.value" :disabled="!isEditable">
+                    {{ opt.label }}
+                  </label>
+                </div>
             </td>
         </tr>
         <!-- Row 8: 地址电话 -->
@@ -506,6 +512,25 @@ const formData = reactive({
 
 const currentId = ref(props.id)
 
+const testItemOptions = [
+  { label: '核子法', value: '核子法' },
+  { label: '灌砂法', value: '灌砂法' },
+  { label: '灌水法', value: '灌水法' },
+  { label: '环刀法', value: '环刀法' },
+  { label: '回弹法', value: '回弹法' },
+  { label: '轻型动力触探', value: '轻型动力触探' },
+  { label: '贝克曼梁', value: '贝克曼梁' }
+]
+
+const showTestItemCheckboxes = ref(false)
+const selectedTestItems = ref([])
+
+watch(selectedTestItems, (arr) => {
+  if (!showTestItemCheckboxes.value) return
+  const items = Array.isArray(arr) ? arr : []
+  formData.testItems = items.join(',')
+}, { deep: true })
+
 const isSameTesterReviewer = computed(() => {
   return !!formData.tester && !!formData.reviewer && formData.tester === formData.reviewer
 })
@@ -653,6 +678,10 @@ const mapDataToForm = (data) => {
     formData.sampleStatus = ''
   }
   formData.testItems = data.testItems || ''
+  showTestItemCheckboxes.value = !formData.testItems || formData.testItems.trim() === ''
+  if (showTestItemCheckboxes.value) {
+    selectedTestItems.value = []
+  }
   formData.remarks = data.remarks || ''
   formData.reportSendUser = data.reportSendUser || ''
   formData.witnessIdCard = data.witnessIdCard || ''
@@ -679,6 +708,9 @@ const loadDataByWtNum = async (wtNum) => {
     } else {
        console.warn('Backend data not found for wtNum:', wtNum)
        // 后端没有数据时，只保留编号，其余字段保持为空，交由用户手工填写
+       showTestItemCheckboxes.value = true
+       selectedTestItems.value = []
+       formData.testItems = ''
     }
   } catch (error) {
     console.error('Error loading data by wtNum:', error)
@@ -1473,6 +1505,37 @@ const openBackendPdfPreview = () => {
       }
 
       dst.setAttribute('value', src.value ?? '')
+    }
+
+    const isChecked = (el) => {
+      return !!(el && ((el.checked === true) || el.hasAttribute('checked')))
+    }
+
+    ;['reportSend', 'sampleDisposal'].forEach((fieldName) => {
+      clone.querySelectorAll(`input[type="checkbox"][name="${fieldName}"]`).forEach(input => {
+        if (isChecked(input)) return
+        const label = input.closest('label')
+        if (label) label.remove()
+      })
+    })
+
+    const testItemsTextarea = clone.querySelector('textarea[name="testItems"]')
+    if (testItemsTextarea) {
+      const cell = testItemsTextarea.closest('td')
+      const group = cell ? cell.querySelector('.checkbox-group') : null
+      if (group) {
+        const selected = Array.from(group.querySelectorAll('input[type="checkbox"]'))
+          .filter(isChecked)
+          .map(input => {
+            const label = input.closest('label')
+            return label ? String(label.textContent || '').trim() : ''
+          })
+          .filter(Boolean)
+        if (selected.length > 0) {
+          testItemsTextarea.textContent = selected.join('，')
+        }
+        group.remove()
+      }
     }
 
     clone.querySelectorAll('input, textarea, select').forEach(el => {

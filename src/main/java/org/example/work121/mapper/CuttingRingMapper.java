@@ -11,10 +11,10 @@ public interface CuttingRingMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN TO_NUMBER(t2.STATUS) ELSE 0 END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -43,8 +43,8 @@ public interface CuttingRingMapper {
     @Update("UPDATE T_CUTTING_RING SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "DATA_JSON = #{dataJson}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -58,10 +58,10 @@ public interface CuttingRingMapper {
             "t2.ID as id, " +
             "t2.ENTRUSTMENT_ID as entrustmentId, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "CASE WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN TO_NUMBER(t2.STATUS) ELSE 0 END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -89,25 +89,25 @@ public interface CuttingRingMapper {
 
     @Insert("INSERT INTO T_CUTTING_RING (" +
             "ID, ENTRUSTMENT_ID, DATA_JSON, " +
-            "TESTER, REVIEWER, APPROVER, " +
-            "REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "RECORD_TESTER, RECORD_REVIEWER, APPROVER, " +
+            "RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id}, #{entrustmentId}, #{dataJson}, " +
             "#{tester}, #{reviewer}, #{approver}, " +
-            "#{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, " +
+            "NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), #{approveSignaturePhoto}, " +
             "#{status}, #{rejectReason}, #{nextHandler}, " +
             "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(CuttingRing cuttingRing);
 
     @Update("UPDATE T_CUTTING_RING SET " +
             "DATA_JSON = #{dataJson}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
+            "RECORD_TESTER = #{tester}, " +
+            "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -123,7 +123,7 @@ public interface CuttingRingMapper {
     @Update("UPDATE T_CUTTING_RING SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_CUTTING_RING SET STATUS = #{status}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_CUTTING_RING SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Update("UPDATE T_CUTTING_RING SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")

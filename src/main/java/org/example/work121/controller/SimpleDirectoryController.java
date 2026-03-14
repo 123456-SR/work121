@@ -45,11 +45,8 @@ public class SimpleDirectoryController {
             System.out.println("角色信息:");
             System.out.println("wtUndertaker: " + directory.getWtUndertaker());
             System.out.println("wtReviewer: " + directory.getWtReviewer());
-            System.out.println("jcFiller: " + directory.getJcFiller());
             System.out.println("jcTester: " + directory.getJcTester());
             System.out.println("jcReviewer: " + directory.getJcReviewer());
-            System.out.println("bgTester: " + directory.getBgTester());
-            System.out.println("bgReviewer: " + directory.getBgReviewer());
             System.out.println("bgApprover: " + directory.getBgApprover());
             System.out.println("=====================================");
             

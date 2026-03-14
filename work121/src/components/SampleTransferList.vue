@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import axios from 'axios'
 
 const navigateTo = inject('navigateTo')
@@ -77,6 +77,8 @@ const pageNum = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const searchSampleNumber = ref('')
+const isInitializing = ref(true)
+let searchTimer = null
 
 const loadData = async () => {
   loading.value = true
@@ -107,10 +109,23 @@ const loadData = async () => {
   }
 }
 
-const handleSearch = () => {
-  pageNum.value = 1
-  loadData()
+const triggerSearch = (immediate = false) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
+  if (immediate) {
+    pageNum.value = 1
+    loadData()
+    return
+  }
+  searchTimer = setTimeout(() => {
+    pageNum.value = 1
+    loadData()
+  }, 300)
 }
+
+const handleSearch = () => triggerSearch(true)
 
 const changePage = (newPage) => {
   pageNum.value = newPage
@@ -146,8 +161,15 @@ const handleDblClick = (item) => {
   editItem(item)
 }
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  await loadData()
+  isInitializing.value = false
+})
+
+watch(searchSampleNumber, (val, oldVal) => {
+  if (isInitializing.value) return
+  if (val === oldVal) return
+  triggerSearch(false)
 })
 </script>
 

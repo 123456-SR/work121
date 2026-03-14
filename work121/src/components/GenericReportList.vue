@@ -20,20 +20,19 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>统一编号</th>
+            <th>委托单编号</th>
             <th>工程名称</th>
             <th>委托单位</th>
             <th>委托日期</th>
-            <th>创建时间</th>
             <th>状态</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
-            <td colspan="6" class="text-center">加载中...</td>
+            <td colspan="5" class="text-center">加载中...</td>
           </tr>
           <tr v-else-if="list.length === 0">
-            <td colspan="6" class="text-center">暂无数据</td>
+            <td colspan="5" class="text-center">暂无数据</td>
           </tr>
           <tr 
             v-else 
@@ -47,7 +46,6 @@
             <td>{{ item.projectName }}</td>
             <td>{{ item.clientUnit }}</td>
             <td>{{ formatDate(item.commissionDate) }}</td>
-            <td>{{ formatDate(item.createTime) }}</td>
             <td>
               <span :class="['status-badge', getStatusClass(getEffectiveStatus(item))]">
                 {{ getStatusText(getEffectiveStatus(item)) }}
@@ -75,6 +73,10 @@ const props = defineProps({
     type: String,
     default: '报告'
   },
+  presetWtNum: {
+    type: String,
+    default: ''
+  },
   category: {
     type: String,
     required: true
@@ -99,6 +101,8 @@ const pageNum = ref(1)
 const pageSize = ref(7)
 const total = ref(0)
 const searchWtNum = ref('')
+const isInitializing = ref(true)
+let searchTimer = null
 
 const apiEndpoint = computed(() => '/api/jc-core-test-report')
 
@@ -138,9 +142,38 @@ const loadData = async () => {
   }
 }
 
+const triggerSearch = (immediate = false) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
+  if (immediate) {
+    pageNum.value = 1
+    loadData()
+    return
+  }
+  searchTimer = setTimeout(() => {
+    pageNum.value = 1
+    loadData()
+  }, 300)
+}
+
+watch(() => props.presetWtNum, (val) => {
+  if (!val) return
+  if (val === searchWtNum.value) return
+  searchWtNum.value = val
+  triggerSearch(true)
+})
+
 watch(() => props.category, () => {
   pageNum.value = 1
   loadData()
+})
+
+watch(searchWtNum, (val, oldVal) => {
+  if (isInitializing.value) return
+  if (val === oldVal) return
+  triggerSearch(false)
 })
 
 const changePage = (newPage) => {
@@ -148,10 +181,7 @@ const changePage = (newPage) => {
   loadData()
 }
 
-const handleSearch = () => {
-  pageNum.value = 1
-  loadData()
-}
+const handleSearch = () => triggerSearch(true)
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
@@ -172,20 +202,20 @@ const getStatusText = (status) => {
     return '草稿'
   }
   switch (s) {
-    // 统一状态名称
+    // 记录表状态 (0-5)
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '已签字待提交'
-    case 5: return '审核通过'
+    case 4: return '待批准'
+    case 5: return '已批准'
     // 报告表状态 (10-17)
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
     case 14: return '已签字待提交'
-    case 15: return '审核通过待批准'
+    case 15: return '待批准'
     case 16: return '已批准'
     case 17: return '驳回'
     // 结果表状态 (20-27)
@@ -194,7 +224,7 @@ const getStatusText = (status) => {
     case 22: return '已打回'
     case 23: return '待签字'
     case 24: return '已签字待提交'
-    case 25: return '审核通过待批准'
+    case 25: return '待批准'
     case 26: return '已批准'
     case 27: return '驳回'
     default: return '未知/历史'
@@ -217,8 +247,6 @@ const getStatusClass = (status) => {
     case 3: return 'status-signing'
     case 4: return 'status-approving'
     case 5: return 'status-completed'
-    case 6: return 'status-completed'
-    case 7: return 'status-rejected'
     // 报告表状态 (10-17)
     case 10: return 'status-draft'
     case 11: return 'status-pending'
@@ -274,8 +302,13 @@ const handleDelete = async (item) => {
   }
 }
 
-onMounted(() => {
-  loadData()
+onMounted(async () => {
+  if (props.presetWtNum) {
+    searchWtNum.value = props.presetWtNum
+    pageNum.value = 1
+  }
+  await loadData()
+  isInitializing.value = false
 })
 </script>
 

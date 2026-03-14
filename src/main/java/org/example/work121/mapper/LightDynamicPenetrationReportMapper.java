@@ -20,11 +20,11 @@ public interface LightDynamicPenetrationReportMapper {
             "STATUS as status, " +
             "REJECT_REASON as rejectReason, " +
             "NEXT_HANDLER as nextHandler, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver, " +
             "CREATE_BY as createBy, " +
             "CREATE_TIME as createTime, " +
@@ -35,8 +35,8 @@ public interface LightDynamicPenetrationReportMapper {
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     List<LightDynamicPenetrationReport> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION (ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, REMARKS) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{status}, #{rejectReason}, #{nextHandler}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remarks,jdbcType=VARCHAR})")
+    @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION (ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, REMARKS) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{status}, #{rejectReason}, #{nextHandler}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, NVL(#{recordTester}, #{tester}), NVL(#{recordReviewer}, #{reviewer}), #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remarks,jdbcType=VARCHAR})")
     int insert(LightDynamicPenetrationReport report);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
@@ -44,11 +44,11 @@ public interface LightDynamicPenetrationReportMapper {
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto}, " +
+            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
+            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
             "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime}, " +
@@ -63,11 +63,11 @@ public interface LightDynamicPenetrationReportMapper {
             "STATUS as status, " +
             "REJECT_REASON as rejectReason, " +
             "NEXT_HANDLER as nextHandler, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver, " +
             "CREATE_BY as createBy, " +
             "CREATE_TIME as createTime, " +
@@ -84,11 +84,11 @@ public interface LightDynamicPenetrationReportMapper {
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto}, " +
+            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
+            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
             "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime}, " +

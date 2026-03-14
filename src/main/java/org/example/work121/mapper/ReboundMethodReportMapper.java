@@ -13,11 +13,11 @@ public interface ReboundMethodReportMapper {
             "ID as id, " +
             "ENTRUSTMENT_ID as entrustmentId, " +
             "DATA_JSON as dataJson, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver, " +
             "STATUS as status, " +
             "REJECT_REASON as rejectReason, " +
@@ -30,17 +30,17 @@ public interface ReboundMethodReportMapper {
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     ReboundMethodReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_REBOUND_METHOD (ID, ENTRUSTMENT_ID, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, TESTER, REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+    @Insert("INSERT INTO T_REBOUND_METHOD (ID, ENTRUSTMENT_ID, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), #{approveSignaturePhoto}, #{tester}, #{reviewer}, #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
     int insert(ReboundMethodReport report);
 
     @Update("UPDATE T_REBOUND_METHOD SET " +
             "DATA_JSON = #{dataJson}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
+            "RECORD_TESTER = #{tester}, " +
+            "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +
@@ -51,11 +51,11 @@ public interface ReboundMethodReportMapper {
             "ID as id, " +
             "ENTRUSTMENT_ID as entrustmentId, " +
             "DATA_JSON as dataJson, " +
-            "REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
-            "TESTER as tester, " +
-            "REVIEWER as reviewer, " +
+            "RECORD_TESTER as tester, " +
+            "RECORD_REVIEWER as reviewer, " +
             "APPROVER as approver, " +
             "STATUS as status, " +
             "REJECT_REASON as rejectReason, " +
@@ -71,11 +71,11 @@ public interface ReboundMethodReportMapper {
     @Update("UPDATE T_REBOUND_METHOD SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "DATA_JSON = #{dataJson}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "TESTER = #{tester}, " +
-            "REVIEWER = #{reviewer}, " +
+            "RECORD_TESTER = #{tester}, " +
+            "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime} " +

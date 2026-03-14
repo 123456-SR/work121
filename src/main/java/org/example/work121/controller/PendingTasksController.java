@@ -83,6 +83,9 @@ public class PendingTasksController {
             String taskId = params.get("taskId");
             String userAccount = params.get("userAccount");
             String taskStatus = params.get("taskStatus");
+            String jcTester = params.get("jcTester");
+            String jcReviewer = params.get("jcReviewer");
+            String bgApprover = params.get("bgApprover");
             
             // 根据任务状态显示不同的日志信息
             if ("approval".equals(taskStatus)) {
@@ -91,7 +94,7 @@ public class PendingTasksController {
                 logger.info("审核通过任务，任务类型: {}, 任务ID: {}, 用户账号: {}", taskType, taskId, userAccount);
             }
             
-            boolean success = pendingTasksService.approveTask(taskType, taskId, userAccount);
+            boolean success = pendingTasksService.approveTask(taskType, taskId, userAccount, jcTester, jcReviewer, bgApprover);
             if (success) {
                 result.put("success", true);
                 if ("approval".equals(taskStatus)) {
@@ -143,20 +146,20 @@ public class PendingTasksController {
     }
 
     /**
-     * 兼容前端传参：允许传 "0"/"1"/"5"，也允许传 "submit"/"audit"/"approval" 等（旧参数）。
+     * 兼容前端传参：允许传 "0"/"1"/"4"/"5"，也允许传 "submit"/"audit"/"approval" 等（旧参数）。
      */
     private String normalizeStatus(String taskStatus) {
         if (taskStatus == null || taskStatus.trim().isEmpty()) {
             return "1";
         }
         String v = taskStatus.trim();
-        if ("0".equals(v) || "1".equals(v) || "5".equals(v)) {
+        if ("0".equals(v) || "1".equals(v) || "4".equals(v) || "5".equals(v)) {
             return v;
         }
-        // 兼容：submit=待提交(0)，audit=待审核(1)，approval=待批准(5)
+        // 兼容：submit=待提交(0)，audit=待审核(1)，approval=待批准(4)
         if ("submit".equalsIgnoreCase(v)) return "0";
         if ("audit".equalsIgnoreCase(v)) return "1";
-        if ("approval".equalsIgnoreCase(v)) return "5";
+        if ("approval".equalsIgnoreCase(v)) return "4";
         return "1";
     }
 }

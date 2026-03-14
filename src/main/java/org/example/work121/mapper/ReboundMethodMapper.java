@@ -25,10 +25,10 @@ public interface ReboundMethodMapper {
             "t2.CARBONATION_DEPTH as carbonationDepth, " +
             "t2.TEST_RESULT as testResult, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "CASE WHEN t2.STATUS IS NULL THEN '0' WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -72,10 +72,10 @@ public interface ReboundMethodMapper {
             "t2.CARBONATION_DEPTH as carbonationDepth, " +
             "t2.TEST_RESULT as testResult, " +
             "t2.DATA_JSON as dataJson, " +
-            "t2.REVIEWER as reviewer, " +
-            "t2.TESTER as tester, " +
-            "t2.REVIEW_SIGNATURE_PHOTO as reviewSignaturePhoto, " +
-            "t2.INSPECT_SIGNATURE_PHOTO as inspectSignaturePhoto, " +
+            "t2.RECORD_REVIEWER as reviewer, " +
+            "t2.RECORD_TESTER as tester, " +
+            "t2.RECORD_REVIEW_SIGN as reviewSignaturePhoto, " +
+            "t2.RECORD_TESTER_SIGN as inspectSignaturePhoto, " +
             "t2.APPROVE_SIGNATURE_PHOTO as approveSignaturePhoto, " +
             "CASE WHEN t2.STATUS IS NULL THEN '0' WHEN REGEXP_LIKE(t2.STATUS, '^[0-9]+$') THEN t2.STATUS ELSE '0' END as status, " +
             "t2.REJECT_REASON as rejectReason, " +
@@ -108,14 +108,14 @@ public interface ReboundMethodMapper {
             "ID, ENTRUSTMENT_ID, STRUCTURE_PART, CONCRETE_GRADE, MOLDING_DATE, AGE, " +
             "INSTRUMENT_MODEL, CALIBRATION_NO, ZONE_COUNT, POURING_DIRECTION, " +
             "TEST_ANGLE, PUMPING_METHOD, PUMPING, DESIGN_STRENGTH, CARBONATION_DEPTH, " +
-            "TEST_RESULT, TESTER, REVIEWER, APPROVER, DATA_JSON, REVIEW_SIGNATURE_PHOTO, INSPECT_SIGNATURE_PHOTO, APPROVE_SIGNATURE_PHOTO, " +
+            "TEST_RESULT, RECORD_TESTER, RECORD_REVIEWER, APPROVER, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
             "VALUES (" +
             "#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{structurePart,jdbcType=VARCHAR}, #{concreteGrade,jdbcType=VARCHAR}, #{moldingDate,jdbcType=TIMESTAMP}, #{age,jdbcType=VARCHAR}, " +
             "#{instrumentModel,jdbcType=VARCHAR}, #{calibrationNo,jdbcType=VARCHAR}, #{zoneCount,jdbcType=VARCHAR}, #{pouringDirection,jdbcType=VARCHAR}, " +
             "#{testAngle,jdbcType=VARCHAR}, #{pumpingMethod,jdbcType=VARCHAR}, #{pumping,jdbcType=VARCHAR}, #{designStrength,jdbcType=VARCHAR}, #{carbonationDepth,jdbcType=VARCHAR}, " +
-            "#{testResult,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "#{testResult,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
             "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
     int insert(ReboundMethod reboundMethod);
@@ -136,12 +136,12 @@ public interface ReboundMethodMapper {
             "DESIGN_STRENGTH = #{designStrength,jdbcType=VARCHAR}, " +
             "CARBONATION_DEPTH = #{carbonationDepth,jdbcType=VARCHAR}, " +
             "TEST_RESULT = #{testResult,jdbcType=VARCHAR}, " +
-            "TESTER = #{tester,jdbcType=VARCHAR}, " +
-            "REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "REVIEW_SIGNATURE_PHOTO = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
-            "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
@@ -154,7 +154,7 @@ public interface ReboundMethodMapper {
     @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR} WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
+    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
     @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
