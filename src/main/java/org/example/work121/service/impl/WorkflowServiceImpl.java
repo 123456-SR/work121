@@ -587,7 +587,6 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         applyChanges(entity, request);
         boolean success = densityTestMapper.updateById(entity) > 0;
-
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             densityTestService.generateReportAndResult(entity.getEntrustmentId());
         }
@@ -613,7 +612,6 @@ public class WorkflowServiceImpl implements WorkflowService {
                     ", oldStatus=" + oldStatus + ", newStatus=" + newStatus);
             boolean success = reboundMethodRecordMapper.updateById(recordEntity) > 0;
             System.out.println("ReboundMethodRecord update result: " + success);
-
             if (success && shouldGenerateReportAndResultByStatus(recordEntity.getStatus())) {
                 reboundMethodService.generateReportAndResult(recordEntity.getEntrustmentId());
                 // 回弹法记录表审核通过时，检查贝克曼梁法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
@@ -633,7 +631,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         
         applyChanges(entity, request);
         boolean success = reboundMethodMapper.updateById(entity) > 0;
-
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             reboundMethodService.generateReportAndResult(entity.getEntrustmentId());
             // 回弹法记录表审核通过时，检查贝克曼梁法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
@@ -652,7 +649,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = sandReplacementMapper.update(entity) > 0;
-
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             sandReplacementService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
@@ -681,7 +677,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         applyChanges(entity, request);
         // 工作流这里只需要更新状态/签名等流程字段，避免误改 DATA_JSON
         boolean success = waterReplacementMapper.updateWorkflowFields(entity) > 0;
-        
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             waterReplacementService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
@@ -699,7 +694,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = nuclearDensityMapper.updateById(entity) > 0;
-
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             // 核子法自己的报告/结果生成
             nuclearDensityService.generateReportAndResult(entity.getEntrustmentId());
@@ -740,7 +734,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = cuttingRingMapper.updateById(entity) > 0;
-
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             cuttingRingService.generateReportAndResult(entity.getEntrustmentId());
             // 密度类记录表审核通过时，顺带触发一次“原位密度检测报告/结果”的自动生成检查
@@ -759,7 +752,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         
         applyChanges(entity, request);
         boolean success = beckmanBeamMapper.updateById(entity) > 0;
-        
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             beckmanBeamService.generateReportAndResult(entity.getEntrustmentId());
             // 贝克曼梁法记录表审核通过时，检查回弹法记录表是否也审核通过，如果是，则触发 BeckmanBeamReport 的生成
@@ -777,7 +769,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         String fromStatus = entity.getStatus();
         applyChanges(entity, request);
         boolean success = lightDynamicPenetrationMapper.updateById(entity) > 0;
-
         if (success && shouldGenerateReportAndResultByStatus(entity.getStatus())) {
             lightDynamicPenetrationService.generateReportAndResult(entity.getEntrustmentId());
         }

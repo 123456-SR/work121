@@ -380,10 +380,12 @@ const restoreState = () => {
       currentProps.value = state.currentProps
       currentPageTitle.value = state.currentPageTitle
       activeMenuId.value = state.activeMenuId
+      return true
     }
   } catch (e) {
     console.error('恢复状态失败:', e)
   }
+  return false
 }
 
 // 检查登录状态
@@ -393,7 +395,10 @@ const checkLoginStatus = () => {
   isLoggedIn.value = !!userInfo
   
   if (isLoggedIn.value) {
-    restoreState()
+    const restored = restoreState()
+    if (!restored || !currentView.value) {
+      navigateTo({ id: 'Dashboard', name: '仪表盘' })
+    }
   }
 }
 

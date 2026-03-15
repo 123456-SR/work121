@@ -267,7 +267,7 @@ public class JcCoreWtInfoController {
         
         try {
             // Split comma-separated categories
-            java.util.List<String> categories = java.util.Arrays.asList(category.split(","));
+            java.util.List<String> categories = new java.util.ArrayList<>(java.util.Arrays.asList(category.split(",")));
             
             java.util.List<String> names = new java.util.ArrayList<>();
             if (regName != null && !regName.isEmpty()) {

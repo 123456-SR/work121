@@ -283,10 +283,16 @@ public class DatabaseInitializer implements CommandLineRunner {
     
     private void ensureLightDynamicUnifiedViewExists() {
         try {
-            String sql = "CREATE OR REPLACE VIEW T_LIGHT_DYNAMIC_PENETRATION_UNIFIED AS " +
-                         "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION " +
-                         "UNION ALL " +
-                         "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION_RESULT";
+            String sql;
+            if (tableExists("T_LIGHT_DYNAMIC_PENETRATION_RESULT")) {
+                sql = "CREATE OR REPLACE VIEW T_LIGHT_DYNAMIC_PENETRATION_UNIFIED AS " +
+                        "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION " +
+                        "UNION ALL " +
+                        "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION_RESULT";
+            } else {
+                sql = "CREATE OR REPLACE VIEW T_LIGHT_DYNAMIC_PENETRATION_UNIFIED AS " +
+                        "SELECT ID, ENTRUSTMENT_ID, STATUS, REPORT_STATUS, RESULT_STATUS FROM T_LIGHT_DYNAMIC_PENETRATION";
+            }
             jdbcTemplate.execute(sql);
             System.out.println("View T_LIGHT_DYNAMIC_PENETRATION_UNIFIED created/updated successfully.");
         } catch (Exception e) {

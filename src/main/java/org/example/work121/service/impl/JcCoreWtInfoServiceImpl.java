@@ -18,6 +18,23 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
     @Autowired
     private JcCoreWtInfoMapper jcCoreWtInfoMapper;
 
+    private java.util.List<String> toSafeList(java.util.List<String> input) {
+        java.util.List<String> result = new java.util.ArrayList<>();
+        if (input == null || input.isEmpty()) {
+            return result;
+        }
+        for (String value : input) {
+            if (value == null) {
+                continue;
+            }
+            String trimmed = value.trim();
+            if (!trimmed.isEmpty()) {
+                result.add(trimmed);
+            }
+        }
+        return result;
+    }
+
     @Override
     public JcCoreWtInfo getByWtNum(String wtNum) {
         logger.info("正在查询委托信息，WT_NUM: {}", wtNum);
@@ -35,7 +52,7 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
     public com.github.pagehelper.PageInfo<JcCoreWtInfo> getByRegName(java.util.List<String> names, String wtNum, int pageNum, int pageSize) {
         logger.info("正在根据登记人查询委托列表，NAMES: {}, WT_NUM: {}, pageNum: {}, pageSize: {}", names, wtNum, pageNum, pageSize);
         com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
-        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByRegName(names, wtNum);
+        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByRegName(toSafeList(names), wtNum);
         return new com.github.pagehelper.PageInfo<>(list);
     }
 
@@ -48,9 +65,25 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
     @Override
     public com.github.pagehelper.PageInfo<JcCoreWtInfo> getByCategory(java.util.List<String> categories, java.util.List<String> names, String wtNum, int pageNum, int pageSize) {
         logger.info("正在根据检测类别和登记人查询委托列表，CATEGORIES: {}, NAMES: {}, WT_NUM: {}, pageNum: {}, pageSize: {}", categories, names, wtNum, pageNum, pageSize);
-        com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
-        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByCategory(categories, names, wtNum);
+        java.util.List<String> safeCategories = toSafeList(categories);
+        java.util.List<String> safeNames = toSafeList(names);
+
+        int safePageNum = pageNum <= 0 ? 1 : pageNum;
+        int safePageSize = pageSize <= 0 ? 10 : pageSize;
+        long startRowLong = (long) (safePageNum - 1) * safePageSize;
+        long endRowLong = (long) safePageNum * safePageSize;
+        int startRow = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, startRowLong));
+        int endRow = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, endRowLong));
+
+        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectByCategoryPaged(safeCategories, safeNames, wtNum, startRow, endRow);
+        long total = jcCoreWtInfoMapper.countByCategory(safeCategories, safeNames, wtNum);
+
         com.github.pagehelper.PageInfo<JcCoreWtInfo> pageInfo = new com.github.pagehelper.PageInfo<>(list);
+        pageInfo.setTotal(total);
+        pageInfo.setPageNum(safePageNum);
+        pageInfo.setPageSize(safePageSize);
+        pageInfo.setSize(list == null ? 0 : list.size());
+        pageInfo.setPages((int) ((total + safePageSize - 1) / safePageSize));
         logger.info("查询结果：实际返回 {} 条记录，总数：{}", list != null ? list.size() : 0, pageInfo.getTotal());
         if (list != null && !list.isEmpty()) {
             JcCoreWtInfo first = list.get(0);
@@ -61,14 +94,14 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
 
     @Override
     public java.util.List<JcCoreWtInfo> selectByCategory(java.util.List<String> categories, java.util.List<String> names, String wtNum) {
-        return jcCoreWtInfoMapper.selectByCategory(categories, names, wtNum);
+        return jcCoreWtInfoMapper.selectByCategory(toSafeList(categories), toSafeList(names), wtNum);
     }
 
     @Override
     public com.github.pagehelper.PageInfo<JcCoreWtInfo> getRecordsByCategory(java.util.List<String> categories, java.util.List<String> names, String wtNum, int pageNum, int pageSize) {
         logger.info("正在根据检测类别和记录表角色查询检测记录列表，CATEGORIES: {}, NAMES: {}, WT_NUM: {}, pageNum: {}, pageSize: {}", categories, names, wtNum, pageNum, pageSize);
         com.github.pagehelper.PageHelper.startPage(pageNum, pageSize);
-        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectRecordsByCategory(categories, names, wtNum);
+        java.util.List<JcCoreWtInfo> list = jcCoreWtInfoMapper.selectRecordsByCategory(toSafeList(categories), toSafeList(names), wtNum);
         if (list != null && !list.isEmpty()) {
             JcCoreWtInfo first = list.get(0);
             logger.info("DEBUG getRecordsByCategory -> first record: wtNum={}, id={}, status={}, sampleStatus={}, wtStatus={}",
@@ -85,12 +118,12 @@ public class JcCoreWtInfoServiceImpl implements JcCoreWtInfoService {
 
     @Override
     public java.util.List<JcCoreWtInfo> selectRecordsByCategory(java.util.List<String> categories, java.util.List<String> names, String wtNum) {
-        return jcCoreWtInfoMapper.selectRecordsByCategory(categories, names, wtNum);
+        return jcCoreWtInfoMapper.selectRecordsByCategory(toSafeList(categories), toSafeList(names), wtNum);
     }
 
     @Override
     public java.util.List<JcCoreWtInfo> selectByRegName(java.util.List<String> names, String wtNum) {
-        return jcCoreWtInfoMapper.selectByRegName(names, wtNum);
+        return jcCoreWtInfoMapper.selectByRegName(toSafeList(names), wtNum);
     }
 
     @Override

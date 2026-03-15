@@ -50,7 +50,7 @@
         <button v-if="!draftMode" @click="generatePdf" class="btn btn-secondary btn-small">下载PDF</button>
         <button v-if="!draftMode" @click="previewPdf" class="btn btn-secondary btn-small">预览PDF</button>
         <button v-if="!draftMode" @click="exportExcel" class="btn btn-secondary btn-small">导出数据</button>
-        <button @click="openAnalysisModal" class="btn btn-secondary btn-small">数据分析</button>
+        <button type="button" @click="openAnalysisModal" class="btn btn-secondary btn-small">数据分析</button>
       </div>
     </div>
 

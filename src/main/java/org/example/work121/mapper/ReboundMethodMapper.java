@@ -108,16 +108,16 @@ public interface ReboundMethodMapper {
             "ID, ENTRUSTMENT_ID, STRUCTURE_PART, CONCRETE_GRADE, MOLDING_DATE, AGE, " +
             "INSTRUMENT_MODEL, CALIBRATION_NO, ZONE_COUNT, POURING_DIRECTION, " +
             "TEST_ANGLE, PUMPING_METHOD, PUMPING, DESIGN_STRENGTH, CARBONATION_DEPTH, " +
-            "TEST_RESULT, RECORD_TESTER, RECORD_REVIEWER, APPROVER, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
-            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
+            "TEST_RESULT, RECORD_TESTER, RECORD_REVIEWER, APPROVER, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (" +
             "#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{structurePart,jdbcType=VARCHAR}, #{concreteGrade,jdbcType=VARCHAR}, #{moldingDate,jdbcType=TIMESTAMP}, #{age,jdbcType=VARCHAR}, " +
             "#{instrumentModel,jdbcType=VARCHAR}, #{calibrationNo,jdbcType=VARCHAR}, #{zoneCount,jdbcType=VARCHAR}, #{pouringDirection,jdbcType=VARCHAR}, " +
             "#{testAngle,jdbcType=VARCHAR}, #{pumpingMethod,jdbcType=VARCHAR}, #{pumping,jdbcType=VARCHAR}, #{designStrength,jdbcType=VARCHAR}, #{carbonationDepth,jdbcType=VARCHAR}, " +
-            "#{testResult,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
-            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
+            "#{testResult,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(ReboundMethod reboundMethod);
 
     @Update("UPDATE T_REBOUND_METHOD SET " +
@@ -139,15 +139,15 @@ public interface ReboundMethodMapper {
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
-            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateById(ReboundMethod reboundMethod);
 
@@ -162,5 +162,12 @@ public interface ReboundMethodMapper {
 
     @Update("UPDATE T_REBOUND_METHOD SET REPORT_STATUS = #{reportStatus,jdbcType=VARCHAR}, RESULT_STATUS = #{resultStatus,jdbcType=VARCHAR} WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
-}
 
+    @Update("UPDATE T_REBOUND_METHOD SET " +
+            "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+    int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
+                                         @Param("testerSign") String testerSign,
+                                         @Param("reviewSign") String reviewSign);
+}

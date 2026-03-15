@@ -33,7 +33,7 @@ public class JcCoreTestReportController {
         logger.info("接收到检测报告列表查询请求，CATEGORY: {}, REG_NAME: {}, WT_NUM: {}, pageNum: {}, pageSize: {}", category, regName, wtNum, pageNum, pageSize);
         
         try {
-            java.util.List<String> categories = java.util.Arrays.asList(category.split(","));
+            java.util.List<String> categories = new java.util.ArrayList<>(java.util.Arrays.asList(category.split(",")));
             
             java.util.List<String> names = new java.util.ArrayList<>();
             if (regName != null && !regName.isEmpty()) {

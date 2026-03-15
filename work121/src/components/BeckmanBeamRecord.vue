@@ -79,6 +79,7 @@
           保存
         </button>
         <button
+          type="button"
           @click="openAnalysisModal"
           class="btn btn-primary btn-small"
         >

@@ -5,6 +5,7 @@ import org.example.work121.entity.SandReplacementReport;
 import org.example.work121.mapper.SandReplacementMapper;
 import org.example.work121.mapper.SandReplacementReportMapper;
 import org.example.work121.service.SandReplacementService;
+import org.example.work121.service.TableGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,9 @@ public class SandReplacementServiceImpl implements SandReplacementService {
 
     @Autowired
     private SandReplacementReportMapper reportMapper;
+
+    @Autowired
+    private TableGenerationService tableGenerationService;
 
     @Override
     public java.util.List<SandReplacement> getByEntrustmentId(String entrustmentId) {
@@ -66,13 +70,11 @@ public class SandReplacementServiceImpl implements SandReplacementService {
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
-        // Since they share the same table, the data is already there.
-        // Placeholder for post-approval logic.
         java.util.List<SandReplacement> records = mapper.selectByEntrustmentId(entrustmentId);
         if (records == null || records.isEmpty()) {
-             System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
-        } else {
-             System.out.println("Generated Report and Result for SandReplacement entrustment: " + entrustmentId);
+            throw new RuntimeException("Cannot generate SandReplacement report/result: Record not found for entrustmentId " + entrustmentId);
         }
+
+        tableGenerationService.generateReportAndResult("SAND_REPLACEMENT", entrustmentId);
     }
 }

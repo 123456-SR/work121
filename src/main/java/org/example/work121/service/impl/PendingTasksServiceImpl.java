@@ -89,7 +89,6 @@ public class PendingTasksServiceImpl implements PendingTasksService {
 
     @Override
     public List<Map<String, Object>> searchPendingTasks(String taskType, String status, String userAccount) {
-        // 只按 taskType 文本匹配，附带 status 过滤；避免依赖额外字段（仅使用表结构里的 STATUS）
         List<Map<String, Object>> base = convertTimeFields(pendingTasksMapper.getAllPendingTasks(status));
         if (userAccount != null && !userAccount.trim().isEmpty()) {
             String ua = userAccount.trim();
@@ -181,6 +180,9 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                 case "委托单":
                     JcCoreWtInfo entrustmentBefore = jcCoreWtInfoMapper.selectById(taskId);
                     if (entrustmentBefore == null) {
+                        entrustmentBefore = jcCoreWtInfoMapper.selectExtById(taskId);
+                    }
+                    if (entrustmentBefore == null) {
                         throw new RuntimeException("未找到委托单，无法审核通过");
                     }
                     unifiedNumber = entrustmentBefore.getWtNum();
@@ -197,20 +199,27 @@ public class PendingTasksServiceImpl implements PendingTasksService {
 
                     SimpleDirectory directoryForRoles = simpleDirectoryService.getDirectoryByDirName(unifiedNumber);
                     if (directoryForRoles == null) {
-                        throw new RuntimeException("未找到统一编号(" + unifiedNumber + ")对应的目录配置，无法分配角色");
+                        directoryForRoles = new SimpleDirectory();
+                        directoryForRoles.setDirName(unifiedNumber);
+                        directoryForRoles.setTable1Type("ENTRUSTMENT_LIST");
+                        directoryForRoles.setTable1Id(taskId);
+                        directoryForRoles.setCreateBy((userAccount != null && !userAccount.trim().isEmpty()) ? userAccount.trim() : "admin");
+                        directoryForRoles.setCreateTime(new java.util.Date());
                     }
                     directoryForRoles.setJcTester(jt);
                     directoryForRoles.setJcReviewer(jr);
                     directoryForRoles.setBgApprover(ba);
                     directoryForRoles.setUpdateBy((userAccount != null && !userAccount.trim().isEmpty()) ? userAccount.trim() : directoryForRoles.getCreateBy());
                     directoryForRoles.setUpdateTime(new java.util.Date());
-                    simpleDirectoryMapper.update(directoryForRoles);
+                    simpleDirectoryService.saveDirectory(directoryForRoles);
 
+                    boolean alreadyApproved = entrustmentBefore.getStatus() != null
+                            && "5".equals(String.valueOf(entrustmentBefore.getStatus()).trim());
                     boolean success;
                     if (approveSignPhoto != null) {
-                        success = jcCoreWtInfoMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        success = jcCoreWtInfoMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0 || alreadyApproved;
                     } else {
-                        success = jcCoreWtInfoMapper.updateStatusById(taskId, "5") > 0;
+                        success = jcCoreWtInfoMapper.updateStatusById(taskId, "5") > 0 || alreadyApproved;
                     }
                     jcCoreWtInfoMapper.updateApproverById(taskId, ba, directoryForRoles.getUpdateBy(), directoryForRoles.getUpdateTime());
                     
@@ -219,6 +228,9 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         try {
                             // 获取委托单信息
                             JcCoreWtInfo entrustment = jcCoreWtInfoMapper.selectById(taskId);
+                            if (entrustment == null) {
+                                entrustment = jcCoreWtInfoMapper.selectExtById(taskId);
+                            }
                             if (entrustment != null) {
                                 unifiedNumber = entrustment.getWtNum();
                                 if (unifiedNumber != null) {
@@ -290,6 +302,7 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                         directory.setUpdateBy((userAccount != null && !userAccount.trim().isEmpty()) ? userAccount.trim() : creator);
                                         directory.setUpdateTime(new java.util.Date());
                                         simpleDirectoryService.saveDirectory(directory);
+                                        simpleDirectoryService.syncEntrustmentDataByWtNum(unifiedNumber);
 
                                         System.out.println("=== 记录表创建完成 ===");
                                     }
@@ -320,6 +333,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                 result = beckmanBeamMapper.updateStatusById(taskId, "5") > 0;
                             }
                         }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = beckmanBeam.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : beckmanBeam.getReviewSignaturePhoto();
+                            beckmanBeamMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
+                        }
                     }
                     break;
                 case "轻型动力触探":
@@ -339,6 +357,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                             } else {
                                 result = lightDynamicPenetrationMapper.updateStatusById(taskId, "5") > 0;
                             }
+                        }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = lightDynamicPenetration.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : lightDynamicPenetration.getReviewSignaturePhoto();
+                            lightDynamicPenetrationMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
                     break;
@@ -360,6 +383,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                 result = reboundMethodMapper.updateStatusById(taskId, "5") > 0;
                             }
                         }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = reboundMethod.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : reboundMethod.getReviewSignaturePhoto();
+                            reboundMethodMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
+                        }
                     }
                     break;
                 case "环刀法":
@@ -379,6 +407,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                             } else {
                                 result = cuttingRingMapper.updateStatusById(taskId, "5") > 0;
                             }
+                        }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = cuttingRing.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : cuttingRing.getReviewSignaturePhoto();
+                            cuttingRingMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
                     break;
@@ -400,6 +433,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                 result = waterReplacementMapper.updateStatusById(taskId, "5") > 0;
                             }
                         }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = waterReplacement.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : waterReplacement.getReviewSignaturePhoto();
+                            waterReplacementMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
+                        }
                     }
                     break;
                 case "灌砂法":
@@ -419,6 +457,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                             } else {
                                 result = sandReplacementMapper.updateStatusById(taskId, "5") > 0;
                             }
+                        }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = sandReplacement.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : sandReplacement.getReviewSignaturePhoto();
+                            sandReplacementMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
                     break;
@@ -440,6 +483,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                                 result = nuclearDensityMapper.updateStatusById(taskId, "5") > 0;
                             }
                         }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = nuclearDensity.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : nuclearDensity.getReviewSignaturePhoto();
+                            nuclearDensityMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
+                        }
                     }
                     break;
                 case "密度试验":
@@ -459,6 +507,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                             } else {
                                 result = densityTestMapper.updateStatusById(taskId, "5") > 0;
                             }
+                        }
+                        if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
+                            String testerSign = densityTest.getInspectSignaturePhoto();
+                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : densityTest.getReviewSignaturePhoto();
+                            densityTestMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
                     break;
@@ -488,7 +541,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                 .replace('，', ',')
                 .replace('；', ',')
                 .replace(';', ',')
-                .replace('|', ',');
+                .replace('|', ',')
+                .replace('、', ',')
+                .replace('\n', ',')
+                .replace('\r', ',')
+                .replace('\t', ',');
         String[] parts = normalized.split(",");
         java.util.LinkedHashSet<String> result = new java.util.LinkedHashSet<>();
         for (String raw : parts) {
@@ -524,7 +581,16 @@ public class PendingTasksServiceImpl implements PendingTasksService {
             String type = getDirectoryTableType(directory, i);
             if (type == null || type.trim().isEmpty()) continue;
             String upper = type.trim().toUpperCase();
-            if (upper.contains("RECORD")) {
+            if (upper.contains("ENTRUSTMENT")) continue;
+            if (upper.contains("RECORD") ||
+                    upper.contains("NUCLEAR_DENSITY") ||
+                    upper.contains("SAND_REPLACEMENT") ||
+                    upper.contains("WATER_REPLACEMENT") ||
+                    upper.contains("CUTTING_RING") ||
+                    upper.contains("REBOUND_METHOD") ||
+                    upper.contains("LIGHT_DYNAMIC_PENETRATION") ||
+                    upper.contains("BECKMAN_BEAM") ||
+                    upper.contains("DENSITY_TEST")) {
                 types.add(type.trim());
             }
         }

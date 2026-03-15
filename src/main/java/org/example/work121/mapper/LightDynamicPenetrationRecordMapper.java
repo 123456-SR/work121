@@ -57,33 +57,31 @@ public interface LightDynamicPenetrationRecordMapper {
     List<LightDynamicPenetrationRecord> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
     @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION (" +
-            "ID, ENTRUSTMENT_ID, DATA_JSON, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, " +
+            "ID, ENTRUSTMENT_ID, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, " +
             "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
-            "APPROVE_SIGNATURE_PHOTO, REMARKS, " +
-            "SOIL_PROPERTY, DESIGN_CAPACITY, HAMMER_WEIGHT, DROP_DISTANCE, TEST_BASIS, EQUIPMENT, CONCLUSION, TEST_DATE, REPORT_DATE, DATA_BLOCKS) " +
+            "REMARKS, " +
+            "SOIL_PROPERTY, DESIGN_CAPACITY, HAMMER_WEIGHT, DROP_DISTANCE, TEST_BASIS, EQUIPMENT, CONCLUSION, TEST_DATE, REPORT_DATE, " +
+            "DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, DATA_BLOCKS) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), #{recordReviewSign,jdbcType=VARCHAR}, #{recordTesterSign,jdbcType=VARCHAR}, " +
+            "#{id}, #{entrustmentId}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), " +
             "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
             "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
-            "#{approveSignaturePhoto,jdbcType=CLOB}, #{remarks,jdbcType=VARCHAR}, " +
-            "#{soilProperty,jdbcType=VARCHAR}, #{designCapacity,jdbcType=VARCHAR}, #{hammerWeight,jdbcType=VARCHAR}, #{dropDistance,jdbcType=VARCHAR}, #{testBasis,jdbcType=VARCHAR}, #{equipment,jdbcType=VARCHAR}, #{conclusion,jdbcType=VARCHAR}, #{testDate,jdbcType=TIMESTAMP}, #{reportDate,jdbcType=TIMESTAMP}, #{dataBlocks,jdbcType=CLOB})")
+            "#{remarks,jdbcType=VARCHAR}, " +
+            "#{soilProperty,jdbcType=VARCHAR}, #{designCapacity,jdbcType=VARCHAR}, #{hammerWeight,jdbcType=VARCHAR}, #{dropDistance,jdbcType=VARCHAR}, #{testBasis,jdbcType=VARCHAR}, #{equipment,jdbcType=VARCHAR}, #{conclusion,jdbcType=VARCHAR}, #{testDate,jdbcType=TIMESTAMP}, #{reportDate,jdbcType=TIMESTAMP}, " +
+            "#{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, #{dataBlocks,jdbcType=CLOB})")
     int insert(LightDynamicPenetrationRecord record);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), " +
             "RECORD_REVIEWER = NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "REMARKS = #{remarks,jdbcType=VARCHAR}, " +
             "SOIL_PROPERTY = #{soilProperty,jdbcType=VARCHAR}, " +
             "DESIGN_CAPACITY = #{designCapacity,jdbcType=VARCHAR}, " +
@@ -94,6 +92,10 @@ public interface LightDynamicPenetrationRecordMapper {
             "CONCLUSION = #{conclusion,jdbcType=VARCHAR}, " +
             "TEST_DATE = #{testDate,jdbcType=TIMESTAMP}, " +
             "REPORT_DATE = #{reportDate,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
             "WHERE ID = #{id}")
     int update(LightDynamicPenetrationRecord record);
@@ -149,19 +151,15 @@ public interface LightDynamicPenetrationRecordMapper {
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "APPROVER = #{approver}, " +
             "FILLER = #{filler}, " +
             "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
             "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "UPDATE_BY = #{updateBy}, " +
             "UPDATE_TIME = #{updateTime}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "REMARKS = #{remarks}, " +
             "SOIL_PROPERTY = #{soilProperty}, " +
             "DESIGN_CAPACITY = #{designCapacity}, " +
@@ -172,7 +170,11 @@ public interface LightDynamicPenetrationRecordMapper {
             "CONCLUSION = #{conclusion}, " +
             "TEST_DATE = #{testDate}, " +
             "REPORT_DATE = #{reportDate}, " +
-            "DATA_BLOCKS = #{dataBlocks} " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
             "WHERE ID = #{id}")
     int updateById(LightDynamicPenetrationRecord record);
 

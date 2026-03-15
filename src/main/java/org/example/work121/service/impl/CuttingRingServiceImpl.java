@@ -3,6 +3,7 @@ package org.example.work121.service.impl;
 import org.example.work121.entity.CuttingRing;
 import org.example.work121.mapper.CuttingRingMapper;
 import org.example.work121.service.CuttingRingService;
+import org.example.work121.service.TableGenerationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,9 @@ public class CuttingRingServiceImpl implements CuttingRingService {
 
     @Autowired
     private org.example.work121.mapper.CuttingRingReportMapper reportMapper;
+
+    @Autowired
+    private TableGenerationService tableGenerationService;
 
     @Override
     public java.util.List<CuttingRing> getByEntrustmentId(String entrustmentId) {
@@ -62,13 +66,11 @@ public class CuttingRingServiceImpl implements CuttingRingService {
     @Override
     @Transactional
     public void generateReportAndResult(String entrustmentId) {
-        // Since they share the same table (T_CUTTING_RING), the data is already there.
-        // This method serves as a placeholder for any post-approval processing.
         java.util.List<CuttingRing> records = mapper.selectByEntrustmentId(entrustmentId);
         if (records == null || records.isEmpty()) {
-            System.err.println("Warning: Record not found for entrustmentId " + entrustmentId + " during generation.");
-        } else {
-            System.out.println("Generated Report and Result for CuttingRing entrustment: " + entrustmentId);
+            throw new RuntimeException("Cannot generate CuttingRing report/result: Record not found for entrustmentId " + entrustmentId);
         }
+
+        tableGenerationService.generateReportAndResult("CUTTING_RING", entrustmentId);
     }
 }

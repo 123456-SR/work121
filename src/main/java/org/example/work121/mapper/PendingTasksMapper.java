@@ -24,7 +24,7 @@ public interface PendingTasksMapper {
             "e.ID AS data_id, " +
             "e.WT_NUM AS unified_number, " +
             "NVL(e.STATUS, '0') AS status, " +
-            "NVL(e.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN NVL(d.WT_UNDERTAKER, e.TESTER) WHEN #{status} = '4' THEN NVL(e.APPROVER, d.BG_APPROVER) ELSE NVL(d.WT_REVIEWER, e.REVIEWER) END) AS reviewer, " +
+            "NVL(e.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN NVL(d.WT_UNDERTAKER, e.TESTER) WHEN #{status} IN ('4','5') THEN NVL(e.APPROVER, d.BG_APPROVER) ELSE NVL(d.WT_REVIEWER, e.REVIEWER) END) AS reviewer, " +
             "e.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -36,105 +36,105 @@ public interface PendingTasksMapper {
             "SELECT " +
             "'贝克曼梁' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.entrustment_id AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_BECKMAN_BEAM t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'轻型动力触探' AS table_type, " +
             "t.ID AS data_id, " +
-            "NVL(e.WT_NUM, t.ID) AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_LIGHT_DYNAMIC_PENETRATION t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'回弹法' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.entrustment_id AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_REBOUND_METHOD t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'环刀法' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.entrustment_id AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_CUTTING_RING t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'灌水法' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.entrustment_id AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_WATER_REPLACEMENT t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'灌砂法' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.entrustment_id AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_SAND_REPLACEMENT t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'核子密度' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.ENTRUSTMENT_ID AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_NUCLEAR_DENSITY t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "UNION ALL " +
             "SELECT " +
             "'密度试验' AS table_type, " +
             "t.ID AS data_id, " +
-            "t.entrustment_id AS unified_number, " +
+            "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '4' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
             "FROM T_DENSITY_TEST t " +
-            "LEFT JOIN T_ENTRUSTMENT e ON t.ENTRUSTMENT_ID = e.ID " +
+            "LEFT JOIN T_ENTRUSTMENT e ON (t.ENTRUSTMENT_ID = e.ID OR t.ENTRUSTMENT_ID = e.WT_NUM) " +
             "WHERE (NVL(t.STATUS, '0') = #{status} OR (#{status} = '0' AND NVL(t.STATUS, '0') = '2')) " +
             "ORDER BY create_time DESC, unified_number ASC")
     List<Map<String, Object>> getAllPendingTasks(@Param("status") String status);

@@ -73,6 +73,7 @@
 
 
         <button
+          type="button"
           @click="showAnalysisModal"
           class="btn btn-secondary btn-small"
           :disabled="!isEditable"

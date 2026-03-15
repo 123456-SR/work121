@@ -45,21 +45,21 @@ public interface BeckmanBeamRecordMapper {
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     BeckmanBeamRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_BECKMAN_BEAM (ID, ENTRUSTMENT_ID, DATA_JSON, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{recordReviewSign,jdbcType=VARCHAR}, #{recordTesterSign,jdbcType=VARCHAR}, #{approveSignaturePhoto,jdbcType=CLOB}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
+    @Insert("INSERT INTO T_BECKMAN_BEAM (ID, ENTRUSTMENT_ID, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
+            "VALUES (#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, #{recordReviewSign,jdbcType=CLOB}, #{recordTesterSign,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(BeckmanBeamRecord record);
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=VARCHAR}, " +
-            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=VARCHAR}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
-            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(BeckmanBeamRecord record);
 
@@ -104,19 +104,19 @@ public interface BeckmanBeamRecordMapper {
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=VARCHAR}, " +
-            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=VARCHAR}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
-            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ID = #{id}")
     int updateById(BeckmanBeamRecord record);
 

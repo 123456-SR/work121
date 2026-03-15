@@ -285,7 +285,11 @@ public class TableGenerationServiceImpl implements TableGenerationService {
                 data.put("reviewer", info.getReviewer());
                 data.put("approver", info.getApprover());
                 data.put("sampleName", info.getSampleName());
-                data.put("testBasis", info.getTestBasis());
+                String testBasis = info.getTestBasis();
+                if (testBasis == null || testBasis.trim().isEmpty()) {
+                    testBasis = info.getTestItems();
+                }
+                data.put("testBasis", testBasis);
                 data.put("equipment", info.getEquipment());
                 data.put("remarks", info.getRemarks());
                 data.put("witness", info.getWitness());
@@ -847,6 +851,13 @@ public class TableGenerationServiceImpl implements TableGenerationService {
 
             SandReplacement record = records.get(0);
             Map<String, Object> recordData = prepareSandReplacementData(record);
+            if (!isPendingApprovalOrApproved(record.getStatus())) {
+                System.err.println("Warning: SandReplacement record is not pending approval/approved for entrustmentId " + entrustmentId);
+                return;
+            }
+            if (isFieldMissing(recordData, "reportDate")) {
+                recordData.put("reportDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+            }
 
             SandReplacementReport report = sandReplacementReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -884,7 +895,14 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             WaterReplacement record = records.get(0);
+            if (!isPendingApprovalOrApproved(record.getStatus())) {
+                System.err.println("Warning: WaterReplacement record is not pending approval/approved for entrustmentId " + entrustmentId);
+                return;
+            }
             Map<String, Object> recordData = prepareWaterReplacementData(record);
+            if (isFieldMissing(recordData, "reportDate")) {
+                recordData.put("reportDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+            }
 
             WaterReplacementReport report = waterReplacementReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -922,7 +940,14 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             NuclearDensity record = records.get(0);
+            if (!isPendingApprovalOrApproved(record.getStatus())) {
+                System.err.println("Warning: NuclearDensity record is not pending approval/approved for entrustmentId " + entrustmentId);
+                return;
+            }
             Map<String, Object> recordData = prepareNuclearDensityData(record);
+            if (isFieldMissing(recordData, "reportDate")) {
+                recordData.put("reportDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+            }
 
             NuclearDensityReport report = nuclearDensityReportMapper.selectByEntrustmentId(entrustmentId);
             if (report == null) {
@@ -962,10 +987,17 @@ public class TableGenerationServiceImpl implements TableGenerationService {
             }
 
             CuttingRing record = records.get(0);
+            if (!isPendingApprovalOrApproved(record.getStatus())) {
+                System.err.println("Warning: CuttingRing record is not pending approval/approved for entrustmentId " + entrustmentId);
+                return;
+            }
             System.out.println("[generateCuttingRingReportAndResult] 找到记录，ID: " + record.getId() + ", dataJson长度: " + 
                 (record.getDataJson() != null ? record.getDataJson().length() : 0));
             
             Map<String, Object> recordData = prepareCuttingRingData(record);
+            if (isFieldMissing(recordData, "reportDate")) {
+                recordData.put("reportDate", new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date()));
+            }
             
             // 统计 recordData 中的表格数据字段数量
             int tableDataCount = 0;

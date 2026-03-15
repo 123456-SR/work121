@@ -66,6 +66,50 @@
       <strong>打回原因：</strong> {{ formData.rejectReason }}
     </div>
 
+    <div v-if="showAssignRolesModal" class="modal-overlay no-print">
+      <div class="modal-content">
+        <div class="dialog-header">
+          <h3>委托单审核通过：指定角色</h3>
+          <button class="dialog-close" @click="closeAssignRolesModal">&times;</button>
+        </div>
+        <div class="dialog-body">
+          <div class="form-grid">
+            <div class="form-item">
+              <label>记录表检测人</label>
+              <select v-model="assignRoles.jcTester">
+                <option value="" disabled>请选择</option>
+                <option v-for="u in userList" :key="u.id" :value="u.userAccount">
+                  {{ u.userName }}（{{ u.userAccount }}）
+                </option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>记录表审核人</label>
+              <select v-model="assignRoles.jcReviewer">
+                <option value="" disabled>请选择</option>
+                <option v-for="u in userList" :key="u.id" :value="u.userAccount">
+                  {{ u.userName }}（{{ u.userAccount }}）
+                </option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>报告/结果批准人</label>
+              <select v-model="assignRoles.bgApprover">
+                <option value="" disabled>请选择</option>
+                <option v-for="u in userList" :key="u.id" :value="u.userAccount">
+                  {{ u.userName }}（{{ u.userAccount }}）
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button class="btn btn-secondary" @click="closeAssignRolesModal">取消</button>
+            <button class="btn btn-primary" @click="confirmApproveWithRoles">确认并通过</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 <form id="entrustmentForm" ref="pdfForm" method="post">
 <h2>检测 (验) 委托单 (代合同)</h2>
 
@@ -416,6 +460,56 @@
   width: 400px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dialog-close {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-item select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
 @media print {
   .no-print {
     display: none;
@@ -469,6 +563,16 @@ watch(() => props.wtNum, (newVal) => {
 })
 
 const pdfForm = ref(null)
+
+const showAssignRolesModal = ref(false)
+const pendingApproveTaskId = ref('')
+const pendingApproveUserAccount = ref('')
+const userList = ref([])
+const assignRoles = reactive({
+  jcTester: '',
+  jcReviewer: '',
+  bgApprover: ''
+})
 
 const formData = reactive({
   unifiedNumber: '',
@@ -917,17 +1021,25 @@ const saveForm = async (silent = false) => {
   }
 
   // Get current user
-  const user = JSON.parse(localStorage.getItem('user'))
-  const currentUserName = user ? (user.fullName || user.username) : '未知用户'
+  let user = null
+  try {
+    user = JSON.parse(localStorage.getItem('userInfo') || 'null')
+  } catch (e) {
+    user = null
+  }
+  const currentAccount = user ? (user.username || user.userAccount || user.userName) : ''
+  const currentRealName = user ? (user.userName || user.fullName || user.username || user.userAccount) : ''
   
   // Set clientRegName if empty (new record)
   if (!formData.clientRegName) {
-    formData.clientRegName = currentUserName
+    formData.clientRegName = currentRealName || currentAccount || '未知用户'
   }
 
   const payload = {
     id: idToSave, // Ensure ID is passed for updates
     wtNum: formData.unifiedNumber,
+    createBy: currentAccount,
+    updateBy: currentAccount,
     commissionDate: formData.clientDate,
     clientUnit: formData.clientUnit,
     client: formData.client,
@@ -1132,6 +1244,8 @@ const submitWorkflow = async (action) => {
                 }
             }
             signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
+            await openAssignRolesModal(idToSubmit, user.username)
+            return
         }
 
         nextHandler = formData.reviewer // Stay with reviewer or move to next? 
@@ -1198,6 +1312,77 @@ const submitWorkflow = async (action) => {
         console.error('Workflow error', e)
         alert('操作出错')
     }
+}
+
+const loadUsers = async () => {
+  try {
+    const response = await axios.get('/api/user/list')
+    if (response.data?.success) {
+      userList.value = Array.isArray(response.data.data) ? response.data.data : []
+    } else {
+      userList.value = []
+    }
+  } catch (e) {
+    userList.value = []
+  }
+}
+
+const openAssignRolesModal = async (taskId, userAccount) => {
+  pendingApproveTaskId.value = taskId
+  pendingApproveUserAccount.value = userAccount
+  try {
+    const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
+    assignRoles.jcTester = assignRoles.jcTester || directory.jcTester || ''
+    assignRoles.jcReviewer = assignRoles.jcReviewer || directory.jcReviewer || ''
+    assignRoles.bgApprover = assignRoles.bgApprover || directory.bgApprover || ''
+  } catch (e) {
+  }
+  showAssignRolesModal.value = true
+  if (!userList.value || userList.value.length === 0) {
+    await loadUsers()
+  }
+}
+
+const closeAssignRolesModal = () => {
+  showAssignRolesModal.value = false
+  pendingApproveTaskId.value = ''
+  pendingApproveUserAccount.value = ''
+  assignRoles.jcTester = ''
+  assignRoles.jcReviewer = ''
+  assignRoles.bgApprover = ''
+}
+
+const confirmApproveWithRoles = async () => {
+  if (!assignRoles.jcTester || !assignRoles.jcReviewer || !assignRoles.bgApprover) {
+    alert('请先选择记录表检测人、记录表审核人、报告/结果批准人')
+    return
+  }
+  if (!pendingApproveTaskId.value || !pendingApproveUserAccount.value) {
+    alert('任务信息缺失，请刷新页面重试')
+    return
+  }
+  try {
+    const response = await axios.post('/api/pending-tasks/approve', {
+      taskType: '委托单',
+      taskId: pendingApproveTaskId.value,
+      userAccount: pendingApproveUserAccount.value,
+      taskStatus: 'audit',
+      jcTester: assignRoles.jcTester,
+      jcReviewer: assignRoles.jcReviewer,
+      bgApprover: assignRoles.bgApprover
+    })
+    if (response.data?.success) {
+      const approvedTaskId = pendingApproveTaskId.value
+      closeAssignRolesModal()
+      alert('审核通过成功')
+      await loadData(approvedTaskId)
+    } else {
+      alert('操作失败: ' + (response.data?.message || '未知错误'))
+    }
+  } catch (e) {
+    console.error('approve entrustment error', e)
+    alert('操作失败')
+  }
 }
 
 watch(() => props.id, (newId) => {

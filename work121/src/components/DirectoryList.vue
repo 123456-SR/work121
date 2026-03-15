@@ -278,60 +278,61 @@ const saveProcess = async () => {
 
     console.log('开始保存流程')
 
-
-
-    // 获取当前登录用户信息
-    try {
-      const userInfoStr = localStorage.getItem('userInfo')
-      if (userInfoStr) {
+    const getActorAccount = () => {
+      try {
+        const userInfoStr = localStorage.getItem('userInfo')
+        if (!userInfoStr) return 'admin'
         const userInfo = JSON.parse(userInfoStr)
-        const actor = userInfo.userName || userInfo.username || 'admin'
-        if (formData.id) {
-          formData.updateBy = actor
-        } else {
-          formData.createBy = actor
-        }
-      } else {
-        if (formData.id) {
-          formData.updateBy = 'admin'
-        } else {
-          formData.createBy = 'admin'
-        }
-      }
-    } catch (error) {
-      console.error('获取用户信息失败:', error)
-      if (formData.id) {
-        formData.updateBy = 'admin'
-      } else {
-        formData.createBy = 'admin'
+        return userInfo.username || userInfo.userAccount || userInfo.userName || 'admin'
+      } catch {
+        return 'admin'
       }
     }
 
-    console.log('发送保存请求，表单数据:', formData)
+    const actor = getActorAccount()
 
-    const payload = {
-      id: formData.id || '',
-      wtNum: formData.dirName,
-      tester: formData.wtUndertaker,
-      reviewer: formData.wtReviewer,
-      updateBy: formData.updateBy,
-      createBy: formData.createBy
+    let existingDirectory = null
+    try {
+      const dirRes = await axios.post('/api/directory/get-by-dirname', { dirName: formData.dirName })
+      if (dirRes.data && dirRes.data.success && dirRes.data.data) {
+        existingDirectory = dirRes.data.data
+      }
+    } catch (e) {
+      console.warn('查询目录失败，将按新建处理:', e)
     }
-    const response = await axios.post('/api/entrustment/save', payload)
+
+    const directoryToSave = existingDirectory ? { ...existingDirectory } : { dirName: formData.dirName }
+    directoryToSave.dirName = formData.dirName
+    directoryToSave.table1Type = directoryToSave.table1Type || 'ENTRUSTMENT_LIST'
+    if (!directoryToSave.table1Id && formData.id) {
+      directoryToSave.table1Id = formData.id
+    }
+    directoryToSave.wtUndertaker = formData.wtUndertaker
+    directoryToSave.wtReviewer = formData.wtReviewer
+
+    if (existingDirectory) {
+      directoryToSave.updateBy = actor
+    } else {
+      directoryToSave.createBy = actor
+      directoryToSave.updateBy = actor
+    }
+
+    console.log('发送保存请求(目录表)，数据:', directoryToSave)
+    const response = await axios.post('/api/directory/save', directoryToSave)
 
     console.log('保存请求响应:', response.data)
 
-    if (response.data.success) {
+    if (response.data && response.data.success) {
       alert('保存成功')
       closeModal()
       loadProcesses()
     } else {
-      alert('保存失败: ' + response.data.message)
+      alert('保存失败: ' + (response.data?.message || '未知错误'))
     }
-  } catch (error) {
     console.error('保存流程失败:', error)
     console.error('错误类型:', error.constructor.name)
     console.error('错误消息:', error.message)
+    console.error('错误堆栈:', error.stack)
     console.error('错误堆栈:', error.stack)
     if (error.response) {
       console.error('响应数据:', error.response.data)

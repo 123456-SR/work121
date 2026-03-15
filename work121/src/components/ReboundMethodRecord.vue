@@ -82,6 +82,7 @@
         </button>
         <button
           v-if="isEditable"
+          type="button"
           @click="showAnalysis = true"
           class="btn btn-secondary btn-small"
         >
