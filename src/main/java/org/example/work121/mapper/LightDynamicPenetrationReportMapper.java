@@ -35,25 +35,25 @@ public interface LightDynamicPenetrationReportMapper {
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     List<LightDynamicPenetrationReport> selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION (ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, REMARKS) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{status}, #{rejectReason}, #{nextHandler}, #{reviewSignaturePhoto}, #{inspectSignaturePhoto}, #{approveSignaturePhoto}, NVL(#{recordTester}, #{tester}), NVL(#{recordReviewer}, #{reviewer}), #{approver}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remarks,jdbcType=VARCHAR})")
+    @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION (ID, ENTRUSTMENT_ID, STATUS, REJECT_REASON, NEXT_HANDLER, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, REMARKS, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
+            "VALUES (#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(LightDynamicPenetrationReport report);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "REMARKS = #{remarks,jdbcType=VARCHAR}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto}, " +
-            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
-            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
-            "APPROVER = #{approver}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime}, " +
-            "REMARKS = #{remarks,jdbcType=VARCHAR} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
     int update(LightDynamicPenetrationReport report);
 
     @Select("SELECT " +
@@ -79,20 +79,20 @@ public interface LightDynamicPenetrationReportMapper {
     LightDynamicPenetrationReport selectById(@Param("id") String id);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId}, " +
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), " +
+            "RECORD_REVIEWER = NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "REMARKS = #{remarks,jdbcType=VARCHAR}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto}, " +
-            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
-            "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
-            "APPROVER = #{approver}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime}, " +
-            "REMARKS = #{remarks,jdbcType=VARCHAR} " +
-            "WHERE ID = #{id}")
+            "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
+            "WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateById(LightDynamicPenetrationReport report);
 }

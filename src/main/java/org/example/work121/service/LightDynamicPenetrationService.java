@@ -3,6 +3,7 @@ package org.example.work121.service;
 import org.example.work121.entity.LightDynamicPenetration;
 import org.example.work121.entity.LightDynamicPenetrationReport;
 import org.example.work121.entity.LightDynamicPenetrationResult;
+import java.util.Map;
 import java.util.List;
 
 public interface LightDynamicPenetrationService {
@@ -24,4 +25,6 @@ public interface LightDynamicPenetrationService {
      * @param entrustmentId The entrustment ID
      */
     void generateReportAndResult(String entrustmentId);
+
+    String exportRecordToExcel(Map<String, Object> payload);
 }

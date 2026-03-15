@@ -115,15 +115,15 @@ public interface DensityTestMapper {
             "RECORD_TESTER = #{tester}, " +
             "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
-            "DATA_JSON = #{dataJson}, " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
             "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "UPDATE_TIME = #{updateTime}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ID = #{id}")
     int updateById(DensityTest densityTest);
 
@@ -131,18 +131,18 @@ public interface DensityTestMapper {
             "ID, ENTRUSTMENT_ID, SOIL_TYPE, PIT_VOLUME, WET_WEIGHT, DRY_WEIGHT, " +
             "WATER_CONTENT, WET_DENSITY, DRY_DENSITY, MAX_DRY_DENSITY, MIN_DRY_DENSITY, " +
             "COMPACTION_COEFFICIENT, QUALIFIED_RATE, " +
-            "RECORD_TESTER, RECORD_REVIEWER, APPROVER, DATA_JSON, " +
-            "RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
+            "RECORD_TESTER, RECORD_REVIEWER, APPROVER, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
-            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
+            "DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{soilType}, #{ringVolume}, #{wetWeight}, #{dryWeight}, " +
-            "#{waterContent}, #{wetDensity}, #{dryDensity}, #{maxDryDensity}, #{minDryDensity}, " +
-            "#{compactionCoefficient}, #{qualifiedRate}, " +
-            "#{tester}, #{reviewer}, #{approver}, #{dataJson}, " +
-            "NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), #{approveSignaturePhoto}, " +
-            "#{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{soilType,jdbcType=VARCHAR}, #{ringVolume,jdbcType=VARCHAR}, #{wetWeight,jdbcType=VARCHAR}, #{dryWeight,jdbcType=VARCHAR}, " +
+            "#{waterContent,jdbcType=VARCHAR}, #{wetDensity,jdbcType=VARCHAR}, #{dryDensity,jdbcType=VARCHAR}, #{maxDryDensity,jdbcType=VARCHAR}, #{minDryDensity,jdbcType=VARCHAR}, " +
+            "#{compactionCoefficient,jdbcType=VARCHAR}, #{qualifiedRate,jdbcType=VARCHAR}, " +
+            "#{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, " +
+            "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
+            "#{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(DensityTest densityTest);
 
     @Update("UPDATE T_DENSITY_TEST SET " +
@@ -160,28 +160,35 @@ public interface DensityTestMapper {
             "RECORD_TESTER = #{tester}, " +
             "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
-            "DATA_JSON = #{dataJson}, " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
             "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "UPDATE_TIME = #{updateTime}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(DensityTest densityTest);
 
     @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_DENSITY_TEST SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_DENSITY_TEST SET REPORT_STATUS = #{reportStatus}, RESULT_STATUS = #{resultStatus} WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
-}
 
+    @Update("UPDATE T_DENSITY_TEST SET " +
+            "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+    int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
+                                         @Param("testerSign") String testerSign,
+                                         @Param("reviewSign") String reviewSign);
+}

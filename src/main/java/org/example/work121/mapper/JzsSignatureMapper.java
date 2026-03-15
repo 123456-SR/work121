@@ -37,20 +37,20 @@ public interface JzsSignatureMapper {
     List<JzsSignature> selectListByUser(String userAccount);
 
     @Insert("INSERT INTO JZS_SIGNATURE (" +
-            "SIGNATURE_ID, USER_ACCOUNT, SIGNATURE_TYPE, SIGNATURE_BLOB, IMAGE_TYPE, IMAGE_SIZE, CREATE_TIME, REMARKS" +
+            "SIGNATURE_ID, USER_ACCOUNT, SIGNATURE_TYPE, IMAGE_TYPE, IMAGE_SIZE, CREATE_TIME, REMARKS, SIGNATURE_BLOB" +
             ") VALUES (" +
             "#{signatureId, jdbcType=VARCHAR}, #{userAccount, jdbcType=VARCHAR}, #{signatureType, jdbcType=VARCHAR}, " +
-            "#{signatureBlob, jdbcType=BLOB}, #{imageType, jdbcType=VARCHAR}, #{imageSize, jdbcType=NUMERIC}, " +
-            "#{createTime, jdbcType=TIMESTAMP}, #{remarks, jdbcType=VARCHAR}" +
+            "#{imageType, jdbcType=VARCHAR}, #{imageSize, jdbcType=NUMERIC}, #{createTime, jdbcType=TIMESTAMP}, " +
+            "#{remarks, jdbcType=VARCHAR}, #{signatureBlob, jdbcType=BLOB}" +
             ")")
     int insert(JzsSignature signature);
 
     @Update("UPDATE JZS_SIGNATURE SET " +
-            "SIGNATURE_BLOB = #{signatureBlob, jdbcType=BLOB}, " +
             "IMAGE_TYPE = #{imageType, jdbcType=VARCHAR}, " +
             "IMAGE_SIZE = #{imageSize, jdbcType=NUMERIC}, " +
             "UPDATE_TIME = #{updateTime, jdbcType=TIMESTAMP}, " +
-            "REMARKS = #{remarks, jdbcType=VARCHAR} " +
+            "REMARKS = #{remarks, jdbcType=VARCHAR}, " +
+            "SIGNATURE_BLOB = #{signatureBlob, jdbcType=BLOB} " +
             "WHERE SIGNATURE_ID = #{signatureId, jdbcType=VARCHAR}")
     int update(JzsSignature signature);
 

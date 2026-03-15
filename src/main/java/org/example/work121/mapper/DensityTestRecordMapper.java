@@ -70,37 +70,44 @@ public interface DensityTestRecordMapper {
             "WHERE t2.ID = #{id}")
     DensityTestRecord selectById(@Param("id") String id);
 
-    @Insert("INSERT INTO T_DENSITY_TEST (ID, ENTRUSTMENT_ID, DATA_JSON, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson}, #{approver}, #{filler}, #{recordTester}, #{recordReviewer}, #{recordReviewSign}, #{recordTesterSign}, #{approveSignaturePhoto}, #{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+    @Insert("INSERT INTO T_DENSITY_TEST (" +
+            "ID, ENTRUSTMENT_ID, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
+            "DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO" +
+            ") VALUES (" +
+            "#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
+            "#{dataJson,jdbcType=CLOB}, #{recordReviewSign,jdbcType=CLOB}, #{recordTesterSign,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}" +
+            ")")
     int insert(DensityTestRecord record);
 
     @Update("UPDATE T_DENSITY_TEST SET " +
-            "DATA_JSON = #{dataJson}, " +
-            "APPROVER = #{approver}, " +
-            "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "RECORD_TESTER_SIGN = #{recordTesterSign}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "FILLER = #{filler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
     int update(DensityTestRecord record);
 
     @Update("UPDATE T_DENSITY_TEST SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson}, " +
-            "APPROVER = #{approver}, " +
-            "FILLER = #{filler}, " +
-            "RECORD_TESTER = #{recordTester}, " +
-            "RECORD_REVIEWER = #{recordReviewer}, " +
-            "RECORD_REVIEW_SIGN = #{recordReviewSign}, " +
-            "RECORD_TESTER_SIGN = #{recordTesterSign}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
-            "WHERE ID = #{id}")
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
+            "APPROVER = #{approver,jdbcType=VARCHAR}, " +
+            "FILLER = #{filler,jdbcType=VARCHAR}, " +
+            "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
+            "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=CLOB}, " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
+            "WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateById(DensityTestRecord record);
 
     @Delete("DELETE FROM T_DENSITY_TEST WHERE ENTRUSTMENT_ID = #{entrustmentId}")

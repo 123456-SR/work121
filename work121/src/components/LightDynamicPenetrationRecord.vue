@@ -101,6 +101,14 @@
           预览PDF
         </button>
         <button
+          v-if="!draftMode"
+          @click="exportExcel"
+          class="btn btn-secondary btn-small"
+        >
+          导出数据
+        </button>
+        <button
+          type="button"
           @click="openAnalysisModal"
           class="btn btn-secondary btn-small"
           :disabled="!isEditable"
@@ -597,6 +605,15 @@ const formatDate = (d) => {
     return `${year}-${month}-${day}`
 }
 
+const applyTechnicalDefaults = () => {
+    if (!formData.hammerWeight || String(formData.hammerWeight).trim() === '') {
+        formData.hammerWeight = '10'
+    }
+    if (!formData.dropDistance || String(formData.dropDistance).trim() === '') {
+        formData.dropDistance = '50'
+    }
+}
+
 const clearFormData = () => {
     // Keep entrustment info, clear others
     const keepKeys = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate']
@@ -714,6 +731,8 @@ const mapRecordToFormData = (record) => {
     if (record.testBasis) formData.testBasis = record.testBasis
     if (record.equipment) formData.equipment = record.equipment
     if (record.remarks) formData.remarks = record.remarks
+
+    applyTechnicalDefaults()
     
     // Map Roles
     // Filler - Priority: record.filler
@@ -1277,6 +1296,35 @@ const previewPdf = () => {
   if (pdfForm.value) {
     saveCurrentToState()
     openBackendPdfPreview('/api/pdf/light_dynamic_penetration_record/preview')
+  }
+}
+
+const exportExcel = async () => {
+  try {
+    saveCurrentToState()
+    const dataObj = { ...formData }
+    delete dataObj.id
+    delete dataObj.status
+    delete dataObj.tester
+    delete dataObj.reviewer
+    delete dataObj.testerSignature
+    delete dataObj.reviewerSignature
+    delete dataObj.calculatorSignature
+
+    const response = await axios.post('/api/light-dynamic-penetration/export-excel', {
+      id: formData.id,
+      entrustmentId: (records.value[currentIndex.value] && records.value[currentIndex.value].entrustmentId) ? records.value[currentIndex.value].entrustmentId : (props.id || ''),
+      data: dataObj
+    })
+
+    if (response.data && response.data.success) {
+      alert(`导出成功：${response.data.path}`)
+    } else {
+      alert('导出失败: ' + (response.data && response.data.message ? response.data.message : '未知错误'))
+    }
+  } catch (error) {
+    console.error('Export error:', error)
+    alert('导出失败')
   }
 }
 

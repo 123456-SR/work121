@@ -148,14 +148,15 @@ const handleDblClick = (item) => {
 // 加载数据
   const loadData = async () => {
     const user = getCurrentUser()
-    if (!user || !user.username) {
+    const regName = user ? (user.username || user.userAccount || user.userName) : ''
+    if (!regName) {
       alert('未找到用户信息，请重新登录')
       return
     }
 
     try {
       loading.value = true
-      const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(user.username)}&wtNum=${encodeURIComponent(searchWtNum.value)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
+      const response = await axios.get(`/api/jc-core-wt-info/by-reg-name?regName=${encodeURIComponent(regName)}&wtNum=${encodeURIComponent(searchWtNum.value)}&pageNum=${pageNum.value}&pageSize=${pageSize.value}`)
       if (response.data.success && response.data.data) {
         const pageData = response.data.data
         const hasData = Array.isArray(pageData.list) && pageData.list.length > 0

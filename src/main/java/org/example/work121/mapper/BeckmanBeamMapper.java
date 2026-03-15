@@ -46,22 +46,22 @@ public interface BeckmanBeamMapper {
     BeckmanBeam selectById(@Param("id") String id);
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
-            "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "SUBGRADE_TYPE = #{subgradeType}, " +
-            "DEFLECTOMETER_TYPE = #{deflectometerType}, " +
-            "AXLE_WEIGHT = #{axleWeight}, " +
-            "TIRE_PRESSURE = #{tirePressure}, " +
-            "TEST_LENGTH = #{testLength}, " +
-            "DATA_JSON = #{dataJson}, " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
-            "STATUS = #{status}, " +
-            "REJECT_REASON = #{rejectReason}, " +
-            "NEXT_HANDLER = #{nextHandler}, " +
-            "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
-            "WHERE ID = #{id}")
+            "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
+            "SUBGRADE_TYPE = #{subgradeType,jdbcType=VARCHAR}, " +
+            "DEFLECTOMETER_TYPE = #{deflectometerType,jdbcType=VARCHAR}, " +
+            "AXLE_WEIGHT = #{axleWeight,jdbcType=VARCHAR}, " +
+            "TIRE_PRESSURE = #{tirePressure,jdbcType=VARCHAR}, " +
+            "TEST_LENGTH = #{testLength,jdbcType=VARCHAR}, " +
+            "STATUS = #{status,jdbcType=VARCHAR}, " +
+            "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
+            "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
+            "WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateById(BeckmanBeam beckmanBeam);
 
     @Select("SELECT " +
@@ -104,18 +104,18 @@ public interface BeckmanBeamMapper {
 
     @Insert("INSERT INTO T_BECKMAN_BEAM (" +
             "ID, ENTRUSTMENT_ID, SUBGRADE_TYPE, DEFLECTOMETER_TYPE, AXLE_WEIGHT, " +
-            "TIRE_PRESSURE, TEST_LENGTH, DATA_JSON, " +
+            "TIRE_PRESSURE, TEST_LENGTH, " +
             "RECORD_TESTER, RECORD_REVIEWER, APPROVER, " +
-            "RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, " +
             "STATUS, REJECT_REASON, NEXT_HANDLER, " +
-            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
+            "DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
             "VALUES (" +
-            "#{id}, #{entrustmentId}, #{subgradeType}, #{deflectometerType}, #{axleWeight}, " +
-            "#{tirePressure}, #{testLength}, #{dataJson}, " +
-            "#{tester}, #{reviewer}, #{approver}, " +
-            "NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), #{approveSignaturePhoto}, " +
-            "#{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{subgradeType,jdbcType=VARCHAR}, #{deflectometerType,jdbcType=VARCHAR}, #{axleWeight,jdbcType=VARCHAR}, " +
+            "#{tirePressure,jdbcType=VARCHAR}, #{testLength,jdbcType=VARCHAR}, " +
+            "#{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, " +
+            "#{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
+            "#{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(BeckmanBeam beckmanBeam);
 
     @Update("UPDATE T_BECKMAN_BEAM SET " +
@@ -124,15 +124,15 @@ public interface BeckmanBeamMapper {
             "AXLE_WEIGHT = #{axleWeight}, " +
             "TIRE_PRESSURE = #{tirePressure}, " +
             "TEST_LENGTH = #{testLength}, " +
-            "DATA_JSON = #{dataJson}, " +
             "RECORD_TESTER = #{tester}, " +
             "RECORD_REVIEWER = #{reviewer}, " +
             "APPROVER = #{approver}, " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "UPDATE_TIME = #{updateTime}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(BeckmanBeam beckmanBeam);
 
@@ -142,13 +142,20 @@ public interface BeckmanBeamMapper {
     @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_BECKMAN_BEAM SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_BECKMAN_BEAM SET REPORT_STATUS = #{reportStatus}, RESULT_STATUS = #{resultStatus} WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
-}
 
+    @Update("UPDATE T_BECKMAN_BEAM SET " +
+            "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+    int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
+                                         @Param("testerSign") String testerSign,
+                                         @Param("reviewSign") String reviewSign);
+}

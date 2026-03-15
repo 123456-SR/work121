@@ -96,33 +96,29 @@ public interface LightDynamicPenetrationMapper {
     LightDynamicPenetration selectById(@Param("id") String id);
 
     @Insert("INSERT INTO T_LIGHT_DYNAMIC_PENETRATION " +
-            "(ID, ENTRUSTMENT_ID, DATA_JSON, STATUS, REJECT_REASON, NEXT_HANDLER, " +
-            "APPROVER, FILLER, RECORD_TESTER, RECORD_TESTER_SIGN, RECORD_REVIEWER, RECORD_REVIEW_SIGN, " +
-            "APPROVE_SIGNATURE_PHOTO, " +
+            "(ID, ENTRUSTMENT_ID, STATUS, REJECT_REASON, NEXT_HANDLER, " +
+            "APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, " +
             "SOIL_PROPERTY, DESIGN_CAPACITY, HAMMER_WEIGHT, DROP_DISTANCE, TEST_BASIS, EQUIPMENT, CONCLUSION, " +
-            "TEST_DATE, REPORT_DATE, DATA_BLOCKS, REMARKS, " +
-            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
+            "TEST_DATE, REPORT_DATE, REMARKS, " +
+            "CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, " +
+            "DATA_JSON, RECORD_TESTER_SIGN, RECORD_REVIEW_SIGN, APPROVE_SIGNATURE_PHOTO, DATA_BLOCKS) " +
             "VALUES " +
-            "(#{id}, #{entrustmentId}, #{dataJson}, #{status}, #{rejectReason}, #{nextHandler}, " +
-            "#{approver}, #{filler}, NVL(#{recordTester}, #{tester}), NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), NVL(#{recordReviewer}, #{reviewer}), NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "#{approveSignaturePhoto}, " +
+            "(#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, " +
+            "#{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), " +
             "#{soilProperty}, #{designCapacity}, #{hammerWeight}, #{dropDistance}, #{testBasis}, #{equipment}, #{conclusion}, " +
-            "#{testDate}, #{reportDate}, #{dataBlocks}, #{remarks}, " +
-            "#{createBy}, #{createTime}, #{updateBy}, #{updateTime})")
+            "#{testDate}, #{reportDate}, #{remarks,jdbcType=VARCHAR}, " +
+            "#{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, " +
+            "#{dataJson,jdbcType=CLOB}, NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, #{dataBlocks,jdbcType=CLOB})")
     int insert(LightDynamicPenetration record);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
-            "DATA_JSON = #{dataJson}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
             "APPROVER = #{approver}, " +
             "FILLER = #{filler}, " +
             "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "SOIL_PROPERTY = #{soilProperty}, " +
             "DESIGN_CAPACITY = #{designCapacity}, " +
             "HAMMER_WEIGHT = #{hammerWeight}, " +
@@ -132,10 +128,14 @@ public interface LightDynamicPenetrationMapper {
             "CONCLUSION = #{conclusion}, " +
             "TEST_DATE = #{testDate}, " +
             "REPORT_DATE = #{reportDate}, " +
-            "DATA_BLOCKS = #{dataBlocks}, " +
             "REMARKS = #{remarks}, " +
             "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "UPDATE_TIME = #{updateTime}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(LightDynamicPenetration record);
 
@@ -144,17 +144,13 @@ public interface LightDynamicPenetrationMapper {
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
-            "DATA_JSON = #{dataJson}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
             "APPROVER = #{approver}, " +
             "FILLER = #{filler}, " +
             "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
-            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign}, #{inspectSignaturePhoto}), " +
             "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
-            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign}, #{reviewSignaturePhoto}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto}, " +
             "SOIL_PROPERTY = #{soilProperty}, " +
             "DESIGN_CAPACITY = #{designCapacity}, " +
             "HAMMER_WEIGHT = #{hammerWeight}, " +
@@ -164,10 +160,14 @@ public interface LightDynamicPenetrationMapper {
             "CONCLUSION = #{conclusion}, " +
             "TEST_DATE = #{testDate}, " +
             "REPORT_DATE = #{reportDate}, " +
-            "DATA_BLOCKS = #{dataBlocks}, " +
             "REMARKS = #{remarks}, " +
             "UPDATE_BY = #{updateBy}, " +
-            "UPDATE_TIME = #{updateTime} " +
+            "UPDATE_TIME = #{updateTime}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
+            "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
+            "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
             "WHERE ID = #{id}")
     int updateById(LightDynamicPenetration record);
 
@@ -180,13 +180,20 @@ public interface LightDynamicPenetrationMapper {
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto} WHERE ID = #{id}")
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET REPORT_STATUS = #{reportStatus}, RESULT_STATUS = #{resultStatus} WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
-}
 
+    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+            "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
+            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+    int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
+                                         @Param("testerSign") String testerSign,
+                                         @Param("reviewSign") String reviewSign);
+}

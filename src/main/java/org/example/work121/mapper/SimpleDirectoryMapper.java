@@ -8,7 +8,8 @@ import java.util.List;
 @Mapper
 public interface SimpleDirectoryMapper {
 
-    @Select("SELECT " +
+    @Select("SELECT * FROM (" +
+            "SELECT " +
             "ID, DIR_ID, DIR_NAME, " +
             "TABLE1_TYPE, TABLE1_ID, " +
             "TABLE2_TYPE, TABLE2_ID, " +
@@ -27,7 +28,9 @@ public interface SimpleDirectoryMapper {
             "UPDATE_MAN as updateBy, " +
             "UPDATE_TIME " +
             "FROM T_SIMPLE_DIRECTORY " +
-            "WHERE DIR_NAME = #{dirName}")
+            "WHERE UPPER(TRIM(DIR_NAME)) = UPPER(TRIM(#{dirName})) " +
+            "ORDER BY NVL(UPDATE_TIME, CREATE_TIME) DESC" +
+            ") WHERE ROWNUM <= 1")
     SimpleDirectory selectByDirName(String dirName);
 
     @Select("SELECT " +

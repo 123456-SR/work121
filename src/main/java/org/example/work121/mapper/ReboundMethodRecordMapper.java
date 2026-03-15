@@ -45,23 +45,24 @@ public interface ReboundMethodRecordMapper {
             "WHERE t2.ENTRUSTMENT_ID = #{entrustmentId}")
     ReboundMethodRecord selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_REBOUND_METHOD (ID, ENTRUSTMENT_ID, DATA_JSON, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME) " +
-            "VALUES (#{id}, #{entrustmentId}, #{dataJson,jdbcType=CLOB}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})")
+    @Insert("INSERT INTO T_REBOUND_METHOD (ID, ENTRUSTMENT_ID, APPROVER, FILLER, RECORD_TESTER, RECORD_REVIEWER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
+            "VALUES (#{id}, #{entrustmentId}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(ReboundMethodRecord record);
 
     @Update("UPDATE T_REBOUND_METHOD SET " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{recordReviewer,jdbcType=VARCHAR}, " +
+            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
-            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int update(ReboundMethodRecord record);
+
 
     @Select("SELECT " +
             "t2.ID as id, " +

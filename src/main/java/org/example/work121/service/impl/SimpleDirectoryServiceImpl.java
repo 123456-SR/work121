@@ -125,16 +125,23 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
     public boolean saveDirectory(SimpleDirectory directory) {
         try {
             boolean isNew = false;
+            if (directory != null && directory.getDirName() != null) {
+                directory.setDirName(directory.getDirName().trim());
+            }
             // 检查是否已存在该目录
             SimpleDirectory existingRecord = null;
             if (directory.getDirId() != null) {
                 existingRecord = simpleDirectoryMapper.selectByDirId(directory.getDirId());
+            }
+            if (existingRecord == null && directory.getDirName() != null && !directory.getDirName().trim().isEmpty()) {
+                existingRecord = simpleDirectoryMapper.selectByDirName(directory.getDirName().trim());
             }
 
             int result;
             if (existingRecord != null) {
                 // 更新现有记录
                 directory.setId(existingRecord.getId()); // Ensure ID is set for update
+                directory.setDirId(existingRecord.getDirId());
                 // 保留创建信息
                 directory.setCreateBy(existingRecord.getCreateBy());
                 directory.setCreateTime(existingRecord.getCreateTime());
