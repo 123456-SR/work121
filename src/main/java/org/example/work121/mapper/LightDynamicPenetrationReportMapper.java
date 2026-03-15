@@ -39,7 +39,7 @@ public interface LightDynamicPenetrationReportMapper {
             "VALUES (#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{rejectReason,jdbcType=VARCHAR}, #{nextHandler,jdbcType=VARCHAR}, NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{remarks,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(LightDynamicPenetrationReport report);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
@@ -52,8 +52,7 @@ public interface LightDynamicPenetrationReportMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(LightDynamicPenetrationReport report);
 
     @Select("SELECT " +
@@ -78,7 +77,7 @@ public interface LightDynamicPenetrationReportMapper {
             "WHERE ID = #{id}")
     LightDynamicPenetrationReport selectById(@Param("id") String id);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
@@ -92,7 +91,6 @@ public interface LightDynamicPenetrationReportMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(LightDynamicPenetrationReport report);
 }

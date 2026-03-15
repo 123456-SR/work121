@@ -25,13 +25,14 @@
           </button>
           <button
             @click="addRecord"
+            :disabled="!canEditStructure"
             class="btn btn-primary btn-small"
           >
             添加记录
           </button>
           <button
             @click="deleteRecord"
-            :disabled="totalRecords <= 0"
+            :disabled="totalRecords <= 0 || !canEditStructure"
             class="btn btn-danger btn-small"
           >
             删除当前记录
@@ -50,7 +51,7 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2 || parseInt(formData.status) === 4"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -350,7 +351,7 @@ const currentIndex = ref(0)
 const totalRecords = computed(() => records.value.length)
 
 const isEditable = computed(() => {
-  return formData.status == 0 || formData.status == 2
+  return formData.status == 0 || formData.status == 1 || formData.status == 2
 })
 
 const formData = reactive({
@@ -389,6 +390,12 @@ const formData = reactive({
   status: 0
 })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 const getStatusText = (status) => {
     // 处理 null、undefined、空字符串、NaN 等情况
     if (status === null || status === undefined || status === '' || status === 'null' || status === 'undefined') {
@@ -402,8 +409,8 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '待审核'
         case 2: return '已打回'
-        case 4: return '已签字待提交'
-        case 5: return '已通过'
+        case 4: return '审核通过'
+        case 5: return '审核通过'
         default: return '未知'
     }
 }
@@ -421,7 +428,7 @@ const getStatusColor = (status) => {
         case 0: return '#9E9E9E' // Grey
         case 1: return '#2196F3' // Blue
         case 2: return '#F44336' // Red
-        case 4: return '#17a2b8' // Info
+        case 4: return '#4CAF50' // Green
         case 5: return '#4CAF50' // Green
         default: return '#9E9E9E' // Grey
     }
@@ -833,6 +840,10 @@ const loadData = async (entrustmentId) => {
 }
 
 const addRecord = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能新增记录')
+    return
+  }
   saveCurrentRecordState()
   
   // 检查是否已经存在未保存的记录（id 为空或未定义）
@@ -874,6 +885,11 @@ const addRecord = async () => {
     clientUnit: entrustmentData.clientUnit,
     sampleName: entrustmentData.sampleName,
     commissionDate: entrustmentData.commissionDate,
+    recordTester: formData.recordTester || '',
+    recordReviewer: formData.recordReviewer || '',
+    filler: formData.filler || '',
+    tester: formData.recordTester || '',
+    reviewer: formData.recordReviewer || '',
     dataJson: '{}'
   }
   
@@ -883,6 +899,10 @@ const addRecord = async () => {
 }
 
 const deleteRecord = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能删除记录')
+    return
+  }
   if (records.value.length <= 1) {
     alert('至少保留一条记录')
     return
@@ -1462,18 +1482,10 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        // 如果两个人都签了，先更新状态为已签字待提交
-        if (formData.testerSignature && formData.reviewerSignature) {
-          formData.status = 4
-        }
         // 保存签名到数据库
         await submitForm()
         // 显示成功消息
-        if (parseInt(formData.status) === 4) {
-          alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
-        } else {
-          alert(`签名成功并已保存，您以${signType}身份签字`)
-        }
+        alert(`签名成功并已保存，您以${signType}身份签字`)
       } else {
         alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
       }
@@ -1501,8 +1513,12 @@ const analysisConfig = reactive({
 })
 
 const performAnalysis = () => {
-  const sr = Math.max(1, Math.min(10, Number(analysisConfig.startRow || 1)))
-  const er = Math.max(sr, Math.min(10, Number(analysisConfig.endRow || 10)))
+  const startRowRaw = analysisConfig.startRow
+  const endRowRaw = analysisConfig.endRow
+  const startRow = (startRowRaw === '' || startRowRaw === null || startRowRaw === undefined) ? 1 : Number(startRowRaw)
+  const endRow = (endRowRaw === '' || endRowRaw === null || endRowRaw === undefined) ? 10 : Number(endRowRaw)
+  const sr = Math.max(1, Math.min(10, Number.isFinite(startRow) ? startRow : 1))
+  const er = Math.max(sr, Math.min(10, Number.isFinite(endRow) ? endRow : 10))
   const rnd = (min, max) => {
     const a = Number(min || 0)
     const b = Number(max || 0)

@@ -9,8 +9,8 @@
           <button @click="prevRecord" :disabled="totalRecords <= 0 || currentIndex <= 0" class="btn btn-secondary btn-small">上一条</button>
           <span class="record-nav-info">记录 {{ totalRecords > 0 ? currentIndex + 1 : 0 }} / {{ totalRecords }}</span>
           <button @click="nextRecord" :disabled="totalRecords <= 0 || currentIndex >= totalRecords - 1" class="btn btn-secondary btn-small">下一条</button>
-          <button @click="addRecord" class="btn btn-primary btn-small">添加记录</button>
-          <button @click="deleteRecord" :disabled="totalRecords <= 0" class="btn btn-danger btn-small">删除当前记录</button>
+          <button @click="addRecord" :disabled="!canEditStructure" class="btn btn-primary btn-small">添加记录</button>
+          <button @click="deleteRecord" :disabled="totalRecords <= 0 || !canEditStructure" class="btn btn-danger btn-small">删除当前记录</button>
         </span>
       </div>
       
@@ -274,6 +274,12 @@ const formData = reactive({
   status: 0
 })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 // 数据分析相关状态
 const showAnalysisModal = ref(false)
 const analysisRange = reactive({ start: '', end: '' })
@@ -325,21 +331,21 @@ const getStatusText = (status) => {
         case 1: return '已提交待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '已签字待提交'
+        case 4: return '审核通过'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
         case 13: return '待签字'
-        case 14: return '已签字待提交'
+        case 14: return '审核通过待批准'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
-        case 24: return '已签字待提交'
+        case 24: return '审核通过待批准'
         case 25: return '审核通过待批准'
         default: return '未知'
     }
@@ -353,21 +359,21 @@ const getStatusColor = (status) => {
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
         case 3: return '#ffc107' // warning
-        case 4: return '#17a2b8' // info
+        case 4: return '#28a745' // success
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
         case 13: return '#ffc107' // warning
-        case 14: return '#17a2b8' // info
+        case 14: return '#28a745' // success
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
         case 23: return '#ffc107' // warning
-        case 24: return '#17a2b8' // info
+        case 24: return '#28a745' // success
         case 25: return '#28a745' // success
         default: return '#6c757d'
     }
@@ -422,7 +428,7 @@ const submitWorkflow = async (action) => {
                 return
             }
         }
-        signatureData = formData.testerSignature
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS') {
         // Role check: Only recordReviewer can audit
         if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
@@ -451,7 +457,7 @@ const submitWorkflow = async (action) => {
                 return
             }
         }
-        signatureData = formData.reviewerSignature
+        signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'REJECT') {
         // Role check: Only recordReviewer can reject
         if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
@@ -642,6 +648,10 @@ const nextRecord = () => {
 }
 
 const addRecord = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能新增记录')
+    return
+  }
   // Save current record state if any
   if (records.value.length > 0) {
       saveCurrentRecordState()
@@ -728,6 +738,10 @@ const addRecord = async () => {
 }
 
 const deleteRecord = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能删除记录')
+    return
+  }
   if (records.value.length <= 1) {
     alert('至少保留一条记录')
     return
@@ -1302,8 +1316,14 @@ const getRandomInRange = (min, max, decimalPlaces) => {
 
 const autoAnalyzeAndFill = () => {
   // 将用户输入的行号（1-20）转换为数组索引（0-19）
-  const start = (parseInt(analysisRange.start) || 1) - 1
-  const end = (parseInt(analysisRange.end) || 20) - 1
+  const startRow = (analysisRange.start === '' || analysisRange.start === null || analysisRange.start === undefined)
+    ? 1
+    : parseInt(String(analysisRange.start), 10)
+  const endRow = (analysisRange.end === '' || analysisRange.end === null || analysisRange.end === undefined)
+    ? 20
+    : parseInt(String(analysisRange.end), 10)
+  const start = (Number.isFinite(startRow) ? startRow : 1) - 1
+  const end = (Number.isFinite(endRow) ? endRow : 20) - 1
   
   // 确保范围在有效范围内
   const validStart = Math.max(0, start)

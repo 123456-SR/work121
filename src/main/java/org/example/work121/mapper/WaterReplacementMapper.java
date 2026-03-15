@@ -41,7 +41,7 @@ public interface WaterReplacementMapper {
             "WHERE t2.ID = #{id}")
     WaterReplacement selectById(@Param("id") String id);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "STATUS = #{status,jdbcType=VARCHAR}, " +
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
@@ -51,15 +51,14 @@ public interface WaterReplacementMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(WaterReplacement waterReplacement);
 
     /**
      * 工作流专用更新：只更新状态、签名、下一处理人等流程字段，不动 DATA_JSON 和 ENTRUSTMENT_ID。
      * 避免在审核通过时因为实体字段为 null 而把已有的 JSON 数据覆盖掉。
      */
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ID = #{id}) SET " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
@@ -67,8 +66,7 @@ public interface WaterReplacementMapper {
             "UPDATE_TIME = #{updateTime}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateWorkflowFields(WaterReplacement waterReplacement);
 
     @Select("SELECT " +
@@ -118,7 +116,7 @@ public interface WaterReplacementMapper {
             "#{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(WaterReplacement waterReplacement);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ENTRUSTMENT_ID = #{entrustmentId}) SET " +
             "APPROVER = #{approver}, " +
             "RECORD_TESTER = NVL(#{recordTester}, #{tester}), " +
             "RECORD_REVIEWER = NVL(#{recordReviewer}, #{reviewer}), " +
@@ -130,8 +128,7 @@ public interface WaterReplacementMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(WaterReplacement waterReplacement);
 
     @Delete("DELETE FROM T_WATER_REPLACEMENT WHERE ID = #{id}")
@@ -140,19 +137,18 @@ public interface WaterReplacementMapper {
     @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ID = #{id}) SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ID = #{id}) SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_WATER_REPLACEMENT SET REPORT_STATUS = #{reportStatus}, RESULT_STATUS = #{resultStatus} WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
-            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN)")
     int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
                                          @Param("testerSign") String testerSign,
                                          @Param("reviewSign") String reviewSign);

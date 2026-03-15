@@ -120,7 +120,7 @@ public interface ReboundMethodMapper {
             "#{testResult,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(ReboundMethod reboundMethod);
 
-    @Update("UPDATE T_REBOUND_METHOD SET " +
+    @Update("UPDATE (SELECT * FROM T_REBOUND_METHOD WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "STRUCTURE_PART = #{structurePart,jdbcType=VARCHAR}, " +
             "CONCRETE_GRADE = #{concreteGrade,jdbcType=VARCHAR}, " +
@@ -147,26 +147,24 @@ public interface ReboundMethodMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(ReboundMethod reboundMethod);
 
     @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR} WHERE ID = #{id,jdbcType=VARCHAR}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
+    @Update("UPDATE (SELECT * FROM T_REBOUND_METHOD WHERE ID = #{id,jdbcType=VARCHAR}) SET STATUS = #{status,jdbcType=VARCHAR}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_REBOUND_METHOD SET STATUS = #{status,jdbcType=VARCHAR}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id,jdbcType=VARCHAR}")
+    @Update("UPDATE (SELECT * FROM T_REBOUND_METHOD WHERE ID = #{id,jdbcType=VARCHAR}) SET STATUS = #{status,jdbcType=VARCHAR}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_REBOUND_METHOD SET REPORT_STATUS = #{reportStatus,jdbcType=VARCHAR}, RESULT_STATUS = #{resultStatus,jdbcType=VARCHAR} WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 
-    @Update("UPDATE T_REBOUND_METHOD SET " +
+    @Update("UPDATE (SELECT * FROM T_REBOUND_METHOD WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
-            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN)")
     int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
                                          @Param("testerSign") String testerSign,
                                          @Param("reviewSign") String reviewSign);

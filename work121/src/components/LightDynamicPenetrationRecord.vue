@@ -25,13 +25,14 @@
           </button>
           <button
             @click="addRecord"
+            :disabled="!canEditStructure"
             class="btn btn-primary btn-small"
           >
             添加页面
           </button>
           <button
             @click="deleteRecord"
-            :disabled="records.length <= 1"
+            :disabled="records.length <= 1 || !canEditStructure"
             class="btn btn-danger btn-small"
           >
             删除当前页面
@@ -274,14 +275,6 @@
         </div>
 
         <div class="form-group">
-          <label>填充顺序：</label>
-          <div class="range-inputs" style="gap: 18px;">
-            <label><input type="radio" v-model="analysisResults.order" value="LR" /> 从左到右</label>
-            <label><input type="radio" v-model="analysisResults.order" value="TB" /> 从上到下</label>
-          </div>
-        </div>
-
-        <div class="form-group">
           <label>实测锤击数（必填范围）：</label>
           <div class="range-inputs">
             <input type="number" v-model="analysisResults.actualMin" placeholder="最小值" step="1" />
@@ -311,7 +304,6 @@ const showAnalysisModal = ref(false)
 const analysisResults = reactive({
   startBlock: '',
   endBlock: '',
-  order: '',
   actualMin: '',
   actualMax: ''
 })
@@ -335,7 +327,7 @@ const records = ref([])
 const currentIndex = ref(0)
 
 const isEditable = computed(() => {
-  return formData.status == 0 || formData.status == 2
+  return formData.status == 0 || formData.status == 1 || formData.status == 2
 })
 
 const formData = reactive({
@@ -367,6 +359,12 @@ const formData = reactive({
   id: null
 })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 const getStatusText = (status) => {
     const s = parseInt(status)
     switch(s) {
@@ -374,19 +372,19 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 4: return '已签字待提交'
+        case 4: return '审核通过'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 14: return '已签字待提交'
+        case 14: return '审核通过'
         case 15: return '审核通过'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 24: return '已签字待提交'
+        case 24: return '审核通过'
         case 25: return '审核通过'
         default: return '未知'
     }
@@ -399,19 +397,19 @@ const getStatusColor = (status) => {
         case 0: return '#6c757d' // secondary
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
-        case 4: return '#17a2b8' // info
+        case 4: return '#28a745' // success
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
-        case 14: return '#17a2b8' // info
+        case 14: return '#28a745' // success
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
-        case 24: return '#17a2b8' // info
+        case 24: return '#28a745' // success
         case 25: return '#28a745' // success
         default: return '#6c757d'
     }
@@ -947,6 +945,10 @@ const nextRecord = () => {
 }
 
 const addRecord = () => {
+    if (!canEditStructure.value) {
+        alert('提交后不能新增页面')
+        return
+    }
     saveCurrentToState()
     
     // Clone basic info from current record
@@ -973,6 +975,7 @@ const addRecord = () => {
         tester: current.tester,
         recordTester: current.recordTester,
         recordReviewer: current.recordReviewer,
+        filler: formData.filler || current.filler || '',
         conclusion: '',
         inspectSignaturePhoto: current.inspectSignaturePhoto,
         reviewSignaturePhoto: current.reviewSignaturePhoto,
@@ -985,6 +988,10 @@ const addRecord = () => {
 }
 
 const deleteRecord = async () => {
+    if (!canEditStructure.value) {
+        alert('提交后不能删除页面')
+        return
+    }
     if (records.value.length <= 1) {
         alert('至少保留一条记录')
         return
@@ -1446,18 +1453,10 @@ const handleSign = async () => {
                 if (!formData.testDate) {
                     formData.testDate = formatDate(new Date())
                 }
-                // 如果两个人都签了，先更新状态为已签字待提交
-                if (formData.testerSignature && formData.reviewerSignature) {
-                    formData.status = 4
-                }
                 // 保存签名到数据库
                 await saveData()
                 // 显示成功消息
-                if (formData.status === 4) {
-                    alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
-                } else {
-                    alert(`签名成功并已保存，您以${signType}身份签字`)
-                }
+                alert(`签名成功并已保存，您以${signType}身份签字`)
             } else {
                 alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
             }
@@ -1522,8 +1521,6 @@ const autoAnalyzeAndFill = () => {
     alert('当前页面可填的区数为 ' + pointCount + '，请调整选择范围')
     return
   }
-  const order = analysisResults.order || 'LR'
-
   const actualMin = toInt(analysisResults.actualMin)
   const actualMax = toInt(analysisResults.actualMax)
   if (actualMin === null || actualMax === null) {
@@ -1560,8 +1557,7 @@ const autoAnalyzeAndFill = () => {
       setIfEmpty(`depth_L_${idx}`, depths[s])
       setIfEmpty(`depth_R_${idx}`, depths[s])
 
-      const sides = order === 'LR' ? ['L', 'R'] : ['L', 'R'] // 行顺序“从上到下”已内置按 s=0..6
-      for (const side of sides) {
+      for (const side of ['L', 'R']) {
         const key = `actual_${side}_${idx}`
         if (formData[key] === '' || formData[key] === null || formData[key] === undefined) {
           formData[key] = String(randomIntBetween(minVal, maxVal))

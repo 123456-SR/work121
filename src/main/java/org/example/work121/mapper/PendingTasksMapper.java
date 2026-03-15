@@ -24,7 +24,7 @@ public interface PendingTasksMapper {
             "e.ID AS data_id, " +
             "e.WT_NUM AS unified_number, " +
             "NVL(e.STATUS, '0') AS status, " +
-            "NVL(e.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN NVL(d.WT_UNDERTAKER, e.TESTER) WHEN #{status} IN ('4','5') THEN NVL(e.APPROVER, d.BG_APPROVER) ELSE NVL(d.WT_REVIEWER, e.REVIEWER) END) AS reviewer, " +
+            "NVL(e.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN NVL(d.WT_UNDERTAKER, e.TESTER) WHEN #{status} = '5' THEN NVL(e.APPROVER, d.BG_APPROVER) ELSE NVL(d.WT_REVIEWER, e.REVIEWER) END) AS reviewer, " +
             "e.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -38,7 +38,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -51,7 +51,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -64,7 +64,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -77,7 +77,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -90,7 +90,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -103,7 +103,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -116,7 +116,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +
@@ -129,7 +129,7 @@ public interface PendingTasksMapper {
             "t.ID AS data_id, " +
             "NVL(e.WT_NUM, t.ENTRUSTMENT_ID) AS unified_number, " +
             "NVL(t.STATUS, '0') AS status, " +
-            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} IN ('4','5') THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
+            "NVL(t.NEXT_HANDLER, CASE WHEN #{status} = '0' THEN t.FILLER WHEN #{status} = '5' THEN t.APPROVER ELSE t.RECORD_REVIEWER END) AS reviewer, " +
             "t.CREATE_TIME AS create_time, " +
             "e.CLIENT_UNIT AS client_unit, " +
             "e.PROJECT_NAME AS project_name " +

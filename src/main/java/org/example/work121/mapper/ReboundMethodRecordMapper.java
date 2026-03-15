@@ -49,7 +49,7 @@ public interface ReboundMethodRecordMapper {
             "VALUES (#{id}, #{entrustmentId}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(ReboundMethodRecord record);
 
-    @Update("UPDATE T_REBOUND_METHOD SET " +
+    @Update("UPDATE (SELECT * FROM T_REBOUND_METHOD WHERE ENTRUSTMENT_ID = #{entrustmentId}) SET " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
@@ -59,8 +59,7 @@ public interface ReboundMethodRecordMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(ReboundMethodRecord record);
 
 
@@ -103,7 +102,7 @@ public interface ReboundMethodRecordMapper {
             "WHERE t2.ID = #{id}")
     ReboundMethodRecord selectById(@Param("id") String id);
 
-    @Update("UPDATE T_REBOUND_METHOD SET " +
+    @Update("UPDATE (SELECT * FROM T_REBOUND_METHOD WHERE ID = #{id}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
@@ -117,8 +116,7 @@ public interface ReboundMethodRecordMapper {
             "REJECT_REASON = #{rejectReason,jdbcType=VARCHAR}, " +
             "NEXT_HANDLER = #{nextHandler,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
-            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP} " +
-            "WHERE ID = #{id}")
+            "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}")
     int updateById(ReboundMethodRecord record);
 
     @Delete("DELETE FROM T_REBOUND_METHOD WHERE ENTRUSTMENT_ID = #{entrustmentId}")

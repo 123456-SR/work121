@@ -320,22 +320,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (beckmanBeam != null) {
                         unifiedNumber = beckmanBeam.getEntrustmentId();
                         String nextStatus = decideNextStatus(beckmanBeam.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = beckmanBeamMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = beckmanBeamMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = beckmanBeamMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = beckmanBeamMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = beckmanBeamMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = beckmanBeamMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = beckmanBeam.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : beckmanBeam.getReviewSignaturePhoto();
+                            String reviewSign = beckmanBeam.getReviewSignaturePhoto();
                             beckmanBeamMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -345,22 +337,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (lightDynamicPenetration != null) {
                         unifiedNumber = lightDynamicPenetration.getEntrustmentId();
                         String nextStatus = decideNextStatus(lightDynamicPenetration.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = lightDynamicPenetrationMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = lightDynamicPenetrationMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = lightDynamicPenetrationMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = lightDynamicPenetrationMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = lightDynamicPenetrationMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = lightDynamicPenetrationMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = lightDynamicPenetration.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : lightDynamicPenetration.getReviewSignaturePhoto();
+                            String reviewSign = lightDynamicPenetration.getReviewSignaturePhoto();
                             lightDynamicPenetrationMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -370,22 +354,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (reboundMethod != null) {
                         unifiedNumber = reboundMethod.getEntrustmentId();
                         String nextStatus = decideNextStatus(reboundMethod.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = reboundMethodMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = reboundMethodMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = reboundMethodMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = reboundMethodMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = reboundMethodMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = reboundMethodMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = reboundMethod.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : reboundMethod.getReviewSignaturePhoto();
+                            String reviewSign = reboundMethod.getReviewSignaturePhoto();
                             reboundMethodMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -395,22 +371,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (cuttingRing != null) {
                         unifiedNumber = cuttingRing.getEntrustmentId();
                         String nextStatus = decideNextStatus(cuttingRing.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = cuttingRingMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = cuttingRingMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = cuttingRingMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = cuttingRingMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = cuttingRingMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = cuttingRingMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = cuttingRing.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : cuttingRing.getReviewSignaturePhoto();
+                            String reviewSign = cuttingRing.getReviewSignaturePhoto();
                             cuttingRingMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -420,22 +388,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (waterReplacement != null) {
                         unifiedNumber = waterReplacement.getEntrustmentId();
                         String nextStatus = decideNextStatus(waterReplacement.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = waterReplacementMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = waterReplacementMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = waterReplacementMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = waterReplacementMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = waterReplacementMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = waterReplacementMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = waterReplacement.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : waterReplacement.getReviewSignaturePhoto();
+                            String reviewSign = waterReplacement.getReviewSignaturePhoto();
                             waterReplacementMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -445,22 +405,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (sandReplacement != null) {
                         unifiedNumber = sandReplacement.getEntrustmentId();
                         String nextStatus = decideNextStatus(sandReplacement.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = sandReplacementMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = sandReplacementMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = sandReplacementMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = sandReplacementMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = sandReplacementMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = sandReplacementMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = sandReplacement.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : sandReplacement.getReviewSignaturePhoto();
+                            String reviewSign = sandReplacement.getReviewSignaturePhoto();
                             sandReplacementMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -470,22 +422,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (nuclearDensity != null) {
                         unifiedNumber = nuclearDensity.getEntrustmentId();
                         String nextStatus = decideNextStatus(nuclearDensity.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = nuclearDensityMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = nuclearDensityMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = nuclearDensityMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = nuclearDensityMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = nuclearDensityMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = nuclearDensityMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = nuclearDensity.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : nuclearDensity.getReviewSignaturePhoto();
+                            String reviewSign = nuclearDensity.getReviewSignaturePhoto();
                             nuclearDensityMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -495,22 +439,14 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     if (densityTest != null) {
                         unifiedNumber = densityTest.getEntrustmentId();
                         String nextStatus = decideNextStatus(densityTest.getStatus());
-                        if ("4".equals(nextStatus)) {
-                            if (approveSignPhoto != null) {
-                                result = densityTestMapper.updateStatusAndReviewSign(taskId, "4", approveSignPhoto) > 0;
-                            } else {
-                                result = densityTestMapper.updateStatusById(taskId, "4") > 0;
-                            }
+                        if (approveSignPhoto != null) {
+                            result = densityTestMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
                         } else {
-                            if (approveSignPhoto != null) {
-                                result = densityTestMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
-                            } else {
-                                result = densityTestMapper.updateStatusById(taskId, "5") > 0;
-                            }
+                            result = densityTestMapper.updateStatusById(taskId, "5") > 0;
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = densityTest.getInspectSignaturePhoto();
-                            String reviewSign = "4".equals(nextStatus) ? approveSignPhoto : densityTest.getReviewSignaturePhoto();
+                            String reviewSign = densityTest.getReviewSignaturePhoto();
                             densityTestMapper.updateRecordSignsByEntrustmentId(unifiedNumber, testerSign, reviewSign);
                         }
                     }
@@ -527,12 +463,11 @@ public class PendingTasksServiceImpl implements PendingTasksService {
     }
 
     private String decideNextStatus(String currentStatus) {
-        if (currentStatus == null) return "4";
+        if (currentStatus == null) return "5";
         String s = currentStatus.trim();
-        if ("1".equals(s)) return "4";
-        if ("4".equals(s)) return "5";
+        if ("1".equals(s)) return "5";
         if ("5".equals(s)) return "5";
-        return "4";
+        return "5";
     }
 
     private java.util.List<String> inferRecordTableTypesFromTestItems(String testItems) {

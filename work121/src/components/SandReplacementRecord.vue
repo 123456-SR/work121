@@ -25,13 +25,14 @@
           </button>
           <button
             @click="addRecord"
+            :disabled="!canEditStructure"
             class="btn btn-primary btn-small"
           >
             添加记录
           </button>
           <button
             @click="deleteRecord"
-            :disabled="totalRecords <= 0"
+            :disabled="totalRecords <= 0 || !canEditStructure"
             class="btn btn-danger btn-small"
           >
             删除当前记录
@@ -49,7 +50,7 @@
 
         <template v-if="!draftMode">
           <button
-            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2 || parseInt(formData.status) === 4"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -475,6 +476,12 @@ const formData = reactive({
   status: 0
 })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 // 数据分析相关状态
 const showAnalysisModal = ref(false)
 const analysisRange = reactive({ start: '', end: '' })
@@ -522,21 +529,21 @@ const getStatusText = (status) => {
         case 1: return '已提交待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '已签字待提交'
+        case 4: return '审核通过'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
         case 13: return '待签字'
-        case 14: return '已签字待提交'
+        case 14: return '审核通过待批准'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
-        case 24: return '已签字待提交'
+        case 24: return '审核通过待批准'
         case 25: return '审核通过待批准'
         default: return '未知'
     }
@@ -556,21 +563,21 @@ const getStatusColor = (status) => {
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
         case 3: return '#ffc107' // warning
-        case 4: return '#17a2b8' // info
+        case 4: return '#28a745' // success
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
         case 13: return '#ffc107' // warning
-        case 14: return '#17a2b8' // info
+        case 14: return '#28a745' // success
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
         case 23: return '#ffc107' // warning
-        case 24: return '#17a2b8' // info
+        case 24: return '#28a745' // success
         case 25: return '#28a745' // success
         default: return '#6c757d'
     }
@@ -626,7 +633,7 @@ const submitWorkflow = async (action) => {
             return
         }
         
-        signatureData = formData.testerSignature
+        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS') {
          // Role check: Only recordReviewer can audit
          if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
@@ -655,7 +662,7 @@ const submitWorkflow = async (action) => {
                  return
              }
          }
-         signatureData = formData.reviewerSignature
+         signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'REJECT' && formData.status === 1) {
          // Role check: Only recordReviewer can reject
          if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
@@ -729,6 +736,15 @@ const formatDate = (dateStr) => {
   return `${year}-${month}-${day}`
 }
 
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
+}
+
 const mapRecordToFormData = (record) => {
   // Clear dynamic fields first
   initDynamicFields()
@@ -737,8 +753,8 @@ const mapRecordToFormData = (record) => {
   formData.entrustmentId = record.entrustmentId || props.id
   
   // Signatures
-  formData.reviewerSignature = record.reviewSignaturePhoto || ''
-  formData.testerSignature = record.inspectSignaturePhoto || ''
+  formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
+  formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
   
   // Map Roles
   // Load defaults from directory if available
@@ -825,6 +841,10 @@ const nextRecord = () => {
 }
 
 const addRecord = async () => {
+    if (!canEditStructure.value) {
+        alert('提交后不能新增记录')
+        return
+    }
     saveCurrentRecordState()
     
     // Fetch Entrustment Info if available
@@ -856,8 +876,11 @@ const addRecord = async () => {
         standard: '',
         equipment: '',
         testCategory: entrustmentData.testCategory || '',
-        tester: '',
-        reviewer: '',
+        recordTester: formData.recordTester || '',
+        recordReviewer: formData.recordReviewer || '',
+        filler: formData.filler || '',
+        tester: formData.recordTester || '',
+        reviewer: formData.recordReviewer || '',
         status: 0, // 默认为草稿状态
     }
     
@@ -874,8 +897,11 @@ const addRecord = async () => {
         newRecord.equipment = lastData.equipment || ''
         newRecord.testCategory = lastData.testCategory || last.testCategory || newRecord.testCategory
         
-        newRecord.tester = last.tester || ''
-        newRecord.reviewer = last.reviewer || ''
+        newRecord.recordTester = newRecord.recordTester || last.recordTester || last.tester || ''
+        newRecord.recordReviewer = newRecord.recordReviewer || last.recordReviewer || last.reviewer || ''
+        newRecord.filler = newRecord.filler || last.filler || ''
+        newRecord.tester = newRecord.recordTester
+        newRecord.reviewer = newRecord.recordReviewer
     }
 
     records.value.push(newRecord)
@@ -884,6 +910,10 @@ const addRecord = async () => {
 }
 
 const deleteRecord = async () => {
+    if (!canEditStructure.value) {
+        alert('提交后不能删除记录')
+        return
+    }
     if (records.value.length <= 1) {
         alert('至少保留一条记录')
         return
@@ -1324,8 +1354,14 @@ const getRandomInRange = (min, max, decimalPlaces) => {
 
 const autoAnalyzeAndFill = () => {
   // 将用户输入的列号（1-4）转换为索引（0-3）
-  const start = (parseInt(analysisRange.start) || 1) - 1
-  const end = (parseInt(analysisRange.end) || 4) - 1
+  const startCol = (analysisRange.start === '' || analysisRange.start === null || analysisRange.start === undefined)
+    ? 1
+    : parseInt(String(analysisRange.start), 10)
+  const endCol = (analysisRange.end === '' || analysisRange.end === null || analysisRange.end === undefined)
+    ? 4
+    : parseInt(String(analysisRange.end), 10)
+  const start = (Number.isFinite(startCol) ? startCol : 1) - 1
+  const end = (Number.isFinite(endCol) ? endCol : 4) - 1
   
   // 确保范围在有效范围内
   const validStart = Math.max(0, start)

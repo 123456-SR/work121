@@ -31,7 +31,7 @@ public interface CuttingRingReportMapper {
             "VALUES (#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(CuttingRingReport report);
 
-    @Update("UPDATE T_CUTTING_RING SET " +
+    @Update("UPDATE (SELECT * FROM T_CUTTING_RING WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
@@ -40,8 +40,7 @@ public interface CuttingRingReportMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(CuttingRingReport report);
 
     @Select("SELECT " +
@@ -62,7 +61,7 @@ public interface CuttingRingReportMapper {
             "WHERE ID = #{id}")
     CuttingRingReport selectById(@Param("id") String id);
 
-    @Update("UPDATE T_CUTTING_RING SET " +
+    @Update("UPDATE (SELECT * FROM T_CUTTING_RING WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
@@ -72,7 +71,6 @@ public interface CuttingRingReportMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(CuttingRingReport report);
 }

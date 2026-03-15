@@ -31,7 +31,7 @@ public interface BeckmanBeamResultMapper {
             "VALUES (#{id}, #{entrustmentId}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(BeckmanBeamResult result);
 
-    @Update("UPDATE T_BECKMAN_BEAM SET " +
+    @Update("UPDATE (SELECT * FROM T_BECKMAN_BEAM WHERE ENTRUSTMENT_ID = #{entrustmentId}) SET " +
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
@@ -40,8 +40,7 @@ public interface BeckmanBeamResultMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(BeckmanBeamResult result);
 
     @Select("SELECT " +
@@ -62,7 +61,7 @@ public interface BeckmanBeamResultMapper {
             "WHERE ID = #{id}")
     BeckmanBeamResult selectById(@Param("id") String id);
 
-    @Update("UPDATE T_BECKMAN_BEAM SET " +
+    @Update("UPDATE (SELECT * FROM T_BECKMAN_BEAM WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
@@ -72,7 +71,6 @@ public interface BeckmanBeamResultMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(BeckmanBeamResult result);
 }

@@ -146,20 +146,20 @@ public class PendingTasksController {
     }
 
     /**
-     * 兼容前端传参：允许传 "0"/"1"/"4"/"5"，也允许传 "submit"/"audit"/"approval" 等（旧参数）。
+     * 兼容前端传参：允许传 "0"/"1"/"5"，也允许传 "submit"/"audit"/"approval" 等（旧参数）。
      */
     private String normalizeStatus(String taskStatus) {
         if (taskStatus == null || taskStatus.trim().isEmpty()) {
             return "1";
         }
         String v = taskStatus.trim();
-        if ("0".equals(v) || "1".equals(v) || "4".equals(v) || "5".equals(v)) {
+        if ("0".equals(v) || "1".equals(v) || "5".equals(v)) {
             return v;
         }
-        // 兼容：submit=待提交(0)，audit=待审核(1)，approval=待批准(4)
+        // 兼容：submit=待提交(0)，audit=待审核(1)，approval=审核通过(5)
         if ("submit".equalsIgnoreCase(v)) return "0";
         if ("audit".equalsIgnoreCase(v)) return "1";
-        if ("approval".equalsIgnoreCase(v)) return "4";
+        if ("approval".equalsIgnoreCase(v)) return "5";
         return "1";
     }
 }

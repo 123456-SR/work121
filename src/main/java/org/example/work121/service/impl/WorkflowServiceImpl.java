@@ -55,7 +55,6 @@ public class WorkflowServiceImpl implements WorkflowService {
     private static final String STATUS_PENDING_AUDIT = "1";
     private static final String STATUS_RETURNED = "2";
     private static final String STATUS_PENDING_SIGN = "3";
-    private static final String STATUS_PENDING_APPROVAL = "4";
     private static final String STATUS_APPROVED = "5";
 
     @Override
@@ -779,7 +778,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private boolean shouldGenerateReportAndResultByStatus(String status) {
-        return STATUS_PENDING_APPROVAL.equals(status) || STATUS_APPROVED.equals(status);
+        return STATUS_APPROVED.equals(status);
     }
 
     private void insertWorkflowActionLog(String tableType,
@@ -959,7 +958,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 if (entity instanceof JcCoreWtInfo) {
                     entity.setStatus(STATUS_APPROVED);
                 } else {
-                    entity.setStatus(STATUS_PENDING_APPROVAL);
+                    entity.setStatus(STATUS_APPROVED);
                 }
                 entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 if (signature != null) {
@@ -976,7 +975,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 if (entity instanceof JcCoreWtInfo) {
                     entity.setStatus(STATUS_APPROVED);
                 } else {
-                    entity.setStatus(STATUS_PENDING_APPROVAL);
+                    entity.setStatus(STATUS_APPROVED);
                 }
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
@@ -1006,7 +1005,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 
             // Backward compatibility for old "SIGN" action if needed
             case "SIGN": 
-                entity.setStatus(STATUS_PENDING_APPROVAL);
+                entity.setStatus(STATUS_APPROVED);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
                     entity.setRecordReviewSign(signature); // Record Reviewer Sign

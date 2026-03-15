@@ -25,6 +25,7 @@
           </button>
           <button
             @click="addPage"
+            :disabled="!canEditStructure"
             class="btn btn-primary btn-small"
           >
             添加页面
@@ -32,6 +33,7 @@
           <button
             v-if="totalPages > 1"
             @click="deletePage"
+            :disabled="!canEditStructure"
             class="btn btn-danger btn-small"
           >
             删除当前页面
@@ -404,7 +406,7 @@ const totalPages = computed(() => {
 })
 
 const isEditable = computed(() => {
-  return formData.status == 0 || formData.status == 2
+  return formData.status == 0 || formData.status == 1 || formData.status == 2
 })
 
 const formData = reactive({
@@ -432,6 +434,12 @@ const formData = reactive({
       totalPages: 1  // 总页数
     })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 const getStatusText = (status) => {
     if (status === null || status === undefined || status === '') {
         return '草稿'
@@ -445,19 +453,19 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 4: return '已签字待提交'
+        case 4: return '审核通过'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 14: return '已签字待提交'
+        case 14: return '审核通过'
         case 15: return '审核通过'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 24: return '已签字待提交'
+        case 24: return '审核通过'
         case 25: return '审核通过'
         default: return '未知'
     }
@@ -476,19 +484,19 @@ const getStatusColor = (status) => {
         case 0: return '#9E9E9E' // Grey (草稿)
         case 1: return '#2196F3' // Blue (待审核)
         case 2: return '#F44336' // Red (已打回)
-        case 4: return '#17a2b8' // Info (待批准)
+        case 4: return '#4CAF50' // Green (已通过)
         case 5: return '#4CAF50' // Green (已通过)
         // 报告表状态 (10-15)
         case 10: return '#9E9E9E' // Grey (报告草稿)
         case 11: return '#2196F3' // Blue (报告待审核)
         case 12: return '#F44336' // Red (报告已打回)
-        case 14: return '#17a2b8' // Info (报告待批准)
+        case 14: return '#4CAF50' // Green (报告已通过)
         case 15: return '#4CAF50' // Green (报告已通过)
         // 结果表状态 (20-25)
         case 20: return '#9E9E9E' // Grey (结果草稿)
         case 21: return '#2196F3' // Blue (结果待审核)
         case 22: return '#F44336' // Red (结果已打回)
-        case 24: return '#17a2b8' // Info (结果待批准)
+        case 24: return '#4CAF50' // Green (结果已通过)
         case 25: return '#4CAF50' // Green (结果已通过)
         default: return '#9E9E9E' // Grey (默认草稿)
     }
@@ -1077,6 +1085,10 @@ const nextPage = () => {
 }
 
 const addPage = () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能新增页面')
+    return
+  }
   saveCurrentPageData()
   saveCurrentRecordState()  // 保存当前状态
   
@@ -1088,6 +1100,10 @@ const addPage = () => {
 }
 
 const deletePage = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能删除页面')
+    return
+  }
   if (totalPages.value <= 1) {
     alert('至少保留一页')
     return
@@ -1325,13 +1341,7 @@ const handleSign = async () => {
       if (signed) {
         // 保存签名
         await saveData()
-        // 如果两个人都签了，调用工作流处理，将状态从待签字(3)变为已签字待提交(4)
-        if (formData.testerSignature && formData.reviewerSignature) {
-          await submitWorkflow('SIGN_TEST')
-          alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
-        } else {
-          alert(`签名成功并已保存，您以${signType}身份签字`)
-        }
+        alert(`签名成功并已保存，您以${signType}身份签字`)
       } else {
         alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
       }
@@ -1625,8 +1635,21 @@ const closeAnalysisModal = () => {
 }
 
 const autoAnalyzeAndFill = () => {
-  const start = (parseInt(analysisRange.start) || 1) - 1
-  const end = (parseInt(analysisRange.end) || 4) - 1
+  const startCol = (analysisRange.start === '' || analysisRange.start === null || analysisRange.start === undefined)
+    ? 1
+    : parseInt(String(analysisRange.start), 10)
+  const endCol = (analysisRange.end === '' || analysisRange.end === null || analysisRange.end === undefined)
+    ? 4
+    : parseInt(String(analysisRange.end), 10)
+  const start = (Number.isFinite(startCol) ? startCol : 1) - 1
+  const end = (Number.isFinite(endCol) ? endCol : 4) - 1
+  const validStart = Math.max(0, start)
+  const validEnd = Math.min(3, end)
+
+  if (validStart > validEnd) {
+    alert('起始列不能大于结束列')
+    return
+  }
   
   // 收集现有数据用于分析
   const ringMasses = []
@@ -1642,7 +1665,7 @@ const autoAnalyzeAndFill = () => {
   const compactions = []
   
   // 收集数据
-  for (let i = start; i <= end; i++) {
+  for (let i = validStart; i <= validEnd; i++) {
     const pagePrefix = '_page' + currentPage.value + '_' + i
     
     // 环刀相关数据

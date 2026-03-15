@@ -46,7 +46,7 @@ public interface WaterReplacementRecordMapper {
             "VALUES (#{id}, #{entrustmentId}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), NVL(#{recordReviewer,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}), #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(WaterReplacementRecord record);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ENTRUSTMENT_ID = #{entrustmentId}) SET " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), " +
@@ -56,8 +56,7 @@ public interface WaterReplacementRecordMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(WaterReplacementRecord record);
 
     @Select("SELECT " +
@@ -96,7 +95,7 @@ public interface WaterReplacementRecordMapper {
             "WHERE t2.ID = #{id}")
     WaterReplacementRecord selectById(@Param("id") String id);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ID = #{id}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
@@ -107,8 +106,7 @@ public interface WaterReplacementRecordMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(WaterReplacementRecord record);
 
     @Delete("DELETE FROM T_WATER_REPLACEMENT WHERE ENTRUSTMENT_ID = #{entrustmentId}")

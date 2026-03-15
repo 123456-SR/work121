@@ -640,7 +640,7 @@ const isSameTesterReviewer = computed(() => {
 })
 
 const showSubmitButton = computed(() => {
-  return formData.status == 0 || formData.status == 2 || formData.status == 4
+  return formData.status == 0 || formData.status == 2
 })
 
 const showAuditButtons = computed(() => {
@@ -995,8 +995,6 @@ const handleSign = async () => {
         // 保存签名到数据库
         const saved = await saveForm(true)
         if (saved) {
-          // 调用工作流处理，将状态从待签字(3)变为已签字待提交(4)
-          await submitWorkflow('SIGN_TEST')
           alert('签名成功并已保存')
         } else {
           alert('签名成功，但保存失败')
@@ -1115,7 +1113,7 @@ const getStatusText = (status) => {
     case 1: return '待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '已签字待提交'
+    case 4: return '审核通过'
     case 5: return '审核通过'
     default: return '草稿'
   }
@@ -1128,7 +1126,7 @@ const getStatusColor = (status) => {
     case 1: return '#2196F3' // Blue
     case 2: return '#F44336' // Red
     case 3: return '#FF9800' // Orange
-    case 4: return '#9C27B0' // Purple
+    case 4: return '#4CAF50' // Green
     case 5: return '#4CAF50' // Green
     default: return '#000000'
   }
@@ -1204,13 +1202,6 @@ const submitWorkflow = async (action) => {
             }
         }
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
-    } else if (action === 'SIGN_TEST') {
-        // Handle test sign action
-        if (!formData.testerSignature) {
-            alert('请先进行检测人签字')
-            return
-        }
-        signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
         // Role check: Only reviewer can audit/reject
         if (formData.reviewer && user.username !== formData.reviewer && user.userName !== formData.reviewer) {
@@ -1269,7 +1260,7 @@ const submitWorkflow = async (action) => {
         }
         signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
         
-    } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 4)) {
+    } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 5)) {
          // Role check: Only approver can sign/reject
          if (formData.approver && user.username !== formData.approver && user.userName !== formData.approver) {
             alert('您不是该单据的批准人 (' + formData.approver + ')，无权操作')

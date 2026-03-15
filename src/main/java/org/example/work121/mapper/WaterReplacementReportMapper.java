@@ -28,14 +28,13 @@ public interface WaterReplacementReportMapper {
             "VALUES (#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(WaterReplacementReport report);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(WaterReplacementReport report);
 
     @Select("SELECT " +
@@ -53,14 +52,13 @@ public interface WaterReplacementReportMapper {
             "WHERE ID = #{id}")
     WaterReplacementReport selectById(@Param("id") String id);
 
-    @Update("UPDATE T_WATER_REPLACEMENT SET " +
+    @Update("UPDATE (SELECT * FROM T_WATER_REPLACEMENT WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(WaterReplacementReport report);
 }

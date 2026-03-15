@@ -307,7 +307,7 @@ const getStatusText = (status) => {
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
-    case 4: return '已签字待提交'
+    case 4: return '审核通过待批准'
     case 5: return '审核通过待批准'
     case 6: return '已批准'
     case 7: return '驳回'
@@ -315,7 +315,7 @@ const getStatusText = (status) => {
     case 10: return '草稿'
     case 11: return '已提交待审核'
     case 12: return '已打回'
-    case 14: return '已签字待提交'
+    case 14: return '审核通过待批准'
     case 15: return '审核通过待批准'
     case 16: return '已批准'
     case 17: return '驳回'
@@ -323,7 +323,7 @@ const getStatusText = (status) => {
     case 20: return '草稿'
     case 21: return '已提交待审核'
     case 22: return '已打回'
-    case 24: return '已签字待提交'
+    case 24: return '审核通过待批准'
     case 25: return '审核通过待批准'
     case 26: return '已批准'
     case 27: return '驳回'
@@ -338,7 +338,7 @@ const getStatusColor = (status) => {
     case 0: return '#6c757d' // secondary
     case 1: return '#007bff' // primary
     case 2: return '#dc3545' // danger
-    case 4: return '#17a2b8' // info
+    case 4: return '#ff8c00' // orange
     case 5: return '#ff8c00' // orange
     case 6: return '#28a745' // success
     case 7: return '#dc3545' // danger
@@ -346,7 +346,7 @@ const getStatusColor = (status) => {
     case 10: return '#6c757d' // secondary
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
-    case 14: return '#17a2b8' // info
+    case 14: return '#ff8c00' // orange
     case 15: return '#ff8c00' // orange
     case 16: return '#28a745' // success
     case 17: return '#dc3545' // danger
@@ -354,7 +354,7 @@ const getStatusColor = (status) => {
     case 20: return '#6c757d' // secondary
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
-    case 24: return '#17a2b8' // info
+    case 24: return '#ff8c00' // orange
     case 25: return '#ff8c00' // orange
     case 26: return '#28a745' // success
     case 27: return '#dc3545' // danger
@@ -436,7 +436,7 @@ const submitWorkflow = async (action) => {
         }
     }
     signatureData = formData.reviewerSignature.replace(/^data:image\/\w+;base64,/, '')
-  } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 4)) {
+  } else if (action === 'SIGN_APPROVE' || (action === 'REJECT' && formData.status === 5)) {
     if (formData.approver && currentAccount !== formData.approver && currentName !== formData.approver) {
          alert('您不是该单据的批准人 (' + formData.approver + ')，无权操作')
          return

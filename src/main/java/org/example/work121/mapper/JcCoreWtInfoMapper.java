@@ -117,10 +117,10 @@ public interface JcCoreWtInfoMapper {
     @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status, jdbcType=VARCHAR} WHERE ID = #{id, jdbcType=VARCHAR}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status, jdbcType=VARCHAR}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto, jdbcType=CLOB} WHERE ID = #{id, jdbcType=VARCHAR}")
+    @Update("UPDATE (SELECT * FROM T_ENTRUSTMENT WHERE ID = #{id, jdbcType=VARCHAR}) SET STATUS = #{status, jdbcType=VARCHAR}, REVIEW_SIGNATURE_PHOTO = #{reviewSignPhoto, jdbcType=CLOB}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_ENTRUSTMENT SET STATUS = #{status, jdbcType=VARCHAR}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto, jdbcType=CLOB} WHERE ID = #{id, jdbcType=VARCHAR}")
+    @Update("UPDATE (SELECT * FROM T_ENTRUSTMENT WHERE ID = #{id, jdbcType=VARCHAR}) SET STATUS = #{status, jdbcType=VARCHAR}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto, jdbcType=CLOB}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_ENTRUSTMENT SET APPROVER = #{approver}, UPDATE_BY = #{updateBy}, UPDATE_TIME = #{updateTime} WHERE ID = #{id}")
@@ -1064,7 +1064,7 @@ public interface JcCoreWtInfoMapper {
             ")")
     int insertExt(JcCoreWtInfo info);
 
-    @org.apache.ibatis.annotations.Update("UPDATE T_ENTRUSTMENT SET " +
+    @org.apache.ibatis.annotations.Update("UPDATE (SELECT * FROM T_ENTRUSTMENT WHERE ID = #{id, jdbcType=VARCHAR}) SET " +
             "WT_NUM = #{wtNum, jdbcType=VARCHAR}, " +
             "PROJECT_NAME = #{projectName, jdbcType=VARCHAR}, " +
             "CLIENT_UNIT = #{clientUnit, jdbcType=VARCHAR}, " +
@@ -1110,8 +1110,7 @@ public interface JcCoreWtInfoMapper {
             "INSPECT_SIGNATURE_PHOTO = #{inspectSignaturePhoto, jdbcType=CLOB}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto, jdbcType=CLOB}, " +
             "WT_MAN_SIGN = #{wtManSign, jdbcType=CLOB}, " +
-            "WT_REVIEW_SIGN = #{wtReviewSign, jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "WT_REVIEW_SIGN = #{wtReviewSign, jdbcType=CLOB}")
     int updateExt(JcCoreWtInfo info);
 
     @org.apache.ibatis.annotations.Insert("INSERT INTO JC_CORE_WT_INFO (" +

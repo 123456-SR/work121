@@ -173,11 +173,11 @@ const viewDetails = (task) => {
   navigateTo(listId, { presetWtNum: wtNum })
 }
 
-// 将页面类型映射为后端表的状态值：待提交=0，待审核=1，待批准=4
+// 将页面类型映射为后端表的状态值：待提交=0，待审核=1，审核通过=5
 const statusParam = computed(() => {
   if (selectedTaskType.value === 'submit') return '0'
   if (selectedTaskType.value === 'audit') return '1'
-  if (selectedTaskType.value === 'approval') return '4'
+  if (selectedTaskType.value === 'approval') return '5'
   // 默认返回待审核状态
   return '1'
 })

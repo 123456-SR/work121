@@ -72,7 +72,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "#{dataJson,jdbcType=CLOB}, NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, #{dataBlocks,jdbcType=CLOB})")
     int insert(LightDynamicPenetrationRecord record);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}) SET " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = NVL(#{recordTester,jdbcType=VARCHAR}, #{tester,jdbcType=VARCHAR}), " +
@@ -96,8 +96,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB}")
     int update(LightDynamicPenetrationRecord record);
 
     @Select("SELECT " +
@@ -149,7 +148,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "WHERE t2.ID = #{id}")
     LightDynamicPenetrationRecord selectById(@Param("id") String id);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "APPROVER = #{approver}, " +
             "FILLER = #{filler}, " +
@@ -174,8 +173,7 @@ public interface LightDynamicPenetrationRecordMapper {
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB}")
     int updateById(LightDynamicPenetrationRecord record);
 
     @Delete("DELETE FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ENTRUSTMENT_ID = #{entrustmentId}")

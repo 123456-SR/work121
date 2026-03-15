@@ -24,13 +24,14 @@
           </button>
           <button
             @click="addRecord"
+            :disabled="!canEditStructure"
             class="btn btn-primary btn-small"
           >
             添加记录
           </button>
           <button
             @click="deleteRecord"
-            :disabled="totalRecords <= 0"
+            :disabled="totalRecords <= 0 || !canEditStructure"
             class="btn btn-danger btn-small"
           >
             删除当前记录
@@ -49,7 +50,7 @@
         <!-- 只要不是草稿预览模式，就显示流程按钮；具体是否已保存由 submitWorkflow 再校验 -->
         <template v-if="!draftMode">
           <button
-            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2 || parseInt(formData.status) === 4"
+            v-if="parseInt(formData.status) === 0 || parseInt(formData.status) === 2"
             @click="submitWorkflow('SUBMIT')"
             class="btn btn-primary btn-small"
           >
@@ -531,6 +532,12 @@ const formData = reactive({
   status: 0
 })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 const getStatusText = (status) => {
     if (status === null || status === undefined || status === '') {
         return '草稿'
@@ -545,21 +552,21 @@ const getStatusText = (status) => {
         case 1: return '已提交待审核'
         case 2: return '已打回'
         case 3: return '待签字'
-        case 4: return '已签字待提交'
+        case 4: return '审核通过'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
         case 13: return '待签字'
-        case 14: return '已签字待提交'
+        case 14: return '审核通过待批准'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
-        case 24: return '已签字待提交'
+        case 24: return '审核通过待批准'
         case 25: return '审核通过待批准'
         default: return '未知'
     }
@@ -579,21 +586,21 @@ const getStatusColor = (status) => {
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
         case 3: return '#ffc107' // warning
-        case 4: return '#17a2b8' // info
+        case 4: return '#28a745' // success
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
         case 13: return '#ffc107' // warning
-        case 14: return '#17a2b8' // info
+        case 14: return '#28a745' // success
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
         case 23: return '#ffc107' // warning
-        case 24: return '#17a2b8' // info
+        case 24: return '#28a745' // success
         case 25: return '#28a745' // success
         default: return '#6c757d'
     }
@@ -951,15 +958,24 @@ const nextRecord = () => {
 }
 
 const addRecord = () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能新增记录')
+    return
+  }
   saveCurrentRecordState()
+  const current = records.value[currentIndex.value]
   const newRecord = {
     id: '',
     entrustmentId: formData.unifiedNumber,
     dataJson: '{}',
-    status: 0
+    status: 0,
+    recordTester: formData.recordTester || current?.recordTester || current?.tester || '',
+    recordReviewer: formData.recordReviewer || current?.recordReviewer || current?.reviewer || '',
+    filler: formData.filler || current?.filler || '',
+    tester: formData.recordTester || current?.recordTester || current?.tester || '',
+    reviewer: formData.recordReviewer || current?.recordReviewer || current?.reviewer || ''
   }
   // Pre-fill some fields from current record
-  const current = records.value[currentIndex.value]
   if (current && current.dataJson) {
       try {
           const json = JSON.parse(current.dataJson)
@@ -987,6 +1003,10 @@ const addRecord = () => {
 }
 
 const deleteRecord = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能删除记录')
+    return
+  }
   if (records.value.length <= 1) {
     alert('至少保留一条记录')
     return
@@ -1235,18 +1255,10 @@ const handleSign = async () => {
       }
 
       if (signed) {
-        // 如果两个人都签了，先更新状态为已签字待提交
-        if (formData.testerSignature && formData.reviewerSignature) {
-          formData.status = 4
-        }
         // 保存签名到数据库
         await submitForm()
         // 显示成功消息
-        if (formData.status === 4) {
-          alert('签名成功并已保存，检测人和审核人都已签字，状态已更新为已签字待提交')
-        } else {
-          alert(`签名成功并已保存，您以${signType}身份签字`)
-        }
+        alert(`签名成功并已保存，您以${signType}身份签字`)
       } else {
         alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签字`)
       }
@@ -1620,8 +1632,12 @@ const autoAnalyzeAndFill = () => {
     return Number.isFinite(n) ? n : null
   }
 
-  const startIdx = (parseInt(analysisRange.start) || 1)
-  const endIdx = (parseInt(analysisRange.end) || 15)
+  const startIdx = (analysisRange.start === '' || analysisRange.start === null || analysisRange.start === undefined)
+    ? 1
+    : parseInt(String(analysisRange.start), 10)
+  const endIdx = (analysisRange.end === '' || analysisRange.end === null || analysisRange.end === undefined)
+    ? 15
+    : parseInt(String(analysisRange.end), 10)
   const validStart = Math.max(1, startIdx)
   const validEnd = Math.min(15, endIdx)
   if (validStart > validEnd) {

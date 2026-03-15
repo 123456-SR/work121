@@ -81,7 +81,7 @@ public interface DensityTestRecordMapper {
             ")")
     int insert(DensityTestRecord record);
 
-    @Update("UPDATE T_DENSITY_TEST SET " +
+    @Update("UPDATE (SELECT * FROM T_DENSITY_TEST WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
@@ -91,11 +91,10 @@ public interface DensityTestRecordMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(DensityTestRecord record);
 
-    @Update("UPDATE T_DENSITY_TEST SET " +
+    @Update("UPDATE (SELECT * FROM T_DENSITY_TEST WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
@@ -106,8 +105,7 @@ public interface DensityTestRecordMapper {
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{recordReviewSign,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{recordTesterSign,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(DensityTestRecord record);
 
     @Delete("DELETE FROM T_DENSITY_TEST WHERE ENTRUSTMENT_ID = #{entrustmentId}")

@@ -27,21 +27,20 @@ public interface NuclearDensityReportMapper {
             "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     NuclearDensityReport selectByEntrustmentId(@Param("entrustmentId") String entrustmentId);
 
-    @Insert("INSERT INTO T_NUCLEAR_DENSITY (ID, ENTRUSTMENT_ID, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, DATA_JSON, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO) " +
-            "VALUES (#{id}, #{entrustmentId}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
+    @Insert("INSERT INTO T_NUCLEAR_DENSITY (ID, ENTRUSTMENT_ID, RECORD_TESTER, RECORD_REVIEWER, APPROVER, CREATE_BY, CREATE_TIME, UPDATE_BY, UPDATE_TIME, RECORD_REVIEW_SIGN, RECORD_TESTER_SIGN, APPROVE_SIGNATURE_PHOTO, DATA_JSON) " +
+            "VALUES (#{id}, #{entrustmentId}, #{tester,jdbcType=VARCHAR}, #{reviewer,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{reviewSignaturePhoto,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB}, #{dataJson,jdbcType=CLOB})")
     int insert(NuclearDensityReport report);
 
-    @Update("UPDATE T_NUCLEAR_DENSITY SET " +
+    @Update("UPDATE (SELECT * FROM T_NUCLEAR_DENSITY WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB})")
     int update(NuclearDensityReport report);
 
     @Select("SELECT " +
@@ -62,17 +61,16 @@ public interface NuclearDensityReportMapper {
             "WHERE ID = #{id}")
     NuclearDensityReport selectById(@Param("id") String id);
 
-    @Update("UPDATE T_NUCLEAR_DENSITY SET " +
+    @Update("UPDATE (SELECT * FROM T_NUCLEAR_DENSITY WHERE ID = #{id,jdbcType=VARCHAR}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{tester,jdbcType=VARCHAR}, " +
             "RECORD_REVIEWER = #{reviewer,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id,jdbcType=VARCHAR}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
+            "DATA_JSON = #{dataJson,jdbcType=CLOB})")
     int updateById(NuclearDensityReport report);
 }

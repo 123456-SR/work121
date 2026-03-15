@@ -111,7 +111,7 @@ public interface LightDynamicPenetrationMapper {
             "#{dataJson,jdbcType=CLOB}, NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), #{approveSignaturePhoto,jdbcType=CLOB}, #{dataBlocks,jdbcType=CLOB})")
     int insert(LightDynamicPenetration record);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ENTRUSTMENT_ID = #{entrustmentId}) SET " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
             "NEXT_HANDLER = #{nextHandler}, " +
@@ -135,14 +135,13 @@ public interface LightDynamicPenetrationMapper {
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB}")
     int update(LightDynamicPenetration record);
 
     @Select("SELECT COUNT(*) FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}")
     int countById(@Param("id") String id);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId}, " +
             "STATUS = #{status}, " +
             "REJECT_REASON = #{rejectReason}, " +
@@ -167,8 +166,7 @@ public interface LightDynamicPenetrationMapper {
             "RECORD_TESTER_SIGN = NVL(#{recordTesterSign,jdbcType=CLOB}, #{inspectSignaturePhoto,jdbcType=CLOB}), " +
             "RECORD_REVIEW_SIGN = NVL(#{recordReviewSign,jdbcType=CLOB}, #{reviewSignaturePhoto,jdbcType=CLOB}), " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "DATA_BLOCKS = #{dataBlocks,jdbcType=CLOB}")
     int updateById(LightDynamicPenetration record);
 
     @Delete("DELETE FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ENTRUSTMENT_ID = #{entrustmentId}")
@@ -180,19 +178,18 @@ public interface LightDynamicPenetrationMapper {
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status} WHERE ID = #{id}")
     int updateStatusById(@Param("id") String id, @Param("status") String status);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}) SET STATUS = #{status}, RECORD_REVIEW_SIGN = #{reviewSignPhoto,jdbcType=CLOB}")
     int updateStatusAndReviewSign(@Param("id") String id, @Param("status") String status, @Param("reviewSignPhoto") String reviewSignPhoto);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB} WHERE ID = #{id}")
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ID = #{id}) SET STATUS = #{status}, APPROVE_SIGNATURE_PHOTO = #{approveSignPhoto,jdbcType=CLOB}")
     int updateStatusAndApproveSign(@Param("id") String id, @Param("status") String status, @Param("approveSignPhoto") String approveSignPhoto);
 
     @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET REPORT_STATUS = #{reportStatus}, RESULT_STATUS = #{resultStatus} WHERE ENTRUSTMENT_ID = #{entrustmentId}")
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 
-    @Update("UPDATE T_LIGHT_DYNAMIC_PENETRATION SET " +
+    @Update("UPDATE (SELECT * FROM T_LIGHT_DYNAMIC_PENETRATION WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
             "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
-            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN) " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}")
+            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN)")
     int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
                                          @Param("testerSign") String testerSign,
                                          @Param("reviewSign") String reviewSign);

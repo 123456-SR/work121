@@ -46,7 +46,7 @@ public interface CuttingRingRecordMapper {
             "VALUES (#{id,jdbcType=VARCHAR}, #{entrustmentId,jdbcType=VARCHAR}, #{approver,jdbcType=VARCHAR}, #{filler,jdbcType=VARCHAR}, #{recordTester,jdbcType=VARCHAR}, #{recordReviewer,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP}, #{dataJson,jdbcType=CLOB}, #{recordReviewSign,jdbcType=CLOB}, #{recordTesterSign,jdbcType=CLOB}, #{approveSignaturePhoto,jdbcType=CLOB})")
     int insert(CuttingRingRecord record);
 
-    @Update("UPDATE T_CUTTING_RING SET " +
+    @Update("UPDATE (SELECT * FROM T_CUTTING_RING WHERE ENTRUSTMENT_ID = #{entrustmentId}) SET " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
             "RECORD_TESTER = #{recordTester,jdbcType=VARCHAR}, " +
@@ -56,8 +56,7 @@ public interface CuttingRingRecordMapper {
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ENTRUSTMENT_ID = #{entrustmentId}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int update(CuttingRingRecord record);
 
     @Select("SELECT " +
@@ -96,7 +95,7 @@ public interface CuttingRingRecordMapper {
             "WHERE t2.ID = #{id}")
     CuttingRingRecord selectById(@Param("id") String id);
 
-    @Update("UPDATE T_CUTTING_RING SET " +
+    @Update("UPDATE (SELECT * FROM T_CUTTING_RING WHERE ID = #{id}) SET " +
             "ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}, " +
             "APPROVER = #{approver,jdbcType=VARCHAR}, " +
             "FILLER = #{filler,jdbcType=VARCHAR}, " +
@@ -107,8 +106,7 @@ public interface CuttingRingRecordMapper {
             "UPDATE_BY = #{updateBy,jdbcType=VARCHAR}, " +
             "UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}, " +
             "DATA_JSON = #{dataJson,jdbcType=CLOB}, " +
-            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB} " +
-            "WHERE ID = #{id}")
+            "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}")
     int updateById(CuttingRingRecord record);
 
     @Delete("DELETE FROM T_CUTTING_RING WHERE ENTRUSTMENT_ID = #{entrustmentId}")

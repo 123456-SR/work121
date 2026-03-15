@@ -25,6 +25,7 @@
           </button>
           <button
             @click="addPage"
+            :disabled="!canEditStructure"
             class="btn btn-primary btn-small"
           >
             添加页面
@@ -32,6 +33,7 @@
           <button
             v-if="totalPages > 1"
             @click="deletePage"
+            :disabled="!canEditStructure"
             class="btn btn-danger btn-small"
           >
             删除当前页面
@@ -448,7 +450,7 @@ const totalPages = computed(() => {
 })
 
 const isEditable = computed(() => {
-  return formData.status == 0 || formData.status == 2
+  return formData.status == 0 || formData.status == 1 || formData.status == 2
 })
 
 const formData = reactive({
@@ -475,6 +477,12 @@ const formData = reactive({
   totalPages: 1  // 总页数
 })
 
+const canEditStructure = computed(() => {
+  const s = Number(formData.status)
+  if (Number.isNaN(s)) return true
+  return s === 0 || s === 2
+})
+
 // Status Text Helper
 const getStatusText = (status) => {
     const s = parseInt(status)
@@ -483,19 +491,19 @@ const getStatusText = (status) => {
         case 0: return '草稿'
         case 1: return '已提交待审核'
         case 2: return '已打回'
-        case 4: return '已签字待提交'
+        case 4: return '审核通过'
         case 5: return '审核通过'
         // 报告表状态 (10-15)
         case 10: return '草稿'
         case 11: return '已提交待审核'
         case 12: return '已打回'
-        case 14: return '已签字待提交'
+        case 14: return '审核通过待批准'
         case 15: return '审核通过待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
-        case 24: return '已签字待提交'
+        case 24: return '审核通过待批准'
         case 25: return '审核通过待批准'
         default: return '未知'
     }
@@ -508,19 +516,19 @@ const getStatusColor = (status) => {
         case 0: return '#6c757d' // secondary
         case 1: return '#007bff' // primary
         case 2: return '#dc3545' // danger
-        case 4: return '#17a2b8' // info
+        case 4: return '#28a745' // success
         case 5: return '#28a745' // success
         // 报告表状态 (10-15)
         case 10: return '#6c757d' // secondary
         case 11: return '#007bff' // primary
         case 12: return '#dc3545' // danger
-        case 14: return '#17a2b8' // info
+        case 14: return '#28a745' // success
         case 15: return '#28a745' // success
         // 结果表状态 (20-25)
         case 20: return '#6c757d' // secondary
         case 21: return '#007bff' // primary
         case 22: return '#dc3545' // danger
-        case 24: return '#17a2b8' // info
+        case 24: return '#28a745' // success
         case 25: return '#28a745' // success
         default: return '#6c757d'
     }
@@ -760,6 +768,15 @@ const loadPageData = (pageIndex, parsedJson = null) => {
   }
 }
 
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
+}
+
 const mapRecordToFormData = (record) => {
   // 保存当前记录引用
   currentRecord.value = record
@@ -773,8 +790,8 @@ const mapRecordToFormData = (record) => {
   } else {
     formData.status = 0
   }
-  formData.reviewerSignature = record.reviewSignaturePhoto || ''
-  formData.testerSignature = record.inspectSignaturePhoto || ''
+  formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
+  formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
 
   let parsedJson = {}
   if (record.dataJson) {
@@ -944,8 +961,8 @@ const mapRecordToFormData = (record) => {
   if (record.equipment !== null && record.equipment !== undefined) formData.equipment = record.equipment
 
   // Ensure entity fields override dataJson if present
-  if (record.reviewSignaturePhoto) formData.reviewerSignature = record.reviewSignaturePhoto
-  if (record.inspectSignaturePhoto) formData.testerSignature = record.inspectSignaturePhoto
+  if (record.reviewSignaturePhoto) formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto)
+  if (record.inspectSignaturePhoto) formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto)
 
   // Map Roles
   const directory = JSON.parse(localStorage.getItem('currentDirectory') || '{}')
@@ -1073,6 +1090,10 @@ const nextPage = () => {
 }
 
 const addPage = () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能新增页面')
+    return
+  }
   saveCurrentPageData()
   saveCurrentRecordState()  // 保存当前状态
   
@@ -1084,6 +1105,10 @@ const addPage = () => {
 }
 
 const deletePage = async () => {
+  if (!canEditStructure.value) {
+    alert('提交后不能删除页面')
+    return
+  }
   if (totalPages.value <= 1) {
     alert('至少保留一页')
     return
@@ -1568,8 +1593,14 @@ const getRandomInRange = (min, max, decimals = 2) => {
 // 自动分析并填充数据
 const autoAnalyzeAndFill = () => {
   // 将用户输入的列号（1-4）转换为数组索引（0-3）
-  const start = (parseInt(analysisRange.start) || 1) - 1
-  const end = (parseInt(analysisRange.end) || 4) - 1
+  const startCol = (analysisRange.start === '' || analysisRange.start === null || analysisRange.start === undefined)
+    ? 1
+    : parseInt(String(analysisRange.start), 10)
+  const endCol = (analysisRange.end === '' || analysisRange.end === null || analysisRange.end === undefined)
+    ? 4
+    : parseInt(String(analysisRange.end), 10)
+  const start = (Number.isFinite(startCol) ? startCol : 1) - 1
+  const end = (Number.isFinite(endCol) ? endCol : 4) - 1
   
   // 确保范围在有效范围内
   const validStart = Math.max(0, start)

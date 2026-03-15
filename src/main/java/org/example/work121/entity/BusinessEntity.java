@@ -125,8 +125,8 @@ public class BusinessEntity extends BaseEntity {
      * 1: 待审核
      * 2: 已退回
      * 3: 审核通过/待签字
-     * 4: 已签字/待批准
-     * 5: 已批准/完成
+     * 4: (历史状态，不再使用)
+     * 5: 审核通过
      */
     private String status;
 

@@ -356,9 +356,14 @@ const nextRecord = () => {
 
 const addRecord = () => {
   saveCurrentRecordState()
+  const current = records.value[currentIndex.value]
   const newRecord = {
     id: '',
     entrustmentId: props.id,
+    recordTester: formData.recordTester || current?.recordTester || '',
+    recordReviewer: formData.recordReviewer || current?.recordReviewer || '',
+    filler: formData.filler || current?.filler || '',
+    approver: formData.approver || current?.approver || '',
     dataJson: '{}'
   }
   records.value.push(newRecord)
@@ -758,7 +763,7 @@ const getStatusText = (status) => {
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '已签字待提交'
+    case 4: return '审核通过待批准'
     case 5: return '审核通过待批准'
     case 6: return '已批准'
     case 7: return '驳回'
@@ -767,7 +772,7 @@ const getStatusText = (status) => {
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
-    case 14: return '已签字待提交'
+    case 14: return '审核通过待批准'
     case 15: return '审核通过待批准'
     case 16: return '已批准'
     case 17: return '驳回'
@@ -776,7 +781,7 @@ const getStatusText = (status) => {
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
-    case 24: return '已签字待提交'
+    case 24: return '审核通过待批准'
     case 25: return '审核通过待批准'
     case 26: return '已批准'
     case 27: return '驳回'
@@ -792,7 +797,7 @@ const getStatusColor = (status) => {
     case 1: return '#007bff' // primary
     case 2: return '#dc3545' // danger
     case 3: return '#ffc107' // warning
-    case 4: return '#17a2b8' // info
+    case 4: return '#ff8c00' // orange
     case 5: return '#ff8c00' // orange
     case 6: return '#28a745' // success
     case 7: return '#dc3545' // danger
@@ -801,7 +806,7 @@ const getStatusColor = (status) => {
     case 11: return '#007bff' // primary
     case 12: return '#dc3545' // danger
     case 13: return '#ffc107' // warning
-    case 14: return '#17a2b8' // info
+    case 14: return '#ff8c00' // orange
     case 15: return '#ff8c00' // orange
     case 16: return '#28a745' // success
     case 17: return '#dc3545' // danger
@@ -810,7 +815,7 @@ const getStatusColor = (status) => {
     case 21: return '#007bff' // primary
     case 22: return '#dc3545' // danger
     case 23: return '#ffc107' // warning
-    case 24: return '#17a2b8' // info
+    case 24: return '#ff8c00' // orange
     case 25: return '#ff8c00' // orange
     case 26: return '#28a745' // success
     case 27: return '#dc3545' // danger
