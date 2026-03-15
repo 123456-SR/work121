@@ -16,77 +16,10 @@
         </div>
 
         <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="submitForm"
-          class="btn btn-secondary btn-small"
-        >
-          保存
-        </button>
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="submitWorkflow('SUBMIT')"
+          @click="approveAndSave"
           class="btn btn-primary btn-small"
         >
-          提交
-        </button>
-
-        <button
-          v-if="formData.status === 1"
-          @click="submitWorkflow('AUDIT_PASS')"
-          class="btn btn-primary btn-small"
-        >
-          审核通过
-        </button>
-        <button
-          v-if="formData.status === 1"
-          @click="submitWorkflow('REJECT')"
-          class="btn btn-danger btn-small"
-        >
-          退回
-        </button>
-
-        <button
-          v-if="formData.status === 3"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 3"
-          @click="submitWorkflow('SIGN_REVIEW')"
-          class="btn btn-primary btn-small"
-        >
-          复核签字
-        </button>
-
-        <button
-          v-if="formData.status === 4"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 4"
-          @click="submitWorkflow('SIGN_APPROVE')"
-          class="btn btn-primary btn-small"
-        >
-          批准签字
-        </button>
-        <button
-          v-if="formData.status === 4"
-          @click="submitWorkflow('REJECT')"
-          class="btn btn-danger btn-small"
-        >
-          驳回
+          批准
         </button>
 
         <button
@@ -253,15 +186,15 @@
     <div class="footer-info">
         <div style="position: relative; display: inline-block;">
             <span>批准：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span></span>
-            <img v-if="formData.approverSignature" :src="formData.approverSignature" style="position: absolute; top: -30px; left: 40px; width: 80px; height: 40px; mix-blend-mode: multiply; pointer-events: none;" />
+            <img v-if="formData.approverSignature" :src="formData.approverSignature" style="position: absolute; top: -16px; left: 40px; height: 18px; width: auto; max-width: 80px; object-fit: contain; mix-blend-mode: multiply; pointer-events: none;" />
         </div>
         <div style="position: relative; display: inline-block;">
             <span>审核：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span></span>
-            <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" style="position: absolute; top: -30px; left: 40px; width: 80px; height: 40px; mix-blend-mode: multiply; pointer-events: none;" />
+            <img v-if="formData.reviewerSignature" :src="formData.reviewerSignature" style="position: absolute; top: -16px; left: 40px; height: 18px; width: auto; max-width: 80px; object-fit: contain; mix-blend-mode: multiply; pointer-events: none;" />
         </div>
         <div style="position: relative; display: inline-block;">
             <span>检验：<span style="display: inline-block; width: 100px; border-bottom: 1px solid black; height: 1em;"></span></span>
-            <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; top: -30px; left: 40px; width: 80px; height: 40px; mix-blend-mode: multiply; pointer-events: none;" />
+            <img v-if="formData.testerSignature" :src="formData.testerSignature" style="position: absolute; top: -16px; left: 40px; height: 18px; width: auto; max-width: 80px; object-fit: contain; mix-blend-mode: multiply; pointer-events: none;" />
         </div>
     </div>
 
@@ -701,72 +634,45 @@ const loadData = async () => {
           if (json.witnessUnit) formData.witnessUnit = json.witnessUnit
           if (json.witness) formData.witness = json.witness
           if (json.commissionDate) formData.entrustDate = formatDate(json.commissionDate)
-
-          // Detect format
-          const keys = Object.keys(json)
-          const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
-          const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
-          
-          // Check if we actually have data
-          if (maxIdx >= 0) {
-              let is6Row = json.format === '6-row';
-              if (!is6Row && json.format !== '5-row') {
-                  // Heuristic: Record (5-row) usually fills 0-4, then 5-9. Index 5 has data (Block 1 Row 0).
-                  // Report (6-row) maps 0-4 -> 0-4, 5-9 -> 6-10. Index 5 is usually empty (Block 0 Row 5).
-                  
-                  // If we see data at index 5, it's likely 5-row format (because that's the start of Block 1).
-                  // If we see data at index 6 but NOT index 5, it's likely 6-row format.
-                  const hasIdx5 = json['depth_L_5'] !== undefined && json['depth_L_5'] !== '';
-                  const hasIdx6 = json['depth_L_6'] !== undefined && json['depth_L_6'] !== '';
-                  const hasPos1 = json['pos_L_1'] !== undefined && json['pos_L_1'] !== '';
-                  
-                  if ((!hasIdx5 && hasIdx6) || maxIdx > 9) {
-                      is6Row = true;
-                  } else if (hasIdx5 && !hasPos1) {
-                      // Data at index 5, but no Block 1 header. Likely Block 0 Row 5 (6-row format).
-                      is6Row = true;
-                  }
+          let hasAnyTableData = false
+          for (let b = 0; b < 2; b++) {
+            if (!formData.dataBlocks[b]) {
+              formData.dataBlocks[b] = {
+                pos_L: '',
+                depths: Array.from({ length: 7 }, () => ({ depth_L: '', actual_L: '' })),
+                avg_L: '',
+                capacity_L: '',
+                pos_R: '',
+                depths_R: Array.from({ length: 7 }, () => ({ depth_R: '', actual_R: '' })),
+                avg_R: '',
+                capacity_R: ''
               }
-              
-              for (let b = 0; b < 2; b++) {
-                // Ensure block exists
-                if (!formData.dataBlocks[b]) {
-                    formData.dataBlocks[b] = { pos_L: '', depths: Array.from({ length: 7 }, () => ({ depth_L: '', actual_L: '' })), avg_L: '', capacity_L: '', pos_R: '', depths_R: Array.from({ length: 7 }, () => ({ depth_R: '', actual_R: '' })), avg_R: '', capacity_R: '' }
-                }
-                formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
-                formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
-                formData.dataBlocks[b].capacity_L = json[`capacity_L_${b}`] || ''
+            }
 
-                formData.dataBlocks[b].pos_R = json[`pos_R_${b}`] || ''
-                formData.dataBlocks[b].avg_R = json[`avg_R_${b}`] || ''
-                formData.dataBlocks[b].capacity_R = json[`capacity_R_${b}`] || ''
+            formData.dataBlocks[b].pos_L = json[`pos_L_${b}`] || ''
+            formData.dataBlocks[b].avg_L = json[`avg_L_${b}`] || ''
+            formData.dataBlocks[b].capacity_L = json[`capacity_L_${b}`] || ''
 
-                if (is6Row) {
-                  for (let s = 0; s < 6; s++) {
-                    const idx = b * 6 + s
-                    formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${idx}`] || ''
-                    formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${idx}`] || ''
+            formData.dataBlocks[b].pos_R = json[`pos_R_${b}`] || ''
+            formData.dataBlocks[b].avg_R = json[`avg_R_${b}`] || ''
+            formData.dataBlocks[b].capacity_R = json[`capacity_R_${b}`] || ''
 
-                    formData.dataBlocks[b].depths_R[s].depth_R = json[`depth_R_${idx}`] || ''
-                    formData.dataBlocks[b].depths_R[s].actual_R = json[`actual_R_${idx}`] || ''
-                  }
-                } else {
-                  // 5-row logic conversion to 6-row UI
-                  // 5-row: Block 0 (0-4), Block 1 (5-9)
-                  // 6-row: Block 0 (0-4), Block 1 (6-10)
-                  for (let s = 0; s < 5; s++) {
-                    const sourceIdx = b * 5 + s
-                    
-                    formData.dataBlocks[b].depths[s].depth_L = json[`depth_L_${sourceIdx}`] || ''
-                    formData.dataBlocks[b].depths[s].actual_L = json[`actual_L_${sourceIdx}`] || ''
+            for (let s = 0; s < 7; s++) {
+              const idx = b * 7 + s
+              const dl = json[`depth_L_${idx}`] || ''
+              const al = json[`actual_L_${idx}`] || ''
+              const dr = json[`depth_R_${idx}`] || ''
+              const ar = json[`actual_R_${idx}`] || ''
 
-                    formData.dataBlocks[b].depths_R[s].depth_R = json[`depth_R_${sourceIdx}`] || ''
-                    formData.dataBlocks[b].depths_R[s].actual_R = json[`actual_R_${sourceIdx}`] || ''
-                  }
-                }
-              }
-              isDataLoaded = true
+              formData.dataBlocks[b].depths[s].depth_L = dl
+              formData.dataBlocks[b].depths[s].actual_L = al
+              formData.dataBlocks[b].depths_R[s].depth_R = dr
+              formData.dataBlocks[b].depths_R[s].actual_R = ar
+
+              if (dl || al || dr || ar) hasAnyTableData = true
+            }
           }
+          if (hasAnyTableData) isDataLoaded = true
         } catch (e) {
           console.error('JSON parse error', e)
         }
@@ -827,8 +733,6 @@ const loadData = async () => {
                    if (!formData.soilProperty && recordJson.soilProperty) formData.soilProperty = recordJson.soilProperty
                    
 
-                   let isFallback6Row = false;
-
                    // Map Data Blocks
                    for (let b = 0; b < 2; b++) {
                       // Ensure block exists
@@ -845,26 +749,12 @@ const loadData = async () => {
                       if (recordJson[`capacity_R_${b}`]) formData.dataBlocks[b].capacity_R = recordJson[`capacity_R_${b}`]
 
                       // Map Rows
-                      if (isFallback6Row) {
-                          for (let s = 0; s < 6; s++) {
-                            const idx = b * 6 + s
-                            if (recordJson[`depth_L_${idx}`]) formData.dataBlocks[b].depths[s].depth_L = recordJson[`depth_L_${idx}`]
-                            if (recordJson[`actual_L_${idx}`]) formData.dataBlocks[b].depths[s].actual_L = recordJson[`actual_L_${idx}`]
-                            
-                            if (recordJson[`depth_R_${idx}`]) formData.dataBlocks[b].depths_R[s].depth_R = recordJson[`depth_R_${idx}`]
-                            if (recordJson[`actual_R_${idx}`]) formData.dataBlocks[b].depths_R[s].actual_R = recordJson[`actual_R_${idx}`]
-                          }
-                      } else {
-                          // 5-row fallback -> 6-row UI
-                          for (let s = 0; s < 5; s++) {
-                              const rIdx = b * 5 + s
-                              
-                              if (recordJson[`depth_L_${rIdx}`]) formData.dataBlocks[b].depths[s].depth_L = recordJson[`depth_L_${rIdx}`]
-                              if (recordJson[`actual_L_${rIdx}`]) formData.dataBlocks[b].depths[s].actual_L = recordJson[`actual_L_${rIdx}`]
-                              
-                              if (recordJson[`depth_R_${rIdx}`]) formData.dataBlocks[b].depths_R[s].depth_R = recordJson[`depth_R_${rIdx}`]
-                              if (recordJson[`actual_R_${rIdx}`]) formData.dataBlocks[b].depths_R[s].actual_R = recordJson[`actual_R_${rIdx}`]
-                          }
+                      for (let s = 0; s < 7; s++) {
+                        const idx = b * 7 + s
+                        formData.dataBlocks[b].depths[s].depth_L = recordJson[`depth_L_${idx}`] || ''
+                        formData.dataBlocks[b].depths[s].actual_L = recordJson[`actual_L_${idx}`] || ''
+                        formData.dataBlocks[b].depths_R[s].depth_R = recordJson[`depth_R_${idx}`] || ''
+                        formData.dataBlocks[b].depths_R[s].actual_R = recordJson[`actual_R_${idx}`] || ''
                       }
                    }
                } catch (e) {
@@ -1271,6 +1161,33 @@ const generatePdf = () => {
 const previewPdf = () => {
   if (pdfForm.value) {
     openBackendPdfPreview('/api/pdf/light_dynamic_penetration/preview')
+  }
+}
+
+const approveAndSave = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+    const signatureBlob = sigRes?.data?.data?.signatureBlob
+    if (!sigRes?.data?.success || !signatureBlob) {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+      return
+    }
+
+    const currentName = user.fullName || user.userName || user.username
+    formData.approver = currentName
+    formData.approverSignature = normalizeSignatureSrc(signatureBlob)
+    formData.status = 6
+
+    await submitForm()
+  } catch (e) {
+    console.error('Approve error:', e)
+    alert('批准失败')
   }
 }
 

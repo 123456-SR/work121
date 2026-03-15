@@ -14,66 +14,11 @@
             {{ getStatusText(formData.status) }}
           </span>
         </div>
-        
-        <template v-if="props.id">
-          <button
-            v-if="formData.status === 0 || formData.status === 2"
-            @click="submitWorkflow('SUBMIT')"
-            class="btn btn-primary btn-small"
-          >
-            提交审核
-          </button>
-
-          <button
-            v-if="formData.status === 1"
-            @click="submitWorkflow('AUDIT_PASS')"
-            class="btn btn-primary btn-small"
-          >
-            审核通过
-          </button>
-          <button
-            v-if="formData.status === 1"
-            @click="submitWorkflow('REJECT')"
-            class="btn btn-danger btn-small"
-          >
-            打回
-          </button>
-
-          <button
-            v-if="formData.status === 3"
-            @click="submitWorkflow('SIGN_REVIEW')"
-            class="btn btn-primary btn-small"
-          >
-            复核签字
-          </button>
-
-          <button
-            v-if="formData.status === 4"
-            @click="submitWorkflow('SIGN_APPROVE')"
-            class="btn btn-primary btn-small"
-          >
-            批准签字
-          </button>
-          <button
-            v-if="formData.status === 4"
-            @click="submitWorkflow('REJECT')"
-            class="btn btn-danger btn-small"
-          >
-            打回
-          </button>
-        </template>
-
         <button
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
+          @click="approveAndSave"
+          class="btn btn-primary btn-small"
         >
-          签字
-        </button>
-        <button
-          @click="saveData"
-          class="btn btn-secondary btn-small"
-        >
-          保存
+          批准
         </button>
         <button
           @click="printDocument"
@@ -565,6 +510,42 @@ const formatDate = (d) => {
     return `${year}-${month}-${day}`
 }
 
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
+}
+
+const approveAndSave = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+    const signatureBlob = sigRes?.data?.data?.signatureBlob
+    if (!sigRes?.data?.success || !signatureBlob) {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+      return
+    }
+
+    const currentName = user.fullName || user.userName || user.username
+    formData.approver = currentName
+    formData.approveSignature = normalizeSignatureSrc(signatureBlob)
+    formData.status = 6
+
+    await saveData()
+  } catch (e) {
+    console.error('Approve error:', e)
+    alert('批准失败')
+  }
+}
+
 const loadData = async () => {
     if (!props.id) return
     try {
@@ -647,13 +628,6 @@ const loadData = async () => {
             if (data.dataJson) {
                 try {
                     const json = JSON.parse(data.dataJson)
-                    // Detect format: explicit flag OR heuristic (indices > 14 imply 6-row format for 3 blocks? No, Record has max 14 (idx 0-14). Result has max 17 (idx 0-17).
-                    // Record (3 blocks * 5 rows): indices 0-4, 5-9, 10-14. Max 14.
-                    // Result (3 blocks * 6 rows): indices 0-5, 6-11, 12-17. Max 17.
-                    const keys = Object.keys(json)
-                    const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
-                    const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
-                    const is6Row = json.format === '6-row' || maxIdx > 14
 
                     // Merge but verify fields
                     if (json.soilProperties && !formData.soilProperty) formData.soilProperty = json.soilProperties
@@ -685,27 +659,13 @@ const loadData = async () => {
                          if (json[`avg_R_${b}`]) formData[`avg_R_${b}`] = json[`avg_R_${b}`]
                          if (json[`capacity_R_${b}`]) formData[`capacity_R_${b}`] = json[`capacity_R_${b}`]
 
-                         if (is6Row) {
-                             for (let s = 0; s < 6; s++) {
-                                const idx = b * 6 + s
-                                if (json[`depth_L_${idx}`]) formData[`depth_L_${idx}`] = json[`depth_L_${idx}`]
-                                if (json[`actual_L_${idx}`]) formData[`actual_L_${idx}`] = json[`actual_L_${idx}`]
-                                
-                                if (json[`depth_R_${idx}`]) formData[`depth_R_${idx}`] = json[`depth_R_${idx}`]
-                                if (json[`actual_R_${idx}`]) formData[`actual_R_${idx}`] = json[`actual_R_${idx}`]
-                             }
-                         } else {
-                             // 5-row logic
-                             for (let s = 0; s < 5; s++) {
-                                const sourceIdx = b * 5 + s
-                                const targetIdx = b * 6 + s
-                                
-                                if (json[`depth_L_${sourceIdx}`]) formData[`depth_L_${targetIdx}`] = json[`depth_L_${sourceIdx}`]
-                                if (json[`actual_L_${sourceIdx}`]) formData[`actual_L_${targetIdx}`] = json[`actual_L_${sourceIdx}`]
-                                
-                                if (json[`depth_R_${sourceIdx}`]) formData[`depth_R_${targetIdx}`] = json[`depth_R_${sourceIdx}`]
-                                if (json[`actual_R_${sourceIdx}`]) formData[`actual_R_${targetIdx}`] = json[`actual_R_${sourceIdx}`]
-                             }
+                         for (let s = 0; s < 7; s++) {
+                            const idx = b * 7 + s
+                            if (json[`depth_L_${idx}`] !== undefined) formData[`depth_L_${idx}`] = json[`depth_L_${idx}`]
+                            if (json[`actual_L_${idx}`] !== undefined) formData[`actual_L_${idx}`] = json[`actual_L_${idx}`]
+                            
+                            if (json[`depth_R_${idx}`] !== undefined) formData[`depth_R_${idx}`] = json[`depth_R_${idx}`]
+                            if (json[`actual_R_${idx}`] !== undefined) formData[`actual_R_${idx}`] = json[`actual_R_${idx}`]
                          }
                     }
                 } catch (e) {
@@ -850,6 +810,8 @@ const saveData = async () => {
             const payload = {
                 id: resultId.value,
                 entrustmentId: currentEntrustmentId.value || props.id,
+                status: pageData.status,
+                rejectReason: pageData.rejectReason,
                 soilProperty: pageData.soilProperty,
                 designCapacity: pageData.designCapacity,
                 hammerWeight: pageData.hammerWeight,
@@ -951,10 +913,6 @@ const loadRecordByIndex = (index) => {
         if (data.dataJson) {
             try {
                 const json = JSON.parse(data.dataJson)
-                const keys = Object.keys(json)
-                const depthKeys = keys.filter(k => k.startsWith('depth_L_'))
-                const maxIdx = depthKeys.length > 0 ? Math.max(...depthKeys.map(k => parseInt(k.split('_')[2]))) : -1
-                const is6Row = json.format === '6-row' || maxIdx > 14
 
                 // 填充数据块
                 for (let b = 0; b < 3; b++) {
@@ -966,27 +924,13 @@ const loadRecordByIndex = (index) => {
                      if (json[`avg_R_${b}`]) formData[`avg_R_${b}`] = json[`avg_R_${b}`]
                      if (json[`capacity_R_${b}`]) formData[`capacity_R_${b}`] = json[`capacity_R_${b}`]
 
-                     if (is6Row) {
-                         for (let s = 0; s < 6; s++) {
-                            const idx = b * 6 + s
-                            if (json[`depth_L_${idx}`]) formData[`depth_L_${idx}`] = json[`depth_L_${idx}`]
-                            if (json[`actual_L_${idx}`]) formData[`actual_L_${idx}`] = json[`actual_L_${idx}`]
-                            
-                            if (json[`depth_R_${idx}`]) formData[`depth_R_${idx}`] = json[`depth_R_${idx}`]
-                            if (json[`actual_R_${idx}`]) formData[`actual_R_${idx}`] = json[`actual_R_${idx}`]
-                         }
-                     } else {
-                         // 5-row logic
-                         for (let s = 0; s < 5; s++) {
-                            const sourceIdx = b * 5 + s
-                            const targetIdx = b * 6 + s
-                            
-                            if (json[`depth_L_${sourceIdx}`]) formData[`depth_L_${targetIdx}`] = json[`depth_L_${sourceIdx}`]
-                            if (json[`actual_L_${sourceIdx}`]) formData[`actual_L_${targetIdx}`] = json[`actual_L_${sourceIdx}`]
-                            
-                            if (json[`depth_R_${sourceIdx}`]) formData[`depth_R_${targetIdx}`] = json[`depth_R_${sourceIdx}`]
-                            if (json[`actual_R_${sourceIdx}`]) formData[`actual_R_${targetIdx}`] = json[`actual_R_${sourceIdx}`]
-                         }
+                     for (let s = 0; s < 7; s++) {
+                        const idx = b * 7 + s
+                        if (json[`depth_L_${idx}`] !== undefined) formData[`depth_L_${idx}`] = json[`depth_L_${idx}`]
+                        if (json[`actual_L_${idx}`] !== undefined) formData[`actual_L_${idx}`] = json[`actual_L_${idx}`]
+                        
+                        if (json[`depth_R_${idx}`] !== undefined) formData[`depth_R_${idx}`] = json[`depth_R_${idx}`]
+                        if (json[`actual_R_${idx}`] !== undefined) formData[`actual_R_${idx}`] = json[`actual_R_${idx}`]
                      }
                 }
             } catch (e) {
@@ -1365,9 +1309,11 @@ const previewPdf = () => {
 .signature-img {
   position: absolute;
   left: 40px;
-  top: -20px;
-  width: 80px;
-  height: 40px;
+  top: -16px;
+  height: 18px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
   mix-blend-mode: multiply;
 }
 .no-print {

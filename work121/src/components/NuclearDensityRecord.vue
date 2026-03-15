@@ -299,6 +299,15 @@ const formatDate = (dateVal) => {
   return `${year}-${month}-${day}`
 }
 
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
+}
+
 // 过滤误用为流程状态码的“样品状态”（例如 0-7 这些数字），只保留真正的文字描述
 const cleanSampleStatus = (val) => {
   if (val === null || val === undefined) return ''
@@ -517,8 +526,8 @@ const mapRecordToFormData = (record) => {
   formData.status = record.status !== null && record.status !== undefined ? parseInt(record.status) || 0 : 0
   
   // Signature photos
-  formData.reviewerSignature = record.reviewSignaturePhoto || ''
-  formData.testerSignature = record.inspectSignaturePhoto || ''
+  formData.reviewerSignature = normalizeSignatureSrc(record.reviewSignaturePhoto || '')
+  formData.testerSignature = normalizeSignatureSrc(record.inspectSignaturePhoto || '')
   
   // Person names
   formData.reviewer = record.reviewer || record.REVIEWER || record.recordReviewer || record.RECORD_REVIEWER || ''
@@ -593,6 +602,10 @@ const mapRecordToFormData = (record) => {
     }
   }
 }
+
+  formData.reviewerSignature = normalizeSignatureSrc(formData.reviewerSignature)
+  formData.testerSignature = normalizeSignatureSrc(formData.testerSignature)
+
 
 const saveCurrentRecordState = () => {
   if (records.value.length > 0 && currentIndex.value >= 0 && currentIndex.value < records.value.length) {
@@ -859,20 +872,62 @@ const saveData = async () => {
 
 const exportExcel = async () => {
   try {
-    const dataJsonObj = { ...formData }
-    delete dataJsonObj.id
-    delete dataJsonObj.status
-    delete dataJsonObj.tester
-    delete dataJsonObj.reviewer
-    const response = await axios.post('/api/nuclear-density/export-excel', {
-      id: formData.id,
-      entrustmentId: formData.entrustmentId || props.id,
-      data: dataJsonObj
-    })
-    if (response.data && response.data.success) {
-      alert(`导出成功：${response.data.path}`)
+    saveCurrentRecordState()
+
+    const list = records.value && records.value.length > 0 ? records.value : [{ id: formData.id, entrustmentId: formData.entrustmentId || props.id, dataJson: JSON.stringify(formData) }]
+    const totalPages = list.length
+
+    const successPaths = []
+    const failures = []
+
+    for (let i = 0; i < list.length; i++) {
+      const pageNo = i + 1
+      const record = list[i] || {}
+
+      let dataJsonObj = {}
+      try {
+        dataJsonObj = record.dataJson ? JSON.parse(record.dataJson) : { ...formData }
+      } catch (e) {
+        dataJsonObj = { ...formData }
+      }
+
+      delete dataJsonObj.id
+      delete dataJsonObj.status
+      delete dataJsonObj.tester
+      delete dataJsonObj.reviewer
+
+      dataJsonObj.pageNo = pageNo
+      dataJsonObj.pageNum = pageNo
+      dataJsonObj.pageIndex = i
+      dataJsonObj.totalPages = totalPages
+      dataJsonObj.pageTotal = totalPages
+      dataJsonObj.pageText = `${pageNo}/${totalPages}`
+
+      try {
+        const response = await axios.post('/api/nuclear-density/export-excel', {
+          id: record.id || formData.id,
+          entrustmentId: record.entrustmentId || formData.entrustmentId || props.id,
+          pageNo,
+          totalPages,
+          data: dataJsonObj
+        })
+
+        if (response.data && response.data.success) {
+          successPaths.push(response.data.path)
+        } else {
+          failures.push(`第${pageNo}页：${response.data && response.data.message ? response.data.message : '未知错误'}`)
+        }
+      } catch (e) {
+        failures.push(`第${pageNo}页：${e && e.message ? e.message : '请求失败'}`)
+      }
+    }
+
+    if (successPaths.length > 0 && failures.length === 0) {
+      alert(`导出成功：\n${successPaths.join('\n')}`)
+    } else if (successPaths.length > 0) {
+      alert(`部分导出成功：\n${successPaths.join('\n')}\n\n失败：\n${failures.join('\n')}`)
     } else {
-      alert('导出失败: ' + (response.data && response.data.message ? response.data.message : '未知错误'))
+      alert(`导出失败：\n${failures.join('\n') || '未知错误'}`)
     }
   } catch (error) {
     console.error('Export error:', error)
@@ -880,7 +935,7 @@ const exportExcel = async () => {
   }
 }
 
-const handleSign = async () => {
+const handleSign = async (role) => {
   const user = JSON.parse(localStorage.getItem('userInfo'))
   if (!user) {
     alert('请先登录')
@@ -915,24 +970,24 @@ const handleSign = async () => {
       let signed = false
       let signType = ''
 
-      // Match Tester (记录检测人)
-      if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
-        if (!formData.recordTester) {
-            formData.recordTester = currentName
+      if (role === 'reviewer') {
+        if (formData.recordReviewer && formData.recordReviewer !== currentName && formData.recordReviewer !== currentAccount) {
+          alert(`当前用户(${currentName}/${currentAccount})与表单中的审核人(${formData.recordReviewer})不匹配，无法签名`)
+          return
         }
-        formData.testerSignature = imgSrc
-        signed = true
-        signType = '检测人'
-      }
-      
-      // Match Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
-      if (!signed && (!formData.recordReviewer || formData.recordReviewer === currentName || formData.recordReviewer === currentAccount)) {
-        if (!formData.recordReviewer) {
-            formData.recordReviewer = currentName
-        }
+        if (!formData.recordReviewer) formData.recordReviewer = currentName || currentAccount
         formData.reviewerSignature = imgSrc
         signed = true
         signType = '审核人'
+      } else {
+        if (formData.recordTester && formData.recordTester !== currentName && formData.recordTester !== currentAccount) {
+          alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})不匹配，无法签名`)
+          return
+        }
+        if (!formData.recordTester) formData.recordTester = currentName || currentAccount
+        formData.testerSignature = imgSrc
+        signed = true
+        signType = '检测人'
       }
 
       if (signed) {
@@ -940,8 +995,6 @@ const handleSign = async () => {
         await saveData()
         // 显示成功消息
         alert(`签名成功并已保存，您以${signType}身份签字`)
-      } else {
-        alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

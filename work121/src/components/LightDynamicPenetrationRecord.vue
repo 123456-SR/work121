@@ -1302,25 +1302,107 @@ const previewPdf = () => {
 const exportExcel = async () => {
   try {
     saveCurrentToState()
-    const dataObj = { ...formData }
-    delete dataObj.id
-    delete dataObj.status
-    delete dataObj.tester
-    delete dataObj.reviewer
-    delete dataObj.testerSignature
-    delete dataObj.reviewerSignature
-    delete dataObj.calculatorSignature
+    const list = records.value && records.value.length > 0 ? records.value : []
+    const totalPages = list.length > 0 ? list.length : 1
+    const successPaths = []
+    const failures = []
 
-    const response = await axios.post('/api/light-dynamic-penetration/export-excel', {
-      id: formData.id,
-      entrustmentId: (records.value[currentIndex.value] && records.value[currentIndex.value].entrustmentId) ? records.value[currentIndex.value].entrustmentId : (props.id || ''),
-      data: dataObj
-    })
+    const buildExportDataFromRecord = (record, index) => {
+      let dynamicData = {}
+      try {
+        dynamicData = record && record.dataJson ? JSON.parse(record.dataJson) : {}
+      } catch (e) {
+        dynamicData = {}
+      }
 
-    if (response.data && response.data.success) {
-      alert(`导出成功：${response.data.path}`)
+      const dataObj = {
+        ...dynamicData,
+        entrustingUnit: record?.clientUnit || '',
+        unifiedNumber: record?.wtNum || '',
+        projectName: record?.projectName || '',
+        commissionDate: formatDate(record?.commissionDate),
+        constructionPart: record?.constructionPart || '',
+        testDate: formatDate(record?.testDate),
+        soilProperties: record?.soilProperty || '',
+        testCategory: record?.testCategory || '',
+        designCapacity: record?.designCapacity || '',
+        hammerWeight: record?.hammerWeight || '',
+        dropDistance: record?.dropDistance || '',
+        testBasis: record?.testBasis || '',
+        equipment: record?.equipment || '',
+        remarks: record?.remarks || '',
+        conclusion: record?.conclusion || '',
+        filler: record?.filler || '',
+        recordTester: record?.recordTester || record?.tester || '',
+        recordReviewer: record?.recordReviewer || record?.reviewer || '',
+        pageNo: index + 1,
+        pageNum: index + 1,
+        pageIndex: index,
+        totalPages,
+        pageTotal: totalPages,
+        pageText: `${index + 1}/${totalPages}`
+      }
+
+      delete dataObj.id
+      delete dataObj.status
+      delete dataObj.tester
+      delete dataObj.reviewer
+      delete dataObj.testerSignature
+      delete dataObj.reviewerSignature
+      delete dataObj.calculatorSignature
+
+      return dataObj
+    }
+
+    for (let i = 0; i < totalPages; i++) {
+      const record = list.length > 0 ? list[i] : null
+      const pageNo = i + 1
+      const entrustmentId = (record && record.entrustmentId) ? record.entrustmentId : (props.id || '')
+      const id = record && record.id ? record.id : formData.id
+
+      const dataObj = record ? buildExportDataFromRecord(record, i) : (() => {
+        const d = { ...formData }
+        delete d.id
+        delete d.status
+        delete d.tester
+        delete d.reviewer
+        delete d.testerSignature
+        delete d.reviewerSignature
+        delete d.calculatorSignature
+        d.pageNo = pageNo
+        d.pageNum = pageNo
+        d.pageIndex = i
+        d.totalPages = totalPages
+        d.pageTotal = totalPages
+        d.pageText = `${pageNo}/${totalPages}`
+        return d
+      })()
+
+      try {
+        const response = await axios.post('/api/light-dynamic-penetration/export-excel', {
+          id,
+          entrustmentId,
+          pageNo,
+          totalPages,
+          data: dataObj
+        })
+
+        if (response.data && response.data.success) {
+          successPaths.push(response.data.path)
+        } else {
+          failures.push(`第${pageNo}页：${response.data && response.data.message ? response.data.message : '未知错误'}`)
+        }
+      } catch (e) {
+        failures.push(`第${pageNo}页：${e && e.message ? e.message : '请求失败'}`)
+      }
+    }
+
+    if (successPaths.length > 0 && failures.length === 0) {
+      alert(`导出成功：\n${successPaths.join('\n')}`)
+    } else if (successPaths.length > 0) {
+      alert(`部分导出成功：\n${successPaths.join('\n')}\n\n失败：\n${failures.join('\n')}`)
     } else {
-      alert('导出失败: ' + (response.data && response.data.message ? response.data.message : '未知错误'))
+      alert(`导出失败：\n${failures.join('\n') || '未知错误'}`)
     }
   } catch (error) {
     console.error('Export error:', error)

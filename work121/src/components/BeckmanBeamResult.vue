@@ -13,66 +13,11 @@
             {{ getStatusText(formData.status) }}
           </span>
         </div>
-        
-        <template v-if="props.id">
-          <button
-            v-if="formData.status === 0 || formData.status === 2"
-            @click="submitWorkflow('SUBMIT')"
-            class="btn btn-primary btn-small"
-          >
-            提交审核
-          </button>
-
-          <button
-            v-if="formData.status === 1"
-            @click="submitWorkflow('AUDIT_PASS')"
-            class="btn btn-primary btn-small"
-          >
-            审核通过
-          </button>
-          <button
-            v-if="formData.status === 1"
-            @click="submitWorkflow('REJECT')"
-            class="btn btn-danger btn-small"
-          >
-            打回
-          </button>
-
-          <button
-            v-if="formData.status === 3"
-            @click="submitWorkflow('SIGN_REVIEW')"
-            class="btn btn-primary btn-small"
-          >
-            复核签字
-          </button>
-
-          <button
-            v-if="formData.status === 4"
-            @click="submitWorkflow('SIGN_APPROVE')"
-            class="btn btn-primary btn-small"
-          >
-            批准签字
-          </button>
-          <button
-            v-if="formData.status === 4"
-            @click="submitWorkflow('REJECT')"
-            class="btn btn-danger btn-small"
-          >
-            打回
-          </button>
-        </template>
-
         <button
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
+          @click="approveAndSave"
+          class="btn btn-primary btn-small"
         >
-          签字
-        </button>
-        <button
-          @click="saveData"
-          class="btn btn-secondary btn-small"
-        >
-          保存
+          批准
         </button>
         <button
           @click="printDocument"
@@ -170,6 +115,15 @@
 <script setup>
 import { reactive, ref, onMounted, inject, defineProps } from 'vue'
 import axios from 'axios'
+
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
+}
 
 const props = defineProps({
     id: String
@@ -490,6 +444,7 @@ const saveData = async () => {
         const dataToSave = {
             id: formData.id,
             entrustmentId: formData.entrustmentId || props.id,
+            status: formData.status,
             dataJson: JSON.stringify(dataJsonObj),
             reviewSignaturePhoto: formData.reviewerSignature,
             inspectSignaturePhoto: formData.testerSignature,
@@ -517,6 +472,33 @@ const saveData = async () => {
         console.error('Save error:', error)
         alert('保存失败')
     }
+}
+
+const approveAndSave = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+    const signatureBlob = sigRes?.data?.data?.signatureBlob
+    if (!sigRes?.data?.success || !signatureBlob) {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+      return
+    }
+
+    const currentName = user.fullName || user.userName || user.username
+    formData.approver = currentName
+    formData.approverSignature = normalizeSignatureSrc(signatureBlob)
+    formData.status = 6
+
+    await saveData()
+  } catch (e) {
+    console.error('Approve error:', e)
+    alert('批准失败')
+  }
 }
 
 const handleSign = async () => {
@@ -921,9 +903,11 @@ const previewPdf = () => {
 .signature-img {
   position: absolute;
   left: 40px;
-  top: -20px;
-  width: 80px;
-  height: 40px;
+  top: -16px;
+  height: 18px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
   mix-blend-mode: multiply;
 }
 .no-print {

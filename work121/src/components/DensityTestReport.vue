@@ -14,79 +14,12 @@
             {{ getStatusText(formData.status) }}
           </span>
         </span>
-        
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="saveData"
-          class="btn btn-secondary btn-small"
-        >
-          保存
-        </button>
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="submitWorkflow('SUBMIT')"
-          class="btn btn-primary btn-small"
-        >
-          提交
-        </button>
 
         <button
-          v-if="formData.status === 1"
-          @click="submitWorkflow('AUDIT_PASS')"
+          @click="approveAndSave"
           class="btn btn-primary btn-small"
         >
-          审核通过
-        </button>
-        <button
-          v-if="formData.status === 1"
-          @click="submitWorkflow('REJECT')"
-          class="btn btn-danger btn-small"
-        >
-          退回
-        </button>
-
-        <button
-          v-if="formData.status === 3"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 3"
-          @click="submitWorkflow('SIGN_REVIEW')"
-          class="btn btn-primary btn-small"
-        >
-          复核签字
-        </button>
-
-        <button
-          v-if="formData.status === 4"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 4"
-          @click="submitWorkflow('SIGN_APPROVE')"
-          class="btn btn-primary btn-small"
-        >
-          批准签字
-        </button>
-        <button
-          v-if="formData.status === 4"
-          @click="submitWorkflow('REJECT')"
-          class="btn btn-danger btn-small"
-        >
-          驳回
+          批准
         </button>
 
         <button
@@ -322,6 +255,8 @@ const formData = reactive({
   companyName: '',
   companyAddress: '',
   companyPhone: '',
+  witness: '',
+  witnessUnit: '',
   remarks: '附原位密度检测结果。\n见证人：\n见证单位：',
   reviewerSignature: '',
   testerSignature: '',
@@ -339,8 +274,7 @@ const formatDate = (d) => {
 
 // 根据检测方法自动判断是否为“核子法”
 const isNuclearMethod = computed(() => {
-  const method = (formData.testMethod || '').toString()
-  // 只要检测方法里包含“核子”两个字，就按核子法版式渲染
+  const method = (formData.testMethod || formData.testCategory || '').toString()
   return method.includes('核子')
 })
 
@@ -558,7 +492,7 @@ const submitWorkflow = async (action) => {
 onMounted(() => {
   // Initialize dynamic fields for loop variable 'i_idx'
     // Please verify the loop count match the template
-    for (let i_idx = 0; i_idx < 8; i_idx++) {
+    for (let i_idx = 0; i_idx < 7; i_idx++) {
     formData['sampleId_' + i_idx] = ''
     formData['location_' + i_idx] = ''
     formData['compaction_' + i_idx] = ''
@@ -573,6 +507,99 @@ onMounted(() => {
 
   loadData()
 })
+
+const normalizeEntrustmentKey = (v) => {
+  const s = (v ?? '').toString().trim()
+  if (!s) return ''
+  if (s.startsWith('{') && s.endsWith('}')) {
+    return s.slice(1, -1).trim()
+  }
+  return s
+}
+
+const fillHeaderFromEntrustment = async (unifiedNumber) => {
+  const u = normalizeEntrustmentKey(unifiedNumber)
+  if (!u) return
+  try {
+    const resp = await axios.get('/api/jc-core-wt-info/detail', { params: { unifiedNumber: u } })
+    if (resp.data && resp.data.success && resp.data.data) {
+      const e = resp.data.data
+      if (!formData.unifiedNumber && e.wtNum) formData.unifiedNumber = e.wtNum
+      if (!formData.projectName && e.projectName) formData.projectName = e.projectName
+      if (!formData.clientUnit && e.clientUnit) formData.clientUnit = e.clientUnit
+      if (!formData.commissionDate && e.commissionDate) formData.commissionDate = formatDate(e.commissionDate)
+      if (!formData.constructionPart && e.constructionPart) formData.constructionPart = e.constructionPart
+      if (!formData.testCategory && e.testCategory) formData.testCategory = e.testCategory
+      if (!formData.testDate && e.testDate) formData.testDate = formatDate(e.testDate)
+      if (!formData.witness && e.witness) formData.witness = e.witness
+      if (!formData.witnessUnit && e.witnessUnit) formData.witnessUnit = e.witnessUnit
+      if (!formData.sampleNameStatus && (e.sampleName || e.sampleStatus)) {
+        const eSampleName = e.sampleName || ''
+        const eSampleStatus = e.sampleStatus || ''
+        formData.sampleNameStatus = eSampleName && eSampleStatus ? `${eSampleName}，${eSampleStatus}` : (eSampleName || eSampleStatus || '')
+      }
+    }
+  } catch (e) {
+  }
+}
+
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
+}
+
+const applyWitnessToRemarks = () => {
+  const w = (formData.witness ?? '').toString().trim()
+  const wu = (formData.witnessUnit ?? '').toString().trim()
+  if (!w && !wu) return
+  const raw = (formData.remarks ?? '').toString()
+  const lines = raw.split(/\r?\n/)
+  const upsert = (label, value) => {
+    if (!value) return
+    const idx = lines.findIndex(l => l.trim().startsWith(label))
+    if (idx === -1) {
+      lines.push(label + value)
+      return
+    }
+    const current = lines[idx].trim().slice(label.length).trim()
+    if (!current) lines[idx] = label + value
+  }
+  upsert('见证人：', w)
+  upsert('见证单位：', wu)
+  formData.remarks = lines.join('\n')
+}
+
+const fetchNuclearRecordsForKey = async (key) => {
+  const primary = normalizeEntrustmentKey(key)
+  if (!primary) return []
+
+  try {
+    const r1 = await axios.get('/api/nuclear-density/get-by-entrustment-id', { params: { entrustmentId: primary } })
+    if (r1.data && r1.data.success && Array.isArray(r1.data.data) && r1.data.data.length > 0) {
+      return r1.data.data
+    }
+  } catch (e) {
+  }
+
+  try {
+    const wtResp = await axios.get('/api/jc-core-wt-info/detail', { params: { unifiedNumber: primary } })
+    const wtInfo = wtResp?.data?.data
+    const wtId = normalizeEntrustmentKey(wtInfo?.id)
+    if (wtId && wtId !== primary) {
+      const r2 = await axios.get('/api/nuclear-density/get-by-entrustment-id', { params: { entrustmentId: wtId } })
+      if (r2.data && r2.data.success && Array.isArray(r2.data.data)) {
+        return r2.data.data || []
+      }
+    }
+  } catch (e) {
+  }
+
+  return []
+}
 
   const loadData = async () => {
   // 这里的 id 来自列表的 item.id（委托 WT_ID），wtNum 是统一编号 XT-2024-54301
@@ -698,7 +725,7 @@ onMounted(() => {
             sortedPages.forEach(pageIndex => {
               // 处理每页的5个样品
               for (let i = 0; i < 5; i++) {
-                if (sampleIndex >= 8) break // 报告表最多显示8个样品
+                if (sampleIndex >= 7) break // 报告表最多显示7个样品
                 
                 const pagePrefix = '_page' + pageIndex + '_' + i
                 
@@ -751,9 +778,93 @@ onMounted(() => {
         formData.id = data.id
         formData.status = data.status !== undefined ? data.status : 0
         formData.entrustmentId = data.entrustmentId
-        formData.reviewerSignature = data.reviewSignaturePhoto || ''
-        formData.testerSignature = data.inspectSignaturePhoto || ''
-        formData.approverSignature = data.approveSignaturePhoto || ''
+        formData.reviewerSignature = normalizeSignatureSrc(data.reviewSignaturePhoto || '')
+        formData.testerSignature = normalizeSignatureSrc(data.inspectSignaturePhoto || '')
+        formData.approverSignature = normalizeSignatureSrc(data.approveSignaturePhoto || '')
+
+        await fillHeaderFromEntrustment(formData.unifiedNumber || key)
+
+        const isFilled = (v) => v !== undefined && v !== null && String(v).trim() !== ''
+        const hasAnyRow = Array.from({ length: 7 }, (_, i) => (
+          isFilled(formData['sampleId_' + i]) ||
+          isFilled(formData['location_' + i]) ||
+          isFilled(formData['wetDensity_' + i]) ||
+          isFilled(formData['dryDensity_' + i]) ||
+          isFilled(formData['moisture_' + i]) ||
+          isFilled(formData['compaction_' + i])
+        )).some(Boolean)
+
+        const nuclearKey = formData.unifiedNumber || props.wtNum || key
+        if (nuclearKey && !hasAnyRow) {
+          try {
+            const nuclearList = await fetchNuclearRecordsForKey(nuclearKey)
+            if (nuclearList && nuclearList.length > 0) {
+              const pickScore = (r) => {
+                try {
+                  const p = JSON.parse(r?.dataJson || '{}')
+                  let c = 0
+                  for (let i = 0; i < 20; i++) {
+                    const v = p['sampleId_' + i]
+                    if (v !== undefined && v !== null && String(v).trim() !== '') c++
+                  }
+                  return c
+                } catch (e) {
+                  return 0
+                }
+              }
+              const nRecord = nuclearList
+                .filter(r => r && r.dataJson)
+                .sort((a, b) => pickScore(b) - pickScore(a))[0] || nuclearList[0]
+              if (nRecord && nRecord.dataJson) {
+                const nParsed = JSON.parse(nRecord.dataJson)
+                const commonFields = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate', 'constructionPart', 'testCategory', 'testMethod', 'equipment', 'sampleNameStatus', 'standard', 'designCompaction', 'maxDryDensity', 'optimumMoisture', 'minDryDensity']
+                commonFields.forEach(field => {
+                  if (!isFilled(formData[field]) && isFilled(nParsed[field])) {
+                    formData[field] = field === 'commissionDate'
+                      ? new Date(nParsed[field]).toISOString().split('T')[0]
+                      : nParsed[field]
+                  }
+                })
+                if (!isFilled(formData.testMethod) && String(formData.testCategory || '').includes('核子')) {
+                  formData.testMethod = '核子法'
+                }
+                if (!isFilled(formData.testBasis)) {
+                  const basis = nParsed.testBasis !== undefined ? nParsed.testBasis : nParsed.standard
+                  if (isFilled(basis)) formData.testBasis = basis
+                }
+                if (!isFilled(formData.designIndex) && isFilled(nParsed.designCompaction)) {
+                  formData.designIndex = nParsed.designCompaction
+                }
+                if (!isFilled(formData.witness) && nRecord.witness) formData.witness = nRecord.witness
+                if (!isFilled(formData.witnessUnit) && nRecord.witnessUnit) formData.witnessUnit = nRecord.witnessUnit
+                if (!isFilled(formData.recordTester) && nRecord.recordTester) formData.recordTester = nRecord.recordTester
+                if (!isFilled(formData.recordReviewer) && nRecord.recordReviewer) formData.recordReviewer = nRecord.recordReviewer
+                if (!isFilled(formData.testerSignature) && nRecord.inspectSignaturePhoto) {
+                  formData.testerSignature = normalizeSignatureSrc(nRecord.inspectSignaturePhoto)
+                }
+                if (!isFilled(formData.reviewerSignature) && nRecord.reviewSignaturePhoto) {
+                  formData.reviewerSignature = normalizeSignatureSrc(nRecord.reviewSignaturePhoto)
+                }
+                const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']
+                for (let i = 0; i < 7; i++) {
+                  rowFields.forEach(field => {
+                    const k = field + '_' + i
+                    if (!isFilled(formData[k]) && isFilled(nParsed[k])) {
+                      formData[k] = nParsed[k]
+                    }
+                  })
+                }
+              }
+            }
+          } catch (e) {
+            console.error('density report nuclear autofill fallback error', e)
+          }
+        }
+
+        if (!isFilled(formData.reportDate)) {
+          formData.reportDate = formatDate(new Date())
+        }
+        applyWitnessToRemarks()
       } else {
         const entrustmentResponse = await axios.get('/api/jc-core-wt-info/detail', {
           params: { unifiedNumber: key }
@@ -769,6 +880,8 @@ onMounted(() => {
           formData.commissionDate = eData.commissionDate ? new Date(eData.commissionDate).toISOString().split('T')[0] : ''
           formData.constructionPart = eData.constructionPart || ''
           formData.testCategory = eData.testCategory || ''
+          formData.witness = eData.witness || formData.witness || ''
+          formData.witnessUnit = eData.witnessUnit || formData.witnessUnit || ''
           // 样品名称及状态：从委托单 sampleName + sampleStatus 拼接，中间用顿号隔开
           const eSampleName = eData.sampleName || ''
           const eSampleStatus = eData.sampleStatus || ''
@@ -797,8 +910,10 @@ onMounted(() => {
               params: { entrustmentId: formData.unifiedNumber }
             })
             if (resultResponse.data.success && resultResponse.data.data && resultResponse.data.data.length > 0) {
-              // Filter records with status 5 (approved)
-              const approvedRecords = resultResponse.data.data.filter(record => record.status === 5)
+              const approvedRecords = resultResponse.data.data.filter(record => {
+                const s = parseInt(record.status)
+                return s === 4 || s === 5
+              })
               if (approvedRecords.length > 0) {
                 const record = approvedRecords[0]
               if (record.dataJson) {
@@ -820,7 +935,7 @@ onMounted(() => {
                   
                   // 3）明细行通用字段：sampleId/location/date/含水率/压实度等，直接复制
                   //    如果是灌砂法，跳过 wetDensity_（后面会专门重排）
-                  for (let i = 0; i < 8; i++) {
+                  for (let i = 0; i < 7; i++) {
                     const prefixes = [
                       'sampleId_',
                       'location_',
@@ -878,7 +993,7 @@ onMounted(() => {
                     }
                   } else {
                     // 其他检测方法（如核子法）：直接复制 dryDensity_/dryDensity2_
-                    for (let i = 0; i < 8; i++) {
+                    for (let i = 0; i < 7; i++) {
                       const d1 = parsed['dryDensity_' + i]
                       const d2 = parsed['dryDensity2_' + i]
                       if (d1 !== undefined) formData['dryDensity_' + i] = d1
@@ -894,64 +1009,93 @@ onMounted(() => {
               }
             }
             
-            // 无论是否有检测结果记录，如果是核子法，都尝试直接从核子法记录获取数据以确保完整性
-            if (formData.testCategory && formData.testCategory.includes('核子')) {
-                try {
-                  const nuclearRes = await axios.get('/api/nuclear-density/get-by-entrustment-id', {
-                     params: { entrustmentId: formData.unifiedNumber }
-                  })
-                  if (nuclearRes.data.success && nuclearRes.data.data && nuclearRes.data.data.length > 0) {
-                     const nRecord = nuclearRes.data.data[0]
-                     // 检查记录表状态是否为审核通过（状态值为5）
-                     if (nRecord.status === 5) {
-                         if (nRecord.dataJson) {
-                             const nParsed = JSON.parse(nRecord.dataJson)
-                             
-                             // 映射标准击实参数和其他通用字段
-                             const commonFields = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate', 'constructionPart', 'testCategory', 'equipment', 'sampleNameStatus', 'standard', 'designCompaction', 'maxDryDensity', 'optimumMoisture', 'minDryDensity']
-                             commonFields.forEach(field => {
-                                 // 优先从顶级字段获取值，然后从dataJson中获取
-                                 if (nRecord[field] !== undefined && nRecord[field] !== null && nRecord[field] !== '') {
-                                     if (field === 'commissionDate') {
-                                         formData[field] = new Date(nRecord[field]).toISOString().split('T')[0]
-                                     } else {
-                                         formData[field] = nRecord[field]
-                                     }
-                                 } else if (nParsed[field] !== undefined) {
-                                     if (field === 'commissionDate') {
-                                         formData[field] = new Date(nParsed[field]).toISOString().split('T')[0]
-                                     } else {
-                                         formData[field] = nParsed[field]
-                                     }
-                                 }
-                             })
-                             
-                             // 特别处理委托单位字段，确保正确映射
-                             if (nRecord.clientUnit !== undefined && nRecord.clientUnit !== null && nRecord.clientUnit !== '') {
-                                 formData.clientUnit = nRecord.clientUnit
-                             } else if (nParsed.entrustingUnit !== undefined) {
-                                 formData.clientUnit = nParsed.entrustingUnit
-                             }
-                             
-                             // 只填充前8行数据到报告表（从核子法记录表第一页）
-                             const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']
-                             for (let i = 0; i < 8; i++) {
-                                 rowFields.forEach(field => {
-                                     const key = field + '_' + i
-                                     if (nParsed[key] !== undefined) {
-                                         formData[key] = nParsed[key]
-                                     }
-                                 })
-                             }
-                         }
-                     } else {
-                         console.log('核子密度仪记录表状态未审核通过，不自动填充数据')
-                     }
+            {
+              try {
+                const nuclearList = await fetchNuclearRecordsForKey(formData.unifiedNumber)
+                if (nuclearList && nuclearList.length > 0) {
+                  const pickScore = (r) => {
+                    try {
+                      const p = JSON.parse(r?.dataJson || '{}')
+                      let c = 0
+                      for (let i = 0; i < 20; i++) {
+                        const v = p['sampleId_' + i]
+                        if (v !== undefined && v !== null && String(v).trim() !== '') c++
+                      }
+                      return c
+                    } catch (e) {
+                      return 0
+                    }
                   }
-                } catch (e) {
-                   console.error('Failed to auto-fill from Nuclear Record', e)
+                  const nRecord = nuclearList
+                    .filter(r => r && r.dataJson)
+                    .sort((a, b) => pickScore(b) - pickScore(a))[0] || nuclearList[0]
+
+                  if (nRecord && nRecord.dataJson) {
+                    const nParsed = JSON.parse(nRecord.dataJson)
+                    const isFilled = (v) => v !== undefined && v !== null && String(v).trim() !== ''
+                    const nuclearHasAny = pickScore(nRecord) > 0 ||
+                      isFilled(nParsed.standard) ||
+                      isFilled(nParsed.equipment) ||
+                      isFilled(nParsed.testMethod)
+                    if (!nuclearHasAny) {
+                      throw new Error('nuclear record has no meaningful data')
+                    }
+
+                    const commonFields = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate', 'constructionPart', 'testCategory', 'testMethod', 'equipment', 'sampleNameStatus', 'standard', 'designCompaction', 'maxDryDensity', 'optimumMoisture', 'minDryDensity']
+                    commonFields.forEach(field => {
+                      const topVal = nRecord[field]
+                      const jsonVal = nParsed[field]
+                      if (!isFilled(formData[field]) && isFilled(topVal)) {
+                        formData[field] = field === 'commissionDate' ? new Date(topVal).toISOString().split('T')[0] : topVal
+                      } else if (!isFilled(formData[field]) && isFilled(jsonVal)) {
+                        formData[field] = field === 'commissionDate' ? new Date(jsonVal).toISOString().split('T')[0] : jsonVal
+                      }
+                    })
+                    if (!isFilled(formData.testMethod)) formData.testMethod = '核子法'
+                    if (!isFilled(formData.testBasis)) {
+                      const basis = nParsed.testBasis !== undefined ? nParsed.testBasis : nParsed.standard
+                      if (isFilled(basis)) formData.testBasis = basis
+                    }
+                    if (!isFilled(formData.designIndex) && isFilled(nParsed.designCompaction)) {
+                      formData.designIndex = nParsed.designCompaction
+                    }
+                    if (!isFilled(formData.witness) && nRecord.witness) formData.witness = nRecord.witness
+                    if (!isFilled(formData.witnessUnit) && nRecord.witnessUnit) formData.witnessUnit = nRecord.witnessUnit
+                    if (!isFilled(formData.recordTester) && nRecord.recordTester) formData.recordTester = nRecord.recordTester
+                    if (!isFilled(formData.recordReviewer) && nRecord.recordReviewer) formData.recordReviewer = nRecord.recordReviewer
+                    if (!isFilled(formData.testerSignature) && nRecord.inspectSignaturePhoto) {
+                      formData.testerSignature = normalizeSignatureSrc(nRecord.inspectSignaturePhoto)
+                    }
+                    if (!isFilled(formData.reviewerSignature) && nRecord.reviewSignaturePhoto) {
+                      formData.reviewerSignature = normalizeSignatureSrc(nRecord.reviewSignaturePhoto)
+                    }
+
+                    if (!isFilled(formData.clientUnit) && isFilled(nRecord.clientUnit)) {
+                      formData.clientUnit = nRecord.clientUnit
+                    } else if (!isFilled(formData.clientUnit) && isFilled(nParsed.entrustingUnit)) {
+                      formData.clientUnit = nParsed.entrustingUnit
+                    }
+
+                    const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']
+                    for (let i = 0; i < 7; i++) {
+                      rowFields.forEach(field => {
+                        const k = field + '_' + i
+                        if (!isFilled(formData[k]) && isFilled(nParsed[k])) {
+                          formData[k] = nParsed[k]
+                        }
+                      })
+                    }
+                  }
                 }
+              } catch (e) {
+                // ignore
+              }
             }
+
+            if (!formData.reportDate) {
+              formData.reportDate = formatDate(new Date())
+            }
+            applyWitnessToRemarks()
 
             // 如果是灌砂法，尝试直接从灌砂法记录获取数据
             if (formData.testCategory && formData.testCategory.includes('灌砂')) {
@@ -962,7 +1106,8 @@ onMounted(() => {
                   if (sandRes.data.success && sandRes.data.data && sandRes.data.data.length > 0) {
                      const sRecord = sandRes.data.data[0]
                      // 检查记录表状态是否为审核通过（状态值为5）
-                     if (sRecord.status === 5) {
+                     const sStatus = parseInt(sRecord.status)
+                     if (sStatus === 4 || sStatus === 5) {
                          if (sRecord.dataJson) {
                              const sParsed = JSON.parse(sRecord.dataJson)
                              
@@ -1041,6 +1186,20 @@ onMounted(() => {
           }
         }
       }
+
+      if (!formData.reportDate) {
+        formData.reportDate = formatDate(new Date())
+      }
+      if (!formData.testMethod && String(formData.testCategory || '').includes('核子')) {
+        formData.testMethod = '核子法'
+      }
+      if (!formData.testBasis && formData.standard) {
+        formData.testBasis = formData.standard
+      }
+      if (!formData.designIndex && formData.designCompaction) {
+        formData.designIndex = formData.designCompaction
+      }
+      applyWitnessToRemarks()
     } catch (error) {
       console.error('Error loading data:', error)
     }
@@ -1049,11 +1208,6 @@ onMounted(() => {
 
 const saveData = async () => {
   try {
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-      formData.status = 3
-    }
-    
     // 确保日期格式正确
     if (formData.commissionDate) {
       formData.commissionDate = formatDate(formData.commissionDate)
@@ -1065,7 +1219,7 @@ const saveData = async () => {
       formData.reportDate = formatDate(formData.reportDate)
     }
     // 确保数据行中的日期格式正确
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 7; i++) {
       if (formData['date_' + i]) {
         formData['date_' + i] = formatDate(formData['date_' + i])
       }
@@ -1088,7 +1242,7 @@ const saveData = async () => {
     
     const response = await axios.post('/api/density-test/report/save', dataToSave)
     if (response.data.success) {
-      alert('保存成功，状态已更新为待签字')
+      alert('保存成功')
       if (!formData.id && response.data.data && response.data.data.id) {
            formData.id = response.data.data.id
       }
@@ -1102,6 +1256,33 @@ const saveData = async () => {
   } catch (error) {
     console.error('Save error:', error)
     alert('保存失败')
+  }
+}
+
+const approveAndSave = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+    const signatureBlob = sigRes?.data?.data?.signatureBlob
+    if (!sigRes?.data?.success || !signatureBlob) {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+      return
+    }
+
+    const currentName = user.fullName || user.userName || user.username
+    formData.approver = currentName
+    formData.approverSignature = normalizeSignatureSrc(signatureBlob)
+    formData.status = 6
+
+    await saveData()
+  } catch (e) {
+    console.error('Approve error:', e)
+    alert('批准失败')
   }
 }
 
@@ -1512,9 +1693,37 @@ const previewPdf = () => {
   z-index: 10;
 }
 .signature-overlay img {
-  width: 80px;
-  height: auto;
+  height: 18px;
+  width: auto;
+  max-width: 80px;
   opacity: 0.8;
+}
+
+.signature-box {
+  position: relative;
+  display: inline-block;
+  min-width: 120px;
+  vertical-align: bottom;
+}
+.signature-line {
+  display: inline-block;
+  min-width: 80px;
+  border-bottom: 1px solid black;
+  text-align: center;
+  padding: 0 5px;
+  height: 20px;
+  line-height: 20px;
+}
+.signature-img {
+  position: absolute;
+  left: 40px;
+  top: -16px;
+  height: 18px;
+  width: auto;
+  max-width: 80px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 .no-print {
     margin-bottom: 20px;

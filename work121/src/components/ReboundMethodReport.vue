@@ -15,77 +15,10 @@
           </span>
         </div>
         <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="submitForm"
-          class="btn btn-secondary btn-small"
-        >
-          保存
-        </button>
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 0 || formData.status === 2"
-          @click="submitWorkflow('SUBMIT')"
+          @click="approveAndSave"
           class="btn btn-primary btn-small"
         >
-          提交
-        </button>
-
-        <button
-          v-if="formData.status === 1"
-          @click="submitWorkflow('AUDIT_PASS')"
-          class="btn btn-primary btn-small"
-        >
-          审核通过
-        </button>
-        <button
-          v-if="formData.status === 1"
-          @click="submitWorkflow('REJECT')"
-          class="btn btn-danger btn-small"
-        >
-          退回
-        </button>
-
-        <button
-          v-if="formData.status === 3"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 3"
-          @click="submitWorkflow('SIGN_REVIEW')"
-          class="btn btn-primary btn-small"
-        >
-          复核签字
-        </button>
-
-        <button
-          v-if="formData.status === 4"
-          @click="handleSign"
-          class="btn btn-secondary btn-small"
-        >
-          签字
-        </button>
-        <button
-          v-if="formData.status === 4"
-          @click="submitWorkflow('SIGN_APPROVE')"
-          class="btn btn-primary btn-small"
-        >
-          批准签字
-        </button>
-        <button
-          v-if="formData.status === 4"
-          @click="submitWorkflow('REJECT')"
-          class="btn btn-danger btn-small"
-        >
-          驳回
+          批准
         </button>
 
         <button
@@ -348,6 +281,15 @@ const formatDate = (d) => {
     const month = ('0' + (date.getMonth() + 1)).slice(-2)
     const day = ('0' + date.getDate()).slice(-2)
     return `${year}-${month}-${day}`
+}
+
+const normalizeSignatureSrc = (v) => {
+  if (!v) return ''
+  const s = String(v).trim()
+  if (!s) return ''
+  if (s.startsWith('data:image')) return s
+  if (/^[A-Za-z0-9+/=]+$/.test(s)) return `data:image/png;base64,${s}`
+  return s
 }
 
 onMounted(() => {
@@ -688,11 +630,6 @@ const submitWorkflow = async (action) => {
 
 const submitForm = async () => {
   try {
-    // 如果状态是草稿(0)，保存后改为待签字(3)
-    if (formData.status === 0) {
-      formData.status = 3
-    }
-    
     // 确保日期格式正确
     if (formData.commissionDate) {
       formData.commissionDate = formatDate(formData.commissionDate)
@@ -730,7 +667,7 @@ const submitForm = async () => {
     const response = await axios.post('/api/reboundMethod/report/save', submitData);
 
     if (response.data.success) {
-      alert('保存成功，状态已更新为待签字');
+      alert('保存成功');
       // 保存成功后返回列表页面，确保列表显示更新后的状态
       if (navigateTo) {
         navigateTo('ReboundMethodReportList');
@@ -741,6 +678,33 @@ const submitForm = async () => {
   } catch (error) {
     console.error('保存错误:', error);
     alert('保存失败，请稍后重试');
+  }
+}
+
+const approveAndSave = async () => {
+  const user = JSON.parse(localStorage.getItem('userInfo'))
+  if (!user || !user.username) {
+    alert('请先登录')
+    return
+  }
+
+  try {
+    const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
+    const signatureBlob = sigRes?.data?.data?.signatureBlob
+    if (!sigRes?.data?.success || !signatureBlob) {
+      alert('未找到您的电子签名，请先去“电子签名”页面设置')
+      return
+    }
+
+    const currentName = user.fullName || user.userName || user.username
+    formData.approver = currentName
+    formData.approverSignature = normalizeSignatureSrc(signatureBlob)
+    formData.status = 6
+
+    await submitForm()
+  } catch (e) {
+    console.error('Approve error:', e)
+    alert('批准失败')
   }
 }
 
@@ -1363,9 +1327,11 @@ const previewPdf = () => {
         .signature-img {
             position: absolute;
             left: 40px;
-            top: -20px;
-            width: 80px;
-            height: 40px;
+            top: -16px;
+            height: 18px;
+            width: auto;
+            max-width: 80px;
+            object-fit: contain;
             mix-blend-mode: multiply;
         }
         
