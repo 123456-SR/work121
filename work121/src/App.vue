@@ -98,17 +98,13 @@ import SampleTransfer from './components/SampleTransfer.vue'
 import SampleTransferList from './components/SampleTransferList.vue'
 import Signature from './components/Signature.vue'
 import DensityTestReport from './components/DensityTestReport.vue'
-import DensityTestResult from './components/DensityTestResult.vue'
 import LightDynamicPenetrationReport from './components/LightDynamicPenetrationReport.vue'
-import LightDynamicPenetrationResult from './components/LightDynamicPenetrationResult.vue'
 import ReboundMethodReport from './components/ReboundMethodReport.vue'
 import BeckmanBeamReport from './components/BeckmanBeamReport.vue'
-import BeckmanBeamResult from './components/BeckmanBeamResult.vue'
 import DirectoryList from './components/DirectoryList.vue'
 import Login from './components/Login.vue'
 import GenericTestList from './components/GenericTestList.vue'
 import GenericReportList from './components/GenericReportList.vue'
-import GenericResultList from './components/GenericResultList.vue'
 import UserManagement from './components/UserManagement.vue'
 import PendingTasks from './components/PendingTasks.vue'
 import Dashboard from './components/Dashboard.vue'
@@ -134,16 +130,12 @@ const components = {
   SampleTransferList,
   Signature,
   DensityTestReport,
-  DensityTestResult,
   LightDynamicPenetrationReport,
-  LightDynamicPenetrationResult,
   ReboundMethodReport,
   BeckmanBeamReport,
-  BeckmanBeamResult,
   DirectoryList,
   GenericTestList,
   GenericReportList,
-  GenericResultList,
   UserManagement,
   PendingTasks,
   Dashboard
@@ -255,26 +247,7 @@ const menuItems = {
         {
           id: 'ResultCategory',
           name: '结果表',
-          submenu: [
-            { 
-              id: 'DensityTestResultList', 
-              name: '原位密度检测结果',
-              component: 'GenericResultList', 
-              props: { title: '原位密度检测结果', category: '密度试验,核子法,灌砂法,灌水法,环刀法', formComponent: 'DensityTestResult', dataType: 'result' }
-            },
-            { 
-              id: 'LightDynamicPenetrationResultList', 
-              name: '轻型动力触探检测结果',
-              component: 'GenericResultList', 
-              props: { title: '轻型动力触探检测结果', category: '轻型动力触探', formComponent: 'LightDynamicPenetrationResult', dataType: 'result' }
-            },
-            { 
-              id: 'BeckmanBeamResultList', 
-              name: '路基路面回弹弯沉检测结果',
-              component: 'GenericResultList', 
-              props: { title: '回弹弯沉检测结果', category: '贝克曼梁', formComponent: 'BeckmanBeamResult', dataType: 'result' }
-            }
-          ]
+          submenu: []
         }
       ]
     },

@@ -259,6 +259,33 @@
     </form>
 
     
+    <div v-if="showExportModal" class="modal-overlay no-print">
+      <div class="modal-content">
+        <h3>导出数据</h3>
+        <div class="form-group">
+          <div>表名称：{{ exportTemplateInfo.baseName }}</div>
+          <div v-if="exportTemplateInfo.templates.length" class="template-files">
+            <span v-for="t in exportTemplateInfo.templates" :key="t.fileName" class="template-file">{{ t.fileName }}</span>
+          </div>
+          <div v-else>已有模板：无</div>
+        </div>
+        <div class="format-buttons">
+          <button
+            v-for="fmt in exportTemplateInfo.formats"
+            :key="fmt"
+            @click="startExport(fmt)"
+            class="btn btn-primary btn-small"
+          >
+            {{ String(fmt).toUpperCase() }}<span v-if="!hasTemplate(fmt)">（无模板）</span>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeExportModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    
     <div v-if="showAnalysisModal" class="modal-overlay no-print">
       <div class="modal-content">
         <h3>数据分析</h3>
@@ -307,6 +334,54 @@ const analysisResults = reactive({
   actualMin: '',
   actualMax: ''
 })
+
+const showExportModal = ref(false)
+const exportTemplateInfo = reactive({
+  baseName: '动力触探记录表',
+  templateDir: '',
+  templates: [],
+  formats: ['xls', 'xlsx', 'docx']
+})
+
+const hasTemplate = (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!ext) return false
+  return Array.isArray(exportTemplateInfo.templates) && exportTemplateInfo.templates.some(t => String(t?.ext || '').toLowerCase() === ext)
+}
+
+const openExportModal = async () => {
+  try {
+    const res = await axios.get('/api/light-dynamic-penetration/export-formats', {
+      params: { baseName: exportTemplateInfo.baseName }
+    })
+    if (res.data && res.data.success) {
+      exportTemplateInfo.baseName = res.data.baseName || exportTemplateInfo.baseName
+      exportTemplateInfo.templateDir = res.data.templateDir || ''
+      exportTemplateInfo.templates = Array.isArray(res.data.templates) ? res.data.templates : []
+      exportTemplateInfo.formats = Array.isArray(res.data.formats) && res.data.formats.length ? res.data.formats : exportTemplateInfo.formats
+      showExportModal.value = true
+    } else {
+      alert((res.data && res.data.message) ? res.data.message : '获取可导出格式失败')
+    }
+  } catch (e) {
+    alert('获取可导出格式失败')
+  }
+}
+
+const closeExportModal = () => {
+  showExportModal.value = false
+}
+
+const startExport = async (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!hasTemplate(ext)) {
+    const dir = exportTemplateInfo.templateDir ? `\n模板目录：${exportTemplateInfo.templateDir}` : ''
+    alert(`未找到模板：${exportTemplateInfo.baseName}.${ext}\n请先将对应模板文件放入“表”文件夹后再导出。${dir}`)
+    return
+  }
+  showExportModal.value = false
+  await exportByFormat(ext)
+}
 
 const props = defineProps({
   id: String,
@@ -1307,6 +1382,10 @@ const previewPdf = () => {
 }
 
 const exportExcel = async () => {
+  await openExportModal()
+}
+
+const exportByFormat = async (format) => {
   try {
     saveCurrentToState()
     const list = records.value && records.value.length > 0 ? records.value : []
@@ -1391,7 +1470,9 @@ const exportExcel = async () => {
           entrustmentId,
           pageNo,
           totalPages,
-          data: dataObj
+          data: dataObj,
+          format,
+          templateBaseName: exportTemplateInfo.baseName
         })
 
         if (response.data && response.data.success) {
@@ -1808,6 +1889,26 @@ const saveData = async () => {
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             border: 1px solid #e0e0e0;
         }
+    .template-files {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .template-file {
+        padding: 4px 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        background: #f8f9fa;
+        font-size: 12px;
+        color: #333;
+    }
+    .format-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
 
         .modal-content h3 {
             margin-top: 0;

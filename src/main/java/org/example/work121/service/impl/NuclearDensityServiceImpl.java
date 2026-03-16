@@ -2,6 +2,7 @@ package org.example.work121.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -9,6 +10,11 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.example.work121.entity.JcCoreWtInfo;
 import org.example.work121.entity.NuclearDensity;
 import org.example.work121.entity.SimpleDirectory;
@@ -205,36 +211,58 @@ public class NuclearDensityServiceImpl implements NuclearDensityService {
 
     @Override
     public String exportRecordToExcel(Map<String, Object> payload) {
-        String templatePath = "D:\\IDEA\\IntelliJ IDEA 2024.1\\workplaces\\work\\表\\核子法记录表.xlsx";
-        Path templateXlsxPath = Paths.get(templatePath);
-        if (!Files.exists(templateXlsxPath)) {
-            throw new RuntimeException("Excel模板不存在: " + templatePath);
+        if (payload == null) throw new RuntimeException("导出失败：缺少数据");
+
+        String templateBaseName = stringValue(payload.get("templateBaseName"));
+        if (templateBaseName.isEmpty()) templateBaseName = stringValue(payload.get("baseName"));
+        if (templateBaseName.isEmpty()) templateBaseName = "核子法记录表";
+
+        String format = stringValue(payload.get("format")).toLowerCase(Locale.ROOT).trim();
+        if (format.isEmpty()) format = "xlsx";
+
+        Path templateDir = Paths.get(System.getProperty("user.dir"), "表");
+        Path templatePath = templateDir.resolve(templateBaseName + "." + format);
+        if (!Files.exists(templatePath)) {
+            throw new RuntimeException("模板不存在，请先在“表”文件夹中导入模板: " + templatePath.toString());
         }
 
         Map<String, Object> data = extractData(payload);
-        Path outputXlsxPath = buildOutputPath(templateXlsxPath, data, payload);
+        Path outputPath = buildOutputPath(templatePath, data, payload, format, templateBaseName);
         try {
-            byte[] bytes = Files.readAllBytes(templateXlsxPath);
-            try (Workbook workbook = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
-                fillWorkbook(workbook, data);
-                try (OutputStream out = Files.newOutputStream(outputXlsxPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
-                    workbook.write(out);
+            byte[] bytes = Files.readAllBytes(templatePath);
+            if ("xlsx".equals(format) || "xls".equals(format)) {
+                try (Workbook workbook = "xls".equals(format)
+                        ? new HSSFWorkbook(new ByteArrayInputStream(bytes))
+                        : new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+                    fillWorkbook(workbook, data);
+                    try (OutputStream out = Files.newOutputStream(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+                        workbook.write(out);
+                    }
                 }
+            } else if ("docx".equals(format)) {
+                try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(bytes))) {
+                    fillDocxDocument(doc, data);
+                    try (OutputStream out = Files.newOutputStream(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+                        doc.write(out);
+                    }
+                }
+            } else {
+                throw new RuntimeException("不支持的导出格式: " + format);
             }
         } catch (IOException e) {
-            throw new RuntimeException("写入Excel失败: " + e.getMessage(), e);
+            throw new RuntimeException("写入导出文件失败: " + e.getMessage(), e);
         }
-        return outputXlsxPath.toString();
+        return outputPath.toString();
     }
 
-    private Path buildOutputPath(Path templatePath, Map<String, Object> data, Map<String, Object> payload) {
+    private Path buildOutputPath(Path templatePath, Map<String, Object> data, Map<String, Object> payload, String ext, String templateBaseName) {
         Path dir = templatePath.getParent();
         if (dir == null) {
             throw new RuntimeException("Excel模板路径无效: " + templatePath);
         }
 
         String projectName = sanitizeFileName(stringValue(data.get("projectName")));
-        String baseName = (projectName.isEmpty() ? "" : (projectName + "_")) + "核子法记录表";
+        String baseName = (projectName.isEmpty() ? "" : (projectName + "_")) + templateBaseName;
         String unifiedNumber = stringValue(data.get("unifiedNumber"));
         if (unifiedNumber.isEmpty()) {
             unifiedNumber = stringValue(payload.get("entrustmentId"));
@@ -245,8 +273,50 @@ public class NuclearDensityServiceImpl implements NuclearDensityService {
         String fileName = baseName
                 + (unifiedNumber.isEmpty() ? "" : ("_" + unifiedNumber))
                 + "_" + timestamp
-                + ".xlsx";
+                + "." + ext;
         return dir.resolve(fileName);
+    }
+
+    private void fillDocxDocument(XWPFDocument doc, Map<String, Object> data) {
+        if (doc == null || data == null || data.isEmpty()) return;
+
+        for (XWPFParagraph p : doc.getParagraphs()) {
+            replaceDocxParagraphText(p, data);
+        }
+
+        for (XWPFTable table : doc.getTables()) {
+            for (XWPFTableRow row : table.getRows()) {
+                if (row == null) continue;
+                for (XWPFTableCell cell : row.getTableCells()) {
+                    if (cell == null) continue;
+                    for (XWPFParagraph p : cell.getParagraphs()) {
+                        replaceDocxParagraphText(p, data);
+                    }
+                }
+            }
+        }
+    }
+
+    private void replaceDocxParagraphText(XWPFParagraph paragraph, Map<String, Object> data) {
+        if (paragraph == null) return;
+        String text = paragraph.getText();
+        if (text == null || text.isEmpty()) return;
+
+        String replaced = text;
+        for (Map.Entry<String, Object> e : data.entrySet()) {
+            String key = e.getKey();
+            if (key == null || key.isEmpty()) continue;
+            String val = stringValue(e.getValue());
+            replaced = replaced.replace("{{" + key + "}}", val);
+            replaced = replaced.replace("${" + key + "}", val);
+        }
+        if (replaced.equals(text)) return;
+
+        int runCount = paragraph.getRuns() == null ? 0 : paragraph.getRuns().size();
+        for (int i = runCount - 1; i >= 0; i--) {
+            paragraph.removeRun(i);
+        }
+        paragraph.createRun().setText(replaced, 0);
     }
 
     private String sanitizeFileName(String s) {

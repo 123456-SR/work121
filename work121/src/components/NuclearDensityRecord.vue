@@ -151,6 +151,32 @@
 
     </form>
 
+    <div v-if="showExportModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>导出数据</h3>
+        <div class="form-group">
+          <div>表名称：{{ exportTemplateInfo.baseName }}</div>
+          <div v-if="exportTemplateInfo.templates.length" class="template-files">
+            <span v-for="t in exportTemplateInfo.templates" :key="t.fileName" class="template-file">{{ t.fileName }}</span>
+          </div>
+          <div v-else>已有模板：无</div>
+        </div>
+        <div class="format-buttons">
+          <button
+            v-for="fmt in exportTemplateInfo.formats"
+            :key="fmt"
+            @click="startExport(fmt)"
+            class="btn btn-primary btn-small"
+          >
+            {{ String(fmt).toUpperCase() }}<span v-if="!hasTemplate(fmt)">（无模板）</span>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeExportModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 数据分析模态窗口 -->
     <div v-if="showAnalysisModal" class="modal-overlay">
       <div class="modal-content">
@@ -293,6 +319,54 @@ const analysisResults = reactive({
   compactionMin: '',
   compactionMax: ''
 })
+
+const showExportModal = ref(false)
+const exportTemplateInfo = reactive({
+  baseName: '核子法记录表',
+  templateDir: '',
+  templates: [],
+  formats: ['xls', 'xlsx', 'docx']
+})
+
+const hasTemplate = (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!ext) return false
+  return Array.isArray(exportTemplateInfo.templates) && exportTemplateInfo.templates.some(t => String(t?.ext || '').toLowerCase() === ext)
+}
+
+const openExportModal = async () => {
+  try {
+    const res = await axios.get('/api/nuclear-density/export-formats', {
+      params: { baseName: exportTemplateInfo.baseName }
+    })
+    if (res.data && res.data.success) {
+      exportTemplateInfo.baseName = res.data.baseName || exportTemplateInfo.baseName
+      exportTemplateInfo.templateDir = res.data.templateDir || ''
+      exportTemplateInfo.templates = Array.isArray(res.data.templates) ? res.data.templates : []
+      exportTemplateInfo.formats = Array.isArray(res.data.formats) && res.data.formats.length ? res.data.formats : exportTemplateInfo.formats
+      showExportModal.value = true
+    } else {
+      alert((res.data && res.data.message) ? res.data.message : '获取可导出格式失败')
+    }
+  } catch (e) {
+    alert('获取可导出格式失败')
+  }
+}
+
+const closeExportModal = () => {
+  showExportModal.value = false
+}
+
+const startExport = async (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!hasTemplate(ext)) {
+    const dir = exportTemplateInfo.templateDir ? `\n模板目录：${exportTemplateInfo.templateDir}` : ''
+    alert(`未找到模板：${exportTemplateInfo.baseName}.${ext}\n请先将对应模板文件放入“表”文件夹后再导出。${dir}`)
+    return
+  }
+  showExportModal.value = false
+  await exportByFormat(ext)
+}
 
 // 统一日期格式化为 YYYY-MM-DD，避免显示完整时间串
 const formatDate = (dateVal) => {
@@ -885,6 +959,10 @@ const saveData = async () => {
 }
 
 const exportExcel = async () => {
+  await openExportModal()
+}
+
+const exportByFormat = async (format) => {
   try {
     saveCurrentRecordState()
 
@@ -923,7 +1001,9 @@ const exportExcel = async () => {
           entrustmentId: record.entrustmentId || formData.entrustmentId || props.id,
           pageNo,
           totalPages,
-          data: dataJsonObj
+          data: dataJsonObj,
+          format,
+          templateBaseName: exportTemplateInfo.baseName
         })
 
         if (response.data && response.data.success) {
@@ -1897,6 +1977,28 @@ const autoAnalyzeAndFill = () => {
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
+        }
+
+        .template-files {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .template-file {
+            padding: 4px 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background: #f8f9fa;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .format-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .modal-actions .btn-primary {

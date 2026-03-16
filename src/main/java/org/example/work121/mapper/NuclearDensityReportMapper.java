@@ -40,7 +40,7 @@ public interface NuclearDensityReportMapper {
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB})")
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}")
     int update(NuclearDensityReport report);
 
     @Select("SELECT " +
@@ -71,6 +71,6 @@ public interface NuclearDensityReportMapper {
             "RECORD_REVIEW_SIGN = #{reviewSignaturePhoto,jdbcType=CLOB}, " +
             "RECORD_TESTER_SIGN = #{inspectSignaturePhoto,jdbcType=CLOB}, " +
             "APPROVE_SIGNATURE_PHOTO = #{approveSignaturePhoto,jdbcType=CLOB}, " +
-            "DATA_JSON = #{dataJson,jdbcType=CLOB})")
+            "DATA_JSON = #{dataJson,jdbcType=CLOB}")
     int updateById(NuclearDensityReport report);
 }

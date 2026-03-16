@@ -8,6 +8,13 @@
       </div>
 
       <div class="toolbar-right">
+        <div class="page-nav">
+          <button class="btn btn-small" @click="currentIndex = 0" :disabled="currentIndex === 0">首页</button>
+          <button class="btn btn-small" @click="prevPage" :disabled="currentIndex === 0">上一页</button>
+          <span class="page-info">{{ currentIndex + 1 }} / {{ 1 + resultPages.length }}</span>
+          <button class="btn btn-small" @click="nextPage" :disabled="currentIndex >= resultPages.length">下一页</button>
+          <button class="btn btn-small" @click="currentIndex = resultPages.length" :disabled="currentIndex >= resultPages.length">末页</button>
+        </div>
         <div v-if="formData.status !== undefined" class="status-text">
           状态:
           <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
@@ -215,16 +222,62 @@
 
     </form>
 
+    <div v-if="currentIndex > 0">
+      <h2>轻型动力触探检测结果</h2>
+      <table>
+        <tr>
+          <td class="label">测点位置</td>
+          <td class="label">贯入<br>深度<br>(cm)</td>
+          <td class="label">实测<br>锤击数</td>
+          <td class="label">平均<br>锤击数<br>N<sub>10</sub></td>
+          <td class="label">承载力<br>特征值<br>(kPa)</td>
+          <td class="label">测点位置</td>
+          <td class="label">贯入<br>深度<br>(cm)</td>
+          <td class="label">实测<br>锤击数</td>
+          <td class="label">平均<br>锤击数<br>N<sub>10</sub></td>
+          <td class="label">承载力<br>特征值<br>(kPa)</td>
+        </tr>
+        <template v-for="(block, blockIndex) in currentPageBlocks" :key="'p-'+blockIndex">
+          <template v-for="(depth, subIndex) in block.depths" :key="'p-'+blockIndex+'-'+subIndex">
+            <tr>
+              <td v-if="subIndex === 0" rowspan="7">
+                <textarea :value="block.pos_L" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" readonly></textarea>
+              </td>
+              <td><input type="text" :value="depth.depth_L" readonly></td>
+              <td><input type="text" :value="depth.actual_L" readonly></td>
+              <td v-if="subIndex === 0" rowspan="7">
+                <input type="text" :value="block.avg_L" style="height: 100%;" readonly />
+              </td>
+              <td v-if="subIndex === 0" rowspan="7">
+                <input type="text" :value="block.capacity_L" style="height: 100%;" readonly />
+              </td>
+              <td v-if="subIndex === 0" rowspan="7">
+                <textarea :value="block.pos_R" style="height: 100%; width: 100%; border: none; text-align: center; padding-top: 10px;" readonly></textarea>
+              </td>
+              <td><input type="text" :value="block.depths_R[subIndex].depth_R" readonly></td>
+              <td><input type="text" :value="block.depths_R[subIndex].actual_R" readonly></td>
+              <td v-if="subIndex === 0" rowspan="7">
+                <input type="text" :value="block.avg_R" style="height: 100%;" readonly />
+              </td>
+              <td v-if="subIndex === 0" rowspan="7">
+                <input type="text" :value="block.capacity_R" style="height: 100%;" readonly />
+              </td>
+            </tr>
+          </template>
+        </template>
+      </table>
+    </div>
 
 
   </div>
 </template>
 
-<script setup>
 import { reactive, ref, onMounted, defineProps, inject } from 'vue';
 import axios from 'axios';
 
 const navigateTo = inject('navigateTo');
+const currentIndex = ref(0)
+const resultPages = ref([])
 
 const goToList = () => {
   if (typeof navigateTo === 'function') {
@@ -300,6 +353,42 @@ const normalizeSignatureSrc = (src) => {
   return `data:image/png;base64,${src}`
 }
 
+const prevPage = () => {
+  if (currentIndex.value > 0) currentIndex.value--
+}
+const nextPage = () => {
+  if (currentIndex.value < resultPages.value.length) currentIndex.value++
+}
+
+const buildBlocksFromJson = (json) => {
+  const blocks = Array.from({ length: 3 }, () => ({
+    pos_L: "",
+    depths: Array.from({ length: 7 }, () => ({ depth_L: "", actual_L: "" })),
+    avg_L: "",
+    capacity_L: "",
+    pos_R: "",
+    depths_R: Array.from({ length: 7 }, () => ({ depth_R: "", actual_R: "" })),
+    avg_R: "",
+    capacity_R: ""
+  }))
+  for (let b = 0; b < 3; b++) {
+    blocks[b].pos_L = json[`pos_L_${b}`] || ''
+    blocks[b].avg_L = json[`avg_L_${b}`] || ''
+    blocks[b].capacity_L = json[`capacity_L_${b}`] || ''
+    blocks[b].pos_R = json[`pos_R_${b}`] || ''
+    blocks[b].avg_R = json[`avg_R_${b}`] || ''
+    blocks[b].capacity_R = json[`capacity_R_${b}`] || ''
+    for (let s = 0; s < 7; s++) {
+      const idx = b * 7 + s
+      blocks[b].depths[s].depth_L = json[`depth_L_${idx}`] || ''
+      blocks[b].depths[s].actual_L = json[`actual_L_${idx}`] || ''
+      blocks[b].depths_R[s].depth_R = json[`depth_R_${idx}`] || ''
+      blocks[b].depths_R[s].actual_R = json[`actual_R_${idx}`] || ''
+    }
+  }
+  return blocks
+}
+
 const getStatusText = (status) => {
   const s = parseInt(status)
   switch(s) {
@@ -331,6 +420,17 @@ const getStatusText = (status) => {
   }
 }
 
+const currentPageBlocks = computed(() => {
+  if (currentIndex.value === 0) return []
+  const page = resultPages.value[currentIndex.value - 1]
+  if (!page) return []
+  try {
+    const json = typeof page.dataJson === 'string' ? JSON.parse(page.dataJson || '{}') : (page.dataJson || {})
+    return buildBlocksFromJson(json)
+  } catch (e) {
+    return []
+  }
+})
 const getStatusColor = (status) => {
   const s = parseInt(status)
   switch(s) {
@@ -764,6 +864,14 @@ const loadData = async () => {
         } catch (e) {
           console.error('light dynamic report autofill error', e)
         }
+      }
+      if (currentEntrustmentId.value) {
+        try {
+          const resPages = await axios.get('/api/light-dynamic-penetration/result/get-by-entrustment-id', { params: { entrustmentId: currentEntrustmentId.value } })
+          if (resPages.data && resPages.data.success && Array.isArray(resPages.data.data)) {
+            resultPages.value = resPages.data.data
+          }
+        } catch (e) {}
       }
     }
     }

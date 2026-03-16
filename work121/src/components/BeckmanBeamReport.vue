@@ -7,6 +7,13 @@
       </div>
 
       <div class="toolbar-right">
+        <div class="page-nav">
+          <button class="btn btn-small" @click="currentIndex = 0" :disabled="currentIndex === 0">首页</button>
+          <button class="btn btn-small" @click="prevPage" :disabled="currentIndex === 0">上一页</button>
+          <span class="page-info">{{ currentIndex + 1 }} / {{ 1 + resultPages.length }}</span>
+          <button class="btn btn-small" @click="nextPage" :disabled="currentIndex >= resultPages.length">下一页</button>
+          <button class="btn btn-small" @click="currentIndex = resultPages.length" :disabled="currentIndex >= resultPages.length">末页</button>
+        </div>
         <span v-if="formData.status !== undefined" class="status-text">
           状态:
           <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
@@ -43,6 +50,7 @@
     </div>
 
     <form id="pdfForm" ref="pdfForm" method="post">
+    <div v-if="currentIndex === 0">
     <!-- 电子签名隐藏字段 -->
     <input type="hidden" v-model="formData.testerSignature" name="testerSignature">
     <input type="hidden" v-model="formData.reviewerSignature" name="reviewerSignature">
@@ -234,6 +242,33 @@
 
 
     </div>
+    <div v-else>
+      <h2>路基路面回弹弯沉检测结果</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>测点桩号 (幅段)</th>
+            <th>车道</th>
+            <th>左侧回弹弯沉值 (0.01mm)</th>
+            <th>右侧回弹弯沉值 (0.01mm)</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="(n, i_idx) in 5" :key="'p-'+i_idx">
+            <tr>
+              <td>{{ i_idx + 1 }}</td>
+              <td><input type="text" :value="currentPageData['station_' + (i_idx + 1)]" readonly></td>
+              <td><input type="text" :value="currentPageData['lane_' + (i_idx + 1)]" readonly></td>
+              <td><input type="text" :value="currentPageData['leftDeflection_' + (i_idx + 1)]" readonly></td>
+              <td><input type="text" :value="currentPageData['rightDeflection_' + (i_idx + 1)]" readonly></td>
+              <td><input type="text" :value="currentPageData['remarks_' + (i_idx + 1)]" readonly></td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
     </form>
 
     
@@ -242,7 +277,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import { reactive, ref, computed, onMounted, inject, defineProps } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -250,6 +285,8 @@ const props = defineProps({
 })
 
 const navigateTo = inject('navigateTo')
+const currentIndex = ref(0)
+const resultPages = ref([])
 
 const goToList = () => {
   if (navigateTo) {
@@ -336,6 +373,21 @@ onMounted(() => {
 
 })
 
+const prevPage = () => {
+  if (currentIndex.value > 0) currentIndex.value--
+}
+const nextPage = () => {
+  if (currentIndex.value < resultPages.value.length) currentIndex.value++
+}
+const currentPageData = computed(() => {
+  if (currentIndex.value === 0) return {}
+  const page = resultPages.value[currentIndex.value - 1]
+  try {
+    return typeof page?.dataJson === 'string' ? JSON.parse(page.dataJson || '{}') : (page?.dataJson || {})
+  } catch (e) {
+    return {}
+  }
+})
 const getStatusText = (status) => {
   const s = parseInt(status)
   switch(s) {
