@@ -1,5 +1,5 @@
 <template>
-  <div class="beckmanBeamReport-container">
+  <div class="beckmanBeamReport-container" ref="containerRef">
 
     <div class="no-print toolbar">
       <div class="toolbar-left">
@@ -242,6 +242,7 @@
 
 
     </div>
+    </div>
     <div v-else>
       <h2>路基路面回弹弯沉检测结果</h2>
       <table>
@@ -259,11 +260,11 @@
           <template v-for="(n, i_idx) in 5" :key="'p-'+i_idx">
             <tr>
               <td>{{ i_idx + 1 }}</td>
-              <td><input type="text" :value="currentPageData['station_' + (i_idx + 1)]" readonly></td>
-              <td><input type="text" :value="currentPageData['lane_' + (i_idx + 1)]" readonly></td>
-              <td><input type="text" :value="currentPageData['leftDeflection_' + (i_idx + 1)]" readonly></td>
-              <td><input type="text" :value="currentPageData['rightDeflection_' + (i_idx + 1)]" readonly></td>
-              <td><input type="text" :value="currentPageData['remarks_' + (i_idx + 1)]" readonly></td>
+              <td><input type="text" v-model="currentPageData['station_' + (i_idx + 1)]"></td>
+              <td><input type="text" v-model="currentPageData['lane_' + (i_idx + 1)]"></td>
+              <td><input type="text" v-model="currentPageData['leftDeflection_' + (i_idx + 1)]"></td>
+              <td><input type="text" v-model="currentPageData['rightDeflection_' + (i_idx + 1)]"></td>
+              <td><input type="text" v-model="currentPageData['remarks_' + (i_idx + 1)]"></td>
             </tr>
           </template>
         </tbody>
@@ -277,7 +278,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted, inject, defineProps } from 'vue'
+import { reactive, ref, computed, onMounted, inject, defineProps, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -287,6 +288,8 @@ const props = defineProps({
 const navigateTo = inject('navigateTo')
 const currentIndex = ref(0)
 const resultPages = ref([])
+const resultPageFormData = ref([])
+const containerRef = ref(null)
 
 const goToList = () => {
   if (navigateTo) {
@@ -373,6 +376,34 @@ onMounted(() => {
 
 })
 
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
+
+onMounted(() => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+watch(currentIndex, () => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
 const prevPage = () => {
   if (currentIndex.value > 0) currentIndex.value--
 }
@@ -381,12 +412,7 @@ const nextPage = () => {
 }
 const currentPageData = computed(() => {
   if (currentIndex.value === 0) return {}
-  const page = resultPages.value[currentIndex.value - 1]
-  try {
-    return typeof page?.dataJson === 'string' ? JSON.parse(page.dataJson || '{}') : (page?.dataJson || {})
-  } catch (e) {
-    return {}
-  }
+  return resultPageFormData.value[currentIndex.value - 1] || {}
 })
 const getStatusText = (status) => {
   const s = parseInt(status)
@@ -703,12 +729,36 @@ const loadData = async (entrustmentId) => {
     // Approver - Priority: record.approver
     formData.approver = formData.approver || ''
 
+    try {
+      const resPages = await axios.get('/api/beckman-beam/result/get-by-entrustment-id', { params: { entrustmentId } })
+      if (resPages.data && resPages.data.success && Array.isArray(resPages.data.data)) {
+        resultPages.value = resPages.data.data
+        resultPageFormData.value = resultPages.value.map((r) => {
+          try {
+            const parsed = JSON.parse((r && r.dataJson) ? r.dataJson : '{}')
+            if (!parsed.unifiedNumber && formData.unifiedNumber) parsed.unifiedNumber = formData.unifiedNumber
+            if (!parsed.constructionPart && formData.constructionPart) parsed.constructionPart = formData.constructionPart
+            return parsed
+          } catch (e) {
+            return {}
+          }
+        })
+        if (currentIndex.value > resultPages.value.length) currentIndex.value = 0
+      } else {
+        resultPages.value = []
+        resultPageFormData.value = []
+      }
+    } catch (e) {
+      resultPages.value = []
+      resultPageFormData.value = []
+    }
+
   } catch (error) {
     console.error('Failed to load data', error)
   }
 }
 
-const saveData = async () => {
+const saveData = async (navigateBack = true) => {
     try {
         // 确保日期格式正确
         if (formData.commissionDate) {
@@ -754,7 +804,7 @@ const saveData = async () => {
                  formData.id = response.data.data.id
             }
             // 保存成功后返回列表页面，确保列表显示更新后的状态
-            if (navigateTo) {
+            if (navigateBack && navigateTo) {
                 navigateTo('BeckmanBeamReportList')
             }
         } else {
@@ -764,6 +814,51 @@ const saveData = async () => {
         console.error('Save error:', error)
         alert('保存失败')
     }
+}
+
+const saveCurrentPage = async () => {
+  if (currentIndex.value === 0) {
+    await saveData(false)
+    return
+  }
+
+  const idx = currentIndex.value - 1
+  const record = resultPages.value[idx] || {}
+  const pageData = resultPageFormData.value[idx] || {}
+
+  try {
+    const dataJsonObj = { ...pageData }
+    if (!dataJsonObj.unifiedNumber && formData.unifiedNumber) dataJsonObj.unifiedNumber = formData.unifiedNumber
+    if (!dataJsonObj.constructionPart && formData.constructionPart) dataJsonObj.constructionPart = formData.constructionPart
+
+    const dataToSave = {
+      id: record.id,
+      entrustmentId: record.entrustmentId || formData.entrustmentId || props.id,
+      status: formData.status,
+      dataJson: JSON.stringify(dataJsonObj),
+      reviewSignaturePhoto: formData.reviewerSignature,
+      inspectSignaturePhoto: formData.testerSignature,
+      approveSignaturePhoto: formData.approverSignature,
+      recordTester: formData.recordTester,
+      recordReviewer: formData.recordReviewer,
+      tester: formData.recordTester,
+      reviewer: formData.recordReviewer,
+      filler: formData.filler,
+      approver: formData.approver
+    }
+
+    const resp = await axios.post('/api/beckman-beam/result/save', dataToSave)
+    if (resp.data && resp.data.success) {
+      if (!record.id && resp.data.data && resp.data.data.id) record.id = resp.data.data.id
+      record.dataJson = dataToSave.dataJson
+      alert('保存成功')
+    } else {
+      alert('保存失败: ' + (resp.data?.message || '未知错误'))
+    }
+  } catch (e) {
+    console.error('Save current page error', e)
+    alert('保存失败')
+  }
 }
 
 const approveAndSave = async () => {
@@ -786,7 +881,31 @@ const approveAndSave = async () => {
     formData.approverSignature = normalizeSignatureSrc(signatureBlob)
     formData.status = 6
 
-    await saveData()
+    await saveData(false)
+    for (let i = 0; i < resultPages.value.length; i++) {
+      const record = resultPages.value[i] || {}
+      const pageData = resultPageFormData.value[i] || {}
+      const dataJsonObj = { ...pageData }
+      if (!dataJsonObj.unifiedNumber && formData.unifiedNumber) dataJsonObj.unifiedNumber = formData.unifiedNumber
+      if (!dataJsonObj.constructionPart && formData.constructionPart) dataJsonObj.constructionPart = formData.constructionPart
+
+      await axios.post('/api/beckman-beam/result/save', {
+        id: record.id,
+        entrustmentId: record.entrustmentId || formData.entrustmentId || props.id,
+        status: formData.status,
+        dataJson: JSON.stringify(dataJsonObj),
+        reviewSignaturePhoto: formData.reviewerSignature,
+        inspectSignaturePhoto: formData.testerSignature,
+        approveSignaturePhoto: formData.approverSignature,
+        recordTester: formData.recordTester,
+        recordReviewer: formData.recordReviewer,
+        tester: formData.recordTester,
+        reviewer: formData.recordReviewer,
+        filler: formData.filler,
+        approver: formData.approver
+      })
+    }
+    if (navigateTo) navigateTo('BeckmanBeamReportList')
   } catch (e) {
     console.error('Approve error:', e)
     alert('批准失败')

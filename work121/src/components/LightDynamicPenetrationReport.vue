@@ -1,5 +1,5 @@
 <template>
-  <div class="lightDynamicPenetration-container">
+  <div class="lightDynamicPenetration-container" ref="containerRef">
 
 
     <div class="no-print toolbar">
@@ -272,12 +272,14 @@
   </div>
 </template>
 
-import { reactive, ref, onMounted, defineProps, inject } from 'vue';
+<script setup>
+import { reactive, ref, computed, onMounted, defineProps, inject, watch, nextTick } from 'vue';
 import axios from 'axios';
 
 const navigateTo = inject('navigateTo');
 const currentIndex = ref(0)
 const resultPages = ref([])
+const containerRef = ref(null)
 
 const goToList = () => {
   if (typeof navigateTo === 'function') {
@@ -882,7 +884,32 @@ const loadData = async () => {
 
 onMounted(() => {
     loadData()
+    nextTick(() => {
+      applyReadOnly()
+    })
 })
+
+watch(currentIndex, () => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
 
 const handleSign = async () => {
   const rawUser = localStorage.getItem('userInfo')
@@ -918,6 +945,12 @@ const handleSign = async () => {
       }
       
       if (signed) {
+        // 将签名同步到所有页的表单数据
+        for (let i = 0; i < (resultPageFormData?.value?.length || 0); i++) {
+          const pageData = resultPageFormData.value[i] || {}
+          pageData.testerSignature = imgSrc
+          resultPageFormData.value[i] = pageData
+        }
         // 保存签名到数据库
         await submitForm()
         alert('签名成功并已保存')

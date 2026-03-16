@@ -1,5 +1,5 @@
 <template>
-  <div class="beckmanBeamResult-container">
+  <div class="beckmanBeamResult-container" ref="containerRef">
 
     <div class="no-print toolbar">
       <div class="toolbar-left">
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const normalizeSignatureSrc = (v) => {
@@ -130,6 +130,7 @@ const props = defineProps({
 })
 
 const navigateTo = inject('navigateTo')
+const containerRef = ref(null)
 
 const goToList = () => {
   if (navigateTo) {
@@ -333,8 +334,33 @@ onMounted(() => {
     formData['station_' + i_idx] = ''
     formData['left_val_' + i_idx] = ''
   }
+
+  nextTick(() => {
+    applyReadOnly()
+  })
 })
 
+watch(() => formData.id, () => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
 const loadData = async (entrustmentId) => {
   try {
     const entrustResponse = await axios.get('/api/jc-core-wt-info/by-id', {

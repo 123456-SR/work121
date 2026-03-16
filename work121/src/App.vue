@@ -243,11 +243,6 @@ const menuItems = {
               props: { title: '回弹弯沉检测报告', category: '贝克曼梁', formComponent: 'BeckmanBeamReport', dataType: 'report' }
             }
           ]
-        },
-        {
-          id: 'ResultCategory',
-          name: '结果表',
-          submenu: []
         }
       ]
     },

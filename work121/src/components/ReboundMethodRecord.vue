@@ -455,17 +455,19 @@ const normalizeSignatureSrc = (value) => {
 const submitWorkflow = async (action) => {
     console.log('submitWorkflow - formData.id:', formData.id, 'type:', typeof formData.id)
     console.log('submitWorkflow - formData:', formData)
-    // 检查 ID：空字符串、null、undefined 都视为无效
-    if (!formData.id || formData.id.trim() === '') {
-        console.warn('提交审核失败：formData.id 为空', formData.id)
-        alert('请先保存记录')
-        return
-    }
     
     const user = JSON.parse(localStorage.getItem('userInfo'))
     if (!user || !user.username) {
         alert('请先登录')
         return
+    }
+
+    if (action !== 'SUBMIT' && action !== 'AUDIT_PASS') {
+        if (!formData.id || (typeof formData.id === 'string' && formData.id.trim() === '')) {
+            console.warn('提交审核失败：formData.id 为空', formData.id)
+            alert('请先保存记录')
+            return
+        }
     }
 
     let signatureData = null
@@ -484,8 +486,6 @@ const submitWorkflow = async (action) => {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     // 保存签名到数据库
-                     await submitForm()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -513,8 +513,6 @@ const submitWorkflow = async (action) => {
                      const sigData = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
                      formData.recordReviewSign = sigData
                      formData.reviewerSignature = sigData
-                     // Save signature to database
-                     await submitForm()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -547,34 +545,186 @@ const submitWorkflow = async (action) => {
     //    signatureData = formData.recordReviewSign
     // }
 
-    const request = {
-        tableType: 'REBOUND_METHOD',
-        recordId: formData.id,
-        action: action,
-        userAccount: user.username,
-        signatureData: signatureData,
-        nextHandler: ''
-    }
-
-    if (action === 'REJECT') {
-        const reason = prompt('请输入打回原因:')
-        if (!reason) return
-        request.rejectReason = reason
-    }
-
     try {
+        saveCurrentRecordState()
+
+        if (action === 'SUBMIT' || action === 'AUDIT_PASS') {
+            if (!records.value || records.value.length === 0) {
+                alert('没有可操作的记录')
+                return
+            }
+
+            const isTesterAction = action === 'SUBMIT'
+            const signatureSrc = isTesterAction ? formData.testerSignature : formData.recordReviewSign
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const assigned = isTesterAction ? pageData.recordTester : pageData.recordReviewer
+                if (assigned) {
+                    const ok = isTesterAction
+                        ? (user.username === assigned || user.userName === assigned)
+                        : (user.username === assigned || user.fullName === assigned)
+                    if (!ok) {
+                        alert(`第${i + 1}页的${isTesterAction ? '记录检测人' : '记录审核人'}为 ${assigned}，您无权操作`)
+                        return
+                    }
+                }
+
+                if (isTesterAction) {
+                    pageData.testerSignature = signatureSrc
+                    pageData.inspectSignaturePhoto = signatureSrc
+                    if (!pageData.recordTester) {
+                        pageData.recordTester = formData.recordTester
+                    }
+                } else {
+                    pageData.recordReviewSign = signatureSrc
+                    pageData.reviewerSignature = signatureSrc
+                    pageData.reviewSignaturePhoto = signatureSrc
+                    if (!pageData.recordReviewer) {
+                        pageData.recordReviewer = formData.recordReviewer
+                    }
+                }
+
+                rec.inspectSignaturePhoto = pageData.testerSignature
+                rec.reviewSignaturePhoto = pageData.reviewerSignature
+                rec.dataJson = JSON.stringify(pageData)
+            }
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const submitData = {
+                    id: rec.id || null,
+                    entrustmentId: pageData.entrustmentId || formData.entrustmentId || formData.unifiedNumber,
+                    status: String(pageData.status ?? formData.status),
+                    projectName: pageData.projectName || '',
+                    section: pageData.section || '',
+                    constructionPart: pageData.constructionPart || '',
+                    sampleName: pageData.sampleName || '',
+                    testDate: pageData.testDate || '',
+                    testCategory: pageData.testCategory || '',
+                    sampleStatus: pageData.sampleStatus || '',
+                    testAngle: pageData.testAngle || '',
+                    designIndex: pageData.designIndex || '',
+                    aggregateSize: pageData.aggregateSize || '',
+                    avgStrength: pageData.avgStrength || '',
+                    stdDev: pageData.stdDev || '',
+                    coefVariation: pageData.coefVariation || '',
+                    compEstimatedStrength: pageData.compEstimatedStrength || '',
+                    equipment: pageData.equipment || '',
+                    avgCarbonation: pageData.avgCarbonation || '',
+                    standard: pageData.standard || '',
+                    calibrationBefore: pageData.calibrationBefore || '',
+                    calibrationAfter: pageData.calibrationAfter || '',
+                    conclusion: pageData.conclusion || '',
+                    recordTester: pageData.recordTester,
+                    recordReviewer: pageData.recordReviewer,
+                    filler: pageData.filler,
+                    tester: pageData.recordTester,
+                    reviewer: pageData.recordReviewer,
+                    reviewSignaturePhoto: pageData.reviewerSignature,
+                    inspectSignaturePhoto: pageData.testerSignature
+                }
+
+                const dataJsonObj = { ...pageData }
+                delete dataJsonObj.id
+                delete dataJsonObj.status
+                delete dataJsonObj.tester
+                delete dataJsonObj.reviewer
+                submitData.dataJson = JSON.stringify(dataJsonObj)
+
+                const saveRes = await axios.post('/api/reboundMethod/save', submitData)
+                if (!saveRes.data || !saveRes.data.success) {
+                    alert(`第${i + 1}页保存失败: ${(saveRes.data && saveRes.data.message) || ''}`)
+                    return
+                }
+                if (saveRes.data.data) {
+                    records.value[i] = { ...records.value[i], ...saveRes.data.data }
+                }
+            }
+
+            const eligibleStatus = (status) => {
+                const s = parseInt(status)
+                if (Number.isNaN(s)) return false
+                if (action === 'SUBMIT') return s === 0 || s === 2
+                if (action === 'AUDIT_PASS') return s === 1
+                return false
+            }
+
+            let successCount = 0
+            let skippedCount = 0
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                if (!rec.id) {
+                    alert(`第${i + 1}页未保存，无法提交流程`)
+                    return
+                }
+                if (!eligibleStatus(rec.status)) {
+                    skippedCount++
+                    continue
+                }
+
+                const request = {
+                    tableType: 'REBOUND_METHOD',
+                    recordId: rec.id,
+                    action: action,
+                    userAccount: user.username,
+                    signatureData: signatureData,
+                    nextHandler: ''
+                }
+
+                const response = await axios.post('/api/workflow/handle', request)
+                if (!response.data.success) {
+                    alert(`第${i + 1}页操作失败: ${response.data.message}`)
+                    return
+                }
+                rec.status = response.data.data
+                successCount++
+            }
+
+            alert(`操作成功：${successCount} 条${skippedCount ? `，跳过 ${skippedCount} 条` : ''}`)
+
+            const entrustmentId = formData.entrustmentId || formData.unifiedNumber
+            await loadData(entrustmentId)
+            return
+        }
+
+        const request = {
+            tableType: 'REBOUND_METHOD',
+            recordId: formData.id,
+            action: action,
+            userAccount: user.username,
+            signatureData: signatureData,
+            nextHandler: ''
+        }
+
+        if (action === 'REJECT') {
+            const reason = prompt('请输入打回原因:')
+            if (!reason) return
+            request.rejectReason = reason
+        }
+
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            // Refresh data - 重新加载数据以获取最新状态
-            // 保存当前记录的 ID，确保重新加载后能定位到正确的记录
             const currentRecordId = formData.id
             const entrustmentId = formData.entrustmentId || formData.unifiedNumber
-            
-            // 重新加载数据
             await loadData(entrustmentId)
-            
-            // 如果重新加载后找到了当前记录，切换到该记录
+
             if (currentRecordId) {
                 const foundIndex = records.value.findIndex(r => r.id === currentRecordId)
                 if (foundIndex !== -1) {
@@ -583,13 +733,7 @@ const submitWorkflow = async (action) => {
                     console.log('After workflow reload, found record at index:', foundIndex, 'formData.status:', formData.status, 'formData.id:', formData.id)
                 } else {
                     console.warn('After workflow reload, record not found with id:', currentRecordId, 'total records:', records.value.length)
-                    // 如果找不到记录，可能是记录被删除了，或者查询返回了不同的记录
-                    // 不要自动切换到其他记录，保持当前状态，避免误操作
-                    if (records.value.length > 0) {
-                        console.warn('Warning: Current record not found, but other records exist. Keeping current state to avoid accidental operations.')
-                        // 不自动切换，让用户手动选择
-                    } else {
-                        // 如果没有任何记录，清空表单
+                    if (records.value.length === 0) {
                         formData.id = ''
                         currentIndex.value = -1
                     }
@@ -1447,6 +1591,7 @@ const handleSign = async () => {
   }
 
   try {
+    saveCurrentRecordState()
     const response = await axios.post('/api/signature/get', {
       userAccount: user.username
     })
@@ -1466,12 +1611,16 @@ const handleSign = async () => {
       let signType = ''
       const currentAccount = user.username
       const currentName = user.userName
+      let signatureKey = ''
+      let photoKey = ''
 
       // Match Record Tester (记录检测人)
       if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
         formData.testerSignature = imgSrc
         signed = true
         signType = '检测人'
+        signatureKey = 'testerSignature'
+        photoKey = 'inspectSignaturePhoto'
       }
       
       // Match Record Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
@@ -1479,13 +1628,99 @@ const handleSign = async () => {
         formData.reviewerSignature = imgSrc
         signed = true
         signType = '审核人'
+        signatureKey = 'reviewerSignature'
+        photoKey = 'reviewSignaturePhoto'
       }
 
       if (signed) {
-        // 保存签名到数据库
-        await submitForm()
-        // 显示成功消息
-        alert(`签名成功并已保存，您以${signType}身份签字`)
+        saveCurrentRecordState()
+
+        for (let i = 0; i < records.value.length; i++) {
+          const rec = records.value[i]
+          let pageData = {}
+          try {
+            pageData = rec && rec.dataJson ? JSON.parse(rec.dataJson) : {}
+          } catch (e) {
+            pageData = {}
+          }
+
+          pageData[signatureKey] = imgSrc
+          if (rec) {
+            rec[photoKey] = imgSrc
+            rec.dataJson = JSON.stringify(pageData)
+          }
+        }
+
+        let successCount = 0
+        const totalCount = records.value.length
+        for (let i = 0; i < records.value.length; i++) {
+          const rec = records.value[i] || {}
+          let pageData = {}
+          try {
+            pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+          } catch (e) {
+            pageData = {}
+          }
+
+          const submitData = {
+            ...(rec.id && String(rec.id).trim() !== '' ? { id: rec.id } : {}),
+            entrustmentId: pageData.entrustmentId || pageData.unifiedNumber || formData.entrustmentId || formData.unifiedNumber,
+            status: pageData.status,
+            structurePart: pageData.structurePart,
+            testResult: pageData.conclusion,
+            remarks: pageData.remarks,
+            entrustingUnit: pageData.entrustingUnit || '',
+            projectName: pageData.projectName || '',
+            testCategory: pageData.testCategory || '',
+            sampleStatus: pageData.sampleStatus || '',
+            testAngle: pageData.testAngle || '',
+            designIndex: pageData.designIndex || '',
+            aggregateSize: pageData.aggregateSize || '',
+            avgStrength: pageData.avgStrength || '',
+            stdDev: pageData.stdDev || '',
+            coefVariation: pageData.coefVariation || '',
+            compEstimatedStrength: pageData.compEstimatedStrength || '',
+            equipment: pageData.equipment || '',
+            avgCarbonation: pageData.avgCarbonation || '',
+            standard: pageData.standard || '',
+            calibrationBefore: pageData.calibrationBefore || '',
+            calibrationAfter: pageData.calibrationAfter || '',
+            conclusion: pageData.conclusion || '',
+            recordTester: pageData.recordTester,
+            recordReviewer: pageData.recordReviewer,
+            filler: pageData.filler,
+            tester: pageData.recordTester,
+            reviewer: pageData.recordReviewer,
+            reviewSignaturePhoto: pageData.reviewerSignature,
+            inspectSignaturePhoto: pageData.testerSignature
+          }
+
+          const dataJsonObj = { ...pageData }
+          delete dataJsonObj.id
+          delete dataJsonObj.status
+          delete dataJsonObj.tester
+          delete dataJsonObj.reviewer
+          submitData.dataJson = JSON.stringify(dataJsonObj)
+
+          const saveRes = await axios.post('/api/reboundMethod/save', submitData)
+          if (saveRes.data && saveRes.data.success) {
+            successCount++
+            if (saveRes.data.data) {
+              const savedRecord = saveRes.data.data
+              records.value[i] = { ...records.value[i], ...savedRecord }
+            }
+          }
+        }
+
+        if (records.value[currentIndex.value]) {
+          mapRecordToFormData(records.value[currentIndex.value])
+        }
+
+        if (successCount === totalCount) {
+          alert(`签名成功并已保存，您以${signType}身份签字`)
+        } else {
+          alert(`签名已写入，保存完成：成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
+        }
       } else {
         alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
       }

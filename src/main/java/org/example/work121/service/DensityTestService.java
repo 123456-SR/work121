@@ -3,6 +3,8 @@ package org.example.work121.service;
 import org.example.work121.entity.DensityTest;
 import org.example.work121.entity.DensityTestReport;
 
+import java.util.Map;
+
 public interface DensityTestService {
     java.util.List<DensityTest> getByEntrustmentId(String entrustmentId);
     void save(DensityTest densityTest);
@@ -16,4 +18,6 @@ public interface DensityTestService {
      * @param entrustmentId The entrustment ID
      */
     void generateReportAndResult(String entrustmentId);
+
+    String exportReportToExcel(Map<String, Object> payload);
 }

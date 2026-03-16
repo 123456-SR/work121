@@ -134,8 +134,8 @@ public interface NuclearDensityMapper {
     int updateReportAndResultStatus(@Param("entrustmentId") String entrustmentId, @Param("reportStatus") String reportStatus, @Param("resultStatus") String resultStatus);
 
     @Update("UPDATE (SELECT * FROM T_NUCLEAR_DENSITY WHERE ENTRUSTMENT_ID = #{entrustmentId,jdbcType=VARCHAR}) SET " +
-            "RECORD_TESTER_SIGN = NVL(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_TESTER_SIGN), " +
-            "RECORD_REVIEW_SIGN = NVL(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}, RECORD_REVIEW_SIGN)")
+            "RECORD_TESTER_SIGN = NVL(TO_CLOB(#{testerSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}), RECORD_TESTER_SIGN), " +
+            "RECORD_REVIEW_SIGN = NVL(TO_CLOB(#{reviewSign,jdbcType=CLOB,typeHandler=org.apache.ibatis.type.ClobTypeHandler}), RECORD_REVIEW_SIGN)")
     int updateRecordSignsByEntrustmentId(@Param("entrustmentId") String entrustmentId,
                                          @Param("testerSign") String testerSign,
                                          @Param("reviewSign") String reviewSign);

@@ -262,18 +262,36 @@ public class NuclearDensityServiceImpl implements NuclearDensityService {
         }
 
         String projectName = sanitizeFileName(stringValue(data.get("projectName")));
-        String baseName = (projectName.isEmpty() ? "" : (projectName + "_")) + templateBaseName;
-        String unifiedNumber = stringValue(data.get("unifiedNumber"));
-        if (unifiedNumber.isEmpty()) {
-            unifiedNumber = stringValue(payload.get("entrustmentId"));
-        }
-        unifiedNumber = sanitizeFileName(unifiedNumber);
+        String projectPrefix = projectName;
+        if (projectPrefix.length() > 3) projectPrefix = projectPrefix.substring(0, 3);
 
-        String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date());
-        String fileName = baseName
-                + (unifiedNumber.isEmpty() ? "" : ("_" + unifiedNumber))
-                + "_" + timestamp
-                + "." + ext;
+        int pageNo = 0;
+        int totalPages = 0;
+        try {
+            pageNo = Integer.parseInt(stringValue(payload.get("pageNo")));
+        } catch (Exception ignored) {
+        }
+        if (pageNo <= 0) {
+            try {
+                pageNo = Integer.parseInt(stringValue(data.get("pageNo")));
+            } catch (Exception ignored) {
+            }
+        }
+        try {
+            totalPages = Integer.parseInt(stringValue(payload.get("totalPages")));
+        } catch (Exception ignored) {
+        }
+        if (totalPages <= 0) {
+            try {
+                totalPages = Integer.parseInt(stringValue(data.get("totalPages")));
+            } catch (Exception ignored) {
+            }
+        }
+        if (pageNo <= 0) pageNo = 1;
+        if (totalPages <= 0) totalPages = 1;
+
+        String baseName = (projectPrefix.isEmpty() ? "" : (projectPrefix + "_")) + templateBaseName;
+        String fileName = baseName + "_P" + pageNo + "of" + totalPages + "." + ext;
         return dir.resolve(fileName);
     }
 

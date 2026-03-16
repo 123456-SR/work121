@@ -460,11 +460,6 @@ const submitWorkflow = async (action) => {
     console.log('formData.reviewer:', formData.reviewer)
     console.log('formData.status:', formData.status)
     
-    if (!formData.id) {
-        alert('请先保存记录')
-        return
-    }
-    
     const user = JSON.parse(localStorage.getItem('userInfo'))
     console.log('Current user:', user)
     if (!user || !user.username) {
@@ -475,13 +470,6 @@ const submitWorkflow = async (action) => {
     let signatureData = null
     
     if (action === 'SUBMIT') {
-        // Role check: Only recordTester can submit
-        if (formData.recordTester && user.username !== formData.recordTester && user.userName !== formData.recordTester) {
-            alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
-            return
-        }
-
-        // Auto fetch signature if missing
         if (!formData.testerSignature) {
             try {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
@@ -490,8 +478,6 @@ const submitWorkflow = async (action) => {
                      if (!formData.recordTester) {
                         formData.recordTester = user.userName || user.username
                      }
-                     // 保存签名到数据库
-                     await saveData()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -504,13 +490,6 @@ const submitWorkflow = async (action) => {
         }
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS') {
-        // Role check: Only recordReviewer can audit
-        if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
-            alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
-            return
-        }
-
-        // Auto fetch signature if missing
         if (!formData.reviewerSignature) {
             try {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
@@ -519,8 +498,6 @@ const submitWorkflow = async (action) => {
                      if (!formData.recordReviewer) {
                         formData.recordReviewer = user.fullName || user.username
                      }
-                     // 保存签名到数据库
-                     await saveData()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -540,26 +517,172 @@ const submitWorkflow = async (action) => {
         }
     }
 
-    const request = {
-        tableType: 'NUCLEAR_DENSITY',
-        recordId: formData.id,
-        action: action,
-        userAccount: user.username,
-        signatureData: signatureData,
-        nextHandler: ''
-    }
-
-    if (action === 'REJECT') {
-        const reason = prompt('请输入打回原因:')
-        if (!reason) return
-        request.rejectReason = reason
-    }
-
     try {
+        saveCurrentRecordState()
+
+        if (action === 'SUBMIT' || action === 'AUDIT_PASS') {
+            if (!records.value || records.value.length === 0) {
+                alert('没有可操作的记录')
+                return
+            }
+
+            const isTesterAction = action === 'SUBMIT'
+            const signatureSrc = isTesterAction ? formData.testerSignature : formData.reviewerSignature
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const assigned = isTesterAction ? pageData.recordTester : pageData.recordReviewer
+                if (assigned) {
+                    const ok = isTesterAction
+                        ? (user.username === assigned || user.userName === assigned)
+                        : (user.username === assigned || user.fullName === assigned)
+                    if (!ok) {
+                        alert(`第${i + 1}页的${isTesterAction ? '记录检测人' : '记录校核人'}为 ${assigned}，您无权操作`)
+                        return
+                    }
+                }
+
+                if (isTesterAction) {
+                    pageData.testerSignature = signatureSrc
+                    pageData.inspectSignaturePhoto = signatureSrc
+                    if (!pageData.recordTester) {
+                        pageData.recordTester = formData.recordTester
+                    }
+                } else {
+                    pageData.reviewerSignature = signatureSrc
+                    pageData.reviewSignaturePhoto = signatureSrc
+                    if (!pageData.recordReviewer) {
+                        pageData.recordReviewer = formData.recordReviewer
+                    }
+                }
+
+                rec.inspectSignaturePhoto = pageData.testerSignature
+                rec.reviewSignaturePhoto = pageData.reviewerSignature
+                rec.dataJson = JSON.stringify(pageData)
+            }
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const dataJsonObj = { ...pageData }
+                delete dataJsonObj.id
+                delete dataJsonObj.status
+                delete dataJsonObj.tester
+                delete dataJsonObj.reviewer
+
+                const dataToSave = {
+                    id: rec.id || null,
+                    entrustmentId: pageData.entrustmentId || formData.entrustmentId || props.id,
+                    status: String(pageData.status ?? formData.status),
+                    dataJson: JSON.stringify(dataJsonObj),
+                    reviewSignaturePhoto: pageData.reviewerSignature,
+                    inspectSignaturePhoto: pageData.testerSignature,
+                    recordTester: pageData.recordTester,
+                    recordReviewer: pageData.recordReviewer,
+                    tester: pageData.recordTester,
+                    reviewer: pageData.recordReviewer,
+                    filler: pageData.filler,
+                    nuclearModel: pageData.equipment
+                }
+
+                const saveRes = await axios.post('/api/nuclear-density/save', dataToSave)
+                if (!saveRes.data || !saveRes.data.success) {
+                    alert(`第${i + 1}页保存失败: ${(saveRes.data && saveRes.data.message) || ''}`)
+                    return
+                }
+                if (saveRes.data.data) {
+                    records.value[i] = saveRes.data.data
+                    if (i === currentIndex.value) {
+                        mapRecordToFormData(records.value[i])
+                    }
+                }
+            }
+
+            const eligibleStatus = (status) => {
+                const s = parseInt(status)
+                if (Number.isNaN(s)) return false
+                if (action === 'SUBMIT') return s === 0 || s === 2
+                if (action === 'AUDIT_PASS') return s === 1
+                return false
+            }
+
+            let successCount = 0
+            let skippedCount = 0
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                if (!rec.id) {
+                    alert(`第${i + 1}页未保存，无法提交流程`)
+                    return
+                }
+                if (!eligibleStatus(rec.status)) {
+                    skippedCount++
+                    continue
+                }
+
+                const request = {
+                    tableType: 'NUCLEAR_DENSITY',
+                    recordId: rec.id,
+                    action: action,
+                    userAccount: user.username,
+                    signatureData: signatureData,
+                    nextHandler: ''
+                }
+
+                const response = await axios.post('/api/workflow/handle', request)
+                if (!response.data.success) {
+                    alert(`第${i + 1}页操作失败: ${response.data.message}`)
+                    return
+                }
+                rec.status = response.data.data
+                successCount++
+            }
+
+            alert(`操作成功：${successCount} 条${skippedCount ? `，跳过 ${skippedCount} 条` : ''}`)
+
+            const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
+            if (reloadId) {
+                loadData(reloadId)
+            }
+            return
+        }
+
+        if (!formData.id) {
+            alert('请先保存记录')
+            return
+        }
+
+        const request = {
+            tableType: 'NUCLEAR_DENSITY',
+            recordId: formData.id,
+            action: action,
+            userAccount: user.username,
+            signatureData: signatureData,
+            nextHandler: ''
+        }
+
+        if (action === 'REJECT') {
+            const reason = prompt('请输入打回原因:')
+            if (!reason) return
+            request.rejectReason = reason
+        }
+
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            // 重新按委托号加载一次，刷新最新的 STATUS（例如从 0 -> 1）
             const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
             if (reloadId) {
               loadData(reloadId)
@@ -1063,6 +1186,8 @@ const handleSign = async (role) => {
 
       let signed = false
       let signType = ''
+      const signatureKey = role === 'reviewer' ? 'reviewerSignature' : 'testerSignature'
+      const photoKey = role === 'reviewer' ? 'reviewSignaturePhoto' : 'inspectSignaturePhoto'
 
       if (role === 'reviewer') {
         if (formData.recordReviewer && formData.recordReviewer !== currentName && formData.recordReviewer !== currentAccount) {
@@ -1085,10 +1210,73 @@ const handleSign = async (role) => {
       }
 
       if (signed) {
-        // 保存签名到数据库
-        await saveData()
-        // 显示成功消息
-        alert(`签名成功并已保存，您以${signType}身份签字`)
+        saveCurrentRecordState()
+
+        for (let i = 0; i < records.value.length; i++) {
+          const rec = records.value[i]
+          let pageData = {}
+          try {
+            pageData = rec && rec.dataJson ? JSON.parse(rec.dataJson) : {}
+          } catch (e) {
+            pageData = {}
+          }
+
+          pageData[signatureKey] = imgSrc
+          if (rec) {
+            rec[photoKey] = imgSrc
+            rec.dataJson = JSON.stringify(pageData)
+          }
+        }
+
+        let successCount = 0
+        const totalCount = records.value.length
+        for (let i = 0; i < records.value.length; i++) {
+          const rec = records.value[i] || {}
+          let pageData = {}
+          try {
+            pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+          } catch (e) {
+            pageData = {}
+          }
+
+          const dataJsonObj = { ...pageData }
+          delete dataJsonObj.id
+          delete dataJsonObj.status
+          delete dataJsonObj.tester
+          delete dataJsonObj.reviewer
+
+          const dataToSave = {
+            id: rec.id || null,
+            entrustmentId: pageData.entrustmentId || formData.entrustmentId || props.id,
+            status: String(pageData.status ?? formData.status),
+            dataJson: JSON.stringify(dataJsonObj),
+            reviewSignaturePhoto: pageData.reviewerSignature,
+            inspectSignaturePhoto: pageData.testerSignature,
+            recordTester: pageData.recordTester,
+            recordReviewer: pageData.recordReviewer,
+            tester: pageData.recordTester,
+            reviewer: pageData.recordReviewer,
+            filler: pageData.filler,
+            nuclearModel: pageData.equipment
+          }
+
+          const saveRes = await axios.post('/api/nuclear-density/save', dataToSave)
+          if (saveRes.data && saveRes.data.success) {
+            successCount++
+            if (saveRes.data.data) {
+              records.value[i] = saveRes.data.data
+              if (i === currentIndex.value) {
+                mapRecordToFormData(records.value[i])
+              }
+            }
+          }
+        }
+
+        if (successCount === totalCount) {
+          alert(`签名成功并已保存，您以${signType}身份签字`)
+        } else {
+          alert(`签名已写入，保存完成：成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
+        }
       }
     } else {
       alert('未找到您的电子签名，请先去“电子签名”页面设置')

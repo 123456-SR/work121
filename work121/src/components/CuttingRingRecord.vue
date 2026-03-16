@@ -110,6 +110,13 @@
         >
           预览PDF
         </button>
+        <button
+          v-if="!draftMode"
+          @click="exportExcel"
+          class="btn btn-secondary btn-small"
+        >
+          导出数据
+        </button>
       </div>
     </div>
 
@@ -248,6 +255,32 @@
     </div>
     </form>
 
+    <div v-if="showExportModal" class="modal-overlay no-print">
+      <div class="modal-content">
+        <h3>导出数据</h3>
+        <div class="form-group">
+          <div>表名称：{{ exportTemplateInfo.baseName }}</div>
+          <div v-if="exportTemplateInfo.templates.length" class="template-files">
+            <span v-for="t in exportTemplateInfo.templates" :key="t.fileName" class="template-file">{{ t.fileName }}</span>
+          </div>
+          <div v-else>已有模板：无</div>
+        </div>
+        <div class="format-buttons">
+          <button
+            v-for="fmt in exportTemplateInfo.formats"
+            :key="fmt"
+            @click="startExport(fmt)"
+            class="btn btn-primary btn-small"
+          >
+            {{ String(fmt).toUpperCase() }}<span v-if="!hasTemplate(fmt)">（无模板）</span>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeExportModal" class="btn btn-secondary">关闭</button>
+        </div>
+      </div>
+    </div>
+
     <!-- 数据分析模态窗口 -->
     <div v-if="showModal" class="modal-overlay" @click="closeAnalysisModal">
       <div class="modal-content" @click.stop style="position: relative;">
@@ -344,6 +377,13 @@ import axios from 'axios'
 
 // 数据分析相关变量
 const showModal = ref(false)
+const showExportModal = ref(false)
+const exportTemplateInfo = reactive({
+  baseName: '环刀法记录表',
+  templateDir: '',
+  templates: [],
+  formats: ['xlsx', 'xls', 'docx']
+})
 const analysisRange = reactive({ start: '', end: '' })
 const analysisResults = reactive({
   ringMassMin: '',
@@ -369,6 +409,46 @@ const analysisResults = reactive({
   compactionMin: '',
   compactionMax: ''
 })
+
+const hasTemplate = (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!ext) return false
+  return Array.isArray(exportTemplateInfo.templates) && exportTemplateInfo.templates.some(t => String(t?.ext || '').toLowerCase() === ext)
+}
+
+const openExportModal = async () => {
+  try {
+    const res = await axios.get('/api/cutting-ring/export-formats', {
+      params: { baseName: exportTemplateInfo.baseName }
+    })
+    if (res.data && res.data.success) {
+      exportTemplateInfo.baseName = res.data.baseName || exportTemplateInfo.baseName
+      exportTemplateInfo.templateDir = res.data.templateDir || ''
+      exportTemplateInfo.templates = Array.isArray(res.data.templates) ? res.data.templates : []
+      exportTemplateInfo.formats = Array.isArray(res.data.formats) && res.data.formats.length ? res.data.formats : exportTemplateInfo.formats
+      showExportModal.value = true
+    } else {
+      alert((res.data && res.data.message) ? res.data.message : '获取可导出格式失败')
+    }
+  } catch (e) {
+    alert('获取可导出格式失败')
+  }
+}
+
+const closeExportModal = () => {
+  showExportModal.value = false
+}
+
+const startExport = async (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!hasTemplate(ext)) {
+    const dir = exportTemplateInfo.templateDir ? `\n模板目录：${exportTemplateInfo.templateDir}` : ''
+    alert(`未找到模板：${exportTemplateInfo.baseName}.${ext}\n请先将对应模板文件放入“表”文件夹后再导出。${dir}`)
+    return
+  }
+  showExportModal.value = false
+  await exportByFormat(ext)
+}
 
 const props = defineProps({
   id: {
@@ -1356,6 +1436,111 @@ const handleSign = async () => {
 
 const printDocument = () => {
   window.print()
+}
+
+const exportExcel = async () => {
+  await openExportModal()
+}
+
+const exportByFormat = async (format) => {
+  try {
+    saveCurrentPageData()
+    saveCurrentRecordState()
+
+    let dynamicData = {}
+    try {
+      dynamicData = currentRecord.value && currentRecord.value.dataJson ? JSON.parse(currentRecord.value.dataJson) : {}
+    } catch (e) {
+      dynamicData = {}
+    }
+
+    const total = Number(dynamicData.totalPages || formData.totalPages || 1) || 1
+    const successPaths = []
+    const failures = []
+
+    const pageFieldRegex = /^(.*)_page(\d+)_(\d+)$/
+    const staticKeys = [
+      'constructionLocation', 'maxDryDensity', 'optMoisture', 'testType', 'standard', 'designCompaction',
+      'testDate', 'remarks', 'unifiedNumber', 'projectName', 'constructionPart', 'clientUnit'
+    ]
+
+    const buildPageData = (pageIndex) => {
+      const d = {}
+      staticKeys.forEach(k => {
+        if (dynamicData[k] !== undefined && dynamicData[k] !== null && dynamicData[k] !== '') d[k] = dynamicData[k]
+      })
+
+      d.constructionLocation = d.constructionLocation || formData.constructionLocation || currentRecord.value?.constructionLocation || ''
+      d.maxDryDensity = d.maxDryDensity || formData.maxDryDensity || ''
+      d.optMoisture = d.optMoisture || formData.optMoisture || ''
+      d.testType = d.testType || formData.testType || ''
+      d.standard = d.standard || formData.standard || currentRecord.value?.testBasis || ''
+      d.designCompaction = d.designCompaction || formData.designCompaction || ''
+      d.testDate = d.testDate || formData.testDate || ''
+      d.remarks = d.remarks || formData.remarks || ''
+
+      d.entrustingUnit = currentRecord.value?.clientUnit || formData.clientUnit || formData.entrustingUnit || dynamicData.entrustingUnit || ''
+      d.projectName = d.projectName || formData.projectName || currentRecord.value?.projectName || ''
+      d.unifiedNumber = d.unifiedNumber || currentRecord.value?.wtNum || formData.unifiedNumber || currentRecord.value?.entrustmentId || ''
+
+      Object.keys(dynamicData || {}).forEach(key => {
+        const m = key.match(pageFieldRegex)
+        if (!m) return
+        const field = m[1]
+        const p = Number(m[2])
+        const idx = Number(m[3])
+        if (p !== pageIndex) return
+        d[key] = dynamicData[key]
+        d[`${field}_${idx}`] = dynamicData[key]
+      })
+
+      d.pageNo = pageIndex + 1
+      d.pageNum = pageIndex + 1
+      d.pageIndex = pageIndex
+      d.totalPages = total
+      d.pageTotal = total
+      d.pageText = `${pageIndex + 1}/${total}`
+      return d
+    }
+
+    for (let i = 0; i < total; i++) {
+      const pageNo = i + 1
+      const entrustmentId = currentRecord.value?.entrustmentId || props.id || formData.entrustmentId || formData.unifiedNumber || ''
+      const id = currentRecord.value?.id || formData.id
+      const dataObj = buildPageData(i)
+
+      try {
+        const response = await axios.post('/api/cutting-ring/export-excel', {
+          id,
+          entrustmentId,
+          pageNo,
+          totalPages: total,
+          data: dataObj,
+          format,
+          templateBaseName: exportTemplateInfo.baseName
+        })
+
+        if (response.data && response.data.success) {
+          successPaths.push(response.data.path)
+        } else {
+          failures.push(`第${pageNo}页：${response.data && response.data.message ? response.data.message : '未知错误'}`)
+        }
+      } catch (e) {
+        failures.push(`第${pageNo}页：${e && e.message ? e.message : '请求失败'}`)
+      }
+    }
+
+    if (successPaths.length > 0 && failures.length === 0) {
+      alert(`导出成功：\n${successPaths.join('\n')}`)
+    } else if (successPaths.length > 0) {
+      alert(`部分导出成功：\n${successPaths.join('\n')}\n\n失败：\n${failures.join('\n')}`)
+    } else {
+      alert(`导出失败：\n${failures.join('\n') || '未知错误'}`)
+    }
+  } catch (error) {
+    console.error('Export error:', error)
+    alert('导出失败')
+  }
 }
 
 const openBackendPdfPreview = (actionUrl) => {

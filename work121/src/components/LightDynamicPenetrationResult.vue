@@ -1,5 +1,5 @@
 <template>
-  <div class="lightDynamicPenetrationResult-container">
+  <div class="lightDynamicPenetrationResult-container" ref="containerRef">
 
 
     <div class="no-print toolbar">
@@ -253,10 +253,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, defineProps, inject, computed } from 'vue'
+import { reactive, ref, onMounted, defineProps, inject, computed, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const navigateTo = inject('navigateTo')
+const containerRef = ref(null)
 
 const goToList = () => {
   if (navigateTo) {
@@ -770,6 +771,11 @@ const handleSign = async () => {
       }
       
       if (signed) {
+        for (let i = 1; i < records.value.length; i++) {
+          if (pageFormData.value[i]) {
+            pageFormData.value[i] = { ...pageFormData.value[i], inspectSignature: imgSrc }
+          }
+        }
         // 保存签名到数据库
         await saveData()
         alert('签名成功并已保存')
@@ -947,7 +953,32 @@ const loadRecordByIndex = (index) => {
 
 onMounted(() => {
     loadData()
+    nextTick(() => {
+      applyReadOnly()
+    })
 })
+
+watch(currentIndex, () => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
 
 const printDocument = () => {
   window.print()

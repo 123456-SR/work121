@@ -1,5 +1,5 @@
 <template>
-  <div class="densityTestReport-container">
+  <div class="densityTestReport-container" ref="containerRef">
 
 
     <div class="no-print toolbar">
@@ -8,6 +8,13 @@
       </div>
 
       <div class="toolbar-right">
+        <div class="page-nav">
+          <button class="btn btn-small" @click="currentIndex = 0" :disabled="currentIndex === 0">首页</button>
+          <button class="btn btn-small" @click="prevPage" :disabled="currentIndex === 0">上一页</button>
+          <span class="page-info">{{ currentIndex + 1 }} / {{ 1 + resultPages.length }}</span>
+          <button class="btn btn-small" @click="nextPage" :disabled="currentIndex >= resultPages.length">下一页</button>
+          <button class="btn btn-small" @click="currentIndex = resultPages.length" :disabled="currentIndex >= resultPages.length">末页</button>
+        </div>
         <span v-if="formData.status !== undefined" class="status-text">
           状态:
           <span :style="{ color: getStatusColor(formData.status) }" class="status-label">
@@ -40,10 +47,16 @@
         >
           预览PDF
         </button>
+        <button
+          @click="exportExcel"
+          class="btn btn-secondary btn-small"
+        >
+          导出数据
+        </button>
       </div>
     </div>
 
-    <form id="pdfForm" ref="pdfForm" method="post">
+    <form id="pdfForm" ref="pdfForm" method="post" v-show="currentIndex === 0">
     <h2>原位密度检测报告</h2>
 
     <div class="header-info">
@@ -103,8 +116,7 @@
             <td colspan="10" class="left-align"><input type="text" v-model="formData.testResult"   name="testResult"></td>
         </tr>
 
-        <!-- Data Header -->
-        <tr>
+        <tr v-if="isNuclearMethod">
             <td class="label" style="width: 10%;">样品编号</td>
             <td class="label" style="width: 20%;" colspan="3">检测部位<br>(桩号、高程)</td>
             <td class="label" style="width: 14%;" colspan="2">检测日期</td>
@@ -113,31 +125,19 @@
             <td class="label" style="width: 14%;">含水率<br>%</td>
             <td class="label" style="width: 14%;" colspan="2">压实度%</td>
         </tr>
+        <tr v-else>
+            <td class="label" style="width: 10%;">样品编号</td>
+            <td class="label" style="width: 20%;" colspan="3">检测部位<br>(桩号、高程)</td>
+            <td class="label" style="width: 14%;" colspan="2">检测日期</td>
+            <td class="label" style="width: 14%;">湿密度<br>(g/cm³)</td>
+            <td class="label" style="width: 14%;">干密度<br>(g/cm³)</td>
+            <td class="label" style="width: 14%;">含水率<br>%</td>
+            <td class="label" style="width: 14%;">平均干密度<br>(g/cm³)</td>
+            <td class="label" style="width: 14%;">压实度%</td>
+        </tr>
 
-        <!-- Data Rows (8 rows)：
-             - 核子法：一行样品编号对应一行湿密度/干密度/含水率（不需要第二行）
-             - 其他方法：保持原来的两行结构 -->
         <template v-for="(n, i_idx) in 7" :key="i_idx">
-          <!-- 非核子法：两行一组 -->
-          <template v-if="!isNuclearMethod">
-            <tr>
-              <td rowspan="2"><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
-              <td rowspan="2" colspan="3"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
-              <td rowspan="2" colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
-              <td><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
-              <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
-              <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
-              <td rowspan="2" colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
-            </tr>
-            <tr>
-              <td><input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]"></td>
-              <td><input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]"></td>
-              <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
-            </tr>
-          </template>
-
-          <!-- 核子法：一行样品编号对应一行检测数据 -->
-          <tr v-else>
+          <tr v-if="isNuclearMethod">
             <td><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
             <td colspan="3"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
             <td colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
@@ -145,6 +145,31 @@
             <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
             <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
             <td colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+          </tr>
+          <tr v-else>
+            <td><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
+            <td colspan="3"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]">
+                <input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]">
+              </div>
+            </td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]">
+                <input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]">
+              </div>
+            </td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]">
+                <input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]">
+              </div>
+            </td>
+            <td><input type="text" :name="'avgDryDensity_' + i_idx" v-model="formData['avgDryDensity_' + i_idx]"></td>
+            <td><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
           </tr>
         </template>
 
@@ -196,14 +221,199 @@
 
     </form>
 
+    <div v-if="currentIndex > 0">
+      <h2>原位密度检测结果</h2>
+      <div class="header-info" style="justify-content: space-between;">
+        <span>统一编号：<input type="text" :value="formData.unifiedNumber" style="width: 150px; border-bottom: 1px solid black; text-align: left;" disabled></span>
+        <span></span>
+      </div>
+
+      <table>
+        <tr>
+          <td class="label" style="width: 15%;">施工部位</td>
+          <td colspan="9" class="left-align"><input type="text" v-model="currentResultFormData.constructionPart"></td>
+        </tr>
+        <tr>
+          <td class="label">最大干密度<br>(g/cm³)</td>
+          <td colspan="2"><input type="text" v-model="currentResultFormData.maxDryDensity"></td>
+          <td class="label">最优含水率 %</td>
+          <td colspan="2"><input type="text" v-model="currentResultFormData.optimumMoisture"></td>
+          <td class="label">最小干密度<br>(g/cm³)</td>
+          <td colspan="3"><input type="text" v-model="currentResultFormData.minDryDensity"></td>
+        </tr>
+        <tr v-if="isNuclearResultMethod">
+          <td class="label" style="width: 10%;">样品编号</td>
+          <td class="label" style="width: 25%;" colspan="2">检测部位<br>(桩号、高程)</td>
+          <td class="label" style="width: 15%;" colspan="2">检测日期</td>
+          <td class="label" style="width: 12.5%;">湿密度<br>(g/cm³)</td>
+          <td class="label" style="width: 12.5%;">干密度<br>(g/cm³)</td>
+          <td class="label" style="width: 12.5%;">含水率<br>%</td>
+          <td class="label" style="width: 12.5%;" colspan="2">压实度%</td>
+        </tr>
+        <tr v-else>
+          <td class="label" style="width: 10%;">样品编号</td>
+          <td class="label" style="width: 25%;" colspan="2">检测部位<br>(桩号、高程)</td>
+          <td class="label" style="width: 15%;" colspan="2">检测日期</td>
+          <td class="label" style="width: 12.5%;">湿密度<br>(g/cm³)</td>
+          <td class="label" style="width: 12.5%;">干密度<br>(g/cm³)</td>
+          <td class="label" style="width: 12.5%;">含水率<br>%</td>
+          <td class="label" style="width: 12.5%;">平均干密度<br>(g/cm³)</td>
+          <td class="label" style="width: 12.5%;">压实度%</td>
+        </tr>
+        <template v-for="(n, i_idx) in 20" :key="'r-'+i_idx">
+          <tr v-if="isNuclearResultMethod">
+            <td><input type="text" v-model="currentResultFormData['sampleId_' + i_idx]"></td>
+            <td colspan="2"><input type="text" v-model="currentResultFormData['location_' + i_idx]"></td>
+            <td colspan="2"><input type="text" v-model="currentResultFormData['date_' + i_idx]"></td>
+            <td><input type="text" v-model="currentResultFormData['wetDensity_' + i_idx]"></td>
+            <td><input type="text" v-model="currentResultFormData['dryDensity_' + i_idx]"></td>
+            <td><input type="text" v-model="currentResultFormData['moisture_' + i_idx]"></td>
+            <td colspan="2"><input type="text" v-model="currentResultFormData['compaction_' + i_idx]"></td>
+          </tr>
+          <tr v-else>
+            <td><input type="text" v-model="currentResultFormData['sampleId_' + i_idx]"></td>
+            <td colspan="2"><input type="text" v-model="currentResultFormData['location_' + i_idx]"></td>
+            <td colspan="2"><input type="text" v-model="currentResultFormData['date_' + i_idx]"></td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" v-model="currentResultFormData['wetDensity_' + i_idx]">
+                <input type="text" v-model="currentResultFormData['wetDensity2_' + i_idx]">
+              </div>
+            </td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" v-model="currentResultFormData['dryDensity_' + i_idx]">
+                <input type="text" v-model="currentResultFormData['dryDensity2_' + i_idx]">
+              </div>
+            </td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" v-model="currentResultFormData['moisture_' + i_idx]">
+                <input type="text" v-model="currentResultFormData['moisture2_' + i_idx]">
+              </div>
+            </td>
+            <td><input type="text" v-model="currentResultFormData['avgDryDensity_' + i_idx]"></td>
+            <td><input type="text" v-model="currentResultFormData['compaction_' + i_idx]"></td>
+          </tr>
+        </template>
+      </table>
+    </div>
+
+    <div v-if="showExportModal" class="modal-overlay no-print">
+      <div class="modal-content">
+        <h3>导出数据</h3>
+        <div class="form-group">
+          <div>报告模板：{{ exportTemplateInfo.reportBaseName }}.xlsx</div>
+          <div v-if="exportTemplateInfo.reportTemplates.length" class="template-files">
+            <span v-for="t in exportTemplateInfo.reportTemplates" :key="t.fileName" class="template-file">{{ t.fileName }}</span>
+          </div>
+          <div v-else>报告模板：无</div>
+          <div style="margin-top: 10px;">结果模板：{{ exportTemplateInfo.resultBaseName }}.xlsx</div>
+          <div v-if="exportTemplateInfo.resultTemplates.length" class="template-files">
+            <span v-for="t in exportTemplateInfo.resultTemplates" :key="t.fileName" class="template-file">{{ t.fileName }}</span>
+          </div>
+          <div v-else>结果模板：无</div>
+        </div>
+        <div class="format-buttons">
+          <button
+            v-for="fmt in exportTemplateInfo.formats"
+            :key="fmt"
+            @click="startExport(fmt)"
+            class="btn btn-primary btn-small"
+          >
+            {{ String(fmt).toUpperCase() }}
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeExportModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
+
 
 
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject, defineProps, computed } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps, computed, watch, nextTick } from 'vue'
 import axios from 'axios'
+
+const showExportModal = ref(false)
+const exportTemplateInfo = reactive({
+  templateDir: '',
+  reportBaseName: '非核子法原位密度报告表',
+  reportTemplates: [],
+  resultBaseName: '非核子法原位密度结果表',
+  resultTemplates: [],
+  formats: ['xlsx']
+})
+
+const getExportTemplateBaseNames = () => {
+  const methodType = detectDensityMethodType(formData.testMethod, formData.testCategory)
+  const isNuclear = methodType === 'nuclear'
+  return {
+    reportBaseName: isNuclear ? '核子法原位密度报告表' : '非核子法原位密度报告表',
+    resultBaseName: isNuclear ? '核子法原位密度结果表' : '非核子法原位密度结果表'
+  }
+}
+
+const hasTemplate = (templates, fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!ext) return false
+  return Array.isArray(templates) && templates.some(t => String(t?.ext || '').toLowerCase() === ext)
+}
+
+const openExportModal = async () => {
+  try {
+    const names = getExportTemplateBaseNames()
+    exportTemplateInfo.reportBaseName = names.reportBaseName
+    exportTemplateInfo.resultBaseName = names.resultBaseName
+
+    const [reportRes, resultRes] = await Promise.all([
+      axios.get('/api/density-test/export-formats', { params: { baseName: exportTemplateInfo.reportBaseName } }),
+      axios.get('/api/density-test/export-formats', { params: { baseName: exportTemplateInfo.resultBaseName } })
+    ])
+
+    const reportOk = reportRes.data && reportRes.data.success
+    const resultOk = resultRes.data && resultRes.data.success
+    if (reportOk) {
+      exportTemplateInfo.templateDir = reportRes.data.templateDir || (resultOk ? resultRes.data.templateDir : '') || ''
+      exportTemplateInfo.reportBaseName = reportRes.data.baseName || exportTemplateInfo.reportBaseName
+      exportTemplateInfo.reportTemplates = Array.isArray(reportRes.data.templates) ? reportRes.data.templates : []
+      exportTemplateInfo.resultBaseName = resultOk ? (resultRes.data.baseName || exportTemplateInfo.resultBaseName) : exportTemplateInfo.resultBaseName
+      exportTemplateInfo.resultTemplates = resultOk && Array.isArray(resultRes.data.templates) ? resultRes.data.templates : []
+      showExportModal.value = true
+    } else {
+      const msg = (reportRes.data && reportRes.data.message) || (resultRes.data && resultRes.data.message) || '获取可导出格式失败'
+      alert(msg)
+    }
+  } catch (e) {
+    alert('获取可导出格式失败')
+  }
+}
+
+const closeExportModal = () => {
+  showExportModal.value = false
+}
+
+const startExport = async (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  const hasReport = hasTemplate(exportTemplateInfo.reportTemplates, ext)
+  const hasResult = hasTemplate(exportTemplateInfo.resultTemplates, ext)
+  const needsResult = (resultPages.value && resultPages.value.length > 0)
+  if (!hasReport || (needsResult && !hasResult)) {
+    const dir = exportTemplateInfo.templateDir ? `\n模板目录：${exportTemplateInfo.templateDir}` : ''
+    const missing = [
+      hasReport ? '' : `${exportTemplateInfo.reportBaseName}.${ext}`,
+      !needsResult || hasResult ? '' : `${exportTemplateInfo.resultBaseName}.${ext}`
+    ].filter(Boolean).join('、')
+    alert(`未找到模板：${missing}\n请先将对应模板文件放入“表”文件夹后再导出。${dir}`)
+    return
+  }
+  showExportModal.value = false
+  await exportByFormat(ext)
+}
 
 const props = defineProps({
   id: {
@@ -217,6 +427,10 @@ const props = defineProps({
 })
 
 const navigateTo = inject('navigateTo')
+const currentIndex = ref(0)
+const resultPages = ref([])
+const resultPageFormData = ref([])
+const containerRef = ref(null)
 
 const goToList = () => {
   if (navigateTo) {
@@ -506,6 +720,46 @@ onMounted(() => {
   }
 
   loadData()
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+watch(currentIndex, () => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
+
+const prevPage = () => {
+  if (currentIndex.value > 0) currentIndex.value--
+}
+const nextPage = () => {
+  if (currentIndex.value < resultPages.value.length) currentIndex.value++
+}
+const currentResultFormData = computed(() => {
+  if (currentIndex.value <= 0) return {}
+  return resultPageFormData.value[currentIndex.value - 1] || {}
+})
+const isNuclearResultMethod = computed(() => {
+  const v = currentResultFormData.value?.testMethod || currentResultFormData.value?.testCategory || formData.testMethod || formData.testCategory
+  return String(v || '').includes('核子')
 })
 
 const normalizeEntrustmentKey = (v) => {
@@ -573,14 +827,70 @@ const applyWitnessToRemarks = () => {
   formData.remarks = lines.join('\n')
 }
 
+const fillReportRemarksFromParsed = (parsed) => {
+  const isFilled = (v) => v !== undefined && v !== null && String(v).trim() !== ''
+  if (!parsed) return
+
+  const looksLikePlaceholder = (v) => {
+    const s = (v ?? '').toString()
+    if (!s.trim()) return true
+    const lines = s.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+    if (lines.length === 0) return true
+    const hasMain = lines.some(l => l.includes('附原位密度检测结果'))
+    const hasWitness = lines.some(l => l.startsWith('见证人：'))
+    const hasWitnessUnit = lines.some(l => l.startsWith('见证单位：'))
+    if (!hasMain) return false
+    if (!hasWitness && !hasWitnessUnit) return false
+    return lines.length <= 3
+  }
+
+  const current = formData.remarks
+  const canOverwrite = !isFilled(current) || looksLikePlaceholder(current)
+  if (!canOverwrite) return
+
+  const candidate = parsed.remarks
+  if (isFilled(candidate)) {
+    formData.remarks = String(candidate)
+    return
+  }
+
+  const uniq = new Set()
+  for (let i = 0; i < 20; i++) {
+    const v = parsed['remarks_' + i]
+    if (!isFilled(v)) continue
+    uniq.add(String(v).trim())
+    if (uniq.size > 1) break
+  }
+  if (uniq.size === 1) {
+    formData.remarks = Array.from(uniq)[0]
+  }
+}
+
 const fetchNuclearRecordsForKey = async (key) => {
   const primary = normalizeEntrustmentKey(key)
   if (!primary) return []
 
+  const sortPages = (list) => {
+    const toTime = (v) => {
+      if (!v) return Number.POSITIVE_INFINITY
+      const t = new Date(v).getTime()
+      return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY
+    }
+    return (Array.isArray(list) ? list : []).slice().sort((a, b) => {
+      const ta = toTime(a?.createTime)
+      const tb = toTime(b?.createTime)
+      if (ta !== tb) return ta - tb
+      const ua = toTime(a?.updateTime)
+      const ub = toTime(b?.updateTime)
+      if (ua !== ub) return ua - ub
+      return String(a?.id || '').localeCompare(String(b?.id || ''))
+    })
+  }
+
   try {
     const r1 = await axios.get('/api/nuclear-density/get-by-entrustment-id', { params: { entrustmentId: primary } })
     if (r1.data && r1.data.success && Array.isArray(r1.data.data) && r1.data.data.length > 0) {
-      return r1.data.data
+      return sortPages(r1.data.data)
     }
   } catch (e) {
   }
@@ -592,7 +902,7 @@ const fetchNuclearRecordsForKey = async (key) => {
     if (wtId && wtId !== primary) {
       const r2 = await axios.get('/api/nuclear-density/get-by-entrustment-id', { params: { entrustmentId: wtId } })
       if (r2.data && r2.data.success && Array.isArray(r2.data.data)) {
-        return r2.data.data || []
+        return sortPages(r2.data.data || [])
       }
     }
   } catch (e) {
@@ -601,12 +911,374 @@ const fetchNuclearRecordsForKey = async (key) => {
   return []
 }
 
+const detectDensityMethodType = (testMethod, testCategory) => {
+  const m = (testMethod || testCategory || '').toString()
+  if (m.includes('核子')) return 'nuclear'
+  if (m.includes('灌砂')) return 'sand'
+  if (m.includes('灌水')) return 'water'
+  if (m.includes('环刀')) return 'ring'
+  return ''
+}
+
+const sortByTimeDesc = (list) => {
+  const toTime = (v) => {
+    if (!v) return Number.NEGATIVE_INFINITY
+    const t = new Date(v).getTime()
+    return Number.isFinite(t) ? t : Number.NEGATIVE_INFINITY
+  }
+  return (Array.isArray(list) ? list : []).slice().sort((a, b) => {
+    const ua = toTime(a?.updateTime)
+    const ub = toTime(b?.updateTime)
+    if (ua !== ub) return ub - ua
+    const ta = toTime(a?.createTime)
+    const tb = toTime(b?.createTime)
+    if (ta !== tb) return tb - ta
+    return String(b?.id || '').localeCompare(String(a?.id || ''))
+  })
+}
+
+const pickApprovedRecord = (list) => {
+  const sorted = sortByTimeDesc(list)
+  const approved = sorted.filter(r => {
+    const s = parseInt(r?.status)
+    return s === 4 || s === 5 || s === 6
+  })
+  return approved[0] || sorted[0]
+}
+
+const fetchSimpleRecordsForKey = async (apiPath, key) => {
+  const primary = normalizeEntrustmentKey(key)
+  if (!primary) return []
+
+  try {
+    const r1 = await axios.get(apiPath, { params: { entrustmentId: primary } })
+    if (r1.data && r1.data.success && Array.isArray(r1.data.data) && r1.data.data.length > 0) {
+      return sortByTimeDesc(r1.data.data)
+    }
+  } catch (e) {
+  }
+
+  try {
+    const wtResp = await axios.get('/api/jc-core-wt-info/detail', { params: { unifiedNumber: primary } })
+    const wtInfo = wtResp?.data?.data
+    const wtId = normalizeEntrustmentKey(wtInfo?.id)
+    if (wtId && wtId !== primary) {
+      const r2 = await axios.get(apiPath, { params: { entrustmentId: wtId } })
+      if (r2.data && r2.data.success && Array.isArray(r2.data.data)) {
+        return sortByTimeDesc(r2.data.data || [])
+      }
+    }
+  } catch (e) {
+  }
+
+  return []
+}
+
+const fetchSandRecordsForKey = async (key) => {
+  return fetchSimpleRecordsForKey('/api/sand-replacement/get-by-entrustment-id', key)
+}
+
+const fetchWaterRecordsForKey = async (key) => {
+  return fetchSimpleRecordsForKey('/api/water-replacement/get-by-entrustment-id', key)
+}
+
+const fetchCuttingRingRecordsForKey = async (key) => {
+  return fetchSimpleRecordsForKey('/api/cutting-ring/get-by-entrustment-id', key)
+}
+
+const safeJsonParse = (v) => {
+  try {
+    return JSON.parse(v || '{}')
+  } catch (e) {
+    return {}
+  }
+}
+
+const appendRowsFromSandParsed = (parsed, out) => {
+  if (!parsed) return
+  for (let col = 0; col < 4; col++) {
+    const idx1 = col * 2
+    const idx2 = col * 2 + 1
+    const row = {}
+    const loc = parsed['location_' + col]
+    if (loc !== undefined) row.location = loc
+    if (parsed.testDate !== undefined) row.date = parsed.testDate
+    const w1 = parsed['wetDensity_' + idx1]
+    const w2 = parsed['wetDensity_' + idx2]
+    const d1 = parsed['dryDensity_' + idx1]
+    const d2 = parsed['dryDensity_' + idx2]
+    const m1 = parsed['avgMoisture_' + idx1]
+    const m2 = parsed['avgMoisture_' + idx2]
+    const ad = parsed['avgDryDensity_' + col]
+    const c = parsed['compaction_' + col]
+    if (w1 !== undefined) row.wetDensity = w1
+    if (w2 !== undefined) row.wetDensity2 = w2
+    if (d1 !== undefined) row.dryDensity = d1
+    if (d2 !== undefined) row.dryDensity2 = d2
+    if (m1 !== undefined) row.moisture = m1
+    if (m2 !== undefined) row.moisture2 = m2
+    if (ad !== undefined) row.avgDryDensity = ad
+    if (c !== undefined) row.compaction = c
+    out.push(row)
+  }
+}
+
+const appendRowsFromWaterParsed = (parsed, out) => {
+  if (!parsed) return
+  const total = Number(parsed.totalPages || 1) || 1
+  for (let page = 0; page < total; page++) {
+    for (let col = 0; col < 4; col++) {
+      const idx1 = col * 2
+      const idx2 = col * 2 + 1
+      const row = {}
+      const loc = parsed[`samplingLocation_page${page}_${col}`]
+      if (loc !== undefined) row.location = loc
+      if (parsed.testDate !== undefined) row.date = parsed.testDate
+      const w1 = parsed[`wetDensity_page${page}_${idx1}`]
+      const w2 = parsed[`wetDensity_page${page}_${idx2}`]
+      const d1 = parsed[`measuredDryDensity_page${page}_${idx1}`]
+      const d2 = parsed[`measuredDryDensity_page${page}_${idx2}`]
+      const m1 = parsed[`avgMoisture_page${page}_${idx1}`]
+      const m2 = parsed[`avgMoisture_page${page}_${idx2}`]
+      const ad = parsed[`avgMeasuredDryDensity_page${page}_${col}`]
+      if (w1 !== undefined) row.wetDensity = w1
+      if (w2 !== undefined) row.wetDensity2 = w2
+      if (d1 !== undefined) row.dryDensity = d1
+      if (d2 !== undefined) row.dryDensity2 = d2
+      if (m1 !== undefined) row.moisture = m1
+      if (m2 !== undefined) row.moisture2 = m2
+      if (ad !== undefined) row.avgDryDensity = ad
+      out.push(row)
+    }
+  }
+}
+
+const appendRowsFromCuttingRingParsed = (parsed, out) => {
+  if (!parsed) return
+  const total = Number(parsed.totalPages || 1) || 1
+  for (let page = 0; page < total; page++) {
+    for (let i = 0; i < 4; i++) {
+      const row = {}
+      const sid = parsed[`sampleNo_page${page}_${i}`]
+      const loc = parsed[`location_page${page}_${i}`]
+      const w1 = parsed[`wetDensity1_page${page}_${i}`]
+      const w2 = parsed[`wetDensity2_page${page}_${i}`]
+      const d1 = parsed[`dryDensity1_page${page}_${i}`]
+      const d2 = parsed[`dryDensity2_page${page}_${i}`]
+      const m1 = parsed[`avgMoisture1_page${page}_${i}`]
+      const m2 = parsed[`avgMoisture2_page${page}_${i}`]
+      const ad = parsed[`avgDryDensity1_page${page}_${i}`]
+      const c = parsed[`compaction1_page${page}_${i}`]
+      if (sid !== undefined) row.sampleId = sid
+      if (loc !== undefined) row.location = loc
+      if (parsed.testDate !== undefined) row.date = parsed.testDate
+      if (w1 !== undefined) row.wetDensity = w1
+      if (w2 !== undefined) row.wetDensity2 = w2
+      if (d1 !== undefined) row.dryDensity = d1
+      if (d2 !== undefined) row.dryDensity2 = d2
+      if (m1 !== undefined) row.moisture = m1
+      if (m2 !== undefined) row.moisture2 = m2
+      if (ad !== undefined) row.avgDryDensity = ad
+      if (c !== undefined) row.compaction = c
+      out.push(row)
+    }
+  }
+}
+
+const fillReportRowsFromRowData = (rows) => {
+  const isFilled = (v) => v !== undefined && v !== null && String(v).trim() !== ''
+  const max = Math.min(7, Array.isArray(rows) ? rows.length : 0)
+  for (let i = 0; i < max; i++) {
+    const r = rows[i] || {}
+    const map = {
+      sampleId: 'sampleId_',
+      location: 'location_',
+      date: 'date_',
+      wetDensity: 'wetDensity_',
+      wetDensity2: 'wetDensity2_',
+      dryDensity: 'dryDensity_',
+      dryDensity2: 'dryDensity2_',
+      moisture: 'moisture_',
+      moisture2: 'moisture2_',
+      avgDryDensity: 'avgDryDensity_',
+      compaction: 'compaction_'
+    }
+    Object.keys(map).forEach(k => {
+      const v = r[k]
+      if (v === undefined) return
+      const targetKey = map[k] + i
+      if (!isFilled(formData[targetKey])) {
+        formData[targetKey] = v
+      }
+    })
+  }
+}
+
+const fetchResultPages = async (unifiedNumber) => {
+  const u = normalizeEntrustmentKey(unifiedNumber)
+  if (!u) {
+    resultPages.value = []
+    resultPageFormData.value = []
+    return
+  }
+
+  try {
+    const isFilled = (v) => v !== undefined && v !== null && String(v).trim() !== ''
+
+    const toParsed = (r) => {
+      try {
+        const parsed = JSON.parse((r && r.dataJson) ? r.dataJson : '{}')
+        if (!parsed.constructionPart && formData.constructionPart) parsed.constructionPart = formData.constructionPart
+        if (!parsed.testMethod && formData.testMethod) parsed.testMethod = formData.testMethod
+        if (!parsed.testCategory && formData.testCategory) parsed.testCategory = formData.testCategory
+        if (!parsed.unifiedNumber && formData.unifiedNumber) parsed.unifiedNumber = formData.unifiedNumber
+        return parsed
+      } catch (e) {
+        return {}
+      }
+    }
+
+    const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'avgDryDensity', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2', 'remarks']
+    const allRowData = []
+    let sourceFirstParsed = {}
+    let firstPageHeadRows = {}
+    const sameTrim = (a, b) => String(a ?? '').trim() === String(b ?? '').trim()
+    const methodType = detectDensityMethodType(formData.testMethod, formData.testCategory)
+
+    if (methodType === 'nuclear') {
+      const nuclearPages = await fetchNuclearRecordsForKey(u)
+      nuclearPages.forEach((nRecord, pageIndex) => {
+        if (!nRecord || !nRecord.dataJson) return
+        const nParsed = safeJsonParse(nRecord.dataJson)
+        if (pageIndex === 0) {
+          for (let i = 7; i < 20; i++) {
+            const rowData = {}
+            rowFields.forEach(field => {
+              const v = nParsed[field + '_' + i]
+              if (v !== undefined) rowData[field] = v
+            })
+            allRowData.push(rowData)
+          }
+        } else {
+          for (let i = 0; i < 20; i++) {
+            const rowData = {}
+            rowFields.forEach(field => {
+              const v = nParsed[field + '_' + i]
+              if (v !== undefined) rowData[field] = v
+            })
+            allRowData.push(rowData)
+          }
+        }
+      })
+      sourceFirstParsed = nuclearPages[0]?.dataJson ? safeJsonParse(nuclearPages[0].dataJson) : {}
+      for (let idx = 0; idx < 7; idx++) {
+        rowFields.forEach(f => {
+          const k = f + '_' + idx
+          if (sourceFirstParsed[k] !== undefined) firstPageHeadRows[k] = sourceFirstParsed[k]
+        })
+      }
+    } else if (methodType === 'sand') {
+      const list = await fetchSandRecordsForKey(u)
+      const picked = pickApprovedRecord(list)
+      const parsed = safeJsonParse(picked?.dataJson)
+      sourceFirstParsed = parsed
+      appendRowsFromSandParsed(parsed, allRowData)
+    } else if (methodType === 'water') {
+      const list = await fetchWaterRecordsForKey(u)
+      const picked = pickApprovedRecord(list)
+      const parsed = safeJsonParse(picked?.dataJson)
+      sourceFirstParsed = parsed
+      appendRowsFromWaterParsed(parsed, allRowData)
+    } else if (methodType === 'ring') {
+      const list = await fetchCuttingRingRecordsForKey(u)
+      const picked = pickApprovedRecord(list)
+      const parsed = safeJsonParse(picked?.dataJson)
+      sourceFirstParsed = parsed
+      appendRowsFromCuttingRingParsed(parsed, allRowData)
+    }
+
+    const derivedPages = []
+    if (allRowData.some(row => Object.values(row).some(isFilled))) {
+      const baseCommon = {}
+      Object.keys(sourceFirstParsed || {}).forEach(k => {
+        if (k.includes('_page')) return
+        if (k.match(/_\d+$/)) return
+        baseCommon[k] = sourceFirstParsed[k]
+      })
+      if (!baseCommon.constructionPart && formData.constructionPart) baseCommon.constructionPart = formData.constructionPart
+      if (!baseCommon.testMethod && formData.testMethod) baseCommon.testMethod = formData.testMethod
+      if (!baseCommon.testCategory && formData.testCategory) baseCommon.testCategory = formData.testCategory
+      if (!baseCommon.unifiedNumber && formData.unifiedNumber) baseCommon.unifiedNumber = formData.unifiedNumber
+
+      const pageSize = 20
+      const totalPages = Math.ceil(allRowData.length / pageSize)
+      for (let page = 0; page < totalPages; page++) {
+        const startIdx = page * pageSize
+        const endIdx = Math.min(startIdx + pageSize, allRowData.length)
+        const pageData = allRowData.slice(startIdx, endIdx)
+        const pageForm = { ...baseCommon }
+        pageData.forEach((row, idx) => {
+          rowFields.forEach(f => {
+            if (row[f] !== undefined) pageForm[f + '_' + idx] = row[f]
+          })
+        })
+        derivedPages.push(pageForm)
+      }
+    }
+
+    const res = await axios.get('/api/density-test/get-by-entrustment-id', { params: { entrustmentId: u } })
+    const existing = (res.data && res.data.success && Array.isArray(res.data.data)) ? res.data.data : []
+    const existingForms = existing.map(toParsed)
+
+    const mergedLength = Math.max(existingForms.length, derivedPages.length)
+    const mergedPages = []
+    for (let i = 0; i < mergedLength; i++) {
+      const base = derivedPages[i] ? { ...derivedPages[i] } : {}
+      const overlay = existingForms[i] || {}
+      Object.keys(overlay).forEach(k => {
+        if (!isFilled(overlay[k])) return
+        if (i === 0 && firstPageHeadRows[k] !== undefined && sameTrim(overlay[k], firstPageHeadRows[k])) return
+        base[k] = overlay[k]
+      })
+      if (!base.constructionPart && formData.constructionPart) base.constructionPart = formData.constructionPart
+      if (!base.testMethod && formData.testMethod) base.testMethod = formData.testMethod
+      if (!base.testCategory && formData.testCategory) base.testCategory = formData.testCategory
+      if (!base.unifiedNumber && formData.unifiedNumber) base.unifiedNumber = formData.unifiedNumber
+      mergedPages.push(base)
+    }
+
+    if (mergedPages.length > 0) {
+      resultPages.value = Array.from({ length: mergedPages.length }, (_, i) => {
+        const r = existing[i]
+        if (r) return r
+        return { id: '', entrustmentId: u, dataJson: '{}' }
+      })
+      resultPageFormData.value = mergedPages
+      if (currentIndex.value > resultPages.value.length) currentIndex.value = 0
+      return
+    }
+
+    if (existing.length > 0) {
+      resultPages.value = existing
+      resultPageFormData.value = existingForms
+      if (currentIndex.value > resultPages.value.length) currentIndex.value = 0
+      return
+    }
+  } catch (e) {
+  }
+
+  resultPages.value = []
+  resultPageFormData.value = []
+  if (currentIndex.value > 0) currentIndex.value = 0
+}
+
   const loadData = async () => {
   // 这里的 id 来自列表的 item.id（委托 WT_ID），wtNum 是统一编号 XT-2024-54301
   // 原位密度报告/结果的 ENTRUSTMENT_ID 我们现在统一用“统一编号”存，所以优先用 wtNum 作为 key
   const key = props.wtNum || props.id
   if (key) {
     try {
+      currentIndex.value = 0
       const response = await axios.get('/api/density-test/report/get-by-entrustment-id', {
         params: { entrustmentId: key }
       })
@@ -815,8 +1487,10 @@ const fetchNuclearRecordsForKey = async (key) => {
               const nRecord = nuclearList
                 .filter(r => r && r.dataJson)
                 .sort((a, b) => pickScore(b) - pickScore(a))[0] || nuclearList[0]
-              if (nRecord && nRecord.dataJson) {
-                const nParsed = JSON.parse(nRecord.dataJson)
+              const firstPageRecord = nuclearList[0]
+              const bestRecord = nRecord
+              if (bestRecord && bestRecord.dataJson) {
+                const nParsed = JSON.parse(bestRecord.dataJson)
                 const commonFields = ['entrustingUnit', 'unifiedNumber', 'projectName', 'commissionDate', 'constructionPart', 'testCategory', 'testMethod', 'equipment', 'sampleNameStatus', 'standard', 'designCompaction', 'maxDryDensity', 'optimumMoisture', 'minDryDensity']
                 commonFields.forEach(field => {
                   if (!isFilled(formData[field]) && isFilled(nParsed[field])) {
@@ -825,6 +1499,7 @@ const fetchNuclearRecordsForKey = async (key) => {
                       : nParsed[field]
                   }
                 })
+                fillReportRemarksFromParsed(nParsed)
                 if (!isFilled(formData.testMethod) && String(formData.testCategory || '').includes('核子')) {
                   formData.testMethod = '核子法'
                 }
@@ -835,24 +1510,32 @@ const fetchNuclearRecordsForKey = async (key) => {
                 if (!isFilled(formData.designIndex) && isFilled(nParsed.designCompaction)) {
                   formData.designIndex = nParsed.designCompaction
                 }
-                if (!isFilled(formData.witness) && nRecord.witness) formData.witness = nRecord.witness
-                if (!isFilled(formData.witnessUnit) && nRecord.witnessUnit) formData.witnessUnit = nRecord.witnessUnit
-                if (!isFilled(formData.recordTester) && nRecord.recordTester) formData.recordTester = nRecord.recordTester
-                if (!isFilled(formData.recordReviewer) && nRecord.recordReviewer) formData.recordReviewer = nRecord.recordReviewer
-                if (!isFilled(formData.testerSignature) && nRecord.inspectSignaturePhoto) {
-                  formData.testerSignature = normalizeSignatureSrc(nRecord.inspectSignaturePhoto)
+                if (!isFilled(formData.witness) && bestRecord.witness) formData.witness = bestRecord.witness
+                if (!isFilled(formData.witnessUnit) && bestRecord.witnessUnit) formData.witnessUnit = bestRecord.witnessUnit
+                if (!isFilled(formData.recordTester) && bestRecord.recordTester) formData.recordTester = bestRecord.recordTester
+                if (!isFilled(formData.recordReviewer) && bestRecord.recordReviewer) formData.recordReviewer = bestRecord.recordReviewer
+                if (!isFilled(formData.testerSignature) && bestRecord.inspectSignaturePhoto) {
+                  formData.testerSignature = normalizeSignatureSrc(bestRecord.inspectSignaturePhoto)
                 }
-                if (!isFilled(formData.reviewerSignature) && nRecord.reviewSignaturePhoto) {
-                  formData.reviewerSignature = normalizeSignatureSrc(nRecord.reviewSignaturePhoto)
+                if (!isFilled(formData.reviewerSignature) && bestRecord.reviewSignaturePhoto) {
+                  formData.reviewerSignature = normalizeSignatureSrc(bestRecord.reviewSignaturePhoto)
                 }
-                const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']
-                for (let i = 0; i < 7; i++) {
-                  rowFields.forEach(field => {
-                    const k = field + '_' + i
-                    if (!isFilled(formData[k]) && isFilled(nParsed[k])) {
-                      formData[k] = nParsed[k]
-                    }
-                  })
+              }
+
+              if (firstPageRecord && firstPageRecord.dataJson) {
+                try {
+                  const firstParsed = JSON.parse(firstPageRecord.dataJson)
+                  const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction']
+                  for (let i = 0; i < 7; i++) {
+                    rowFields.forEach(field => {
+                      const k = field + '_' + i
+                      if (!isFilled(formData[k]) && isFilled(firstParsed[k])) {
+                        formData[k] = firstParsed[k]
+                      }
+                    })
+                  }
+                  fillReportRemarksFromParsed(firstParsed)
+                } catch (e) {
                 }
               }
             }
@@ -1051,6 +1734,7 @@ const fetchNuclearRecordsForKey = async (key) => {
                         formData[field] = field === 'commissionDate' ? new Date(jsonVal).toISOString().split('T')[0] : jsonVal
                       }
                     })
+                    fillReportRemarksFromParsed(nParsed)
                     if (!isFilled(formData.testMethod)) formData.testMethod = '核子法'
                     if (!isFilled(formData.testBasis)) {
                       const basis = nParsed.testBasis !== undefined ? nParsed.testBasis : nParsed.standard
@@ -1076,7 +1760,7 @@ const fetchNuclearRecordsForKey = async (key) => {
                       formData.clientUnit = nParsed.entrustingUnit
                     }
 
-                    const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'remarks']
+                    const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction']
                     for (let i = 0; i < 7; i++) {
                       rowFields.forEach(field => {
                         const k = field + '_' + i
@@ -1199,6 +1883,7 @@ const fetchNuclearRecordsForKey = async (key) => {
       if (!formData.designIndex && formData.designCompaction) {
         formData.designIndex = formData.designCompaction
       }
+      await fetchResultPages(formData.unifiedNumber || key)
       applyWitnessToRemarks()
     } catch (error) {
       console.error('Error loading data:', error)
@@ -1206,7 +1891,7 @@ const fetchNuclearRecordsForKey = async (key) => {
   }
 }
 
-const saveData = async () => {
+const saveData = async (navigateBack = true) => {
   try {
     // 确保日期格式正确
     if (formData.commissionDate) {
@@ -1247,7 +1932,7 @@ const saveData = async () => {
            formData.id = response.data.data.id
       }
       // 保存成功后返回列表页面，确保列表显示更新后的状态
-      if (navigateTo) {
+      if (navigateBack && navigateTo) {
         navigateTo('DensityTestReportList')
       }
     } else {
@@ -1255,6 +1940,57 @@ const saveData = async () => {
     }
   } catch (error) {
     console.error('Save error:', error)
+    alert('保存失败')
+  }
+}
+
+const saveCurrentPage = async () => {
+  if (currentIndex.value === 0) {
+    await saveData(false)
+    return
+  }
+
+  const idx = currentIndex.value - 1
+  const record = resultPages.value[idx] || {}
+  const pageData = resultPageFormData.value[idx] || {}
+
+  try {
+    const dataJsonObj = { ...pageData }
+    if (!dataJsonObj.unifiedNumber && formData.unifiedNumber) dataJsonObj.unifiedNumber = formData.unifiedNumber
+    if (!dataJsonObj.constructionPart && formData.constructionPart) dataJsonObj.constructionPart = formData.constructionPart
+    if (!dataJsonObj.testMethod && formData.testMethod) dataJsonObj.testMethod = formData.testMethod
+    if (!dataJsonObj.testCategory && formData.testCategory) dataJsonObj.testCategory = formData.testCategory
+
+    for (let i = 0; i < 20; i++) {
+      if (dataJsonObj['date_' + i]) {
+        dataJsonObj['date_' + i] = formatDate(dataJsonObj['date_' + i])
+      }
+    }
+
+    const dataToSave = {
+      id: record.id,
+      entrustmentId: record.entrustmentId || formData.unifiedNumber || props.wtNum || props.id,
+      status: formData.status,
+      dataJson: JSON.stringify(dataJsonObj),
+      reviewSignaturePhoto: formData.reviewerSignature,
+      inspectSignaturePhoto: formData.testerSignature,
+      approveSignaturePhoto: formData.approverSignature,
+      recordTester: formData.recordTester,
+      recordReviewer: formData.recordReviewer,
+      filler: formData.filler,
+      approver: formData.approver
+    }
+
+    const resp = await axios.post('/api/density-test/save', dataToSave)
+    if (resp.data && resp.data.success) {
+      if (!record.id && resp.data.data && resp.data.data.id) record.id = resp.data.data.id
+      record.dataJson = dataToSave.dataJson
+      alert('保存成功')
+    } else {
+      alert('保存失败: ' + (resp.data?.message || '未知错误'))
+    }
+  } catch (e) {
+    console.error('Save current page error', e)
     alert('保存失败')
   }
 }
@@ -1279,7 +2015,35 @@ const approveAndSave = async () => {
     formData.approverSignature = normalizeSignatureSrc(signatureBlob)
     formData.status = 6
 
-    await saveData()
+    await saveData(false)
+    for (let i = 0; i < resultPages.value.length; i++) {
+      const record = resultPages.value[i] || {}
+      const pageData = resultPageFormData.value[i] || {}
+      const dataJsonObj = { ...pageData }
+      if (!dataJsonObj.unifiedNumber && formData.unifiedNumber) dataJsonObj.unifiedNumber = formData.unifiedNumber
+      if (!dataJsonObj.constructionPart && formData.constructionPart) dataJsonObj.constructionPart = formData.constructionPart
+      if (!dataJsonObj.testMethod && formData.testMethod) dataJsonObj.testMethod = formData.testMethod
+      if (!dataJsonObj.testCategory && formData.testCategory) dataJsonObj.testCategory = formData.testCategory
+
+      for (let j = 0; j < 20; j++) {
+        if (dataJsonObj['date_' + j]) dataJsonObj['date_' + j] = formatDate(dataJsonObj['date_' + j])
+      }
+
+      await axios.post('/api/density-test/save', {
+        id: record.id,
+        entrustmentId: record.entrustmentId || formData.unifiedNumber || props.wtNum || props.id,
+        status: formData.status,
+        dataJson: JSON.stringify(dataJsonObj),
+        reviewSignaturePhoto: formData.reviewerSignature,
+        inspectSignaturePhoto: formData.testerSignature,
+        approveSignaturePhoto: formData.approverSignature,
+        recordTester: formData.recordTester,
+        recordReviewer: formData.recordReviewer,
+        filler: formData.filler,
+        approver: formData.approver
+      })
+    }
+    if (navigateTo) navigateTo('DensityTestReportList')
   } catch (e) {
     console.error('Approve error:', e)
     alert('批准失败')
@@ -1320,8 +2084,40 @@ const handleSign = async () => {
       }
       
       if (signed) {
-        // 保存签名
+        // 将签名同步到所有页的表单数据
+        for (let i = 0; i < resultPages.value.length; i++) {
+          const pageData = resultPageFormData.value[i] || {}
+          pageData.testerSignature = imgSrc
+          resultPageFormData.value[i] = pageData
+        }
+        // 保存报告封面页
         await saveData()
+        // 同步保存每一页记录的签名
+        for (let i = 0; i < resultPages.value.length; i++) {
+          const record = resultPages.value[i] || {}
+          const pageData = resultPageFormData.value[i] || {}
+          const dataJsonObj = { ...pageData }
+          if (!dataJsonObj.unifiedNumber && formData.unifiedNumber) dataJsonObj.unifiedNumber = formData.unifiedNumber
+          if (!dataJsonObj.constructionPart && formData.constructionPart) dataJsonObj.constructionPart = formData.constructionPart
+          if (!dataJsonObj.testMethod && formData.testMethod) dataJsonObj.testMethod = formData.testMethod
+          if (!dataJsonObj.testCategory && formData.testCategory) dataJsonObj.testCategory = formData.testCategory
+          for (let j = 0; j < 20; j++) {
+            if (dataJsonObj['date_' + j]) dataJsonObj['date_' + j] = formatDate(dataJsonObj['date_' + j])
+          }
+          await axios.post('/api/density-test/save', {
+            id: record.id,
+            entrustmentId: record.entrustmentId || formData.unifiedNumber || props.wtNum || props.id,
+            status: formData.status,
+            dataJson: JSON.stringify(dataJsonObj),
+            reviewSignaturePhoto: formData.reviewerSignature,
+            inspectSignaturePhoto: formData.testerSignature,
+            approveSignaturePhoto: formData.approverSignature,
+            recordTester: formData.recordTester,
+            recordReviewer: formData.recordReviewer,
+            filler: formData.filler,
+            approver: formData.approver
+          })
+        }
         await submitWorkflow('SIGN_REVIEW')
         alert('签名成功并已保存')
       } else {
@@ -1338,6 +2134,125 @@ const handleSign = async () => {
 
 const printDocument = () => {
   window.print()
+}
+
+const exportExcel = async () => {
+  await openExportModal()
+}
+
+const exportByFormat = async (format) => {
+  try {
+    const names = getExportTemplateBaseNames()
+    exportTemplateInfo.reportBaseName = names.reportBaseName
+    exportTemplateInfo.resultBaseName = names.resultBaseName
+
+    const reportData = { ...formData }
+    if (reportData.commissionDate) reportData.commissionDate = formatDate(reportData.commissionDate)
+    if (reportData.testDate) reportData.testDate = formatDate(reportData.testDate)
+    if (reportData.reportDate) reportData.reportDate = formatDate(reportData.reportDate)
+    for (let i = 0; i < 7; i++) {
+      if (reportData['date_' + i]) reportData['date_' + i] = formatDate(reportData['date_' + i])
+    }
+
+    const resultTotal = resultPages.value.length
+    const totalPages = 1 + resultTotal
+    const successPaths = []
+    const failures = []
+
+    const entrustmentId = formData.unifiedNumber || props.wtNum || props.id || ''
+
+    try {
+      const resp = await axios.post('/api/density-test/export-excel', {
+        entrustmentId,
+        pageNo: 1,
+        totalPages,
+        data: {
+          ...reportData,
+          pageNo: 1,
+          pageNum: 1,
+          pageIndex: 0,
+          totalPages,
+          pageTotal: totalPages,
+          pageText: `1/${totalPages}`
+        },
+        format,
+        templateBaseName: exportTemplateInfo.reportBaseName
+      })
+      if (resp.data && resp.data.success) {
+        successPaths.push(resp.data.path)
+      } else {
+        failures.push(`报告页：${resp.data && resp.data.message ? resp.data.message : '未知错误'}`)
+      }
+    } catch (e) {
+      failures.push(`报告页：${e && e.message ? e.message : '请求失败'}`)
+    }
+
+    for (let i = 0; i < resultTotal; i++) {
+      const pageNo = i + 2
+      const resultData = { ...(resultPageFormData.value[i] || {}) }
+      if (!resultData.unifiedNumber && formData.unifiedNumber) resultData.unifiedNumber = formData.unifiedNumber
+      if (!resultData.constructionPart && formData.constructionPart) resultData.constructionPart = formData.constructionPart
+      if (!resultData.testMethod && formData.testMethod) resultData.testMethod = formData.testMethod
+      if (!resultData.testCategory && formData.testCategory) resultData.testCategory = formData.testCategory
+      if (!resultData.maxDryDensity && formData.maxDryDensity) resultData.maxDryDensity = formData.maxDryDensity
+      if (!resultData.optimumMoisture && formData.optimumMoisture) resultData.optimumMoisture = formData.optimumMoisture
+      if (!resultData.minDryDensity && formData.minDryDensity) resultData.minDryDensity = formData.minDryDensity
+      for (let j = 0; j < 20; j++) {
+        if (resultData['date_' + j]) resultData['date_' + j] = formatDate(resultData['date_' + j])
+      }
+
+      const mergedData = { ...reportData }
+      const isEmpty = (v) => v === undefined || v === null || String(v).trim() === ''
+      const sampleKeyRe = /^(sampleId|location|date|wetDensity|dryDensity|moisture|avgDryDensity|compaction|remarks)_\d+$/
+      Object.keys(resultData).forEach((k) => {
+        const v = resultData[k]
+        if (sampleKeyRe.test(k)) {
+          mergedData[k] = v
+          return
+        }
+        if (isEmpty(mergedData[k]) && !isEmpty(v)) {
+          mergedData[k] = v
+        }
+      })
+
+      try {
+        const response = await axios.post('/api/density-test/export-excel', {
+          entrustmentId,
+          pageNo,
+          totalPages,
+          data: {
+            ...mergedData,
+            pageNo,
+            pageNum: pageNo,
+            pageIndex: pageNo - 1,
+            totalPages,
+            pageTotal: totalPages,
+            pageText: `${pageNo}/${totalPages}`
+          },
+          format,
+          templateBaseName: exportTemplateInfo.resultBaseName
+        })
+        if (response.data && response.data.success) {
+          successPaths.push(response.data.path)
+        } else {
+          failures.push(`第${pageNo}页：${response.data && response.data.message ? response.data.message : '未知错误'}`)
+        }
+      } catch (e) {
+        failures.push(`第${pageNo}页：${e && e.message ? e.message : '请求失败'}`)
+      }
+    }
+
+    if (successPaths.length > 0 && failures.length === 0) {
+      alert(`导出成功：\n${successPaths.join('\n')}`)
+    } else if (successPaths.length > 0) {
+      alert(`部分导出成功：\n${successPaths.join('\n')}\n\n失败：\n${failures.join('\n')}`)
+    } else {
+      alert(`导出失败：\n${failures.join('\n') || '未知错误'}`)
+    }
+  } catch (error) {
+    console.error('Export error:', error)
+    alert('导出失败')
+  }
 }
 
 const openClientPdfPreview = () => {
@@ -1876,6 +2791,15 @@ const previewPdf = () => {
             vertical-align: middle;
             text-align: center;
         }
+        .two-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .two-inputs input {
+            width: 100%;
+            box-sizing: border-box;
+        }
         .label {
             font-weight: bold;
             white-space: normal;
@@ -1935,6 +2859,48 @@ const previewPdf = () => {
             display: flex;
             justify-content: space-between;
             font-size: 12px;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 520px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .template-files {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .template-file {
+            font-size: 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+        .format-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 12px;
         }
         @media print {
             .densityTestReport-container {

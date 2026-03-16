@@ -1,5 +1,5 @@
 <template>
-  <div class="densityTestResult-container">
+  <div class="densityTestResult-container" ref="containerRef">
 
 
     <div class="no-print toolbar">
@@ -24,14 +24,13 @@
             下一页
           </button>
           <button
-            @click="addRecord"
             class="btn btn-primary btn-small"
+            disabled
           >
             添加记录
           </button>
           <button
-            @click="deleteRecord"
-            :disabled="totalRecords <= 0"
+            :disabled="true"
             class="btn btn-danger btn-small"
           >
             删除当前记录
@@ -95,8 +94,7 @@
             <td colspan="3"><input type="text" v-model="formData.minDryDensity"   name="minDryDensity"></td>
         </tr>
 
-        <!-- Data Header -->
-        <tr>
+        <tr v-if="isNuclearMethod">
             <td class="label" style="width: 10%;">样品编号</td>
             <td class="label" style="width: 25%;" colspan="2">检测部位<br>(桩号、高程)</td>
             <td class="label" style="width: 15%;" colspan="2">检测日期</td>
@@ -105,31 +103,19 @@
             <td class="label" style="width: 12.5%;">含水率<br>%</td>
             <td class="label" style="width: 12.5%;" colspan="2">压实度%</td>
         </tr>
+        <tr v-else>
+            <td class="label" style="width: 10%;">样品编号</td>
+            <td class="label" style="width: 25%;" colspan="2">检测部位<br>(桩号、高程)</td>
+            <td class="label" style="width: 15%;" colspan="2">检测日期</td>
+            <td class="label" style="width: 12.5%;">湿密度<br>(g/cm³)</td>
+            <td class="label" style="width: 12.5%;">干密度<br>(g/cm³)</td>
+            <td class="label" style="width: 12.5%;">含水率<br>%</td>
+            <td class="label" style="width: 12.5%;">平均干密度<br>(g/cm³)</td>
+            <td class="label" style="width: 12.5%;">压实度%</td>
+        </tr>
 
-        <!-- Data Rows (20 组)：
-             - 核子法：一行样品编号对应一行湿密度/干密度/含水率（不需要第二行）
-             - 其他方法：保持原来的两行结构 -->
         <template v-for="(n, i_idx) in 20" :key="i_idx">
-          <!-- 非核子法：两行一组 -->
-          <template v-if="!isNuclearMethod">
-            <tr>
-              <td rowspan="2"><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
-              <td rowspan="2" colspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
-              <td rowspan="2" colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
-              <td><input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]"></td>
-              <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
-              <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
-              <td rowspan="2" colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
-            </tr>
-            <tr>
-              <td><input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]"></td>
-              <td><input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]"></td>
-              <td><input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]"></td>
-            </tr>
-          </template>
-
-          <!-- 核子法：一行样品编号对应一行检测数据 -->
-          <tr v-else>
+          <tr v-if="isNuclearMethod">
             <td><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
             <td colspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
             <td colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
@@ -137,6 +123,31 @@
             <td><input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]"></td>
             <td><input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]"></td>
             <td colspan="2"><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
+          </tr>
+          <tr v-else>
+            <td><input type="text" :name="'sampleId_' + i_idx" v-model="formData['sampleId_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'location_' + i_idx" v-model="formData['location_' + i_idx]"></td>
+            <td colspan="2"><input type="text" :name="'date_' + i_idx" v-model="formData['date_' + i_idx]"></td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" :name="'wetDensity_' + i_idx" v-model="formData['wetDensity_' + i_idx]">
+                <input type="text" :name="'wetDensity2_' + i_idx" v-model="formData['wetDensity2_' + i_idx]">
+              </div>
+            </td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" :name="'dryDensity_' + i_idx" v-model="formData['dryDensity_' + i_idx]">
+                <input type="text" :name="'dryDensity2_' + i_idx" v-model="formData['dryDensity2_' + i_idx]">
+              </div>
+            </td>
+            <td>
+              <div class="two-inputs">
+                <input type="text" :name="'moisture_' + i_idx" v-model="formData['moisture_' + i_idx]">
+                <input type="text" :name="'moisture2_' + i_idx" v-model="formData['moisture2_' + i_idx]">
+              </div>
+            </td>
+            <td><input type="text" :name="'avgDryDensity_' + i_idx" v-model="formData['avgDryDensity_' + i_idx]"></td>
+            <td><input type="text" :name="'compaction_' + i_idx" v-model="formData['compaction_' + i_idx]"></td>
           </tr>
         </template>
     </table>
@@ -169,7 +180,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject, defineProps, computed } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps, computed, watch, nextTick } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -184,6 +195,7 @@ const props = defineProps({
 })
 
 const navigateTo = inject('navigateTo')
+const containerRef = ref(null)
 
 const goToList = () => {
   if (navigateTo) {
@@ -247,6 +259,7 @@ const initDynamicFields = () => {
     formData['sampleId_' + i_idx] = ''
     formData['location_' + i_idx] = ''
     formData['compaction_' + i_idx] = ''
+    formData['avgDryDensity_' + i_idx] = ''
     formData['wetDensity2_' + i_idx] = ''
     formData['wetDensity_' + i_idx] = ''
     formData['dryDensity2_' + i_idx] = ''
@@ -260,7 +273,32 @@ const initDynamicFields = () => {
 onMounted(() => {
   initDynamicFields()
   loadData()
+  nextTick(() => {
+    applyReadOnly()
+  })
 })
+
+watch(currentIndex, () => {
+  nextTick(() => {
+    applyReadOnly()
+  })
+})
+
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
 
 const mapRecordToFormData = (record) => {
   initDynamicFields()
@@ -411,6 +449,69 @@ const normalizeEntrustmentKey = (v) => {
   return s
 }
 
+const detectDensityMethodType = (testMethod, testCategory) => {
+  const m = (testMethod || testCategory || '').toString()
+  if (m.includes('核子')) return 'nuclear'
+  if (m.includes('灌砂')) return 'sand'
+  if (m.includes('灌水')) return 'water'
+  if (m.includes('环刀')) return 'ring'
+  return ''
+}
+
+const sortByTimeDesc = (list) => {
+  const toTime = (v) => {
+    if (!v) return Number.NEGATIVE_INFINITY
+    const t = new Date(v).getTime()
+    return Number.isFinite(t) ? t : Number.NEGATIVE_INFINITY
+  }
+  return (Array.isArray(list) ? list : []).slice().sort((a, b) => {
+    const ua = toTime(a?.updateTime)
+    const ub = toTime(b?.updateTime)
+    if (ua !== ub) return ub - ua
+    const ta = toTime(a?.createTime)
+    const tb = toTime(b?.createTime)
+    if (ta !== tb) return tb - ta
+    return String(b?.id || '').localeCompare(String(a?.id || ''))
+  })
+}
+
+const pickApprovedRecord = (list) => {
+  const sorted = sortByTimeDesc(list)
+  const approved = sorted.filter(r => {
+    const s = parseInt(r?.status)
+    return s === 4 || s === 5 || s === 6
+  })
+  return approved[0] || sorted[0]
+}
+
+const fetchSimpleRecordsForKey = async (apiPath, key) => {
+  const primary = normalizeEntrustmentKey(key)
+  if (!primary) return []
+
+  try {
+    const r1 = await axios.get(apiPath, { params: { entrustmentId: primary } })
+    if (r1.data && r1.data.success && Array.isArray(r1.data.data) && r1.data.data.length > 0) {
+      return sortByTimeDesc(r1.data.data)
+    }
+  } catch (e) {
+  }
+
+  try {
+    const wtResp = await axios.get('/api/jc-core-wt-info/detail', { params: { unifiedNumber: primary } })
+    const wtInfo = wtResp?.data?.data
+    const wtId = normalizeEntrustmentKey(wtInfo?.id)
+    if (wtId && wtId !== primary) {
+      const r2 = await axios.get(apiPath, { params: { entrustmentId: wtId } })
+      if (r2.data && r2.data.success && Array.isArray(r2.data.data)) {
+        return sortByTimeDesc(r2.data.data || [])
+      }
+    }
+  } catch (e) {
+  }
+
+  return []
+}
+
 const fetchNuclearRecordsForKey = async (key) => {
   const primary = normalizeEntrustmentKey(key)
   if (!primary) return []
@@ -437,6 +538,128 @@ const fetchNuclearRecordsForKey = async (key) => {
   }
 
   return []
+}
+
+const fetchSandRecordsForKey = async (key) => {
+  return fetchSimpleRecordsForKey('/api/sand-replacement/get-by-entrustment-id', key)
+}
+
+const fetchWaterRecordsForKey = async (key) => {
+  return fetchSimpleRecordsForKey('/api/water-replacement/get-by-entrustment-id', key)
+}
+
+const fetchCuttingRingRecordsForKey = async (key) => {
+  return fetchSimpleRecordsForKey('/api/cutting-ring/get-by-entrustment-id', key)
+}
+
+const safeJsonParse = (v) => {
+  try {
+    return JSON.parse(v || '{}')
+  } catch (e) {
+    return {}
+  }
+}
+
+const copyCommonFieldsFromParsed = (parsed, isFilled) => {
+  if (!parsed) return
+  Object.keys(parsed).forEach(k => {
+    if (k.includes('_page')) return
+    if (k.match(/_\d+$/)) return
+    if (!isFilled(formData[k]) && parsed[k] !== undefined) {
+      formData[k] = parsed[k]
+    }
+  })
+}
+
+const appendRowsFromSandParsed = (parsed, out) => {
+  if (!parsed) return
+  for (let col = 0; col < 4; col++) {
+    const idx1 = col * 2
+    const idx2 = col * 2 + 1
+    const row = {}
+    const loc = parsed['location_' + col]
+    if (loc !== undefined) row.location = loc
+    if (parsed.testDate !== undefined) row.date = parsed.testDate
+    const w1 = parsed['wetDensity_' + idx1]
+    const w2 = parsed['wetDensity_' + idx2]
+    const d1 = parsed['dryDensity_' + idx1]
+    const d2 = parsed['dryDensity_' + idx2]
+    const m1 = parsed['avgMoisture_' + idx1]
+    const m2 = parsed['avgMoisture_' + idx2]
+    const ad = parsed['avgDryDensity_' + col]
+    const c = parsed['compaction_' + col]
+    if (w1 !== undefined) row.wetDensity = w1
+    if (w2 !== undefined) row.wetDensity2 = w2
+    if (d1 !== undefined) row.dryDensity = d1
+    if (d2 !== undefined) row.dryDensity2 = d2
+    if (m1 !== undefined) row.moisture = m1
+    if (m2 !== undefined) row.moisture2 = m2
+    if (ad !== undefined) row.avgDryDensity = ad
+    if (c !== undefined) row.compaction = c
+    out.push(row)
+  }
+}
+
+const appendRowsFromWaterParsed = (parsed, out) => {
+  if (!parsed) return
+  const total = Number(parsed.totalPages || 1) || 1
+  for (let page = 0; page < total; page++) {
+    for (let col = 0; col < 4; col++) {
+      const idx1 = col * 2
+      const idx2 = col * 2 + 1
+      const row = {}
+      const loc = parsed[`samplingLocation_page${page}_${col}`]
+      if (loc !== undefined) row.location = loc
+      if (parsed.testDate !== undefined) row.date = parsed.testDate
+      const w1 = parsed[`wetDensity_page${page}_${idx1}`]
+      const w2 = parsed[`wetDensity_page${page}_${idx2}`]
+      const d1 = parsed[`measuredDryDensity_page${page}_${idx1}`]
+      const d2 = parsed[`measuredDryDensity_page${page}_${idx2}`]
+      const m1 = parsed[`avgMoisture_page${page}_${idx1}`]
+      const m2 = parsed[`avgMoisture_page${page}_${idx2}`]
+      const ad = parsed[`avgMeasuredDryDensity_page${page}_${col}`]
+      if (w1 !== undefined) row.wetDensity = w1
+      if (w2 !== undefined) row.wetDensity2 = w2
+      if (d1 !== undefined) row.dryDensity = d1
+      if (d2 !== undefined) row.dryDensity2 = d2
+      if (m1 !== undefined) row.moisture = m1
+      if (m2 !== undefined) row.moisture2 = m2
+      if (ad !== undefined) row.avgDryDensity = ad
+      out.push(row)
+    }
+  }
+}
+
+const appendRowsFromCuttingRingParsed = (parsed, out) => {
+  if (!parsed) return
+  const total = Number(parsed.totalPages || 1) || 1
+  for (let page = 0; page < total; page++) {
+    for (let i = 0; i < 4; i++) {
+      const row = {}
+      const sid = parsed[`sampleNo_page${page}_${i}`]
+      const loc = parsed[`location_page${page}_${i}`]
+      const w1 = parsed[`wetDensity1_page${page}_${i}`]
+      const w2 = parsed[`wetDensity2_page${page}_${i}`]
+      const d1 = parsed[`dryDensity1_page${page}_${i}`]
+      const d2 = parsed[`dryDensity2_page${page}_${i}`]
+      const m1 = parsed[`avgMoisture1_page${page}_${i}`]
+      const m2 = parsed[`avgMoisture2_page${page}_${i}`]
+      const ad = parsed[`avgDryDensity1_page${page}_${i}`]
+      const c = parsed[`compaction1_page${page}_${i}`]
+      if (sid !== undefined) row.sampleId = sid
+      if (loc !== undefined) row.location = loc
+      if (parsed.testDate !== undefined) row.date = parsed.testDate
+      if (w1 !== undefined) row.wetDensity = w1
+      if (w2 !== undefined) row.wetDensity2 = w2
+      if (d1 !== undefined) row.dryDensity = d1
+      if (d2 !== undefined) row.dryDensity2 = d2
+      if (m1 !== undefined) row.moisture = m1
+      if (m2 !== undefined) row.moisture2 = m2
+      if (ad !== undefined) row.avgDryDensity = ad
+      if (c !== undefined) row.compaction = c
+      out.push(row)
+    }
+  }
 }
 
 const loadData = async () => {
@@ -480,12 +703,21 @@ const loadData = async () => {
 
         if (!hasAnyRow || missingRow || records.value.length < 2) {
           try {
-            const nuclearRecords = await fetchNuclearRecordsForKey(key)
-            if (nuclearRecords && nuclearRecords.length > 0) {
-              const existing = records.value.slice()
-              const signatureRecord = nuclearRecords.find(r =>
+            const methodType = detectDensityMethodType(formData.testMethod, formData.testCategory)
+            const existing = records.value.slice()
+            const allRowData = []
+            const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'avgDryDensity', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2', 'remarks']
+
+            let sourceList = []
+            if (methodType === 'nuclear') sourceList = await fetchNuclearRecordsForKey(key)
+            if (methodType === 'sand') sourceList = await fetchSandRecordsForKey(key)
+            if (methodType === 'water') sourceList = await fetchWaterRecordsForKey(key)
+            if (methodType === 'ring') sourceList = await fetchCuttingRingRecordsForKey(key)
+
+            if (sourceList && sourceList.length > 0) {
+              const signatureRecord = sourceList.find(r =>
                 (r && (r.reviewSignaturePhoto || r.inspectSignaturePhoto || r.approveSignaturePhoto))
-              ) || nuclearRecords[0]
+              ) || sourceList[0]
               if (!formData.recordTester && signatureRecord?.recordTester) formData.recordTester = signatureRecord.recordTester
               if (!formData.recordReviewer && signatureRecord?.recordReviewer) formData.recordReviewer = signatureRecord.recordReviewer
               if (!formData.reviewerSignature && signatureRecord?.reviewSignaturePhoto) {
@@ -497,76 +729,86 @@ const loadData = async () => {
               if (!formData.approverSignature && signatureRecord?.approveSignaturePhoto) {
                 formData.approverSignature = normalizeSignatureSrc(signatureRecord.approveSignaturePhoto)
               }
-              const allRowData = []
-              const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2', 'remarks']
 
-              nuclearRecords.forEach((nRecord, pageIndex) => {
-                if (!nRecord || !nRecord.dataJson) return
-                const nParsed = JSON.parse(nRecord.dataJson)
-                if (pageIndex === 0) {
-                  for (let i = 7; i < 20; i++) {
-                    const rowData = {}
-                    rowFields.forEach(field => {
-                      const val = nParsed[field + '_' + i]
-                      if (val !== undefined) rowData[field] = val
-                    })
-                    allRowData.push(rowData)
-                  }
-                } else {
-                  for (let i = 0; i < 20; i++) {
-                    const rowData = {}
-                    rowFields.forEach(field => {
-                      const val = nParsed[field + '_' + i]
-                      if (val !== undefined) rowData[field] = val
-                    })
-                    allRowData.push(rowData)
-                  }
-                }
-                if (pageIndex === 0) {
-                  Object.keys(nParsed).forEach(k => {
-                    if (!k.match(/_\d+$/)) {
-                      formData[k] = nParsed[k]
+              if (methodType === 'nuclear') {
+                sourceList.forEach((nRecord, pageIndex) => {
+                  if (!nRecord || !nRecord.dataJson) return
+                  const nParsed = safeJsonParse(nRecord.dataJson)
+                  if (pageIndex === 0) {
+                    for (let i = 7; i < 20; i++) {
+                      const rowData = {}
+                      rowFields.forEach(field => {
+                        const val = nParsed[field + '_' + i]
+                        if (val !== undefined) rowData[field] = val
+                      })
+                      allRowData.push(rowData)
                     }
-                  })
-                }
-              })
-
-              const pageSize = 20
-              const totalPages = Math.ceil(allRowData.length / pageSize)
-              const newRecords = []
-              for (let page = 0; page < totalPages; page++) {
-                const startIdx = page * pageSize
-                const endIdx = Math.min(startIdx + pageSize, allRowData.length)
-                const pageData = allRowData.slice(startIdx, endIdx)
-
-                let pageFormData = { ...formData }
-                if (existing[page] && existing[page].dataJson) {
-                  try {
-                    pageFormData = { ...pageFormData, ...JSON.parse(existing[page].dataJson) }
-                  } catch (e) {
-                  }
-                }
-                pageData.forEach((rowData, idx) => {
-                  rowFields.forEach(field => {
-                    if (rowData[field] !== undefined) {
-                      const k = field + '_' + idx
-                      if (!isFilled(pageFormData[k])) {
-                        pageFormData[k] = rowData[field]
-                      }
+                  } else {
+                    for (let i = 0; i < 20; i++) {
+                      const rowData = {}
+                      rowFields.forEach(field => {
+                        const val = nParsed[field + '_' + i]
+                        if (val !== undefined) rowData[field] = val
+                      })
+                      allRowData.push(rowData)
                     }
-                  })
+                  }
+                  if (pageIndex === 0) {
+                    copyCommonFieldsFromParsed(nParsed, isFilled)
+                  }
                 })
-
-                const base = existing[page] ? { ...existing[page] } : { id: '', entrustmentId: key, dataJson: '{}' }
-                base.entrustmentId = key
-                base.dataJson = JSON.stringify(pageFormData)
-                newRecords.push(base)
+              } else if (methodType === 'sand') {
+                const picked = pickApprovedRecord(sourceList)
+                const parsed = safeJsonParse(picked?.dataJson)
+                copyCommonFieldsFromParsed(parsed, isFilled)
+                appendRowsFromSandParsed(parsed, allRowData)
+              } else if (methodType === 'water') {
+                const picked = pickApprovedRecord(sourceList)
+                const parsed = safeJsonParse(picked?.dataJson)
+                copyCommonFieldsFromParsed(parsed, isFilled)
+                appendRowsFromWaterParsed(parsed, allRowData)
+              } else if (methodType === 'ring') {
+                const picked = pickApprovedRecord(sourceList)
+                const parsed = safeJsonParse(picked?.dataJson)
+                copyCommonFieldsFromParsed(parsed, isFilled)
+                appendRowsFromCuttingRingParsed(parsed, allRowData)
               }
 
-              if (newRecords.length > 0) {
-                records.value = newRecords
-                currentIndex.value = 0
-                mapRecordToFormData(records.value[0])
+              if (allRowData.some(r => Object.values(r).some(isFilled))) {
+                const pageSize = 20
+                const totalPages = Math.ceil(allRowData.length / pageSize)
+                const newRecords = []
+                for (let page = 0; page < totalPages; page++) {
+                  const startIdx = page * pageSize
+                  const endIdx = Math.min(startIdx + pageSize, allRowData.length)
+                  const pageData = allRowData.slice(startIdx, endIdx)
+
+                  let pageFormData = { ...formData }
+                  if (existing[page] && existing[page].dataJson) {
+                    pageFormData = { ...pageFormData, ...safeJsonParse(existing[page].dataJson) }
+                  }
+                  pageData.forEach((rowData, idx) => {
+                    rowFields.forEach(field => {
+                      if (rowData[field] !== undefined) {
+                        const k = field + '_' + idx
+                        if (!isFilled(pageFormData[k])) {
+                          pageFormData[k] = rowData[field]
+                        }
+                      }
+                    })
+                  })
+
+                  const base = existing[page] ? { ...existing[page] } : { id: '', entrustmentId: key, dataJson: '{}' }
+                  base.entrustmentId = key
+                  base.dataJson = JSON.stringify(pageFormData)
+                  newRecords.push(base)
+                }
+
+                if (newRecords.length > 0) {
+                  records.value = newRecords
+                  currentIndex.value = 0
+                  mapRecordToFormData(records.value[0])
+                }
               }
             }
           } catch (e) {
@@ -590,6 +832,7 @@ const loadData = async () => {
           formData.entrustmentId = key
           formData.unifiedNumber = eData.wtNum || key || ''
           formData.constructionPart = eData.constructionPart || ''
+          formData.testCategory = eData.testCategory || formData.testCategory || ''
           
           if (eData.tester) formData.tester = eData.tester
           if (eData.reviewer) formData.reviewer = eData.reviewer
@@ -613,129 +856,108 @@ const loadData = async () => {
             formData.approver = currentDirectory.approver
           }
           
-          // Auto-fill from Nuclear Density Record if available
           try {
-            const nuclearRecords = await fetchNuclearRecordsForKey(key)
-            if (nuclearRecords && nuclearRecords.length > 0) {
-                    let hasAnyRow = false
-                    
-                    // 收集所有核子法记录表的数据
-                    const allRowData = []
-                    const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2', 'remarks']
+            const isFilled = (v) => v !== undefined && v !== null && String(v).trim() !== ''
+            const methodType = detectDensityMethodType(formData.testMethod, formData.testCategory)
+            const rowFields = ['sampleId', 'location', 'date', 'wetDensity', 'dryDensity', 'moisture', 'avgDryDensity', 'compaction', 'wetDensity2', 'dryDensity2', 'moisture2', 'remarks']
+            const allRowData = []
 
-                    const signatureRecord = nuclearRecords.find(r =>
-                      (r && (r.reviewSignaturePhoto || r.inspectSignaturePhoto || r.approveSignaturePhoto))
-                    ) || nuclearRecords[0]
-                    if (!formData.recordTester && signatureRecord?.recordTester) formData.recordTester = signatureRecord.recordTester
-                    if (!formData.recordReviewer && signatureRecord?.recordReviewer) formData.recordReviewer = signatureRecord.recordReviewer
-                    if (!formData.reviewerSignature && signatureRecord?.reviewSignaturePhoto) {
-                      formData.reviewerSignature = normalizeSignatureSrc(signatureRecord.reviewSignaturePhoto)
+            let sourceList = []
+            if (methodType === 'nuclear') sourceList = await fetchNuclearRecordsForKey(key)
+            if (methodType === 'sand') sourceList = await fetchSandRecordsForKey(key)
+            if (methodType === 'water') sourceList = await fetchWaterRecordsForKey(key)
+            if (methodType === 'ring') sourceList = await fetchCuttingRingRecordsForKey(key)
+
+            if (sourceList && sourceList.length > 0) {
+              const signatureRecord = sourceList.find(r =>
+                (r && (r.reviewSignaturePhoto || r.inspectSignaturePhoto || r.approveSignaturePhoto))
+              ) || sourceList[0]
+              if (!formData.recordTester && signatureRecord?.recordTester) formData.recordTester = signatureRecord.recordTester
+              if (!formData.recordReviewer && signatureRecord?.recordReviewer) formData.recordReviewer = signatureRecord.recordReviewer
+              if (!formData.reviewerSignature && signatureRecord?.reviewSignaturePhoto) {
+                formData.reviewerSignature = normalizeSignatureSrc(signatureRecord.reviewSignaturePhoto)
+              }
+              if (!formData.testerSignature && signatureRecord?.inspectSignaturePhoto) {
+                formData.testerSignature = normalizeSignatureSrc(signatureRecord.inspectSignaturePhoto)
+              }
+              if (!formData.approverSignature && signatureRecord?.approveSignaturePhoto) {
+                formData.approverSignature = normalizeSignatureSrc(signatureRecord.approveSignaturePhoto)
+              }
+
+              if (methodType === 'nuclear') {
+                sourceList.forEach((nRecord, pageIndex) => {
+                  if (!nRecord?.dataJson) return
+                  const nParsed = safeJsonParse(nRecord.dataJson)
+                  if (pageIndex === 0) {
+                    for (let i = 7; i < 20; i++) {
+                      const rowData = {}
+                      rowFields.forEach(field => {
+                        const val = nParsed[field + '_' + i]
+                        if (val !== undefined) rowData[field] = val
+                      })
+                      allRowData.push(rowData)
                     }
-                    if (!formData.testerSignature && signatureRecord?.inspectSignaturePhoto) {
-                      formData.testerSignature = normalizeSignatureSrc(signatureRecord.inspectSignaturePhoto)
+                  } else {
+                    for (let i = 0; i < 20; i++) {
+                      const rowData = {}
+                      rowFields.forEach(field => {
+                        const val = nParsed[field + '_' + i]
+                        if (val !== undefined) rowData[field] = val
+                      })
+                      allRowData.push(rowData)
                     }
-                    if (!formData.approverSignature && signatureRecord?.approveSignaturePhoto) {
-                      formData.approverSignature = normalizeSignatureSrc(signatureRecord.approveSignaturePhoto)
-                    }
-                    
-                    // 遍历所有核子法记录表页面
-                    nuclearRecords.forEach((nRecord, pageIndex) => {
-                        if (nRecord.dataJson) {
-                            const nParsed = JSON.parse(nRecord.dataJson)
-                            
-                            // 第一页：只取第7-19行（13行）
-                            if (pageIndex === 0) {
-                                for (let i = 7; i < 20; i++) {
-                                    const rowData = {}
-                                    rowFields.forEach(field => {
-                                        const val = nParsed[field + '_' + i]
-                                        if (val !== undefined) {
-                                            rowData[field] = val
-                                        }
-                                    })
-                                    allRowData.push(rowData)
-                                    hasAnyRow = true
-                                }
-                            } else {
-                                // 第二页及以后：取所有20行
-                                for (let i = 0; i < 20; i++) {
-                                    const rowData = {}
-                                    rowFields.forEach(field => {
-                                        const val = nParsed[field + '_' + i]
-                                        if (val !== undefined) {
-                                            rowData[field] = val
-                                        }
-                                    })
-                                    allRowData.push(rowData)
-                                    hasAnyRow = true
-                                }
-                            }
-                            
-                            // 复制第一页的通用字段（只复制一次）
-                            if (pageIndex === 0) {
-                                Object.keys(nParsed).forEach(key => {
-                                    if (!key.match(/_\d+$/)) {
-                                        formData[key] = nParsed[key]
-                                    }
-                                })
-                            }
-                        }
+                  }
+                  if (pageIndex === 0) {
+                    Object.keys(nParsed).forEach(k => {
+                      if (!k.match(/_\d+$/)) formData[k] = nParsed[k]
                     })
-                    
-                    // 将收集到的数据按每页20行分页到结果表
-                    const pageSize = 20
-                    const totalPages = Math.ceil(allRowData.length / pageSize)
-                    
-                    // 清空现有记录
-                    records.value = []
-                    
-                    // 创建分页记录
-                    for (let page = 0; page < totalPages; page++) {
-                        const startIdx = page * pageSize
-                        const endIdx = Math.min(startIdx + pageSize, allRowData.length)
-                        const pageData = allRowData.slice(startIdx, endIdx)
-                        
-                        const pageRecord = {
-                            id: '',
-                            entrustmentId: key,
-                            dataJson: '{}'
-                        }
-                        
-                        // 创建页面数据
-                        const pageFormData = { ...formData }
-                        
-                        // 填充当前页的行数据
-                        pageData.forEach((rowData, idx) => {
-                            rowFields.forEach(field => {
-                                if (rowData[field] !== undefined) {
-                                    pageFormData[field + '_' + idx] = rowData[field]
-                                }
-                            })
-                        })
-                        
-                        // 保存页面数据
-                        pageRecord.dataJson = JSON.stringify(pageFormData)
-                        records.value.push(pageRecord)
-                    }
-                    
-                    // 如果没有数据，创建一个空记录
-                    if (records.value.length === 0) {
-                        const emptyRecord = {
-                            id: '',
-                            entrustmentId: key,
-                            dataJson: JSON.stringify(formData)
-                        }
-                        records.value.push(emptyRecord)
-                    }
-                    
-                    // 映射第一条记录到表单
-                    currentIndex.value = 0
-                    mapRecordToFormData(records.value[0])
-                    
-                    if (hasAnyRow) {
-                      return
-                    }
+                  }
+                })
+              } else if (methodType === 'sand') {
+                const picked = pickApprovedRecord(sourceList)
+                const parsed = safeJsonParse(picked?.dataJson)
+                copyCommonFieldsFromParsed(parsed, isFilled)
+                appendRowsFromSandParsed(parsed, allRowData)
+              } else if (methodType === 'water') {
+                const picked = pickApprovedRecord(sourceList)
+                const parsed = safeJsonParse(picked?.dataJson)
+                copyCommonFieldsFromParsed(parsed, isFilled)
+                appendRowsFromWaterParsed(parsed, allRowData)
+              } else if (methodType === 'ring') {
+                const picked = pickApprovedRecord(sourceList)
+                const parsed = safeJsonParse(picked?.dataJson)
+                copyCommonFieldsFromParsed(parsed, isFilled)
+                appendRowsFromCuttingRingParsed(parsed, allRowData)
+              }
+
+              if (allRowData.some(r => Object.values(r).some(isFilled))) {
+                const pageSize = 20
+                const totalPages = Math.ceil(allRowData.length / pageSize)
+                records.value = []
+                for (let page = 0; page < totalPages; page++) {
+                  const startIdx = page * pageSize
+                  const endIdx = Math.min(startIdx + pageSize, allRowData.length)
+                  const pageData = allRowData.slice(startIdx, endIdx)
+                  const pageRecord = { id: '', entrustmentId: key, dataJson: '{}' }
+                  const pageFormData = { ...formData }
+                  pageData.forEach((rowData, idx) => {
+                    rowFields.forEach(field => {
+                      if (rowData[field] !== undefined) {
+                        pageFormData[field + '_' + idx] = rowData[field]
+                      }
+                    })
+                  })
+                  pageRecord.dataJson = JSON.stringify(pageFormData)
+                  records.value.push(pageRecord)
                 }
+                if (records.value.length === 0) {
+                  records.value.push({ id: '', entrustmentId: key, dataJson: JSON.stringify(formData) })
+                }
+                currentIndex.value = 0
+                mapRecordToFormData(records.value[0])
+                return
+              }
+            }
           } catch (e) {
             console.error('Failed to auto-fill from Nuclear Record', e)
           }
@@ -1090,6 +1312,19 @@ const handleSign = async () => {
       }
       
       if (signed) {
+        saveCurrentRecordState()
+        for (let i = 0; i < records.value.length; i++) {
+          const record = records.value[i]
+          let recordData = {}
+          try {
+            recordData = JSON.parse(record.dataJson || '{}')
+          } catch (e) {
+            recordData = {}
+          }
+          recordData.testerSignature = imgSrc
+          record.dataJson = JSON.stringify(recordData)
+          record.inspectSignaturePhoto = imgSrc
+        }
         // 保存签名到数据库
         await saveData()
         alert('签名成功并已保存')
@@ -1550,6 +1785,15 @@ const previewPdf = () => {
             text-align: center;
             padding: 8px 5px;
             font-size: inherit;
+        }
+        .two-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+        }
+        .two-inputs input[type="text"] {
+            width: 90%;
         }
         .label {
             font-weight: bold;

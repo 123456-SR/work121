@@ -525,11 +525,6 @@ const normalizeSignatureSrc = (value) => {
 }
 
 const submitWorkflow = async (action) => {
-    if (!formData.id) {
-        alert('请先保存记录')
-        return
-    }
-    
     const user = JSON.parse(localStorage.getItem('userInfo'))
     if (!user || !user.username) {
         alert('请先登录')
@@ -539,21 +534,11 @@ const submitWorkflow = async (action) => {
     let signatureData = null
     
     if (action === 'SUBMIT') {
-        // Role check: Only recordTester can submit
-        // Logic: formData.recordTester (if set)
-        // if (formData.recordTester && !isCurrentUser(formData.recordTester, user)) {
-        //      alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
-        //      return
-        // }
-
-        // Auto fetch signature if missing
         if (!formData.testerSignature) {
             try {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                 if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                      formData.testerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                     // 保存签名到数据库
-                     await saveData()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -567,22 +552,12 @@ const submitWorkflow = async (action) => {
         
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS' || (action === 'REJECT' && formData.status === 1)) {
-        // Role check: Only recordReviewer can audit/reject at status 1
-        // Logic: formData.recordReviewer (if set)
-        // if (formData.recordReviewer && !isCurrentUser(formData.recordReviewer, user)) {
-        //    alert('您不是该单据的记录审核人 (' + formData.recordReviewer + ')，无权操作')
-        //    return
-        // }
-
         if (action === 'AUDIT_PASS') {
-            // Auto fetch signature if missing
             if (!formData.reviewerSignature) {
                 try {
                     const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
                     if (sigRes.data.success && sigRes.data.data && sigRes.data.data.signatureBlob) {
                          formData.reviewerSignature = `data:image/png;base64,${sigRes.data.data.signatureBlob}`
-                         // Save signature to database
-                         await saveData()
                     } else {
                          alert('未找到您的电子签名，无法自动签名')
                          return
@@ -610,35 +585,124 @@ const submitWorkflow = async (action) => {
     //    signatureData = formData.reviewerSignature
     //}
 
-    const request = {
-        tableType: 'LIGHT_DYNAMIC_PENETRATION',
-        recordId: formData.id,
-        action: action,
-        userAccount: user.username,
-        signatureData: signatureData
-    }
-
-    if (action === 'REJECT') {
-        const reason = prompt('请输入打回原因:')
-        if (!reason) return
-        request.rejectReason = reason
-    }
-
     try {
-        const response = await axios.post('/api/workflow/handle', request)
-        if (response.data.success) {
-            alert('操作成功')
-            // Refresh
-            const record = records.value[currentIndex.value]
-            if (record) {
-                record.status = response.data.data // Update status
-                formData.status = response.data.data
-                if (action === 'REJECT' && request.rejectReason) {
-                    formData.rejectReason = request.rejectReason
+        saveCurrentToState()
+
+        if (action === 'SUBMIT' || action === 'AUDIT_PASS') {
+            if (!records.value || records.value.length === 0) {
+                alert('没有可操作的记录')
+                return
+            }
+
+            const isTesterAction = action === 'SUBMIT'
+            const signatureSrc = isTesterAction ? formData.testerSignature : formData.reviewerSignature
+
+            for (let i = 0; i < records.value.length; i++) {
+                const r = records.value[i]
+                const assigned = isTesterAction ? r.recordTester : r.recordReviewer
+                if (assigned && !isCurrentUser(assigned, user)) {
+                    alert(`第${i + 1}页的${isTesterAction ? '记录检测人' : '记录审核人'}为 ${assigned}，您无权操作`)
+                    return
+                }
+
+                if (isTesterAction) {
+                    r.testerSignature = signatureSrc
+                    r.inspectSignaturePhoto = signatureSrc
+                } else {
+                    r.reviewerSignature = signatureSrc
+                    r.reviewSignaturePhoto = signatureSrc
                 }
             }
-        } else {
-            alert('操作失败: ' + response.data.message)
+
+            for (let i = 0; i < records.value.length; i++) {
+                const r = records.value[i]
+                const saveRes = await axios.post('/api/light-dynamic-penetration/save', r)
+                if (!saveRes.data.success) {
+                    alert(`第${i + 1}页保存失败: ${saveRes.data.message || ''}`)
+                    return
+                }
+                if (saveRes.data.data) {
+                    records.value[i] = saveRes.data.data
+                }
+            }
+
+            const eligibleStatus = (status) => {
+                const s = parseInt(status)
+                if (Number.isNaN(s)) return false
+                if (action === 'SUBMIT') return s === 0 || s === 2
+                if (action === 'AUDIT_PASS') return s === 1
+                return false
+            }
+
+            let successCount = 0
+            let skippedCount = 0
+
+            for (let i = 0; i < records.value.length; i++) {
+                const r = records.value[i]
+                if (!r.id) {
+                    alert(`第${i + 1}页未保存，无法提交流程`)
+                    return
+                }
+                if (!eligibleStatus(r.status)) {
+                    skippedCount++
+                    continue
+                }
+
+                const request = {
+                    tableType: 'LIGHT_DYNAMIC_PENETRATION',
+                    recordId: r.id,
+                    action: action,
+                    userAccount: user.username,
+                    signatureData: signatureData
+                }
+                const response = await axios.post('/api/workflow/handle', request)
+                if (!response.data.success) {
+                    alert(`第${i + 1}页操作失败: ${response.data.message}`)
+                    return
+                }
+                r.status = response.data.data
+                successCount++
+            }
+
+            alert(`操作成功：${successCount} 条${skippedCount ? `，跳过 ${skippedCount} 条` : ''}`)
+
+            const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
+            if (reloadId) {
+                await loadData(reloadId)
+            }
+            return
+        }
+
+        if (action === 'REJECT') {
+            if (!formData.id) {
+                alert('请先保存记录')
+                return
+            }
+            const request = {
+                tableType: 'LIGHT_DYNAMIC_PENETRATION',
+                recordId: formData.id,
+                action: action,
+                userAccount: user.username,
+                signatureData: signatureData
+            }
+
+            const reason = prompt('请输入打回原因:')
+            if (!reason) return
+            request.rejectReason = reason
+
+            const response = await axios.post('/api/workflow/handle', request)
+            if (response.data.success) {
+                alert('操作成功')
+                const record = records.value[currentIndex.value]
+                if (record) {
+                    record.status = response.data.data
+                    formData.status = response.data.data
+                    formData.rejectReason = request.rejectReason
+                }
+            } else {
+                alert('操作失败: ' + response.data.message)
+            }
+            return
         }
     } catch (e) {
         console.error('Workflow error', e)
@@ -1509,17 +1573,20 @@ const handleSign = async () => {
     const currentName = user.userName
 
     try {
+        saveCurrentToState()
         const res = await axios.post('/api/signature/get', { userAccount: currentAccount })
         if (res.data.success && res.data.data && res.data.data.signatureBlob) {
             const imgSrc = `data:image/png;base64,${res.data.data.signatureBlob}`
             let signed = false
             let signType = ''
+            let signatureKey = ''
             
             // Match Record Tester (记录检测人)
             if (!formData.recordTester || formData.recordTester === currentName || formData.recordTester === currentAccount) {
                 formData.testerSignature = imgSrc
                 signed = true
                 signType = '检测人'
+                signatureKey = 'inspectSignaturePhoto'
             }
             
             // Match Record Reviewer (记录审核人) - 如果检测人已经签了，或者当前用户是审核人
@@ -1527,6 +1594,7 @@ const handleSign = async () => {
                 formData.reviewerSignature = imgSrc
                 signed = true
                 signType = '审核人'
+                signatureKey = 'reviewSignaturePhoto'
             }
             
             if (signed) {
@@ -1534,10 +1602,39 @@ const handleSign = async () => {
                 if (!formData.testDate) {
                     formData.testDate = formatDate(new Date())
                 }
-                // 保存签名到数据库
-                await saveData()
-                // 显示成功消息
-                alert(`签名成功并已保存，您以${signType}身份签字`)
+                saveCurrentToState()
+
+                for (let i = 0; i < records.value.length; i++) {
+                    const rec = records.value[i]
+                    if (!rec) continue
+                    if (signatureKey === 'inspectSignaturePhoto') rec.inspectSignaturePhoto = imgSrc
+                    if (signatureKey === 'reviewSignaturePhoto') rec.reviewSignaturePhoto = imgSrc
+                }
+
+                let successCount = 0
+                const totalCount = records.value.length
+                for (let i = 0; i < records.value.length; i++) {
+                    const record = records.value[i]
+                    if (!record) continue
+                    if (record.status === undefined || record.status === null) record.status = formData.status
+                    const saveRes = await axios.post('/api/light-dynamic-penetration/save', record)
+                    if (saveRes.data && saveRes.data.success) {
+                        successCount++
+                        if (saveRes.data.data) {
+                            records.value[i] = saveRes.data.data
+                        }
+                    }
+                }
+
+                if (records.value[currentIndex.value]) {
+                    mapRecordToFormData(records.value[currentIndex.value])
+                }
+
+                if (successCount === totalCount) {
+                    alert(`签名成功并已保存，您以${signType}身份签字`)
+                } else {
+                    alert(`签名已写入，保存完成：成功 ${successCount} 页，失败 ${totalCount - successCount} 页`)
+                }
             } else {
                 alert(`当前用户(${currentName}/${currentAccount})与表单中的检测人(${formData.recordTester})或审核人(${formData.recordReviewer})不匹配，无法签名`)
             }

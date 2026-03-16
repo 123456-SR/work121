@@ -1,5 +1,5 @@
 <template>
-  <div class="reboundMethodReport-container">
+  <div class="reboundMethodReport-container" ref="containerRef">
 
 
     <div class="no-print toolbar">
@@ -20,7 +20,6 @@
         >
           批准
         </button>
-
         <button
           @click="printDocument"
           class="btn btn-secondary btn-small"
@@ -222,10 +221,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, inject, defineProps } from 'vue'
+import { reactive, ref, onMounted, inject, defineProps, nextTick } from 'vue'
 import axios from 'axios'
 
 const navigateTo = inject('navigateTo')
+const containerRef = ref(null)
 
 // 定义props
 const props = defineProps({
@@ -311,7 +311,27 @@ onMounted(() => {
       loadData(id)
     }
   }
+
+  nextTick(() => {
+    applyReadOnly()
+  })
 })
+
+const applyReadOnly = () => {
+  const root = containerRef.value
+  if (!root) return
+  root.querySelectorAll('input, textarea').forEach((el) => {
+    const type = (el.getAttribute('type') || '').toLowerCase()
+    if (type === 'checkbox' || type === 'radio' || type === 'file') {
+      el.setAttribute('disabled', 'true')
+      return
+    }
+    el.setAttribute('readonly', 'true')
+  })
+  root.querySelectorAll('select, button[contenteditable], [contenteditable="true"]').forEach((el) => {
+    el.setAttribute('disabled', 'true')
+  })
+}
 
 // 加载数据
 const loadData = async (id) => {

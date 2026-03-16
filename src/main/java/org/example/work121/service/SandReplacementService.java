@@ -1,6 +1,7 @@
 package org.example.work121.service;
 
 import java.util.List;
+import java.util.Map;
 import org.example.work121.entity.SandReplacement;
 import org.example.work121.entity.SandReplacementReport;
 
@@ -17,4 +18,6 @@ public interface SandReplacementService {
      * @param entrustmentId The entrustment ID
      */
     void generateReportAndResult(String entrustmentId);
+
+    String exportRecordToExcel(Map<String, Object> payload);
 }

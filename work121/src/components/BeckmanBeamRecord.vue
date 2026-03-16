@@ -633,11 +633,6 @@ const normalizeSignatureSrc = (value) => {
 }
 
 const submitWorkflow = async (action) => {
-    if (!formData.id) {
-        alert('请先保存记录')
-        return
-    }
-
     const user = JSON.parse(localStorage.getItem('userInfo'))
     if (!user || !user.username) {
         alert('请先登录')
@@ -706,27 +701,104 @@ const submitWorkflow = async (action) => {
         }
     }
 
-    const request = {
-        tableType: 'BECKMAN_BEAM',
-        recordId: formData.id,
-        action: action,
-        userAccount: user.username,
-        signatureData: signatureData ? signatureData.replace(/^data:image\/\w+;base64,/, '') : null,
-        nextHandler: ''
-    }
-
-    if (action === 'REJECT') {
-        const reason = prompt('请输入打回原因:')
-        if (!reason) return
-        request.rejectReason = reason
-    }
-
     try {
-        const response = await axios.post('/api/workflow/handle', request)
-        if (response.data.success) {
-            alert('操作成功')
+        saveCurrentRecordState()
 
-            // 如果是审核通过，生成报告表和结果表
+        if (action === 'SUBMIT' || action === 'AUDIT_PASS') {
+            if (!records.value || records.value.length === 0) {
+                alert('没有可操作的记录')
+                return
+            }
+
+            const isTesterAction = action === 'SUBMIT'
+            const signatureSrc = isTesterAction ? formData.testerSignature : formData.reviewerSignature
+
+            for (let i = 0; i < records.value.length; i++) {
+                const r = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = r.dataJson ? JSON.parse(r.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const assigned = isTesterAction ? pageData.recordTester : pageData.recordReviewer
+                if (assigned) {
+                    const ok = isTesterAction
+                        ? (user.username === assigned || user.userName === assigned)
+                        : (user.username === assigned || user.fullName === assigned)
+                    if (!ok) {
+                        alert(`第${i + 1}页的${isTesterAction ? '记录检测人' : '记录校核人'}为 ${assigned}，您无权操作`)
+                        return
+                    }
+                }
+
+                if (isTesterAction) {
+                    pageData.testerSignature = signatureSrc
+                    pageData.inspectSignaturePhoto = signatureSrc
+                    if (!pageData.recordTester) {
+                        pageData.recordTester = formData.recordTester
+                    }
+                } else {
+                    pageData.reviewerSignature = signatureSrc
+                    pageData.reviewSignaturePhoto = signatureSrc
+                    if (!pageData.recordReviewer) {
+                        pageData.recordReviewer = formData.recordReviewer
+                    }
+                }
+
+                r.inspectSignaturePhoto = pageData.testerSignature
+                r.reviewSignaturePhoto = pageData.reviewerSignature
+                r.dataJson = JSON.stringify(pageData)
+            }
+
+            await submitForm()
+
+            const eligibleStatus = (status) => {
+                const s = parseInt(status)
+                if (Number.isNaN(s)) return false
+                if (action === 'SUBMIT') return s === 0 || s === 2
+                if (action === 'AUDIT_PASS') return s === 1
+                return false
+            }
+
+            let successCount = 0
+            let skippedCount = 0
+
+            for (let i = 0; i < records.value.length; i++) {
+                const r = records.value[i] || {}
+                if (!r.id) {
+                    alert(`第${i + 1}页未保存，无法提交流程`)
+                    return
+                }
+                if (!eligibleStatus(r.status)) {
+                    skippedCount++
+                    continue
+                }
+
+                const request = {
+                    tableType: 'BECKMAN_BEAM',
+                    recordId: r.id,
+                    action: action,
+                    userAccount: user.username,
+                    signatureData: signatureData,
+                    nextHandler: ''
+                }
+
+                const response = await axios.post('/api/workflow/handle', request)
+                if (!response.data.success) {
+                    alert(`第${i + 1}页操作失败: ${response.data.message}`)
+                    return
+                }
+                r.status = response.data.data
+                if (i === currentIndex.value) {
+                    formData.status = response.data.data
+                }
+                successCount++
+            }
+
+            alert(`操作成功：${successCount} 条${skippedCount ? `，跳过 ${skippedCount} 条` : ''}`)
+
             if (action === 'AUDIT_PASS') {
                 try {
                     await generateReportAndResult()
@@ -736,12 +808,50 @@ const submitWorkflow = async (action) => {
                 }
             }
 
-            // 重新按委托号加载一次，刷新最新的 STATUS（例如从 0 -> 1）
+            const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
+            if (reloadId) {
+                await loadData(reloadId)
+            }
+            return
+        }
+
+        if (!formData.id) {
+            alert('请先保存记录')
+            return
+        }
+
+        const request = {
+            tableType: 'BECKMAN_BEAM',
+            recordId: formData.id,
+            action: action,
+            userAccount: user.username,
+            signatureData: signatureData,
+            nextHandler: ''
+        }
+
+        if (action === 'REJECT') {
+            const reason = prompt('请输入打回原因:')
+            if (!reason) return
+            request.rejectReason = reason
+        }
+
+        const response = await axios.post('/api/workflow/handle', request)
+        if (response.data.success) {
+            alert('操作成功')
+
+            if (action === 'AUDIT_PASS') {
+                try {
+                    await generateReportAndResult()
+                } catch (genError) {
+                    console.error('生成报告表和结果表失败', genError)
+                    alert('审核通过，但生成报告表和结果表失败，请手动生成')
+                }
+            }
+
             const reloadId = formData.entrustmentId || props.wtNum || formData.unifiedNumber
             if (reloadId) {
                 await loadData(reloadId)
             } else if (formData.id) {
-                // 如果没有委托号，尝试通过记录ID重新加载
                 try {
                     const reloadRes = await axios.get('/api/beckman-beam/get-by-entrustment-id', {
                         params: { entrustmentId: formData.entrustmentId || formData.unifiedNumber }
@@ -754,7 +864,6 @@ const submitWorkflow = async (action) => {
                             currentIndex.value = foundIndex
                             mapRecordToFormData(foundRecord)
                         } else {
-                            // 如果找不到，重新加载第一条记录
                             records.value = reloadRes.data.data
                             currentIndex.value = 0
                             mapRecordToFormData(reloadRes.data.data[0])
@@ -1220,6 +1329,7 @@ const handleSign = async () => {
   }
 
   try {
+    saveCurrentRecordState()
     const response = await axios.post('/api/signature/get', {
       userAccount: user.username
     })
@@ -1255,6 +1365,24 @@ const handleSign = async () => {
       }
 
       if (signed) {
+        saveCurrentRecordState()
+        const signatureKey = signType === '审核人' ? 'reviewerSignature' : 'testerSignature'
+        const photoKey = signType === '审核人' ? 'reviewSignaturePhoto' : 'inspectSignaturePhoto'
+        for (let i = 0; i < records.value.length; i++) {
+          const rec = records.value[i]
+          let pageData = {}
+          try {
+            pageData = rec && rec.dataJson ? JSON.parse(rec.dataJson) : {}
+          } catch (e) {
+            pageData = {}
+          }
+
+          pageData[signatureKey] = imgSrc
+          if (rec) {
+            rec[photoKey] = imgSrc
+            rec.dataJson = JSON.stringify(pageData)
+          }
+        }
         // 保存签名到数据库
         await submitForm()
         // 显示成功消息

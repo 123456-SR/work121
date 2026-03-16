@@ -95,6 +95,13 @@
           预览PDF
         </button>
         <button
+          v-if="!draftMode"
+          @click="exportExcel"
+          class="btn btn-secondary btn-small"
+        >
+          导出数据
+        </button>
+        <button
           @click="submitForm"
           class="btn btn-secondary btn-small"
         >
@@ -277,6 +284,32 @@
     </div>
 
     </form>
+
+    <div v-if="showExportModal" class="modal-overlay no-print">
+      <div class="modal-content">
+        <h3>导出数据</h3>
+        <div class="form-group">
+          <div>表名称：{{ exportTemplateInfo.baseName }}</div>
+          <div v-if="exportTemplateInfo.templates.length" class="template-files">
+            <span v-for="t in exportTemplateInfo.templates" :key="t.fileName" class="template-file">{{ t.fileName }}</span>
+          </div>
+          <div v-else>已有模板：无</div>
+        </div>
+        <div class="format-buttons">
+          <button
+            v-for="fmt in exportTemplateInfo.formats"
+            :key="fmt"
+            @click="startExport(fmt)"
+            class="btn btn-primary btn-small"
+          >
+            {{ String(fmt).toUpperCase() }}<span v-if="!hasTemplate(fmt)">（无模板）</span>
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeExportModal" class="btn btn-secondary btn-small">关闭</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 数据分析模态窗口 -->
     <div v-if="showAnalysisModal" class="modal-overlay">
@@ -484,6 +517,53 @@ const canEditStructure = computed(() => {
 
 // 数据分析相关状态
 const showAnalysisModal = ref(false)
+const showExportModal = ref(false)
+const exportTemplateInfo = reactive({
+  baseName: '灌砂法记录表',
+  templateDir: '',
+  templates: [],
+  formats: ['xls', 'xlsx', 'docx']
+})
+
+const hasTemplate = (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!ext) return false
+  return Array.isArray(exportTemplateInfo.templates) && exportTemplateInfo.templates.some(t => String(t?.ext || '').toLowerCase() === ext)
+}
+
+const openExportModal = async () => {
+  try {
+    const res = await axios.get('/api/sand-replacement/export-formats', {
+      params: { baseName: exportTemplateInfo.baseName }
+    })
+    if (res.data && res.data.success) {
+      exportTemplateInfo.baseName = res.data.baseName || exportTemplateInfo.baseName
+      exportTemplateInfo.templateDir = res.data.templateDir || ''
+      exportTemplateInfo.templates = Array.isArray(res.data.templates) ? res.data.templates : []
+      exportTemplateInfo.formats = Array.isArray(res.data.formats) && res.data.formats.length ? res.data.formats : exportTemplateInfo.formats
+      showExportModal.value = true
+    } else {
+      alert((res.data && res.data.message) ? res.data.message : '获取可导出格式失败')
+    }
+  } catch (e) {
+    alert('获取可导出格式失败')
+  }
+}
+
+const closeExportModal = () => {
+  showExportModal.value = false
+}
+
+const startExport = async (fmt) => {
+  const ext = String(fmt || '').toLowerCase()
+  if (!hasTemplate(ext)) {
+    const dir = exportTemplateInfo.templateDir ? `\n模板目录：${exportTemplateInfo.templateDir}` : ''
+    alert(`未找到模板：${exportTemplateInfo.baseName}.${ext}\n请先将对应模板文件放入“表”文件夹后再导出。${dir}`)
+    return
+  }
+  showExportModal.value = false
+  await exportByFormat(ext)
+}
 const analysisRange = reactive({ start: '', end: '' })
 const analysisResults = reactive({
   totalSandMassMin: '',
@@ -585,15 +665,8 @@ const getStatusColor = (status) => {
 
 // Workflow Action Handler
 const submitWorkflow = async (action) => {
-    // 如果记录还未保存，先保存记录
-    if (!formData.id) {
-        await submitForm()
-        if (!formData.id) {
-            alert('保存记录失败，请重试')
-            return
-        }
-    }
-    
+    saveCurrentRecordState()
+
     // Get current user
     const user = JSON.parse(localStorage.getItem('userInfo'))
     if (!user || !user.username) {
@@ -603,9 +676,7 @@ const submitWorkflow = async (action) => {
 
     let signatureData = null
     
-    // Prepare signature based on action
     if (action === 'SUBMIT') {
-        // Auto fetch signature if missing
         if (!formData.testerSignature) {
             try {
                 const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
@@ -614,8 +685,6 @@ const submitWorkflow = async (action) => {
                      if (!formData.recordTester) {
                         formData.recordTester = user.userName || user.username
                      }
-                     // Save signature to database
-                     await submitForm()
                 } else {
                      alert('未找到您的电子签名，无法自动签名')
                      return
@@ -626,8 +695,6 @@ const submitWorkflow = async (action) => {
                 return
             }
         }
-        
-        // Check if current user is the tester
         if (formData.recordTester && user.username !== formData.recordTester && user.userName !== formData.recordTester) {
             alert('您不是该单据的记录检测人 (' + formData.recordTester + ')，无权提交')
             return
@@ -635,13 +702,11 @@ const submitWorkflow = async (action) => {
         
         signatureData = formData.testerSignature.replace(/^data:image\/\w+;base64,/, '')
     } else if (action === 'AUDIT_PASS') {
-         // Role check: Only recordReviewer can audit
          if (formData.recordReviewer && user.username !== formData.recordReviewer && user.fullName !== formData.recordReviewer) {
             alert('您不是该单据的记录校核人 (' + formData.recordReviewer + ')，无权操作')
             return
          }
 
-         // Auto fetch signature if missing
          if (!formData.reviewerSignature) {
              try {
                  const sigRes = await axios.post('/api/signature/get', { userAccount: user.username })
@@ -650,8 +715,6 @@ const submitWorkflow = async (action) => {
                       if (!formData.recordReviewer) {
                          formData.recordReviewer = user.userName || user.username
                       }
-                      // Save signature to database
-                      await submitForm()
                  } else {
                       alert('未找到您的电子签名，无法自动签名')
                       return
@@ -672,26 +735,161 @@ const submitWorkflow = async (action) => {
     }
 
 
-    const request = {
-        tableType: 'SAND_REPLACEMENT',
-        recordId: formData.id,
-        action: action,
-        userAccount: user.username,
-        signatureData: signatureData,
-        nextHandler: ''
-    }
-
-    if (action === 'REJECT') {
-        const reason = prompt('请输入打回原因:')
-        if (!reason) return
-        request.rejectReason = reason
-    }
-
     try {
+        if (action === 'SUBMIT' || action === 'AUDIT_PASS') {
+            if (!records.value || records.value.length === 0) {
+                alert('没有可操作的记录')
+                return
+            }
+
+            const isTesterAction = action === 'SUBMIT'
+            const signatureSrc = isTesterAction ? formData.testerSignature : formData.reviewerSignature
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const assigned = isTesterAction ? pageData.recordTester : pageData.recordReviewer
+                if (assigned) {
+                    const ok = isTesterAction
+                        ? (user.username === assigned || user.userName === assigned)
+                        : (user.username === assigned || user.fullName === assigned)
+                    if (!ok) {
+                        alert(`第${i + 1}页的${isTesterAction ? '记录检测人' : '记录校核人'}为 ${assigned}，您无权操作`)
+                        return
+                    }
+                }
+
+                if (isTesterAction) {
+                    pageData.testerSignature = signatureSrc
+                    if (!pageData.recordTester) {
+                        pageData.recordTester = formData.recordTester
+                    }
+                } else {
+                    pageData.reviewerSignature = signatureSrc
+                    if (!pageData.recordReviewer) {
+                        pageData.recordReviewer = formData.recordReviewer
+                    }
+                }
+
+                rec.inspectSignaturePhoto = pageData.testerSignature
+                rec.reviewSignaturePhoto = pageData.reviewerSignature
+                rec.dataJson = JSON.stringify(pageData)
+            }
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                let pageData = {}
+                try {
+                    pageData = rec.dataJson ? JSON.parse(rec.dataJson) : {}
+                } catch (e) {
+                    pageData = {}
+                }
+
+                const dataJsonObj = { ...pageData }
+                delete dataJsonObj.id
+                delete dataJsonObj.status
+                delete dataJsonObj.tester
+                delete dataJsonObj.reviewer
+
+                const dataToSave = {
+                    id: rec.id,
+                    entrustmentId: pageData.entrustmentId || formData.entrustmentId || props.id,
+                    status: String(pageData.status ?? rec.status ?? formData.status),
+                    dataJson: JSON.stringify(dataJsonObj),
+                    reviewSignaturePhoto: pageData.reviewerSignature,
+                    inspectSignaturePhoto: pageData.testerSignature,
+                    tester: pageData.recordTester,
+                    reviewer: pageData.recordReviewer,
+                    recordTester: pageData.recordTester,
+                    recordReviewer: pageData.recordReviewer,
+                    filler: pageData.filler,
+                    soilType: pageData.soilType
+                }
+
+                const saveRes = await axios.post('/api/sand-replacement/save', dataToSave)
+                if (!saveRes.data || !saveRes.data.success) {
+                    alert(`第${i + 1}页保存失败: ${(saveRes.data && saveRes.data.message) || ''}`)
+                    return
+                }
+                if (saveRes.data.data) {
+                    records.value[i] = saveRes.data.data
+                }
+            }
+
+            const eligibleStatus = (status) => {
+                const s = parseInt(status)
+                if (Number.isNaN(s)) return false
+                if (action === 'SUBMIT') return s === 0 || s === 2
+                if (action === 'AUDIT_PASS') return s === 1
+                return false
+            }
+
+            let successCount = 0
+            let skippedCount = 0
+
+            for (let i = 0; i < records.value.length; i++) {
+                const rec = records.value[i] || {}
+                if (!rec.id) {
+                    alert(`第${i + 1}页未保存，无法提交流程`)
+                    return
+                }
+                if (!eligibleStatus(rec.status)) {
+                    skippedCount++
+                    continue
+                }
+
+                const request = {
+                    tableType: 'SAND_REPLACEMENT',
+                    recordId: rec.id,
+                    action: action,
+                    userAccount: user.username,
+                    signatureData: signatureData,
+                    nextHandler: ''
+                }
+
+                const response = await axios.post('/api/workflow/handle', request)
+                if (!response.data.success) {
+                    alert(`第${i + 1}页操作失败: ${response.data.message}`)
+                    return
+                }
+                rec.status = response.data.data
+                successCount++
+            }
+
+            alert(`操作成功：${successCount} 条${skippedCount ? `，跳过 ${skippedCount} 条` : ''}`)
+            loadData(formData.entrustmentId || props.id)
+            return
+        }
+
+        if (!formData.id) {
+            alert('请先保存记录')
+            return
+        }
+
+        const request = {
+            tableType: 'SAND_REPLACEMENT',
+            recordId: formData.id,
+            action: action,
+            userAccount: user.username,
+            signatureData: signatureData,
+            nextHandler: ''
+        }
+
+        if (action === 'REJECT') {
+            const reason = prompt('请输入打回原因:')
+            if (!reason) return
+            request.rejectReason = reason
+        }
+
         const response = await axios.post('/api/workflow/handle', request)
         if (response.data.success) {
             alert('操作成功')
-            // Reload data to reflect status change
             loadData(formData.entrustmentId || props.id)
         } else {
             alert('操作失败: ' + response.data.message)
@@ -1059,6 +1257,111 @@ const submitForm = async () => {
 
 const printDocument = () => {
   window.print()
+}
+
+const exportExcel = async () => {
+  await openExportModal()
+}
+
+const exportByFormat = async (format) => {
+  try {
+    saveCurrentRecordState()
+    const list = records.value && records.value.length > 0 ? records.value : []
+    const totalRecords = list.length > 0 ? list.length : 1
+    const successPaths = []
+    const failures = []
+
+    const buildExportDataFromRecord = (record, index) => {
+      let dynamicData = {}
+      try {
+        dynamicData = record && record.dataJson ? JSON.parse(record.dataJson) : {}
+      } catch (e) {
+        dynamicData = {}
+      }
+
+      const pageNo = index + 1
+      return {
+        ...dynamicData,
+        entrustingUnit: record?.clientUnit || dynamicData.entrustingUnit || formData.entrustingUnit || '',
+        unifiedNumber: record?.wtNum || dynamicData.unifiedNumber || formData.unifiedNumber || record?.entrustmentId || '',
+        projectName: dynamicData.projectName || formData.projectName || record?.constructionPart || record?.projectName || '',
+        testDate: dynamicData.testDate || formData.testDate || '',
+        standard: dynamicData.standard || formData.standard || record?.testBasis || '',
+        sandDensity: dynamicData.sandDensity || formData.sandDensity || '',
+        equipment: dynamicData.equipment || formData.equipment || record?.equipment || '',
+        testCategory: dynamicData.testCategory || formData.testCategory || record?.testCategory || '',
+        designCompaction: dynamicData.designCompaction || formData.designCompaction || '',
+        remarks: dynamicData.remarks || formData.remarks || '',
+        pageNo,
+        pageNum: pageNo,
+        pageIndex: index,
+        totalPages: totalRecords,
+        pageTotal: totalRecords,
+        pageText: `${pageNo}/${totalRecords}`,
+        recordNo: index + 1,
+        recordIndex: index,
+        totalRecords
+      }
+    }
+
+    for (let i = 0; i < totalRecords; i++) {
+      const record = list.length > 0 ? list[i] : null
+      const recordNo = i + 1
+      const entrustmentId = (record && record.entrustmentId) ? record.entrustmentId : (props.id || formData.entrustmentId || '')
+      const id = record && record.id ? record.id : formData.id
+
+      const dataObj = record ? buildExportDataFromRecord(record, i) : (() => {
+        const d = { ...formData }
+        delete d.id
+        delete d.status
+        return {
+          ...d,
+          pageNo: recordNo,
+          pageNum: recordNo,
+          pageIndex: i,
+          totalPages: totalRecords,
+          pageTotal: totalRecords,
+          pageText: `${recordNo}/${totalRecords}`,
+          recordNo,
+          recordIndex: i,
+          totalRecords
+        }
+      })()
+
+      try {
+        const response = await axios.post('/api/sand-replacement/export-excel', {
+          id,
+          entrustmentId,
+          recordNo,
+          totalRecords,
+          pageNo: recordNo,
+          totalPages: totalRecords,
+          data: dataObj,
+          format,
+          templateBaseName: exportTemplateInfo.baseName
+        })
+
+        if (response.data && response.data.success) {
+          successPaths.push(response.data.path)
+        } else {
+          failures.push(`第${recordNo}条：${response.data && response.data.message ? response.data.message : '未知错误'}`)
+        }
+      } catch (e) {
+        failures.push(`第${recordNo}条：${e && e.message ? e.message : '请求失败'}`)
+      }
+    }
+
+    if (successPaths.length > 0 && failures.length === 0) {
+      alert(`导出成功：\n${successPaths.join('\n')}`)
+    } else if (successPaths.length > 0) {
+      alert(`部分导出成功：\n${successPaths.join('\n')}\n\n失败：\n${failures.join('\n')}`)
+    } else {
+      alert(`导出失败：\n${failures.join('\n') || '未知错误'}`)
+    }
+  } catch (error) {
+    console.error('Export error:', error)
+    alert('导出失败')
+  }
 }
 
 // 返回列表
