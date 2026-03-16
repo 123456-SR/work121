@@ -840,6 +840,7 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
         return type != null && (
                 "ENTRUSTMENT".equalsIgnoreCase(type) ||
                 "JZS_ENTRUSTMENT".equalsIgnoreCase(type) ||
+                "T_ENTRUSTMENT".equalsIgnoreCase(type) ||
                 "ENTRUSTMENT_LIST".equalsIgnoreCase(type) ||
                 "委托单".equals(type)
         );
@@ -1791,6 +1792,17 @@ public class SimpleDirectoryServiceImpl implements SimpleDirectoryService {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean update(SimpleDirectory directory) {
+        try {
+            int result = simpleDirectoryMapper.update(directory);
+            return result > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

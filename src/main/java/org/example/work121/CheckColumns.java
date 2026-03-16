@@ -24,8 +24,7 @@ public class CheckColumns implements CommandLineRunner {
         System.out.println("=== CHECKING COLUMNS ===");
         try {
             checkTable("JC_CORE_WT_INFO");
-            checkTable("EXO");
-            checkTable("JZS_ENTRUSTMENT");
+            checkTable("T_ENTRUSTMENT");
         } catch (Exception e) {
             e.printStackTrace();
         }
