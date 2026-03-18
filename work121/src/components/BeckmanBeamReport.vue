@@ -359,6 +359,11 @@ const normalizeSignatureSrc = (v) => {
   return s
 }
 
+const pickReportStatus = (data, fallback = 0) => {
+  const v = data?.status ?? data?.reportStatus ?? data?.report_status ?? data?.REPORT_STATUS ?? data?.STATUS
+  return (v === null || v === undefined || v === '') ? fallback : v
+}
+
 onMounted(() => {
   if (props.id) {
     loadData(props.id)
@@ -422,8 +427,8 @@ const getStatusText = (status) => {
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '审核通过待批准'
-    case 5: return '审核通过待批准'
+    case 4: return '待批准'
+    case 5: return '待批准'
     case 6: return '已批准'
     case 7: return '驳回'
     // 报告表状态 (10-17)
@@ -431,8 +436,8 @@ const getStatusText = (status) => {
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
-    case 14: return '审核通过待批准'
-    case 15: return '审核通过待批准'
+    case 14: return '待批准'
+    case 15: return '待批准'
     case 16: return '已批准'
     case 17: return '驳回'
     // 结果表状态 (20-27)
@@ -440,8 +445,8 @@ const getStatusText = (status) => {
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
-    case 24: return '审核通过待批准'
-    case 25: return '审核通过待批准'
+    case 24: return '待批准'
+    case 25: return '待批准'
     case 26: return '已批准'
     case 27: return '驳回'
     default: return '未知'
@@ -649,7 +654,7 @@ const loadData = async (entrustmentId) => {
       dbData = data
       formData.id = data.id
       formData.entrustmentId = data.entrustmentId
-      formData.status = data.status !== undefined ? data.status : 0
+      formData.status = pickReportStatus(data, 0)
 
       if (data.dataJson) {
         sourceJson = data.dataJson

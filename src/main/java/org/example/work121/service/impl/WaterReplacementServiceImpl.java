@@ -164,6 +164,21 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
         }
 
         Map<String, Object> data = extractExcelData(payload);
+        int pageNo = parsePositiveInt(firstNonEmpty(
+                stringValue(payload.get("pageNo")),
+                firstNonEmpty(stringValue(payload.get("pageNum")), firstNonEmpty(stringValue(data.get("pageNo")), stringValue(data.get("pageNum"))))
+        ));
+        int totalPages = parsePositiveInt(firstNonEmpty(
+                stringValue(payload.get("totalPages")),
+                firstNonEmpty(stringValue(payload.get("pageTotal")), firstNonEmpty(stringValue(data.get("totalPages")), stringValue(data.get("pageTotal"))))
+        ));
+        if (pageNo <= 0) pageNo = 1;
+        if (totalPages <= 0) totalPages = 1;
+        data.put("pageNo", pageNo);
+        data.put("pageNum", pageNo);
+        data.put("totalPages", totalPages);
+        data.put("pageTotal", totalPages);
+        data.put("pageText", pageNo + "/" + totalPages);
         Path outputPath = buildExcelOutputPath(templatePath, data, payload, format, templateBaseName);
         try {
             byte[] bytes = Files.readAllBytes(templatePath);
@@ -269,6 +284,7 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
             fillByLabel(sheet, "备注", stringValue(data.get("remarks")));
 
             replacePlaceholders(sheet, data);
+            replaceHeaderFooterPlaceholders(sheet, data);
         }
     }
 
@@ -314,6 +330,70 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
         }
     }
 
+    private void replaceHeaderFooterPlaceholders(Sheet sheet, Map<String, Object> data) {
+        if (sheet == null || data == null || data.isEmpty()) return;
+        Header header = sheet.getHeader();
+        if (header != null) {
+            String l = header.getLeft();
+            String c = header.getCenter();
+            String r = header.getRight();
+            String nl = replacePlaceholdersInText(l, data);
+            String nc = replacePlaceholdersInText(c, data);
+            String nr = replacePlaceholdersInText(r, data);
+            if (!String.valueOf(l).equals(nl)) header.setLeft(nl);
+            if (!String.valueOf(c).equals(nc)) header.setCenter(nc);
+            if (!String.valueOf(r).equals(nr)) header.setRight(nr);
+        }
+
+        Footer footer = sheet.getFooter();
+        if (footer != null) {
+            String l = footer.getLeft();
+            String c = footer.getCenter();
+            String r = footer.getRight();
+            String nl = replacePlaceholdersInText(l, data);
+            String nc = replacePlaceholdersInText(c, data);
+            String nr = replacePlaceholdersInText(r, data);
+            if (!String.valueOf(l).equals(nl)) footer.setLeft(nl);
+            if (!String.valueOf(c).equals(nc)) footer.setCenter(nc);
+            if (!String.valueOf(r).equals(nr)) footer.setRight(nr);
+        }
+    }
+
+    private String replacePlaceholdersInText(String text, Map<String, Object> data) {
+        if (text == null || text.isEmpty()) return text;
+        String replaced = text;
+        for (Map.Entry<String, Object> e : data.entrySet()) {
+            String key = e.getKey();
+            if (key == null || key.isEmpty()) continue;
+            String val = stringValue(e.getValue());
+            replaced = replaced.replace("{{" + key + "}}", val);
+            replaced = replaced.replace("${" + key + "}", val);
+        }
+        if ("第页共页".equals(normalize(replaced))) {
+            int pageNo = parsePositiveInt(firstNonEmpty(stringValue(data.get("pageNo")), stringValue(data.get("pageNum"))));
+            int totalPages = parsePositiveInt(firstNonEmpty(stringValue(data.get("totalPages")), stringValue(data.get("pageTotal"))));
+            if (pageNo > 0 && totalPages > 0) {
+                replaced = "第 " + pageNo + " 页，共 " + totalPages + " 页";
+            }
+        }
+        return replaced;
+    }
+
+    private int parsePositiveInt(String s) {
+        if (s == null) return 0;
+        try {
+            int v = (int) Double.parseDouble(s.trim());
+            return v > 0 ? v : 0;
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
+    private String firstNonEmpty(String a, String b) {
+        if (a != null && !a.trim().isEmpty()) return a;
+        return b;
+    }
+
     private void setCellString(Sheet sheet, Row row, int col, String value) {
         if (row == null) return;
         int[] anchor = mergedRegionAnchor(sheet, row.getRowNum(), col);
@@ -321,7 +401,6 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
         if (anchorRow == null) anchorRow = sheet.createRow(anchor[0]);
         Cell targetCell = anchorRow.getCell(anchor[1]);
         if (targetCell == null) targetCell = anchorRow.createCell(anchor[1], CellType.STRING);
-        targetCell.setCellType(CellType.STRING);
         targetCell.setCellValue(value == null ? "" : value);
     }
 
@@ -380,6 +459,13 @@ public class WaterReplacementServiceImpl implements WaterReplacementService {
         if (text == null || text.isEmpty()) return;
 
         String replaced = text;
+        if ("第页共页".equals(normalize(replaced))) {
+            int pageNo = parsePositiveInt(firstNonEmpty(stringValue(data.get("pageNo")), stringValue(data.get("pageNum"))));
+            int totalPages = parsePositiveInt(firstNonEmpty(stringValue(data.get("totalPages")), stringValue(data.get("pageTotal"))));
+            if (pageNo <= 0) pageNo = 1;
+            if (totalPages <= 0) totalPages = 1;
+            replaced = "第 " + pageNo + " 页，共 " + totalPages + " 页";
+        }
         for (Map.Entry<String, Object> e : data.entrySet()) {
             String key = e.getKey();
             if (key == null || key.isEmpty()) continue;

@@ -49,7 +49,7 @@
               </div>
               <!-- 普通菜单项 -->
               <div v-else @click="navigateTo(item)" :class="['sidebar-nav-item', { active: activeMenuId === item.id }]">
-                <i class="icon fa-solid" :class="item.id === 'Dashboard' ? 'fa-gauge-high' : 'fa-table'"></i>
+                <i class="icon fa-solid" :class="item.id === 'Dashboard' ? 'fa-gauge-high' : (item.id === 'TemplateImport' ? 'fa-upload' : 'fa-table')"></i>
                 <span>{{ item.name }}</span>
               </div>
             </div>
@@ -80,6 +80,39 @@
         </div>
       </main>
     </div>
+
+    <div v-if="showTemplateImportModal" class="template-modal-overlay" @click="closeTemplateImportModal" @dragover.prevent @drop.prevent="handleTemplateDrop">
+      <div class="template-modal-content" @click.stop>
+        <div class="template-modal-header">
+          <h3>导入模板</h3>
+          <button class="template-close-btn" @click="closeTemplateImportModal">×</button>
+        </div>
+        <div class="template-modal-body">
+          <div class="template-dropzone" @dragover.prevent @drop.prevent="handleTemplateDrop">
+            <div class="template-dropzone-title">拖拽模板文件到这里</div>
+            <div class="template-dropzone-sub">支持 xls / xlsx / docx，也可以点击选择文件</div>
+            <input ref="templateFileInput" class="template-file-input" type="file" multiple accept=".xls,.xlsx,.docx" @change="handleTemplateFileChange" />
+            <button class="btn template-pick-btn" @click="triggerTemplatePick">选择文件</button>
+          </div>
+
+          <div v-if="templateSelectedFiles.length" class="template-file-list">
+            <div class="template-file-item" v-for="f in templateSelectedFiles" :key="f.name + '_' + f.size">
+              <div class="template-file-name">{{ f.name }}</div>
+              <button class="template-remove-btn" :disabled="templateUploading" @click="removeTemplateFile(f)">移除</button>
+            </div>
+          </div>
+
+          <div class="template-actions">
+            <button class="btn btn-secondary" :disabled="templateUploading" @click="closeTemplateImportModal">取消</button>
+            <button class="btn" :disabled="templateUploading || !templateSelectedFiles.length" @click="uploadTemplates">
+              {{ templateUploading ? '导入中...' : '导入到 /表' }}
+            </button>
+          </div>
+
+          <div v-if="templateImportMessage" class="template-message">{{ templateImportMessage }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -108,6 +141,7 @@ import GenericReportList from './components/GenericReportList.vue'
 import UserManagement from './components/UserManagement.vue'
 import PendingTasks from './components/PendingTasks.vue'
 import Dashboard from './components/Dashboard.vue'
+import axios from 'axios'
 
 const currentView = ref('')
 const activeMenuId = ref('')
@@ -147,6 +181,10 @@ const menuItems = {
       id: 'Dashboard',
       name: '仪表盘',
       component: 'Dashboard'
+    },
+    {
+      id: 'TemplateImport',
+      name: '导入模板'
     },
     {
       id: 'TaskManagement',
@@ -198,6 +236,12 @@ const menuItems = {
               name: '相对密度试验记录表（灌水法）',
               component: 'GenericTestList', 
               props: { title: '相对密度试验记录（灌水法）', category: '灌水法', formComponent: 'WaterReplacementRecord', dataType: 'record' }
+            },
+            {
+              id: 'DensityTestRecordList',
+              name: '原位密度检测记录表（密度试验）',
+              component: 'GenericTestList',
+              props: { title: '原位密度检测记录（密度试验）', category: '密度试验', formComponent: 'DensityTestReport', dataType: 'record' }
             },
             { id: 'CuttingRingRecordList', name: '原位密度检测记录表（环刀法）', component: 'GenericTestList', props: { title: '原位密度检测记录（环刀法）', category: '环刀法', formComponent: 'CuttingRingRecord', dataType: 'record' }},
             { 
@@ -268,6 +312,98 @@ const findMenuItem = (menus, targetId) => {
   return null
 }
 
+const showTemplateImportModal = ref(false)
+const templateFileInput = ref(null)
+const templateSelectedFiles = ref([])
+const templateUploading = ref(false)
+const templateImportMessage = ref('')
+const previousMenuState = ref({ activeMenuId: '', currentPageTitle: '' })
+
+const openTemplateImportModal = () => {
+  previousMenuState.value = { activeMenuId: activeMenuId.value, currentPageTitle: currentPageTitle.value }
+  activeMenuId.value = 'TemplateImport'
+  currentPageTitle.value = '导入模板'
+  templateImportMessage.value = ''
+  templateSelectedFiles.value = []
+  showTemplateImportModal.value = true
+}
+
+const closeTemplateImportModal = () => {
+  showTemplateImportModal.value = false
+  templateUploading.value = false
+  templateImportMessage.value = ''
+  templateSelectedFiles.value = []
+  if (previousMenuState.value) {
+    activeMenuId.value = previousMenuState.value.activeMenuId
+    currentPageTitle.value = previousMenuState.value.currentPageTitle
+  }
+}
+
+const triggerTemplatePick = () => {
+  if (!templateFileInput.value) return
+  templateFileInput.value.value = null
+  templateFileInput.value.click()
+}
+
+const isAllowedTemplateFile = (file) => {
+  const name = String(file?.name || '').toLowerCase()
+  return name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.docx')
+}
+
+const addTemplateFiles = (files) => {
+  const list = Array.from(files || []).filter(Boolean).filter(isAllowedTemplateFile)
+  if (!list.length) {
+    templateImportMessage.value = '请选择 xls / xlsx / docx 模板文件'
+    return
+  }
+  const existingKey = new Set(templateSelectedFiles.value.map(f => `${f.name}__${f.size}__${f.lastModified}`))
+  const merged = [...templateSelectedFiles.value]
+  list.forEach(f => {
+    const key = `${f.name}__${f.size}__${f.lastModified}`
+    if (!existingKey.has(key)) merged.push(f)
+  })
+  templateSelectedFiles.value = merged
+  templateImportMessage.value = ''
+}
+
+const handleTemplateFileChange = (e) => {
+  addTemplateFiles(e?.target?.files || [])
+}
+
+const handleTemplateDrop = (e) => {
+  addTemplateFiles(e?.dataTransfer?.files || [])
+}
+
+const removeTemplateFile = (file) => {
+  templateSelectedFiles.value = templateSelectedFiles.value.filter(f => !(f.name === file.name && f.size === file.size && f.lastModified === file.lastModified))
+}
+
+const uploadTemplates = async () => {
+  if (templateUploading.value) return
+  if (!templateSelectedFiles.value.length) return
+  try {
+    templateUploading.value = true
+    templateImportMessage.value = ''
+    const form = new FormData()
+    templateSelectedFiles.value.forEach(f => form.append('files', f))
+    const res = await axios.post('/api/template/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    if (res.data && res.data.success) {
+      const files = Array.isArray(res.data.files) ? res.data.files : []
+      const dir = res.data.dir ? `\n目录：${res.data.dir}` : ''
+      templateImportMessage.value = `导入成功：${files.join('，')}${dir}`
+      templateSelectedFiles.value = []
+    } else {
+      templateImportMessage.value = (res.data && res.data.message) ? res.data.message : '导入失败'
+    }
+  } catch (e) {
+    templateImportMessage.value = e && e.message ? e.message : '导入失败'
+  } finally {
+    templateUploading.value = false
+  }
+}
+
 // 导航逻辑
 const navigateTo = (target, props = {}) => {
   if (typeof target === 'string') {
@@ -299,6 +435,10 @@ const navigateTo = (target, props = {}) => {
     
     if (title) currentPageTitle.value = title
   } else {
+    if (target.id === 'TemplateImport') {
+      openTemplateImportModal()
+      return
+    }
     // target is object {id, name, ...}
     activeMenuId.value = target.id
     currentPageTitle.value = target.name
@@ -723,6 +863,126 @@ border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
 background: #a8a8a8;
+}
+
+.template-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.template-modal-content {
+  width: min(720px, calc(100vw - 32px));
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.template-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.template-modal-header h3 {
+  font-size: 16px;
+  color: var(--text-normal);
+}
+
+.template-close-btn {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-light);
+  line-height: 1;
+}
+
+.template-modal-body {
+  padding: 16px;
+}
+
+.template-dropzone {
+  border: 2px dashed #b7d8ff;
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  background: #f7fbff;
+}
+
+.template-dropzone-title {
+  font-size: 15px;
+  color: var(--text-normal);
+  font-weight: 500;
+}
+
+.template-dropzone-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.template-file-input {
+  display: none;
+}
+
+.template-pick-btn {
+  margin-top: 12px;
+}
+
+.template-file-list {
+  margin-top: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.template-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.template-file-item:first-child {
+  border-top: none;
+}
+
+.template-file-name {
+  font-size: 13px;
+  color: var(--text-normal);
+  word-break: break-all;
+}
+
+.template-remove-btn {
+  border: 1px solid var(--border-color);
+  background: #fff;
+  color: var(--text-light);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.template-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.template-message {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-normal);
+  white-space: pre-wrap;
 }
 
 @media print {

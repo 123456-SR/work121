@@ -738,7 +738,20 @@ const loadData = async () => {
                     for (let i = 7; i < 20; i++) {
                       const rowData = {}
                       rowFields.forEach(field => {
-                        const val = nParsed[field + '_' + i]
+                        if (field === 'date') {
+                          const val = nParsed['date_' + i] ?? nParsed.testDate ?? nParsed.test_date
+                          if (val !== undefined) rowData[field] = val
+                          return
+                        }
+                        if (field === 'avgDryDensity') {
+                          const val = nParsed['avgDryDensity_' + i]
+                          const fallback = nParsed['dryDensity_' + i]
+                          const picked = val !== undefined ? val : fallback
+                          if (picked !== undefined) rowData[field] = picked
+                          return
+                        }
+                        const key = field + '_' + i
+                        const val = nParsed[key]
                         if (val !== undefined) rowData[field] = val
                       })
                       allRowData.push(rowData)
@@ -747,7 +760,20 @@ const loadData = async () => {
                     for (let i = 0; i < 20; i++) {
                       const rowData = {}
                       rowFields.forEach(field => {
-                        const val = nParsed[field + '_' + i]
+                        if (field === 'date') {
+                          const val = nParsed['date_' + i] ?? nParsed.testDate ?? nParsed.test_date
+                          if (val !== undefined) rowData[field] = val
+                          return
+                        }
+                        if (field === 'avgDryDensity') {
+                          const val = nParsed['avgDryDensity_' + i]
+                          const fallback = nParsed['dryDensity_' + i]
+                          const picked = val !== undefined ? val : fallback
+                          if (picked !== undefined) rowData[field] = picked
+                          return
+                        }
+                        const key = field + '_' + i
+                        const val = nParsed[key]
                         if (val !== undefined) rowData[field] = val
                       })
                       allRowData.push(rowData)
@@ -892,7 +918,20 @@ const loadData = async () => {
                     for (let i = 7; i < 20; i++) {
                       const rowData = {}
                       rowFields.forEach(field => {
-                        const val = nParsed[field + '_' + i]
+                        if (field === 'date') {
+                          const val = nParsed['date_' + i] ?? nParsed.testDate ?? nParsed.test_date
+                          if (val !== undefined) rowData[field] = val
+                          return
+                        }
+                        if (field === 'avgDryDensity') {
+                          const val = nParsed['avgDryDensity_' + i]
+                          const fallback = nParsed['dryDensity_' + i]
+                          const picked = val !== undefined ? val : fallback
+                          if (picked !== undefined) rowData[field] = picked
+                          return
+                        }
+                        const key = field + '_' + i
+                        const val = nParsed[key]
                         if (val !== undefined) rowData[field] = val
                       })
                       allRowData.push(rowData)
@@ -901,7 +940,20 @@ const loadData = async () => {
                     for (let i = 0; i < 20; i++) {
                       const rowData = {}
                       rowFields.forEach(field => {
-                        const val = nParsed[field + '_' + i]
+                        if (field === 'date') {
+                          const val = nParsed['date_' + i] ?? nParsed.testDate ?? nParsed.test_date
+                          if (val !== undefined) rowData[field] = val
+                          return
+                        }
+                        if (field === 'avgDryDensity') {
+                          const val = nParsed['avgDryDensity_' + i]
+                          const fallback = nParsed['dryDensity_' + i]
+                          const picked = val !== undefined ? val : fallback
+                          if (picked !== undefined) rowData[field] = picked
+                          return
+                        }
+                        const key = field + '_' + i
+                        const val = nParsed[key]
                         if (val !== undefined) rowData[field] = val
                       })
                       allRowData.push(rowData)
@@ -985,8 +1037,8 @@ const getStatusText = (status) => {
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '审核通过待批准'
-    case 5: return '审核通过待批准'
+    case 4: return '待批准'
+    case 5: return '待批准'
     case 6: return '已批准'
     case 7: return '驳回'
     // 报告表状态 (10-17)
@@ -994,8 +1046,8 @@ const getStatusText = (status) => {
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
-    case 14: return '审核通过待批准'
-    case 15: return '审核通过待批准'
+    case 14: return '待批准'
+    case 15: return '待批准'
     case 16: return '已批准'
     case 17: return '驳回'
     // 结果表状态 (20-27)
@@ -1003,8 +1055,8 @@ const getStatusText = (status) => {
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
-    case 24: return '审核通过待批准'
-    case 25: return '审核通过待批准'
+    case 24: return '待批准'
+    case 25: return '待批准'
     case 26: return '已批准'
     case 27: return '驳回'
     default: return '未知'

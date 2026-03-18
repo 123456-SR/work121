@@ -265,6 +265,7 @@ public class DensityTestServiceImpl implements DensityTestService {
             fillPageText(sheet, pageNo, totalPages);
 
             replacePlaceholders(sheet, data);
+            replaceHeaderFooterPlaceholders(sheet, data, pageNo, totalPages);
         }
     }
 
@@ -499,6 +500,52 @@ public class DensityTestServiceImpl implements DensityTestService {
         }
     }
 
+    private void replaceHeaderFooterPlaceholders(Sheet sheet, Map<String, Object> data, int pageNo, int totalPages) {
+        if (sheet == null || data == null || data.isEmpty()) return;
+        if (pageNo <= 0) pageNo = 1;
+        if (totalPages <= 0) totalPages = 1;
+        String pageText = "第 " + pageNo + " 页，共 " + totalPages + " 页";
+
+        Header header = sheet.getHeader();
+        if (header != null) {
+            String l = header.getLeft();
+            String c = header.getCenter();
+            String r = header.getRight();
+            String nl = normalize(replacePlaceholdersInText(l, data)).equals("第页共页") ? pageText : replacePlaceholdersInText(l, data);
+            String nc = normalize(replacePlaceholdersInText(c, data)).equals("第页共页") ? pageText : replacePlaceholdersInText(c, data);
+            String nr = normalize(replacePlaceholdersInText(r, data)).equals("第页共页") ? pageText : replacePlaceholdersInText(r, data);
+            if (!String.valueOf(l).equals(nl)) header.setLeft(nl);
+            if (!String.valueOf(c).equals(nc)) header.setCenter(nc);
+            if (!String.valueOf(r).equals(nr)) header.setRight(nr);
+        }
+
+        Footer footer = sheet.getFooter();
+        if (footer != null) {
+            String l = footer.getLeft();
+            String c = footer.getCenter();
+            String r = footer.getRight();
+            String nl = normalize(replacePlaceholdersInText(l, data)).equals("第页共页") ? pageText : replacePlaceholdersInText(l, data);
+            String nc = normalize(replacePlaceholdersInText(c, data)).equals("第页共页") ? pageText : replacePlaceholdersInText(c, data);
+            String nr = normalize(replacePlaceholdersInText(r, data)).equals("第页共页") ? pageText : replacePlaceholdersInText(r, data);
+            if (!String.valueOf(l).equals(nl)) footer.setLeft(nl);
+            if (!String.valueOf(c).equals(nc)) footer.setCenter(nc);
+            if (!String.valueOf(r).equals(nr)) footer.setRight(nr);
+        }
+    }
+
+    private String replacePlaceholdersInText(String text, Map<String, Object> data) {
+        if (text == null || text.isEmpty()) return text;
+        String replaced = text;
+        for (Map.Entry<String, Object> e : data.entrySet()) {
+            String key = e.getKey();
+            if (key == null || key.isEmpty()) continue;
+            String val = stringValue(e.getValue());
+            replaced = replaced.replace("{{" + key + "}}", val);
+            replaced = replaced.replace("${" + key + "}", val);
+        }
+        return replaced;
+    }
+
     private void setCellString(Sheet sheet, Row row, int col, String value) {
         if (sheet == null || row == null) return;
         int[] anchor = mergedRegionAnchor(sheet, row.getRowNum(), col);
@@ -506,7 +553,6 @@ public class DensityTestServiceImpl implements DensityTestService {
         if (anchorRow == null) anchorRow = sheet.createRow(anchor[0]);
         Cell targetCell = anchorRow.getCell(anchor[1]);
         if (targetCell == null) targetCell = anchorRow.createCell(anchor[1], CellType.STRING);
-        targetCell.setCellType(CellType.STRING);
         targetCell.setCellValue(value == null ? "" : value);
     }
 
@@ -564,6 +610,15 @@ public class DensityTestServiceImpl implements DensityTestService {
         if (text == null || text.isEmpty()) return;
 
         String replaced = text;
+        if ("第页共页".equals(normalize(replaced))) {
+            int pageNo = 1;
+            int totalPages = 1;
+            try { pageNo = (int) Double.parseDouble(firstNonEmpty(stringValue(data.get("pageNo")), stringValue(data.get("pageNum")))); } catch (Exception ignored) {}
+            try { totalPages = (int) Double.parseDouble(firstNonEmpty(stringValue(data.get("totalPages")), stringValue(data.get("pageTotal")))); } catch (Exception ignored) {}
+            if (pageNo <= 0) pageNo = 1;
+            if (totalPages <= 0) totalPages = 1;
+            replaced = "第 " + pageNo + " 页，共 " + totalPages + " 页";
+        }
         for (Map.Entry<String, Object> e : data.entrySet()) {
             String key = e.getKey();
             if (key == null || key.isEmpty()) continue;

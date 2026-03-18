@@ -153,13 +153,13 @@ public class PendingTasksController {
             return "1";
         }
         String v = taskStatus.trim();
-        if ("0".equals(v) || "1".equals(v) || "5".equals(v)) {
+        if ("0".equals(v) || "1".equals(v) || "4".equals(v) || "5".equals(v)) {
             return v;
         }
-        // 兼容：submit=待提交(0)，audit=待审核(1)，approval=审核通过(5)
+        // 兼容：submit=待提交(0)，audit=待审核(1)，approval=待批准(4)
         if ("submit".equalsIgnoreCase(v)) return "0";
         if ("audit".equalsIgnoreCase(v)) return "1";
-        if ("approval".equalsIgnoreCase(v)) return "5";
+        if ("approval".equalsIgnoreCase(v)) return "4";
         return "1";
     }
 }

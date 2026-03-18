@@ -559,15 +559,15 @@ const getStatusText = (status) => {
         case 11: return '已提交待审核'
         case 12: return '已打回'
         case 13: return '待签字'
-        case 14: return '审核通过待批准'
-        case 15: return '审核通过待批准'
+        case 14: return '待批准'
+        case 15: return '待批准'
         // 结果表状态 (20-25)
         case 20: return '草稿'
         case 21: return '已提交待审核'
         case 22: return '已打回'
         case 23: return '待签字'
-        case 24: return '审核通过待批准'
-        case 25: return '审核通过待批准'
+        case 24: return '待批准'
+        case 25: return '待批准'
         default: return '未知'
     }
 }

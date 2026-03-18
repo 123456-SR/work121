@@ -55,6 +55,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     private static final String STATUS_PENDING_AUDIT = "1";
     private static final String STATUS_RETURNED = "2";
     private static final String STATUS_PENDING_SIGN = "3";
+    private static final String STATUS_PENDING_APPROVAL = "4";
     private static final String STATUS_APPROVED = "5";
 
     @Override
@@ -858,6 +859,9 @@ public class WorkflowServiceImpl implements WorkflowService {
                     if ("SUBMIT".equals(action) && directory.getWtReviewer() != null && !directory.getWtReviewer().trim().isEmpty()) {
                         return directory.getWtReviewer();
                     }
+                    if (STATUS_PENDING_APPROVAL.equals(toStatus) && directory.getBgApprover() != null && !directory.getBgApprover().trim().isEmpty()) {
+                        return directory.getBgApprover();
+                    }
                     if ("REJECT".equals(action) && directory.getWtUndertaker() != null && !directory.getWtUndertaker().trim().isEmpty()) {
                         return directory.getWtUndertaker();
                     }
@@ -871,6 +875,11 @@ public class WorkflowServiceImpl implements WorkflowService {
             if (be.getRecordReviewer() != null && !be.getRecordReviewer().trim().isEmpty()) return be.getRecordReviewer();
             if (be.getReviewer() != null && !be.getReviewer().trim().isEmpty()) return be.getReviewer();
             if (be.getWtReviewer() != null && !be.getWtReviewer().trim().isEmpty()) return be.getWtReviewer();
+        }
+
+        if (STATUS_PENDING_APPROVAL.equals(toStatus) && entity instanceof BusinessEntity) {
+            BusinessEntity be = (BusinessEntity) entity;
+            if (be.getApprover() != null && !be.getApprover().trim().isEmpty()) return be.getApprover();
         }
 
         if ("REJECT".equals(action) && STATUS_RETURNED.equals(toStatus) && entity instanceof BusinessEntity) {
@@ -955,11 +964,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 break;
             
             case "AUDIT_PASS": // 审核通过 -> 待批准（记录表）；委托单直接完成
-                if (entity instanceof JcCoreWtInfo) {
-                    entity.setStatus(STATUS_APPROVED);
-                } else {
-                    entity.setStatus(STATUS_APPROVED);
-                }
+                entity.setStatus(STATUS_PENDING_APPROVAL);
                 entity.setReviewer(reviewerToUse); // 对于委托单，使用配置的 wtReviewer
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature); // Report Reviewer Sign
@@ -968,15 +973,11 @@ public class WorkflowServiceImpl implements WorkflowService {
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
                     entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
-                entity.setNextHandler(entity instanceof JcCoreWtInfo ? null : nextHandler);
+                entity.setNextHandler(nextHandler);
                 break;
 
             case "SIGN_REVIEW": // Deprecated or mapped to APPROVED
-                if (entity instanceof JcCoreWtInfo) {
-                    entity.setStatus(STATUS_APPROVED);
-                } else {
-                    entity.setStatus(STATUS_APPROVED);
-                }
+                entity.setStatus(STATUS_PENDING_APPROVAL);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
                     entity.setRecordReviewSign(signature); // Record Reviewer Sign
@@ -985,7 +986,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 if (entity.getRecordReviewer() == null || entity.getRecordReviewer().isEmpty()) {
                     entity.setRecordReviewer(user); // RecordReviewer 仍使用当前操作人
                 }
-                entity.setNextHandler(entity instanceof JcCoreWtInfo ? null : nextHandler);
+                entity.setNextHandler(nextHandler);
                 break;
 
             case "SIGN_APPROVE": // 批准 -> 完成
@@ -1005,7 +1006,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 
             // Backward compatibility for old "SIGN" action if needed
             case "SIGN": 
-                entity.setStatus(STATUS_APPROVED);
+                entity.setStatus(STATUS_PENDING_APPROVAL);
                 if (signature != null) {
                     entity.setReviewSignaturePhoto(signature);
                     entity.setRecordReviewSign(signature); // Record Reviewer Sign

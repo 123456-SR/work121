@@ -486,6 +486,11 @@ const formatDate = (d) => {
     return `${year}-${month}-${day}`
 }
 
+const pickReportStatus = (data, fallback = 0) => {
+  const v = data?.status ?? data?.reportStatus ?? data?.report_status ?? data?.REPORT_STATUS ?? data?.STATUS
+  return (v === null || v === undefined || v === '') ? fallback : v
+}
+
 // 根据检测方法自动判断是否为“核子法”
 const isNuclearMethod = computed(() => {
   const method = (formData.testMethod || formData.testCategory || '').toString()
@@ -506,8 +511,8 @@ const getStatusText = (status) => {
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
-    case 4: return '审核通过待批准'
-    case 5: return '审核通过待批准'
+    case 4: return '待批准'
+    case 5: return '待批准'
     case 6: return '已批准'
     case 7: return '驳回'
     // 报告表状态 (10-17)
@@ -515,8 +520,8 @@ const getStatusText = (status) => {
     case 11: return '已提交待审核'
     case 12: return '已打回'
     case 13: return '待签字'
-    case 14: return '审核通过待批准'
-    case 15: return '审核通过待批准'
+    case 14: return '待批准'
+    case 15: return '待批准'
     case 16: return '已批准'
     case 17: return '驳回'
     // 结果表状态 (20-27)
@@ -524,8 +529,8 @@ const getStatusText = (status) => {
     case 21: return '已提交待审核'
     case 22: return '已打回'
     case 23: return '待签字'
-    case 24: return '审核通过待批准'
-    case 25: return '审核通过待批准'
+    case 24: return '待批准'
+    case 25: return '待批准'
     case 26: return '已批准'
     case 27: return '驳回'
     default: return '未知'
@@ -1154,7 +1159,20 @@ const fetchResultPages = async (unifiedNumber) => {
           for (let i = 7; i < 20; i++) {
             const rowData = {}
             rowFields.forEach(field => {
-              const v = nParsed[field + '_' + i]
+              if (field === 'date') {
+                const v = nParsed['date_' + i] ?? nParsed.testDate ?? nParsed.test_date
+                if (v !== undefined) rowData[field] = v
+                return
+              }
+              if (field === 'avgDryDensity') {
+                const v = nParsed['avgDryDensity_' + i]
+                const fallback = nParsed['dryDensity_' + i]
+                const picked = v !== undefined ? v : fallback
+                if (picked !== undefined) rowData[field] = picked
+                return
+              }
+              const k = field + '_' + i
+              const v = nParsed[k]
               if (v !== undefined) rowData[field] = v
             })
             allRowData.push(rowData)
@@ -1163,7 +1181,20 @@ const fetchResultPages = async (unifiedNumber) => {
           for (let i = 0; i < 20; i++) {
             const rowData = {}
             rowFields.forEach(field => {
-              const v = nParsed[field + '_' + i]
+              if (field === 'date') {
+                const v = nParsed['date_' + i] ?? nParsed.testDate ?? nParsed.test_date
+                if (v !== undefined) rowData[field] = v
+                return
+              }
+              if (field === 'avgDryDensity') {
+                const v = nParsed['avgDryDensity_' + i]
+                const fallback = nParsed['dryDensity_' + i]
+                const picked = v !== undefined ? v : fallback
+                if (picked !== undefined) rowData[field] = picked
+                return
+              }
+              const k = field + '_' + i
+              const v = nParsed[k]
               if (v !== undefined) rowData[field] = v
             })
             allRowData.push(rowData)
@@ -1448,7 +1479,7 @@ const fetchResultPages = async (unifiedNumber) => {
           }
         }
         formData.id = data.id
-        formData.status = data.status !== undefined ? data.status : 0
+        formData.status = pickReportStatus(data, 0)
         formData.entrustmentId = data.entrustmentId
         formData.reviewerSignature = normalizeSignatureSrc(data.reviewSignaturePhoto || '')
         formData.testerSignature = normalizeSignatureSrc(data.inspectSignaturePhoto || '')
@@ -1529,6 +1560,11 @@ const fetchResultPages = async (unifiedNumber) => {
                   for (let i = 0; i < 7; i++) {
                     rowFields.forEach(field => {
                       const k = field + '_' + i
+                      if (field === 'date' && !isFilled(formData[k])) {
+                        const v = firstParsed[k] ?? firstParsed.testDate ?? firstParsed.test_date
+                        if (isFilled(v)) formData[k] = v
+                        return
+                      }
                       if (!isFilled(formData[k]) && isFilled(firstParsed[k])) {
                         formData[k] = firstParsed[k]
                       }

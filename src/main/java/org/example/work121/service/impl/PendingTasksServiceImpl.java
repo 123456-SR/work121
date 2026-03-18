@@ -164,12 +164,12 @@ public class PendingTasksServiceImpl implements PendingTasksService {
     @Transactional
     public boolean approveTask(String taskType, String taskId, String userAccount, String jcTester, String jcReviewer, String bgApprover) {
         try {
-            String approveSignPhoto = null;
+            String signaturePhoto = null;
             
             if (userAccount != null && !userAccount.isEmpty()) {
                 JzsSignature signature = jzsSignatureService.getSignatureByUserAccount(userAccount);
                 if (signature != null && signature.getSignatureBlob() != null) {
-                    approveSignPhoto = Base64.getEncoder().encodeToString(signature.getSignatureBlob());
+                    signaturePhoto = Base64.getEncoder().encodeToString(signature.getSignatureBlob());
                 }
             }
             
@@ -177,7 +177,7 @@ public class PendingTasksServiceImpl implements PendingTasksService {
             String unifiedNumber = null;
             
             switch (taskType) {
-                case "委托单":
+                case "委托单": {
                     JcCoreWtInfo entrustmentBefore = jcCoreWtInfoMapper.selectById(taskId);
                     if (entrustmentBefore == null) {
                         entrustmentBefore = jcCoreWtInfoMapper.selectExtById(taskId);
@@ -190,11 +190,18 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         throw new RuntimeException("委托单统一编号为空，无法分配角色/创建记录表");
                     }
 
+                    String currentStatus = entrustmentBefore.getStatus() == null ? null : String.valueOf(entrustmentBefore.getStatus()).trim();
+                    String nextStatus = decideNextStatus(currentStatus);
+                    boolean isAuditPass = "4".equals(nextStatus);
+                    boolean isApprove = "5".equals(nextStatus) && "4".equals(currentStatus);
+
                     String jt = jcTester == null ? "" : jcTester.trim();
                     String jr = jcReviewer == null ? "" : jcReviewer.trim();
                     String ba = bgApprover == null ? "" : bgApprover.trim();
-                    if (jt.isEmpty() || jr.isEmpty() || ba.isEmpty()) {
-                        throw new RuntimeException("委托单审核通过前必须指定：记录表检测人、记录表审核人、报告/结果批准人");
+                    if (isAuditPass) {
+                        if (jt.isEmpty() || jr.isEmpty() || ba.isEmpty()) {
+                            throw new RuntimeException("委托单审核通过前必须指定：记录表检测人、记录表审核人、报告/结果批准人");
+                        }
                     }
 
                     SimpleDirectory directoryForRoles = simpleDirectoryService.getDirectoryByDirName(unifiedNumber);
@@ -206,25 +213,49 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         directoryForRoles.setCreateBy((userAccount != null && !userAccount.trim().isEmpty()) ? userAccount.trim() : "admin");
                         directoryForRoles.setCreateTime(new java.util.Date());
                     }
-                    directoryForRoles.setJcTester(jt);
-                    directoryForRoles.setJcReviewer(jr);
-                    directoryForRoles.setBgApprover(ba);
-                    directoryForRoles.setUpdateBy((userAccount != null && !userAccount.trim().isEmpty()) ? userAccount.trim() : directoryForRoles.getCreateBy());
-                    directoryForRoles.setUpdateTime(new java.util.Date());
-                    simpleDirectoryService.saveDirectory(directoryForRoles);
+                    if (isAuditPass) {
+                        directoryForRoles.setJcTester(jt);
+                        directoryForRoles.setJcReviewer(jr);
+                        directoryForRoles.setBgApprover(ba);
+                        directoryForRoles.setUpdateBy((userAccount != null && !userAccount.trim().isEmpty()) ? userAccount.trim() : directoryForRoles.getCreateBy());
+                        directoryForRoles.setUpdateTime(new java.util.Date());
+                        simpleDirectoryService.saveDirectory(directoryForRoles);
+                    }
 
                     boolean alreadyApproved = entrustmentBefore.getStatus() != null
                             && "5".equals(String.valueOf(entrustmentBefore.getStatus()).trim());
                     boolean success;
-                    if (approveSignPhoto != null) {
-                        success = jcCoreWtInfoMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0 || alreadyApproved;
+                    if (alreadyApproved) {
+                        success = true;
                     } else {
-                        success = jcCoreWtInfoMapper.updateStatusById(taskId, "5") > 0 || alreadyApproved;
+                        if (isAuditPass) {
+                            if (signaturePhoto != null) {
+                                success = jcCoreWtInfoMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                success = jcCoreWtInfoMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
+                        } else if (isApprove) {
+                            if (signaturePhoto != null) {
+                                success = jcCoreWtInfoMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                success = jcCoreWtInfoMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
+                        } else {
+                            if (signaturePhoto != null) {
+                                success = jcCoreWtInfoMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                success = jcCoreWtInfoMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
+                        }
                     }
-                    jcCoreWtInfoMapper.updateApproverById(taskId, ba, directoryForRoles.getUpdateBy(), directoryForRoles.getUpdateTime());
+                    if (isAuditPass) {
+                        jcCoreWtInfoMapper.updateApproverById(taskId, ba, directoryForRoles.getUpdateBy(), directoryForRoles.getUpdateTime());
+                    } else if (isApprove && ba != null && !ba.trim().isEmpty()) {
+                        jcCoreWtInfoMapper.updateApproverById(taskId, ba.trim(), userAccount, new java.util.Date());
+                    }
                     
                     // 委托单审核通过时，自动创建记录表
-                    if (success) {
+                    if (success && isAuditPass) {
                         try {
                             // 获取委托单信息
                             JcCoreWtInfo entrustment = jcCoreWtInfoMapper.selectById(taskId);
@@ -315,15 +346,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                     }
                     result = success;
                     break;
-                case "贝克曼梁":
+                }
+                case "贝克曼梁": {
                     org.example.work121.entity.BeckmanBeam beckmanBeam = beckmanBeamMapper.selectById(taskId);
                     if (beckmanBeam != null) {
                         unifiedNumber = beckmanBeam.getEntrustmentId();
                         String nextStatus = decideNextStatus(beckmanBeam.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = beckmanBeamMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = beckmanBeamMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = beckmanBeamMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = beckmanBeamMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = beckmanBeamMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = beckmanBeamMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = beckmanBeam.getInspectSignaturePhoto();
@@ -332,15 +372,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "轻型动力触探":
+                }
+                case "轻型动力触探": {
                     org.example.work121.entity.LightDynamicPenetration lightDynamicPenetration = lightDynamicPenetrationMapper.selectById(taskId);
                     if (lightDynamicPenetration != null) {
                         unifiedNumber = lightDynamicPenetration.getEntrustmentId();
                         String nextStatus = decideNextStatus(lightDynamicPenetration.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = lightDynamicPenetrationMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = lightDynamicPenetrationMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = lightDynamicPenetrationMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = lightDynamicPenetrationMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = lightDynamicPenetrationMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = lightDynamicPenetrationMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = lightDynamicPenetration.getInspectSignaturePhoto();
@@ -349,15 +398,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "回弹法":
+                }
+                case "回弹法": {
                     org.example.work121.entity.ReboundMethod reboundMethod = reboundMethodMapper.selectById(taskId);
                     if (reboundMethod != null) {
                         unifiedNumber = reboundMethod.getEntrustmentId();
                         String nextStatus = decideNextStatus(reboundMethod.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = reboundMethodMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = reboundMethodMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = reboundMethodMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = reboundMethodMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = reboundMethodMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = reboundMethodMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = reboundMethod.getInspectSignaturePhoto();
@@ -366,15 +424,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "环刀法":
+                }
+                case "环刀法": {
                     org.example.work121.entity.CuttingRing cuttingRing = cuttingRingMapper.selectById(taskId);
                     if (cuttingRing != null) {
                         unifiedNumber = cuttingRing.getEntrustmentId();
                         String nextStatus = decideNextStatus(cuttingRing.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = cuttingRingMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = cuttingRingMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = cuttingRingMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = cuttingRingMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = cuttingRingMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = cuttingRingMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = cuttingRing.getInspectSignaturePhoto();
@@ -383,15 +450,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "灌水法":
+                }
+                case "灌水法": {
                     org.example.work121.entity.WaterReplacement waterReplacement = waterReplacementMapper.selectById(taskId);
                     if (waterReplacement != null) {
                         unifiedNumber = waterReplacement.getEntrustmentId();
                         String nextStatus = decideNextStatus(waterReplacement.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = waterReplacementMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = waterReplacementMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = waterReplacementMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = waterReplacementMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = waterReplacementMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = waterReplacementMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = waterReplacement.getInspectSignaturePhoto();
@@ -400,15 +476,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "灌砂法":
+                }
+                case "灌砂法": {
                     org.example.work121.entity.SandReplacement sandReplacement = sandReplacementMapper.selectById(taskId);
                     if (sandReplacement != null) {
                         unifiedNumber = sandReplacement.getEntrustmentId();
                         String nextStatus = decideNextStatus(sandReplacement.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = sandReplacementMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = sandReplacementMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = sandReplacementMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = sandReplacementMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = sandReplacementMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = sandReplacementMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = sandReplacement.getInspectSignaturePhoto();
@@ -417,15 +502,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "核子密度":
+                }
+                case "核子密度": {
                     org.example.work121.entity.NuclearDensity nuclearDensity = nuclearDensityMapper.selectById(taskId);
                     if (nuclearDensity != null) {
                         unifiedNumber = nuclearDensity.getEntrustmentId();
                         String nextStatus = decideNextStatus(nuclearDensity.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = nuclearDensityMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = nuclearDensityMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = nuclearDensityMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = nuclearDensityMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = nuclearDensityMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = nuclearDensityMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = nuclearDensity.getInspectSignaturePhoto();
@@ -434,15 +528,24 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                case "密度试验":
+                }
+                case "密度试验": {
                     org.example.work121.entity.DensityTest densityTest = densityTestMapper.selectById(taskId);
                     if (densityTest != null) {
                         unifiedNumber = densityTest.getEntrustmentId();
                         String nextStatus = decideNextStatus(densityTest.getStatus());
-                        if (approveSignPhoto != null) {
-                            result = densityTestMapper.updateStatusAndApproveSign(taskId, "5", approveSignPhoto) > 0;
+                        if ("4".equals(nextStatus)) {
+                            if (signaturePhoto != null) {
+                                result = densityTestMapper.updateStatusAndReviewSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = densityTestMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         } else {
-                            result = densityTestMapper.updateStatusById(taskId, "5") > 0;
+                            if (signaturePhoto != null) {
+                                result = densityTestMapper.updateStatusAndApproveSign(taskId, nextStatus, signaturePhoto) > 0;
+                            } else {
+                                result = densityTestMapper.updateStatusById(taskId, nextStatus) > 0;
+                            }
                         }
                         if (result && unifiedNumber != null && !unifiedNumber.trim().isEmpty()) {
                             String testerSign = densityTest.getInspectSignaturePhoto();
@@ -451,8 +554,10 @@ public class PendingTasksServiceImpl implements PendingTasksService {
                         }
                     }
                     break;
-                default:
+                }
+                default: {
                     return false;
+                }
             }
 
             return result;
@@ -464,8 +569,9 @@ public class PendingTasksServiceImpl implements PendingTasksService {
 
     private String decideNextStatus(String currentStatus) {
         if (currentStatus == null) return "5";
-        String s = currentStatus.trim();
-        if ("1".equals(s)) return "5";
+        String s = String.valueOf(currentStatus).trim();
+        if ("1".equals(s)) return "4";
+        if ("4".equals(s)) return "5";
         if ("5".equals(s)) return "5";
         return "5";
     }

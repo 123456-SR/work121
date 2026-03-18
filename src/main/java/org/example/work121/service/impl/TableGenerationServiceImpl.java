@@ -778,7 +778,7 @@ public class TableGenerationServiceImpl implements TableGenerationService {
     private boolean isPendingApprovalOrApproved(Object status) {
         if (status == null) return false;
         String s = String.valueOf(status).trim();
-        return "5".equals(s);
+        return "4".equals(s) || "5".equals(s);
     }
 
     private void generateReboundMethodReportAndResult(String entrustmentId) {

@@ -135,6 +135,7 @@ const totalItems = ref(0)
 const navigateTo = inject('navigateTo')
 const selectedTaskType = ref(props.taskType || 'audit')
 const userList = ref([])
+const supportsAllFetch = ref(false)
 const showAssignRolesModal = ref(false)
 const taskToApprove = ref(null)
 const assignRoles = reactive({
@@ -143,18 +144,42 @@ const assignRoles = reactive({
   bgApprover: ''
 })
 
-const getListIdByTableType = (tableType) => {
+const parseStatusNum = (v) => {
+  if (v === null || v === undefined || v === '') return null
+  const n = parseInt(v)
+  return Number.isNaN(n) ? null : n
+}
+
+const normalizeTaskStage = (status) => {
+  const s = parseStatusNum(status)
+  if (s === null) return null
+  if (s === 15 || s === 25) return 4
+  if (s === 5) return 4
+  if (s >= 10) return s % 10
+  return s
+}
+
+const getRawTaskStatus = (it) => {
+  return it?._taskStatus ?? it?.task_status ?? it?.TASK_STATUS ?? it?.status ?? it?.STATUS
+}
+
+const getListIdByTableType = (tableType, rawStatus, taskType = '') => {
   const raw = String(tableType || '').trim()
   const upper = raw.toUpperCase()
+  const statusNum = parseStatusNum(rawStatus)
   if (raw === '委托单' || upper === 'ENTRUSTMENT' || upper === 'ENTRUSTMENT_LIST') return 'EntrustmentList'
-  if (raw === '轻型动力触探' || upper === 'LIGHT_DYNAMIC_PENETRATION') return 'LightDynamicPenetrationRecordList'
+  if (raw === '轻型动力触探' || upper === 'LIGHT_DYNAMIC_PENETRATION') return taskType === 'approval' ? 'LightDynamicPenetrationReportList' : ((statusNum !== null && statusNum >= 10) ? 'LightDynamicPenetrationReportList' : 'LightDynamicPenetrationRecordList')
   if (raw === '核子密度' || raw === '核子法' || upper === 'NUCLEAR_DENSITY') return 'NuclearDensityRecordList'
   if (raw === '灌砂法' || upper === 'SAND_REPLACEMENT') return 'SandReplacementRecordList'
   if (raw === '灌水法' || upper === 'WATER_REPLACEMENT') return 'WaterReplacementRecordList'
   if (raw === '环刀法' || upper === 'CUTTING_RING') return 'CuttingRingRecordList'
-  if (raw === '回弹法' || upper === 'REBOUND_METHOD') return 'ReboundMethodRecordList'
-  if (raw === '贝克曼梁' || upper === 'BECKMAN_BEAM') return 'BeckmanBeamRecordList'
-  if (raw === '密度试验' || upper === 'DENSITY_TEST') return 'DensityTestReportList'
+  if (raw === '回弹法' || upper === 'REBOUND_METHOD') return taskType === 'approval' ? 'ReboundMethodReportList' : ((statusNum !== null && statusNum >= 10) ? 'ReboundMethodReportList' : 'ReboundMethodRecordList')
+  if (raw === '贝克曼梁' || upper === 'BECKMAN_BEAM') return taskType === 'approval' ? 'BeckmanBeamReportList' : ((statusNum !== null && statusNum >= 10) ? 'BeckmanBeamReportList' : 'BeckmanBeamRecordList')
+  if (raw === '密度试验' || upper === 'DENSITY_TEST') return taskType === 'approval' ? 'DensityTestReportList' : ((statusNum !== null && statusNum >= 10) ? 'DensityTestReportList' : 'DensityTestRecordList')
+  if (upper === 'LIGHT_DYNAMIC_PENETRATION_REPORT' || upper === 'LIGHT_DYNAMIC_PENETRATION_RESULT') return 'LightDynamicPenetrationReportList'
+  if (upper === 'REBOUND_METHOD_REPORT' || upper === 'REBOUND_METHOD_RESULT') return 'ReboundMethodReportList'
+  if (upper === 'BECKMAN_BEAM_REPORT' || upper === 'BECKMAN_BEAM_RESULT') return 'BeckmanBeamReportList'
+  if (upper === 'DENSITY_TEST_REPORT' || upper === 'DENSITY_TEST_RESULT') return 'DensityTestReportList'
   return ''
 }
 
@@ -165,7 +190,7 @@ const viewDetails = (task) => {
     alert('统一编号为空，无法查询')
     return
   }
-  const listId = getListIdByTableType(task?.tableType)
+  const listId = getListIdByTableType(task?.tableType, task?.rawStatus, selectedTaskType.value)
   if (!listId) {
     alert('暂不支持查看该任务类型的列表：' + (task?.tableType || '未知类型'))
     return
@@ -173,14 +198,14 @@ const viewDetails = (task) => {
   navigateTo(listId, { presetWtNum: wtNum })
 }
 
-// 将页面类型映射为后端表的状态值：待提交=0，待审核=1，审核通过=5
-const statusParam = computed(() => {
-  if (selectedTaskType.value === 'submit') return '0'
-  if (selectedTaskType.value === 'audit') return '1'
-  if (selectedTaskType.value === 'approval') return '5'
-  // 默认返回待审核状态
-  return '1'
+const statusParams = computed(() => {
+  if (selectedTaskType.value === 'submit') return ['0', '10', '20']
+  if (selectedTaskType.value === 'audit') return ['1', '11', '21']
+  if (selectedTaskType.value === 'approval') return ['4', '5', '14', '15', '24', '25']
+  return ['1']
 })
+
+const statusParam = computed(() => statusParams.value[0])
 
 // 切换任务类型
 const switchTaskType = async () => {
@@ -226,29 +251,30 @@ const totalPages = computed(() => {
 const searchTasks = async () => {
   try {
     currentPage.value = 1 // 重置到第一页
+    if (supportsAllFetch.value) return
     const userAccount = getCurrentUserAccount()
-    const response = await axios.get('/api/pending-tasks/search', {
+    const kw = String(searchQuery.value || '').trim()
+    if (!kw) {
+      await loadTasks()
+      return
+    }
+
+    const requests = statusParams.value.map(s => axios.get('/api/pending-tasks/search', {
       params: {
-        // 兼容后端：常见会要求 taskStatus/taskType；同时附带 keyword/userAccount 以适配“多表查询展示”接口
-        taskStatus: statusParam.value,
+        taskStatus: s,
         taskType: selectedTaskType.value,
-        keyword: searchQuery.value,
+        keyword: kw,
         userAccount: userAccount
       }
+    }))
+    const responses = await Promise.all(requests)
+    const merged = []
+    responses.forEach((r, idx) => {
+      const s = statusParams.value[idx]
+      const list = r?.data?.success ? (r?.data?.data || []) : []
+      merged.push(...list.map(it => ({ ...it, _taskStatus: s })))
     })
-    if (response.data.success) {
-      tasks.value = response.data.data.map(item => ({
-        id: item.data_id || item.DATA_ID || item.dataId || '未知ID',
-        tableType: item.table_type || item.TABLE_TYPE || item.tableType || '未知类型',
-        name: (item.table_type || item.TABLE_TYPE || item.tableType || '未知类型') + (selectedTaskType.value === 'audit' ? '审核任务' : selectedTaskType.value === 'approval' ? '批准任务' : selectedTaskType.value === 'submit' ? '提交任务' : '审核任务'),
-        reviewer: item.reviewer || item.REVIEWER || '',
-        createTime: item.create_time || item.CREATE_TIME || item.createTime || new Date().toLocaleString(),
-        status: selectedTaskType.value === 'audit' ? '待审核' : selectedTaskType.value === 'approval' ? '待批准' : selectedTaskType.value === 'submit' ? '待提交' : '待处理',
-        unifiedNumber: item.unified_number || item.UNIFIED_NUMBER || item.unifiedNumber || '未知编号',
-        clientUnit: item.client_unit || item.CLIENT_UNIT || item.clientUnit || '',
-        projectName: item.project_name || item.PROJECT_NAME || item.projectName || ''
-      }))
-    }
+    tasks.value = mapRawTasksToViewTasks(merged)
   } catch (e) {
     console.error('搜索任务失败', e)
   }
@@ -377,25 +403,34 @@ const loadTasks = async () => {
   try {
     currentPage.value = 1 // 重置到第一页
     const userAccount = getCurrentUserAccount()
-    const response = await axios.get('/api/pending-tasks/get-by-user', {
+
+    try {
+      const res = await axios.get('/api/pending-tasks/get-by-user', { params: { userAccount } })
+      if (res?.data?.success) {
+        const list = Array.isArray(res.data.data) ? res.data.data : (Array.isArray(res.data.data?.list) ? res.data.data.list : (Array.isArray(res.data.data?.records) ? res.data.data.records : []))
+        if (Array.isArray(list) && list.length) {
+          supportsAllFetch.value = true
+          tasks.value = mapRawTasksToViewTasks(list)
+          return
+        }
+      }
+    } catch (e) {
+    }
+
+    const requests = statusParams.value.map(s => axios.get('/api/pending-tasks/get-by-user', {
       params: {
         userAccount: userAccount,
-        taskStatus: statusParam.value
+        taskStatus: s
       }
+    }))
+    const responses = await Promise.all(requests)
+    const merged = []
+    responses.forEach((r, idx) => {
+      const s = statusParams.value[idx]
+      const list = r?.data?.success ? (r?.data?.data || []) : []
+      merged.push(...list.map(it => ({ ...it, _taskStatus: s })))
     })
-    if (response.data.success) {
-      tasks.value = response.data.data.map(item => ({
-        id: item.data_id || item.DATA_ID || item.dataId || '未知ID',
-        tableType: item.table_type || item.TABLE_TYPE || item.tableType || '未知类型',
-        name: (item.table_type || item.TABLE_TYPE || item.tableType || '未知类型') + (selectedTaskType.value === 'audit' ? '审核任务' : selectedTaskType.value === 'approval' ? '批准任务' : selectedTaskType.value === 'submit' ? '提交任务' : '审核任务'),
-        reviewer: item.reviewer || item.REVIEWER || '',
-        createTime: item.create_time || item.CREATE_TIME || item.createTime || new Date().toLocaleString(),
-        status: selectedTaskType.value === 'audit' ? '待审核' : selectedTaskType.value === 'approval' ? '待批准' : selectedTaskType.value === 'submit' ? '待提交' : '待处理',
-        unifiedNumber: item.unified_number || item.UNIFIED_NUMBER || item.unifiedNumber || '未知编号',
-        clientUnit: item.client_unit || item.CLIENT_UNIT || item.clientUnit || '',
-        projectName: item.project_name || item.PROJECT_NAME || item.projectName || ''
-      }))
-    }
+    tasks.value = mapRawTasksToViewTasks(merged)
   } catch (e) {
     console.error('获取任务列表失败', e)
   }
@@ -417,6 +452,106 @@ const isEntrustmentTask = (task) => {
   const raw = String(task?.tableType || '').trim()
   const upper = raw.toUpperCase()
   return raw === '委托单' || upper === 'ENTRUSTMENT' || upper === 'ENTRUSTMENT_LIST'
+}
+
+const mapRawTaskToViewTask = (item) => {
+  const tableType = item.table_type || item.TABLE_TYPE || item.tableType || '未知类型'
+  let displayType = tableType
+  if (selectedTaskType.value === 'approval') {
+    const upper = String(tableType || '').trim().toUpperCase()
+    if (upper.endsWith('_RESULT')) displayType = upper.replace(/_RESULT$/, '_REPORT')
+  }
+  return {
+    id: item.data_id || item.DATA_ID || item.dataId || '未知ID',
+    tableType,
+    name: displayType + (selectedTaskType.value === 'audit' ? '审核任务' : selectedTaskType.value === 'approval' ? '批准任务' : selectedTaskType.value === 'submit' ? '提交任务' : '审核任务'),
+    reviewer: item.reviewer || item.REVIEWER || '',
+    createTime: item.create_time || item.CREATE_TIME || item.createTime || new Date().toLocaleString(),
+    status: selectedTaskType.value === 'audit' ? '待审核' : selectedTaskType.value === 'approval' ? '待批准' : selectedTaskType.value === 'submit' ? '待提交' : '待处理',
+    rawStatus: getRawTaskStatus(item),
+    unifiedNumber: item.unified_number || item.UNIFIED_NUMBER || item.unifiedNumber || '未知编号',
+    clientUnit: item.client_unit || item.CLIENT_UNIT || item.clientUnit || '',
+    projectName: item.project_name || item.PROJECT_NAME || item.projectName || ''
+  }
+}
+
+const isEntrustmentTableType = (tableType) => {
+  const raw = String(tableType || '').trim()
+  const upper = raw.toUpperCase()
+  return raw === '委托单' || upper === 'ENTRUSTMENT' || upper === 'ENTRUSTMENT_LIST'
+}
+
+const isApprovalRelevantTableType = (tableType) => {
+  const raw = String(tableType || '').trim()
+  const upper = raw.toUpperCase()
+  if (!upper) return false
+  if (upper.endsWith('_REPORT') || upper.endsWith('_RESULT')) return true
+  if (upper === 'DENSITY_TEST') return true
+  if (upper === 'LIGHT_DYNAMIC_PENETRATION') return true
+  if (upper === 'REBOUND_METHOD') return true
+  if (upper === 'BECKMAN_BEAM') return true
+  if (raw === '密度试验' || raw === '轻型动力触探' || raw === '回弹法' || raw === '贝克曼梁') return true
+  return false
+}
+
+const normalizeApprovalKeyType = (tableType) => {
+  const raw = String(tableType || '').trim()
+  const upper = raw.toUpperCase()
+  if (upper.endsWith('_RESULT')) return upper.replace(/_RESULT$/, '_REPORT')
+  return upper || raw
+}
+
+const mapRawTasksToViewTasks = (rawList) => {
+  const dedup = new Map()
+  const list = Array.isArray(rawList) ? rawList : []
+  for (const item of list) {
+    const id = item?.data_id || item?.DATA_ID || item?.dataId || ''
+    const tableType = item?.table_type || item?.TABLE_TYPE || item?.tableType || ''
+    const unifiedNumber = item?.unified_number || item?.UNIFIED_NUMBER || item?.unifiedNumber || ''
+    const createTime = item?.create_time || item?.CREATE_TIME || item?.createTime || ''
+    const key = String(id) + '|' + String(tableType) + '|' + String(unifiedNumber) + '|' + String(createTime)
+    if (!dedup.has(key)) dedup.set(key, item)
+  }
+
+  const merged = Array.from(dedup.values())
+    .filter(it => {
+      const stage = normalizeTaskStage(getRawTaskStatus(it))
+      if (selectedTaskType.value === 'submit') return stage === 0
+      if (selectedTaskType.value === 'audit') return stage === 1
+      if (selectedTaskType.value !== 'approval') return true
+      if (stage !== 4) return false
+      const tableType = it?.table_type || it?.TABLE_TYPE || it?.tableType || ''
+      return !isEntrustmentTableType(tableType) && isApprovalRelevantTableType(tableType)
+    })
+
+  if (selectedTaskType.value !== 'approval') {
+    return merged.map(mapRawTaskToViewTask)
+  }
+
+  const priority = (st) => {
+    const v = String(st || '').trim()
+    if (v === '4' || v === '14' || v === '15') return 1
+    if (v === '5') return 2
+    if (v === '24' || v === '25') return 3
+    return 9
+  }
+
+  const byUniq = new Map()
+  for (const it of merged) {
+    const unifiedNumber = it?.unified_number || it?.UNIFIED_NUMBER || it?.unifiedNumber || ''
+    const tableType = it?.table_type || it?.TABLE_TYPE || it?.tableType || ''
+    const key = String(unifiedNumber || '') + '|' + normalizeApprovalKeyType(tableType)
+    const prev = byUniq.get(key)
+    if (!prev) {
+      byUniq.set(key, it)
+      continue
+    }
+    const prevP = priority(getRawTaskStatus(prev))
+    const curP = priority(getRawTaskStatus(it))
+    if (curP < prevP) byUniq.set(key, it)
+  }
+
+  return Array.from(byUniq.values()).map(mapRawTaskToViewTask)
 }
 
 const closeAssignRoles = () => {

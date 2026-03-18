@@ -179,7 +179,26 @@ const formatDate = (dateStr) => {
 
 // 结果列表状态：优先使用 resultStatus 字段（结果表状态），如果不存在则使用 status 字段（委托单状态）
 const getEffectiveStatus = (item) => {
-  return item?.resultStatus || item?.status
+  return item?.resultStatus ?? item?.result_status ?? item?.RESULT_STATUS ?? item?.status
+}
+
+const normalizeStatus = (status) => {
+  if (status === null || status === undefined || status === '') return null
+  const s = parseInt(status)
+  if (Number.isNaN(s)) return null
+  if (s >= 20 && s <= 27) {
+    if (s === 25) return 5
+    if (s === 26) return 6
+    if (s === 27) return 7
+    return s - 20
+  }
+  if (s >= 10 && s <= 17) {
+    if (s === 15) return 5
+    if (s === 16) return 6
+    if (s === 17) return 7
+    return s - 10
+  }
+  return s
 }
 
 watch(() => props.presetWtNum, (val) => {
@@ -196,77 +215,33 @@ watch(searchWtNum, (val, oldVal) => {
 })
 
 const getStatusText = (status) => {
-  if (status === null || status === undefined || status === '') {
-    return '草稿'
-  }
-  const s = parseInt(status)
-  if (isNaN(s)) {
-    return '草稿'
-  }
+  const s = normalizeStatus(status)
+  if (s === null) return '草稿'
   switch (s) {
-    // 记录表状态 (0-5)
     case 0: return '草稿'
     case 1: return '已提交待审核'
     case 2: return '已打回'
     case 3: return '待签字'
     case 4: return '待批准'
-    case 5: return '已批准'
-    // 报告表状态 (10-17)
-    case 10: return '草稿'
-    case 11: return '已提交待审核'
-    case 12: return '已打回'
-    case 13: return '待签字'
-    case 14: return '待批准'
-    case 15: return '待批准'
-    case 16: return '已批准'
-    case 17: return '驳回'
-    // 结果表状态 (20-27)
-    case 20: return '草稿'
-    case 21: return '已提交待审核'
-    case 22: return '已打回'
-    case 23: return '待签字'
-    case 24: return '待批准'
-    case 25: return '待批准'
-    case 26: return '已批准'
-    case 27: return '驳回'
+    case 5: return '待批准'
+    case 6: return '已批准'
+    case 7: return '驳回'
     default: return '未知/历史'
   }
 }
 
 const getStatusClass = (status) => {
-  if (status === null || status === undefined || status === '') {
-    return 'status-draft'
-  }
-  const s = parseInt(status)
-  if (isNaN(s)) {
-    return 'status-draft'
-  }
+  const s = normalizeStatus(status)
+  if (s === null) return 'status-draft'
   switch (s) {
-    // 记录表状态 (0-5)
     case 0: return 'status-draft'
     case 1: return 'status-pending'
     case 2: return 'status-rejected'
     case 3: return 'status-signing'
     case 4: return 'status-approving'
-    case 5: return 'status-completed'
-    // 报告表状态 (10-17)
-    case 10: return 'status-draft'
-    case 11: return 'status-pending'
-    case 12: return 'status-rejected'
-    case 13: return 'status-signing'
-    case 14: return 'status-approving'
-    case 15: return 'status-approving'
-    case 16: return 'status-completed'
-    case 17: return 'status-rejected'
-    // 结果表状态 (20-27)
-    case 20: return 'status-draft'
-    case 21: return 'status-pending'
-    case 22: return 'status-rejected'
-    case 23: return 'status-signing'
-    case 24: return 'status-approving'
-    case 25: return 'status-approving'
-    case 26: return 'status-completed'
-    case 27: return 'status-rejected'
+    case 5: return 'status-approving'
+    case 6: return 'status-completed'
+    case 7: return 'status-rejected'
     default: return 'status-unknown'
   }
 }
